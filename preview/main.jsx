@@ -47,6 +47,7 @@ window.fetch = async (input) => {
     else data = { api_key: 'preview-service-key', email: 'preview@example.com', base_url: 'https://preview.invalid', model: value.model };
     return new Response(JSON.stringify({ code: 0, data }), { status: 200 });
   }
+  if (url.includes('/releases')) return new Response(JSON.stringify([{tag_name:'v3.10.0'},{tag_name:'v3.9.0'},{tag_name:'v3.8.2'},{tag_name:'v3.11.0-beta.1',prerelease:true}]));
   if (url.includes('package.json')) return new Response(JSON.stringify(pkg));
   if (/commits|refs|tags|jsdelivr/.test(url)) return new Response(JSON.stringify([]));
   throw new Error(`预览已拦截请求：${url}`);

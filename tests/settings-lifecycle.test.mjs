@@ -96,17 +96,17 @@ test('automatic update failures do not change page status; manual failures remai
   assert.equal(await ctx.checkForUpdate(false), '');
   assert.ok(events.includes('failed')); assert.ok(events.includes('offline'));
 });
-for (const available of ['gitee', 'github']) test(`${available} alone can signal an update without waiting for other sources`, async () => {
+for (const available of ['gitee', 'github']) test(`${available} can supply versions when the other source fails`, async () => {
   const ctx = vm.createContext({
     PLUGIN_VERSION: '3.3.0', UPDATE_FILE_API: 'gitee', UPDATE_TAGS_API: 'tags', UPDATE_MIRROR_FILES: ['mirror'],
     decodeBase64Text: value => value,
     fetchUpdateSource: async url => {
       if (String(url).includes(available)) return { json: async () => [{tag_name:'v3.3.1',prerelease:false}] };
       if (url === 'tags') throw new Error('unavailable');
-      return new Promise(() => {});
+      throw new Error('unavailable');
     },
   });
-  for (const name of ['isNewerVersion', 'fetchLatestVersion']) vm.runInContext(extract(name), ctx);
+  for (const name of ['isNewerVersion', 'fetchRecentVersions', 'fetchLatestVersion']) vm.runInContext(extract(name), ctx);
   assert.equal(await Promise.race([ctx.fetchLatestVersion(), new Promise((_, reject) => setTimeout(() => reject(new Error('blocked by another source')), 100))]), '3.3.1');
 });
 test('all update sources failing rejects cleanly; an older successful source still works', async () => {
@@ -119,8 +119,8 @@ test('all update sources failing rejects cleanly; an older successful source sti
       throw new Error('offline');
     },
   });
-  for (const name of ['isNewerVersion', 'fetchLatestVersion']) vm.runInContext(extract(name), ctx);
-  await assert.rejects(ctx.fetchLatestVersion(), /offline/);
+  for (const name of ['isNewerVersion', 'fetchRecentVersions', 'fetchLatestVersion']) vm.runInContext(extract(name), ctx);
+  await assert.rejects(ctx.fetchLatestVersion(), /no published stable/);
   failed = false; assert.equal(await ctx.fetchLatestVersion(), '3.2.2');
 });
 

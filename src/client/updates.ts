@@ -6,7 +6,7 @@ export function createUpdates({ h }: any) {
     /** 在线更新最多试几次：Gitee 的匿名 HTTPS 克隆会排队，429 一般过一会儿就好。 */
     const UPDATE_ATTEMPTS = 3;
     /** 版本检查结果的本地缓存：打开设置页先显示，再后台刷新。 */
-    const UPDATE_CACHE_KEY = 'metaontic-video.update-check-v2';
+    const UPDATE_CACHE_KEY = 'metaontic-video.update-check-v3';
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
     /** 构建时由 esbuild --define 注入的版本号；从源码直接跑（没注入）时为空串。 */
     const PLUGIN_VERSION = typeof __PLUGIN_VERSION__ === 'string'
@@ -62,43 +62,29 @@ export function createUpdates({ h }: any) {
       }
     }
 
-    /** 分渠道读取 GitHub/Gitee 已发布 Release，不发送本机凭据。 */
-    async function fetchLatestVersion(channel = 'stable') {
-      // 仅使用已发布 Release；不从 master 或未发布标签推断可安装版本。
+    /** 两仓合并去重，仅保留最近三个已发布正式版本。 */
+    async function fetchRecentVersions() {
       const urls = [
         'https://gitee.com/api/v5/repos/hackloop/metaontic-video/releases?per_page=100',
-        channel === 'prerelease'
-          ? 'https://api.github.com/repos/wxsimon2022/metaontic-video/releases?per_page=100'
-          : 'https://api.github.com/repos/wxsimon2022/metaontic-video/releases/latest',
+        'https://api.github.com/repos/wxsimon2022/metaontic-video/releases?per_page=100',
       ];
-      const requests = urls.map(async url => {
-        const data = await (await fetchUpdateSource(url, 6000)).json();
-        const body = Array.isArray(data) ? data : data?.tag_name ? [data] : null;
-        if (!body) throw new Error('invalid releases');
-        let best = '';
-        for (const release of body) {
-          const version = String(release.tag_name || '').replace(/^v/, '');
-          if (release.draft || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(version)) continue;
-          if (channel !== 'prerelease' && (release.prerelease || version.includes('-'))) continue;
-          if (!best || isNewerVersion(version, best)) best = version;
-        }
-        if (!best) throw new Error('no releases in channel');
-        return best;
-      });
-      // 有来源发现比本机新的版本即可提醒；降级切换等待全部有界请求后选最高版本。
-      return new Promise<string>((resolve, reject) => {
-        let remaining = requests.length, best = '';
-        const errors = [];
-        for (const request of requests) request.then(version => {
-          if (!best || isNewerVersion(version, best)) best = version;
-          if (isNewerVersion(version, PLUGIN_VERSION)) resolve(version);
-        }, error => { errors.push(error?.message || String(error)); }).finally(() => {
-          if (--remaining === 0) best ? resolve(best) : reject(new Error(errors.join('；')));
-        });
-      });
+      const results = await Promise.allSettled(urls.map(async url => {
+        const body = await (await fetchUpdateSource(url, 6000)).json();
+        if (!Array.isArray(body)) throw new Error('invalid releases');
+        return body.filter(r => !r.draft && !r.prerelease)
+          .map(r => String(r.tag_name || '').replace(/^v/, ''))
+          .filter(version => /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version));
+      }));
+      const versions = [...new Set(results.flatMap(r => r.status === 'fulfilled' ? r.value : []))]
+        .sort((a,b) => isNewerVersion(a,b) ? -1 : isNewerVersion(b,a) ? 1 : 0).slice(0,3);
+      if (!versions.length) throw new Error('no published stable releases available');
+      return versions;
+    }
+    async function fetchLatestVersion() {
+      return (await fetchRecentVersions())[0];
     }
 
-  return { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell };
+  return { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, fetchRecentVersions, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell };
 }
 
 export function createUpdateActions(context: any) {
@@ -111,25 +97,25 @@ function readUpdateCache() {
         const raw = window.localStorage.getItem(context.UPDATE_CACHE_KEY);
         const saved = raw ? JSON.parse(raw) : null;
         if (!saved || typeof saved !== 'object') {
-            return { latest: '', commit: '', at: 0, fresh: false };
+            return { latest: '', versions: [], at: 0, fresh: false };
         }
         const at = Number(saved.at) || 0;
         return {
             latest: String(saved.latest || ''),
-            commit: String(saved.commit || ''),
+            versions: Array.isArray(saved.versions) ? saved.versions.filter(v => /^\d+\.\d+\.\d+$/.test(v)).slice(0,3) : [],
             at,
             fresh: Boolean(at) && Date.now() - at < context.UPDATE_MAX_AGE_MS,
         };
     }
     catch {
-        return { latest: '', commit: '', at: 0, fresh: false };
+        return { latest: '', versions: [], at: 0, fresh: false };
     }
 }
 
-/** 所选渠道最近检测到的发布版本；渠道通过缓存键隔离。 */
-function rememberUpdateCheck(latest, commit = '') {
+/** 最近三个正式版本及检测时间，旧渠道缓存不再读取。 */
+function rememberUpdateCheck(latest, versions = []) {
     try {
-        window.localStorage.setItem(context.UPDATE_CACHE_KEY, JSON.stringify({ at: Date.now(), latest, commit: commit || '' }));
+        window.localStorage.setItem(context.UPDATE_CACHE_KEY, JSON.stringify({ at: Date.now(), latest, versions }));
     }
     catch {
         // 存不住只是下次打开会再查一遍，不影响这次的显示
@@ -147,7 +133,7 @@ function forgetUpdateCheck() {
 }
 
 /**
- * 检查更新：读取所选渠道的已发布版本。
+ * 检查更新：读取最近三个已发布正式版本。
  * silent 用于打开设置页时的自动检查——失败不打扰用户，页面上还是上次的结果。
  */
 async function checkForUpdate(silent = false) {
@@ -157,16 +143,19 @@ async function checkForUpdate(silent = false) {
         context.setUpdateStatus('working');
         context.setUpdateMessage('');
     }
-    const channel = context.updateChannel || 'stable';
     const request = context.updateRequest ? ++context.updateRequest.current : 0;
     try {
-        const latest = await context.fetchLatestVersion(channel);
+        const versions = context.fetchRecentVersions ? await context.fetchRecentVersions() : [await context.fetchLatestVersion()];
+        const latest = versions[0];
         if (context.updateRequest && request !== context.updateRequest.current) return '';
         context.setUpdateConfirm?.(false);
-        context.setUpdateLatest(latest);
+        context.setAvailableVersions?.(versions);
+        const selected = !context.PLUGIN_VERSION || context.isNewerVersion?.(latest, context.PLUGIN_VERSION)
+          ? latest : versions.includes(context.PLUGIN_VERSION) ? context.PLUGIN_VERSION : '';
+        context.setUpdateLatest(selected);
         context.setUpdateAt(new Date().toLocaleTimeString());
         context.setUpdateStatus('ok');
-        rememberUpdateCheck(latest);
+        rememberUpdateCheck(latest, versions);
         return latest;
     }
     catch (error) {
@@ -182,6 +171,8 @@ async function checkForUpdate(silent = false) {
 /** 仅在用户二次确认后安装已发布标签，保留当前插件作为失败退路。 */
 async function runOnlineUpdate() {
     if (context.updateConfirm !== true) return;
+    const downgrading = context.isNewerVersion?.(context.PLUGIN_VERSION, context.updateLatest) === true;
+    const operationKey = key => downgrading ? key.replace('versionUpdate', 'versionDowngrade') : key;
     context.setUpdateConfirm(false);
     // 先把「更新中」摆上：重装会把本插件的客户端模块换掉，页面随时可能消失，
     // 用户至少要立刻看到按钮/文案变了，而不是以为点了没反应。
@@ -191,7 +182,7 @@ async function runOnlineUpdate() {
     const pluginManager = probe.manager;
     if (!pluginManager || typeof pluginManager.installBundle !== 'function') {
         context.setUpdateStatus('failed');
-        context.setUpdateMessage(context.t('versionUpdateUnavailable', { detail: probe.tried.join('，') }));
+        context.setUpdateMessage(context.t(operationKey('versionUpdateUnavailable'), { detail: probe.tried.join('，') }));
         return;
     }
     const requestId = `${context.PLUGIN_PACKAGE}-update-${Date.now()}`;
@@ -211,8 +202,8 @@ async function runOnlineUpdate() {
     /** 过一会儿可能就好的失败：Gitee 排队（429）、超时、连接被掐。 */
     const worthRetrying = (text) => /429|queue overflowed|timed out|timeout|ETIMEDOUT|ECONNRESET|ECONNREFUSED|EAI_AGAIN|socket hang up|unable to access|network|fetch/i.test(text);
     // 安装仅使用所选发布版本的成品包，避免 Git 安装引入构建依赖；禁止回退 master。
-    if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(context.updateLatest || '')
-        || (context.updateChannel === 'stable' && context.updateLatest.includes('-'))) {
+    if (!/^\d+\.\d+\.\d+$/.test(context.updateLatest || '')
+        || (context.availableVersions && !context.availableVersions.includes(context.updateLatest))) {
         context.setUpdateStatus('failed');
         context.setUpdateMessage(context.t('versionCheckFirst'));
         return;
@@ -237,7 +228,7 @@ async function runOnlineUpdate() {
             const text = failureText(result);
             const transient = worthRetrying(text);
             if (transient && round < context.UPDATE_ATTEMPTS) {
-                context.setUpdateMessage(context.t('versionUpdateRetry', { attempt: round + 1, total: context.UPDATE_ATTEMPTS }));
+                context.setUpdateMessage(context.t(operationKey('versionUpdateRetry'), { attempt: round + 1, total: context.UPDATE_ATTEMPTS }));
                 await new Promise((resolve) => window.setTimeout(resolve, round * 1200));
                 continue;
             }
@@ -261,7 +252,7 @@ async function runOnlineUpdate() {
     if (!outcome) {
         context.setUpdateStatus('failed');
         context.setUpdateMessage([
-            context.t('versionUpdateFailed', { message: failure }),
+            context.t(operationKey('versionUpdateFailed'), { message: failure }),
             worthRetrying(failure) || /429|queue overflowed/i.test(failure)
                 ? context.t('versionUpdateRateLimited')
                 : '',
@@ -270,7 +261,7 @@ async function runOnlineUpdate() {
     }
     if (outcome.application === 'cancelled') {
         context.setUpdateStatus('ok');
-        context.setUpdateMessage(context.t('versionUpdateCancelled'));
+        context.setUpdateMessage(context.t(operationKey('versionUpdateCancelled')));
         return;
     }
     // 装好了：缓存作废，卡片不再是「有新版本」，只报更新结果
@@ -279,8 +270,8 @@ async function runOnlineUpdate() {
     context.setUpdateLatest('');
     context.setUpdateStatus(outcome.application === 'restart-required' ? 'restart' : 'applied');
     context.setUpdateMessage(outcome.application === 'restart-required'
-        ? context.t('versionUpdateRestart', { version })
-        : context.t(outcome.application === 'applied' ? 'versionUpdateDone' : 'versionUpdatePending', { version }));
+        ? context.t(operationKey('versionUpdateRestart'), { version })
+        : context.t(operationKey(outcome.application === 'applied' ? 'versionUpdateDone' : 'versionUpdatePending'), { version }));
 }
 function deferUpdate() {
     context.setUpdateConfirm(false);
@@ -291,16 +282,16 @@ function deferUpdate() {
 }
 
 /** Ordinary updates are optional: checking and dismissing never install anything. */
-export function renderUpdateNotice({ h, t, available, latest, deferred, status, confirmed, onUpdate, onLater }) {
+export function renderUpdateNotice({ h, t, available, latest, deferred, status, confirmed, downgrade = false, onUpdate, onLater }) {
   if (!available || deferred === latest || status === 'installing') return null;
   return h('div', { key: 'update-notice', className: 'mov-notice', role: 'status', 'data-field': 'update-notice' }, [
-    h('strong', { key: 'title' }, t('versionNew', { version: latest })),
+    h('strong', { key: 'title' }, t('versionTarget', { version: latest })),
     h('p', { key: 'optional' }, t('versionOptional')),
-    confirmed ? h('p', { key: 'confirm' }, t('versionUpdateConfirmHint')) : null,
+    confirmed ? h('p', { key: 'confirm' }, t(downgrade ? 'versionDowngradeConfirmHint' : 'versionUpdateConfirmHint')) : null,
     h('div', { key: 'actions', className: 'mov-cmd-row' }, [
       h('button', { key: 'update', type: 'button', className: 'mov-btn mov-btn-sm mov-btn-primary',
         'data-action': confirmed ? 'update-notice-confirm' : 'update-notice-open', onClick: onUpdate },
-        confirmed ? t('versionUpdateConfirm', { version: latest }) : t('versionUpdate')),
+        confirmed ? t(downgrade ? 'versionDowngradeConfirm' : 'versionUpdateConfirm', { version: latest }) : t(downgrade ? 'versionDowngrade' : 'versionUpdate')),
       h('button', { key: 'later', type: 'button', className: 'mov-btn mov-btn-sm', 'data-action': 'update-later', onClick: onLater }, t('versionLater')),
     ]),
   ]);

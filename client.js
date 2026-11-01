@@ -473,6 +473,17 @@
       versionNew: "\u6709\u65B0\u7248\u672C v{version}",
       versionFailed: "\u68C0\u67E5\u66F4\u65B0\u5931\u8D25\uFF1A{message}",
       versionUpdate: "\u7ACB\u5373\u66F4\u65B0",
+      versionDowngrade: "\u964D\u7EA7\u7248\u672C",
+      versionDowngradeConfirm: "\u786E\u8BA4\u964D\u7EA7\u5230 v{version}",
+      versionDowngradeConfirmHint: "\u5C06\u5B89\u88C5\u66F4\u4F4E\u7248\u672C\uFF0C\u6062\u590D\u8BE5\u7248\u672C\u539F\u6709\u884C\u4E3A\u4E0E\u4F9D\u8D56\u3002\u8BBE\u7F6E\u9875\u53EF\u80FD\u77ED\u6682\u5173\u95ED\uFF0C\u73B0\u6709\u914D\u7F6E\u4E0E\u5BC6\u94A5\u4F1A\u4FDD\u7559\u3002",
+      versionDowngrading: "\u964D\u7EA7\u4E2D\u2026",
+      versionDowngradeDone: "\u5DF2\u964D\u7EA7\u5230 v{version}\uFF0C\u5DF2\u901A\u8FC7\u70ED\u52A0\u8F7D\u751F\u6548\uFF0C\u65E0\u9700\u91CD\u542F\u3002\u73B0\u6709\u5BF9\u8BDD\u4E0B\u4E00\u8F6E\u4F7F\u7528\u8BE5\u7248\u672C\u89C4\u5219\u3002",
+      versionDowngradePending: "v{version} \u5DF2\u5B89\u88C5\uFF0C\u5F53\u524D\u914D\u7F6E\u5C1A\u672A\u542F\u7528\u8BE5\u7248\u672C\uFF0C\u8BF7\u5728\u63D2\u4EF6\u9875\u68C0\u67E5\u542F\u7528\u72B6\u6001\u3002",
+      versionDowngradeRestart: "\u5DF2\u5B89\u88C5\u8F83\u4F4E\u7248\u672C v{version}\uFF1A\u91CD\u542F Harness \u540E\u751F\u6548\u3002",
+      versionDowngradeCancelled: "\u964D\u7EA7\u5DF2\u53D6\u6D88\u3002",
+      versionDowngradeRetry: "\u964D\u7EA7\u672A\u5B8C\u6210\uFF0C\u6B63\u5728\u91CD\u8BD5\uFF08{attempt}/{total}\uFF09\u2026",
+      versionDowngradeFailed: "\u7248\u672C\u964D\u7EA7\u5931\u8D25\uFF1A{message}",
+      versionDowngradeUnavailable: "\u5F53\u524D\u8F6F\u4EF6\u4E0D\u652F\u6301\u5728\u7EBF\u964D\u7EA7\uFF0C\u8BF7\u5230\u63D2\u4EF6\u9875\u6DFB\u52A0\u6240\u9009\u7248\u672C\u6210\u54C1\u5305\u3002",
       versionOptional: "\u8FD9\u662F\u666E\u901A\u66F4\u65B0\uFF0C\u4F60\u53EF\u4EE5\u81EA\u884C\u51B3\u5B9A\u662F\u5426\u5347\u7EA7\u3002\u7A0D\u540E\u5904\u7406\u4E0D\u5F71\u54CD\u7EE7\u7EED\u4F7F\u7528\uFF0C\u63D2\u4EF6\u4E0D\u4F1A\u81EA\u52A8\u5B89\u88C5\u3002",
       versionLater: "\u7A0D\u540E\u518D\u8BF4",
       versionUpdateConfirm: "\u786E\u8BA4\u66F4\u65B0\u5230 v{version}",
@@ -525,11 +536,12 @@
       seamTrimSecondsHint: "\u5206\u522B\u88C1\u526A\u7B2C 2\u30013\u2026\u6BB5\u5F00\u5934\uFF0C\u4F8B\u5982 0.5,0\u3002\u7559\u7A7A\u4F7F\u7528\u6A21\u578B\u9ED8\u8BA4\u503C\uFF0C\u586B 0 \u5173\u95ED\uFF1B\u6BCF\u9879\u4E3A 0\u20133 \u79D2\u3002",
       waitSecondsHint: "\u81F3\u5C11 1 \u79D2\uFF0C\u652F\u6301\u5C0F\u6570\u3002\u6700\u957F\u7B49\u5F85\u65F6\u95F4\u4E0D\u5F97\u5C0F\u4E8E\u67E5\u8BE2\u95F4\u9694\u3002",
       versionHistory: "\u5386\u53F2\u66F4\u65B0",
-      versionChannel: "\u66F4\u65B0\u6E20\u9053",
-      versionStable: "\u6B63\u5F0F\u7248",
-      versionPrerelease: "\u9884\u53D1\u5E03\u7248",
-      versionChannelHint: "\u9009\u62E9\u540E\u68C0\u67E5\u5BF9\u5E94\u7248\u672C\uFF0C\u70B9\u51FB\u66F4\u65B0\u5E76\u786E\u8BA4\u540E\u624D\u5B89\u88C5\uFF1B\u5207\u56DE\u6B63\u5F0F\u7248\u53EF\u80FD\u964D\u4F4E\u7248\u672C\u53F7\uFF0C\u9884\u53D1\u5E03\u7248\u53EF\u80FD\u4E0D\u7A33\u5B9A\u3002",
-      versionCheckFirst: "\u8BF7\u5148\u68C0\u67E5\u6240\u9009\u6E20\u9053\u7684\u7248\u672C\uFF0C\u518D\u786E\u8BA4\u5B89\u88C5\u3002",
+      versionSelect: "\u5207\u6362\u7248\u672C",
+      versionChoose: "\u8BF7\u9009\u62E9\u7248\u672C",
+      versionInstalled: "\u5F53\u524D\u7248\u672C",
+      versionTarget: "\u6240\u9009\u7248\u672C v{version}",
+      versionSelectHint: "\u652F\u6301\u6700\u8FD1 3 \u4E2A\u6B63\u5F0F\u7248\u672C\uFF1B\u9009\u62E9\u540E\u786E\u8BA4\u624D\u5B89\u88C5\u3002\u56DE\u9000\u65E7\u7248\u4F1A\u6062\u590D\u8BE5\u7248\u672C\u539F\u6709\u884C\u4E3A\u4E0E\u4F9D\u8D56\uFF0C\u8BF7\u5148\u67E5\u770B\u66F4\u65B0\u8BF4\u660E\u3002",
+      versionCheckFirst: "\u8BF7\u5148\u68C0\u67E5\u5E76\u9009\u62E9\u53EF\u7528\u7684\u6B63\u5F0F\u7248\u672C\uFF0C\u518D\u786E\u8BA4\u5B89\u88C5\u3002",
       unknownConnection: "\u672A\u77E5\u63A5\u5165\u65B9\u5F0F\uFF0C\u8BF7\u91CD\u65B0\u9009\u62E9\u3002",
       atomicUnsupported: "\u5F53\u524D Harness \u4E0D\u652F\u6301\u6279\u91CF\u4FDD\u5B58\uFF0C\u8BF7\u66F4\u65B0 Harness \u540E\u91CD\u8BD5\u3002",
       atomicRejected: "\u8F6F\u4EF6\u672A\u63A5\u53D7\u672C\u6B21\u4FDD\u5B58\uFF0C\u8F93\u5165\u5DF2\u4FDD\u7559\u3002\u8BF7\u91CD\u65B0\u6253\u5F00\u8BBE\u7F6E\u9875\u6838\u5BF9\u540E\u91CD\u8BD5\u3002",
@@ -624,6 +636,17 @@
       versionNew: "v{version} is available",
       versionFailed: "Update check failed: {message}",
       versionUpdate: "Update now",
+      versionDowngrade: "Downgrade",
+      versionDowngradeConfirm: "Confirm downgrade to v{version}",
+      versionDowngradeConfirmHint: "An older version restores its original behavior and dependencies. Settings may briefly close; settings and keys are kept.",
+      versionDowngrading: "Downgrading\u2026",
+      versionDowngradeDone: "Downgraded to v{version} through hot reload; no restart needed. Existing conversations use that version on the next turn.",
+      versionDowngradePending: "v{version} installed but not activated. Check its enabled state in Plugins.",
+      versionDowngradeRestart: "Older version v{version} installed; restart Harness to apply it.",
+      versionDowngradeCancelled: "Downgrade cancelled.",
+      versionDowngradeRetry: "Downgrade incomplete. Retrying ({attempt}/{total})\u2026",
+      versionDowngradeFailed: "Downgrade failed: {message}",
+      versionDowngradeUnavailable: "Online downgrade is unavailable. Add the selected release archive from Plugins.",
       versionOptional: "This update is optional. You can keep using the plugin and update later. It will not install automatically.",
       versionLater: "Later",
       versionUpdateConfirm: "Confirm update to v{version}",
@@ -676,11 +699,12 @@
       seamTrimSecondsHint: "Trim the start of segments 2, 3, etc., e.g. 0.5,0. Leave blank for model defaults; use 0 to disable. Each value: 0\u20133 seconds.",
       waitSecondsHint: "At least 1 second; decimals allowed. Maximum wait must be at least the check interval.",
       versionHistory: "Update history",
-      versionChannel: "Update channel",
-      versionStable: "Stable",
-      versionPrerelease: "Prerelease",
-      versionChannelHint: "Checking never installs. Confirm installation to switch; returning to stable may downgrade. Prereleases may be unstable.",
-      versionCheckFirst: "Check the selected channel before confirming installation.",
+      versionSelect: "Switch version",
+      versionChoose: "Select a version",
+      versionInstalled: "Installed",
+      versionTarget: "Selected version v{version}",
+      versionSelectHint: "Choose from the latest 3 stable releases, then confirm installation. Older versions retain their original behavior and dependencies; review their notes first.",
+      versionCheckFirst: "Check and select an available stable version before confirming installation.",
       unknownConnection: "Unknown connection method. Select one again.",
       atomicUnsupported: "This version of Harness does not support batch saving. Update Harness and try again.",
       atomicRejected: "The application refused the save. Input is retained. Reopen settings, review and retry.",
@@ -806,9 +830,9 @@
     const PLUGIN_PACKAGE = "metaontic-video";
     const UPDATE_SPEC = "git+https://gitee.com/hackloop/metaontic-video.git";
     const UPDATE_ATTEMPTS = 3;
-    const UPDATE_CACHE_KEY = "metaontic-video.update-check-v2";
+    const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.10.0-beta.2".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.10.0".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -856,39 +880,24 @@
         if (timer) window.clearTimeout(timer);
       }
     }
-    async function fetchLatestVersion(channel = "stable") {
+    async function fetchRecentVersions() {
       const urls = [
         "https://gitee.com/api/v5/repos/hackloop/metaontic-video/releases?per_page=100",
-        channel === "prerelease" ? "https://api.github.com/repos/wxsimon2022/metaontic-video/releases?per_page=100" : "https://api.github.com/repos/wxsimon2022/metaontic-video/releases/latest"
+        "https://api.github.com/repos/wxsimon2022/metaontic-video/releases?per_page=100"
       ];
-      const requests = urls.map(async (url) => {
-        const data = await (await fetchUpdateSource(url, 6e3)).json();
-        const body = Array.isArray(data) ? data : data?.tag_name ? [data] : null;
-        if (!body) throw new Error("invalid releases");
-        let best = "";
-        for (const release of body) {
-          const version = String(release.tag_name || "").replace(/^v/, "");
-          if (release.draft || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(version)) continue;
-          if (channel !== "prerelease" && (release.prerelease || version.includes("-"))) continue;
-          if (!best || isNewerVersion(version, best)) best = version;
-        }
-        if (!best) throw new Error("no releases in channel");
-        return best;
-      });
-      return new Promise((resolve, reject) => {
-        let remaining = requests.length, best = "";
-        const errors = [];
-        for (const request of requests) request.then((version) => {
-          if (!best || isNewerVersion(version, best)) best = version;
-          if (isNewerVersion(version, PLUGIN_VERSION)) resolve(version);
-        }, (error) => {
-          errors.push(error?.message || String(error));
-        }).finally(() => {
-          if (--remaining === 0) best ? resolve(best) : reject(new Error(errors.join("\uFF1B")));
-        });
-      });
+      const results = await Promise.allSettled(urls.map(async (url) => {
+        const body = await (await fetchUpdateSource(url, 6e3)).json();
+        if (!Array.isArray(body)) throw new Error("invalid releases");
+        return body.filter((r) => !r.draft && !r.prerelease).map((r) => String(r.tag_name || "").replace(/^v/, "")).filter((version) => /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version));
+      }));
+      const versions = [...new Set(results.flatMap((r) => r.status === "fulfilled" ? r.value : []))].sort((a, b) => isNewerVersion(a, b) ? -1 : isNewerVersion(b, a) ? 1 : 0).slice(0, 3);
+      if (!versions.length) throw new Error("no published stable releases available");
+      return versions;
     }
-    return { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell };
+    async function fetchLatestVersion() {
+      return (await fetchRecentVersions())[0];
+    }
+    return { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, fetchRecentVersions, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell };
   }
   function createUpdateActions(context) {
     function readUpdateCache() {
@@ -896,22 +905,22 @@
         const raw = window.localStorage.getItem(context.UPDATE_CACHE_KEY);
         const saved = raw ? JSON.parse(raw) : null;
         if (!saved || typeof saved !== "object") {
-          return { latest: "", commit: "", at: 0, fresh: false };
+          return { latest: "", versions: [], at: 0, fresh: false };
         }
         const at = Number(saved.at) || 0;
         return {
           latest: String(saved.latest || ""),
-          commit: String(saved.commit || ""),
+          versions: Array.isArray(saved.versions) ? saved.versions.filter((v) => /^\d+\.\d+\.\d+$/.test(v)).slice(0, 3) : [],
           at,
           fresh: Boolean(at) && Date.now() - at < context.UPDATE_MAX_AGE_MS
         };
       } catch {
-        return { latest: "", commit: "", at: 0, fresh: false };
+        return { latest: "", versions: [], at: 0, fresh: false };
       }
     }
-    function rememberUpdateCheck(latest, commit = "") {
+    function rememberUpdateCheck(latest, versions = []) {
       try {
-        window.localStorage.setItem(context.UPDATE_CACHE_KEY, JSON.stringify({ at: Date.now(), latest, commit: commit || "" }));
+        window.localStorage.setItem(context.UPDATE_CACHE_KEY, JSON.stringify({ at: Date.now(), latest, versions }));
       } catch {
       }
     }
@@ -931,16 +940,18 @@
         context.setUpdateStatus("working");
         context.setUpdateMessage("");
       }
-      const channel = context.updateChannel || "stable";
       const request = context.updateRequest ? ++context.updateRequest.current : 0;
       try {
-        const latest = await context.fetchLatestVersion(channel);
+        const versions = context.fetchRecentVersions ? await context.fetchRecentVersions() : [await context.fetchLatestVersion()];
+        const latest = versions[0];
         if (context.updateRequest && request !== context.updateRequest.current) return "";
         context.setUpdateConfirm?.(false);
-        context.setUpdateLatest(latest);
+        context.setAvailableVersions?.(versions);
+        const selected = !context.PLUGIN_VERSION || context.isNewerVersion?.(latest, context.PLUGIN_VERSION) ? latest : versions.includes(context.PLUGIN_VERSION) ? context.PLUGIN_VERSION : "";
+        context.setUpdateLatest(selected);
         context.setUpdateAt((/* @__PURE__ */ new Date()).toLocaleTimeString());
         context.setUpdateStatus("ok");
-        rememberUpdateCheck(latest);
+        rememberUpdateCheck(latest, versions);
         return latest;
       } catch (error) {
         if (context.updateRequest && request !== context.updateRequest.current) return "";
@@ -953,6 +964,8 @@
     }
     async function runOnlineUpdate() {
       if (context.updateConfirm !== true) return;
+      const downgrading = context.isNewerVersion?.(context.PLUGIN_VERSION, context.updateLatest) === true;
+      const operationKey = (key) => downgrading ? key.replace("versionUpdate", "versionDowngrade") : key;
       context.setUpdateConfirm(false);
       context.setUpdateStatus("installing");
       context.setUpdateMessage("");
@@ -960,7 +973,7 @@
       const pluginManager = probe.manager;
       if (!pluginManager || typeof pluginManager.installBundle !== "function") {
         context.setUpdateStatus("failed");
-        context.setUpdateMessage(context.t("versionUpdateUnavailable", { detail: probe.tried.join("\uFF0C") }));
+        context.setUpdateMessage(context.t(operationKey("versionUpdateUnavailable"), { detail: probe.tried.join("\uFF0C") }));
         return;
       }
       const requestId = `${context.PLUGIN_PACKAGE}-update-${Date.now()}`;
@@ -973,7 +986,7 @@
       };
       const failureText = (result) => String(result?.error?.message ?? result?.value?.error?.diagnostic ?? result?.value?.error?.code ?? "unknown");
       const worthRetrying = (text) => /429|queue overflowed|timed out|timeout|ETIMEDOUT|ECONNRESET|ECONNREFUSED|EAI_AGAIN|socket hang up|unable to access|network|fetch/i.test(text);
-      if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(context.updateLatest || "") || context.updateChannel === "stable" && context.updateLatest.includes("-")) {
+      if (!/^\d+\.\d+\.\d+$/.test(context.updateLatest || "") || context.availableVersions && !context.availableVersions.includes(context.updateLatest)) {
         context.setUpdateStatus("failed");
         context.setUpdateMessage(context.t("versionCheckFirst"));
         return;
@@ -995,7 +1008,7 @@
           const text = failureText(result);
           const transient = worthRetrying(text);
           if (transient && round < context.UPDATE_ATTEMPTS) {
-            context.setUpdateMessage(context.t("versionUpdateRetry", { attempt: round + 1, total: context.UPDATE_ATTEMPTS }));
+            context.setUpdateMessage(context.t(operationKey("versionUpdateRetry"), { attempt: round + 1, total: context.UPDATE_ATTEMPTS }));
             await new Promise((resolve) => window.setTimeout(resolve, round * 1200));
             continue;
           }
@@ -1018,21 +1031,21 @@
       if (!outcome) {
         context.setUpdateStatus("failed");
         context.setUpdateMessage([
-          context.t("versionUpdateFailed", { message: failure }),
+          context.t(operationKey("versionUpdateFailed"), { message: failure }),
           worthRetrying(failure) || /429|queue overflowed/i.test(failure) ? context.t("versionUpdateRateLimited") : ""
         ].filter(Boolean).join(" "));
         return;
       }
       if (outcome.application === "cancelled") {
         context.setUpdateStatus("ok");
-        context.setUpdateMessage(context.t("versionUpdateCancelled"));
+        context.setUpdateMessage(context.t(operationKey("versionUpdateCancelled")));
         return;
       }
       forgetUpdateCheck();
       const version = outcome.version || context.updateLatest;
       context.setUpdateLatest("");
       context.setUpdateStatus(outcome.application === "restart-required" ? "restart" : "applied");
-      context.setUpdateMessage(outcome.application === "restart-required" ? context.t("versionUpdateRestart", { version }) : context.t(outcome.application === "applied" ? "versionUpdateDone" : "versionUpdatePending", { version }));
+      context.setUpdateMessage(outcome.application === "restart-required" ? context.t(operationKey("versionUpdateRestart"), { version }) : context.t(operationKey(outcome.application === "applied" ? "versionUpdateDone" : "versionUpdatePending"), { version }));
     }
     function deferUpdate() {
       context.setUpdateConfirm(false);
@@ -1044,12 +1057,12 @@
     }
     return { deferUpdate, readUpdateCache, rememberUpdateCheck, forgetUpdateCheck, checkForUpdate, runOnlineUpdate };
   }
-  function renderUpdateNotice({ h, t, available, latest, deferred, status, confirmed, onUpdate, onLater }) {
+  function renderUpdateNotice({ h, t, available, latest, deferred, status, confirmed, downgrade = false, onUpdate, onLater }) {
     if (!available || deferred === latest || status === "installing") return null;
     return h("div", { key: "update-notice", className: "mov-notice", role: "status", "data-field": "update-notice" }, [
-      h("strong", { key: "title" }, t("versionNew", { version: latest })),
+      h("strong", { key: "title" }, t("versionTarget", { version: latest })),
       h("p", { key: "optional" }, t("versionOptional")),
-      confirmed ? h("p", { key: "confirm" }, t("versionUpdateConfirmHint")) : null,
+      confirmed ? h("p", { key: "confirm" }, t(downgrade ? "versionDowngradeConfirmHint" : "versionUpdateConfirmHint")) : null,
       h("div", { key: "actions", className: "mov-cmd-row" }, [
         h(
           "button",
@@ -1060,7 +1073,7 @@
             "data-action": confirmed ? "update-notice-confirm" : "update-notice-open",
             onClick: onUpdate
           },
-          confirmed ? t("versionUpdateConfirm", { version: latest }) : t("versionUpdate")
+          confirmed ? t(downgrade ? "versionDowngradeConfirm" : "versionUpdateConfirm", { version: latest }) : t(downgrade ? "versionDowngrade" : "versionUpdate")
         ),
         h("button", { key: "later", type: "button", className: "mov-btn mov-btn-sm", "data-action": "update-later", onClick: onLater }, t("versionLater"))
       ])
@@ -1434,7 +1447,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.10.0-beta.2",
+    version: "3.10.0",
     description: "DeepSeek Harness video creation plugin with a Video Creation Assistant for concepts, script review and confirmed production; supports reference images, video continuation, segment previews, resumable generation, local merging, and MetaOnticVideo, MetaOntic AI or Volcano Engine access.",
     license: "MIT",
     type: "module",
@@ -1521,19 +1534,24 @@
       "@deepseek-ai/schemastery": "~3.18.5"
     },
     releaseNotes: {
-      version: "3.10.0-beta.2",
-      prerelease: true,
-      publishedAt: "2026-11-01T11:11:36Z",
+      version: "3.10.0",
+      prerelease: false,
+      publishedAt: "2026-11-01T11:28:47Z",
       items: [
-        "\u4FEE\u590D\uFF1A\u79FB\u9664\u516C\u5171\u63D2\u4EF6\u5BF9 Hyperframes\u3001esbuild \u7B49\u6784\u5EFA\u5DE5\u5177\u7684\u8FD0\u884C\u4F9D\u8D56\uFF0C\u907F\u514D\u5728\u7EBF\u66F4\u65B0\u56E0\u5B89\u88C5\u811A\u672C\u88AB\u62E6\u622A\u800C\u62A5\u9519\u3002",
-        "\u4F18\u5316\uFF1A\u5728\u7EBF\u66F4\u65B0\u6539\u4E3A\u5B89\u88C5\u6240\u9009\u7248\u672C\u7684 Release \u6210\u54C1\u5305\uFF0CGitee \u9644\u4EF6\u4E0D\u53EF\u7528\u65F6\u5C1D\u8BD5\u540C\u7248 GitHub \u9644\u4EF6\uFF0C\u4E0D\u56DE\u9000\u65E7\u7248\u6216\u5F00\u53D1\u5206\u652F\u3002",
-        "\u4F18\u5316\uFF1A\u5185\u90E8 Hyperframes \u4EC5\u4FDD\u7559\u4E3A\u5F00\u53D1\u4F9D\u8D56\uFF0C\u516C\u5F00\u89C6\u9891\u751F\u6210\u548C\u5B9E\u9645\u8D39\u7528\u67E5\u8BE2\u65E0\u9700\u6279\u51C6\u989D\u5916\u6784\u5EFA\u811A\u672C\uFF1B\u540C\u6B65\u4F7F\u7528\u8BF4\u660E\u4E66\u4E0E PDF\u3002"
+        "\u65B0\u589E\uFF1A\u63D2\u4EF6\u7248\u672C\u5361\u7247\u652F\u6301\u6700\u8FD1 3 \u4E2A\u6B63\u5F0F\u7248\u672C\u5207\u6362\uFF0C\u6309\u7248\u672C\u53F7\u6392\u5E8F\u53BB\u91CD\uFF0C\u9AD8\u7248\u672C\u663E\u793A\u66F4\u65B0\u3001\u4F4E\u7248\u672C\u663E\u793A\u964D\u7EA7\uFF0C\u4E8C\u6B21\u786E\u8BA4\u540E\u624D\u5B89\u88C5\u3002",
+        "\u4F18\u5316\uFF1A\u79FB\u9664\u9884\u53D1\u5E03\u5165\u53E3\uFF0C\u540E\u7EED\u4EC5\u53D1\u5E03\u6B63\u5F0F\u7248\uFF1B\u8FC7\u6EE4\u8349\u7A3F\u4E0E\u9884\u53D1\u5E03\uFF0C\u68C0\u67E5\u66F4\u65B0\u4E0D\u9ED8\u8BA4\u9009\u4E2D\u66F4\u4F4E\u7248\u672C\u3002",
+        "\u4F18\u5316\uFF1A\u914D\u7F6E\u4FDD\u5B58\u7B49\u5F85\u8BBE\u5907\u540C\u6B65\u53CA\u81EA\u52A8\u53D6\u56DE Key \u5B8C\u6210\uFF0C\u51B2\u7A81\u65F6\u7ED1\u5B9A\u4FEE\u8BA2\u53F7\u5B89\u5168\u91CD\u8BD5\uFF0C\u4FDD\u7559\u4FDD\u5B58\u671F\u95F4\u7EE7\u7EED\u7F16\u8F91\u7684\u8F93\u5165\u3002",
+        "\u4F18\u5316\uFF1A\u4FDD\u5B58\u5931\u8D25\u533A\u5206\u914D\u7F6E\u51B2\u7A81\u3001\u53EA\u8BFB\u3001\u9875\u9762\u5931\u6548\u53CA\u8FDE\u63A5\u4E2D\u65AD\uFF0C\u589E\u52A0\u4E0D\u542B\u5BC6\u94A5\u4E0E\u5B57\u6BB5\u503C\u7684\u8BCA\u65AD\u4FE1\u606F\u3002",
+        "\u4F18\u5316\uFF1A\u5728\u7EBF\u66F4\u65B0\u5B89\u88C5\u5BF9\u5E94 Release \u6210\u54C1\u5305\uFF0CGitee \u4E0D\u53EF\u7528\u65F6\u5C1D\u8BD5\u540C\u7248 GitHub \u9644\u4EF6\uFF0C\u4E0D\u56DE\u9000\u65E7\u7248\u6216\u9ED8\u8BA4\u5206\u652F\u3001\u4E0D\u5148\u5378\u8F7D\u63D2\u4EF6\uFF1B\u540C\u6B65\u4F7F\u7528\u8BF4\u660E\u4E66\u4E0E PDF\u3002",
+        "\u4FEE\u590D\uFF1A\u5B9E\u9645\u8D39\u7528\u53EF\u7A7A\u5B57\u6BB5\u6539\u7528\u5BBF\u4E3B\u652F\u6301\u7684 Schema\uFF0C\u89E3\u51B3\u201C\u7EC4\u4EF6\u542F\u52A8\u5931\u8D25\u201D\u5BFC\u81F4\u63D2\u4EF6\u65E0\u6CD5\u52A0\u8F7D\u3002",
+        "\u4FEE\u590D\uFF1A\u79FB\u9664\u516C\u5171\u63D2\u4EF6\u5BF9 Hyperframes\u3001esbuild \u7B49\u6784\u5EFA\u5DE5\u5177\u7684\u8FD0\u884C\u4F9D\u8D56\uFF0C\u89E3\u51B3\u5728\u7EBF\u66F4\u65B0\u56E0\u5B89\u88C5\u811A\u672C\u88AB\u62E6\u622A\u800C\u62A5\u9519\u3002",
+        "\u4FEE\u590D\uFF1A\u91CD\u7F6E\u540E\u5148\u6838\u5BF9\u914D\u7F6E\u5E76\u5F15\u5BFC\u767B\u5F55\u6216\u586B\u5199 Key\uFF0C\u4FDD\u7559\u811A\u672C\u4E0E\u4EFB\u52A1\u8FDB\u5EA6\uFF0C\u907F\u514D\u8BEF\u5EFA\u8BAE\u91CD\u88C5\u6216\u91CD\u542F\u3002"
       ]
     }
   };
 
   // src/client/settings.ts
-  function createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS }) {
+  function createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, fetchRecentVersions, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS }) {
     function makePage({ form, t, manager }) {
       return function ConfigPage(props) {
         const snapshot = useSnapshot(form);
@@ -1587,22 +1605,14 @@
         const [updateStatus, setUpdateStatus] = React.useState("idle");
         const [updateMessage, setUpdateMessage] = React.useState("");
         const [updateLatest, setUpdateLatest] = React.useState("");
-        const [updateChannel, setUpdateChannel] = React.useState(() => {
-          try {
-            const saved = window.localStorage.getItem("metaontic-video.update-channel");
-            if (saved === "stable" || saved === "prerelease") return saved;
-          } catch {
-          }
-          return package_default.releaseNotes?.prerelease || PLUGIN_VERSION.includes("-") ? "prerelease" : "stable";
-        });
+        const [availableVersions, setAvailableVersions] = React.useState([]);
         const updateRequest = React.useRef(0);
-        const channelCacheKey = `${UPDATE_CACHE_KEY}.${updateChannel}`;
         const releaseNotes = package_default.releaseNotes;
         const [updateAt, setUpdateAt] = React.useState("");
         const [updateConfirm, setUpdateConfirm] = React.useState(false);
         const [updateDeferred, setUpdateDeferred] = React.useState(() => {
           try {
-            return window.localStorage.getItem(`${channelCacheKey}.deferred`) || "";
+            return window.localStorage.getItem(`${UPDATE_CACHE_KEY}.deferred`) || "";
           } catch {
             return "";
           }
@@ -1704,10 +1714,22 @@
         });
         const { readUpdateCache, rememberUpdateCheck, forgetUpdateCheck, checkForUpdate, runOnlineUpdate, deferUpdate } = createUpdateActions({
           get UPDATE_CACHE_KEY() {
-            return channelCacheKey;
+            return UPDATE_CACHE_KEY;
           },
-          get updateChannel() {
-            return updateChannel;
+          get availableVersions() {
+            return availableVersions;
+          },
+          get setAvailableVersions() {
+            return setAvailableVersions;
+          },
+          get PLUGIN_VERSION() {
+            return PLUGIN_VERSION;
+          },
+          get isNewerVersion() {
+            return isNewerVersion;
+          },
+          get fetchRecentVersions() {
+            return fetchRecentVersions;
           },
           get updateRequest() {
             return updateRequest;
@@ -1797,33 +1819,34 @@
             window.document?.removeEventListener("visibilitychange", refresh);
           };
         }, [serviceMode, Boolean(snapshot.secrets?.apiKey || value.apiKey), value.deviceId, props?.view]);
-        const updateTried = React.useRef("");
+        const updateTried = React.useRef(false);
         React.useEffect(() => {
           if (props?.view === "summary") {
-            updateTried.current = "";
+            updateTried.current = false;
             return;
           }
-          if (updateTried.current === updateChannel) return;
-          updateTried.current = updateChannel;
+          if (updateTried.current) return;
+          updateTried.current = true;
           setUpdateLatest("");
           setUpdateConfirm(false);
           setUpdateAt("");
           setUpdateStatus("idle");
           setUpdateMessage("");
           try {
-            setUpdateDeferred(window.localStorage.getItem(`${channelCacheKey}.deferred`) || "");
+            setUpdateDeferred(window.localStorage.getItem(`${UPDATE_CACHE_KEY}.deferred`) || "");
           } catch {
             setUpdateDeferred("");
           }
           const cached = readUpdateCache();
           if (cached.latest) {
-            setUpdateLatest(cached.latest);
+            setAvailableVersions(cached.versions);
+            setUpdateLatest(isNewerVersion(cached.latest, PLUGIN_VERSION) ? cached.latest : cached.versions.includes(PLUGIN_VERSION) ? PLUGIN_VERSION : "");
             if (cached.at) setUpdateAt(new Date(cached.at).toLocaleTimeString());
             setUpdateStatus("ok");
           }
           checkForUpdate(true).catch(() => {
           });
-        }, [props?.view, updateChannel]);
+        }, [props?.view]);
         if (props && props.view === "summary") {
           const configured = Boolean(value.model) || Boolean(snapshot.secrets?.apiKey);
           const text = configured ? t("summary", { provider: t(selectedMode), model: value.model || "-" }) : t("summaryEmpty");
@@ -2253,8 +2276,9 @@
           usageAt ? h("span", { key: "updated-at", className: "mov-foot-note" }, t("quotaUpdatedAt", { time: usageAt })) : null,
           usageMessage ? h("span", { key: "message", className: "mov-hint" }, usageMessage) : null
         ]) : null;
-        const updateAvailable = Boolean(updateLatest) && Boolean(PLUGIN_VERSION) && updateLatest !== PLUGIN_VERSION && (isNewerVersion(updateLatest, PLUGIN_VERSION) || updateChannel !== (package_default.releaseNotes?.prerelease || PLUGIN_VERSION.includes("-") ? "prerelease" : "stable"));
-        const updateText = updateStatus === "working" ? t("versionChecking") : updateStatus === "failed" ? updateMessage : updateStatus === "installing" ? t("versionUpdating") : updateStatus === "restart" || updateStatus === "applied" ? updateMessage : updateStatus === "ok" ? updateAvailable ? t("versionNew", { version: updateLatest }) : t("versionLatest") : "";
+        const updateAvailable = Boolean(updateLatest) && availableVersions.includes(updateLatest) && updateLatest !== PLUGIN_VERSION;
+        const isDowngrade = updateAvailable && isNewerVersion(PLUGIN_VERSION, updateLatest);
+        const updateText = updateStatus === "working" ? t("versionChecking") : updateStatus === "failed" ? updateMessage : updateStatus === "installing" ? t(isDowngrade ? "versionDowngrading" : "versionUpdating") : updateStatus === "restart" || updateStatus === "applied" ? updateMessage : updateStatus === "ok" ? updateAvailable ? t("versionTarget", { version: updateLatest }) : t("versionLatest") : "";
         const updateTone = updateStatus === "failed" ? TOKENS.error : updateStatus === "restart" || updateStatus === "applied" || updateAvailable ? TOKENS.success : TOKENS.muted;
         const versionBox = h("div", {
           key: "version",
@@ -2284,28 +2308,27 @@
               }
             }, updateStatus === "working" ? t("versionChecking") : t("versionCheck"))
           ]),
-          h("div", { key: "channel", className: "mov-cmd-row" }, [
-            h("label", { key: "label", htmlFor: "mov-update-channel", className: "mov-label" }, t("versionChannel")),
+          h("div", { key: "version-choice", className: "mov-cmd-row" }, [
+            h("label", { key: "label", htmlFor: "mov-update-version", className: "mov-label" }, t("versionSelect")),
             h("select", {
               key: "select",
-              id: "mov-update-channel",
+              id: "mov-update-version",
               className: "mov-input",
-              value: updateChannel,
-              disabled: updateStatus === "installing",
+              value: updateLatest,
+              disabled: updateStatus === "installing" || updateStatus === "working" || !availableVersions.length,
               onChange: (event) => {
-                const channel = event.target.value;
-                if (!["stable", "prerelease"].includes(channel)) return;
+                const version = event.target.value;
+                if (!availableVersions.includes(version)) return;
                 updateRequest.current++;
-                setUpdateLatest("");
+                setUpdateLatest(version);
                 setUpdateConfirm(false);
-                setUpdateChannel(channel);
-                try {
-                  window.localStorage.setItem("metaontic-video.update-channel", channel);
-                } catch {
-                }
+                setUpdateMessage("");
               }
-            }, [h("option", { key: "stable", value: "stable" }, t("versionStable")), h("option", { key: "pre", value: "prerelease" }, t("versionPrerelease"))]),
-            h("span", { key: "hint", className: "mov-hint" }, t("versionChannelHint"))
+            }, [
+              !updateLatest ? h("option", { key: "empty", value: "", disabled: true }, t("versionChoose")) : null,
+              ...availableVersions.map((version) => h("option", { key: version, value: version }, `v${version}${version === PLUGIN_VERSION ? " \xB7 " + t("versionInstalled") : ""}`))
+            ]),
+            h("span", { key: "hint", className: "mov-hint" }, t("versionSelectHint"))
           ]),
           releaseNotes?.items?.length ? h("div", { key: "release-notes", "data-field": "releaseNotes" }, [
             h("div", { key: "heading", style: { display: "flex", alignItems: "baseline", gap: 12 } }, [
@@ -2337,13 +2360,13 @@
                 });
                 else setUpdateConfirm(true);
               }
-            }, updateStatus === "installing" ? t("versionUpdating") : updateConfirm ? t("versionUpdateConfirm", { version: updateLatest }) : t("versionUpdate"))
+            }, updateStatus === "installing" ? t(isDowngrade ? "versionDowngrading" : "versionUpdating") : updateConfirm ? t(isDowngrade ? "versionDowngradeConfirm" : "versionUpdateConfirm", { version: updateLatest }) : t(isDowngrade ? "versionDowngrade" : "versionUpdate"))
           ]) : null,
           updateAvailable && updateConfirm ? h("span", {
             key: "confirm-hint",
             "data-field": "updateConfirmHint",
             className: "mov-hint"
-          }, t("versionUpdateConfirmHint")) : null,
+          }, t(isDowngrade ? "versionDowngradeConfirmHint" : "versionUpdateConfirmHint")) : null,
           updateAvailable ? h("span", { key: "hint", className: "mov-hint" }, t("versionHint")) : null,
           updateStatus === "ok" && updateAt ? h("span", { key: "at", className: "mov-foot-note" }, t("versionCheckedAt", { time: updateAt })) : null
         ]);
@@ -2440,6 +2463,7 @@
             h,
             t,
             available: updateAvailable,
+            downgrade: isDowngrade,
             latest: updateLatest,
             deferred: updateDeferred,
             status: updateStatus,
@@ -2493,8 +2517,8 @@
       const { PLUGIN_OWNED_KEYS, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE } = createClientConfig();
       const { zh, en } = createDictionaries();
       const { useSnapshot, same, validateSettings, persistConnection, persistBatch } = createSettingsState({ React });
-      const { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell } = createUpdates({ h });
-      const { makePage } = createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS });
+      const { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, fetchRecentVersions, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell } = createUpdates({ h });
+      const { makePage } = createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, fetchRecentVersions, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS });
       return {
         inject: ["slots", "locale", "configForms", "uiSession"],
         apply(ctx) {

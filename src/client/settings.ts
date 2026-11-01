@@ -2,7 +2,7 @@ import { createAccountActions } from './account.js';
 import { createUpdateActions, renderUpdateNotice, formatReleaseTime } from './updates.js';
 /** 浏览器端 settings：由入口注入宿主 React 与共享依赖。 */
 import packageInfo from '../../package.json';
-export function createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS }: any) {
+export function createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, fetchRecentVersions, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS }: any) {
 function makePage({ form, t, manager }) {
       return function ConfigPage(props) {
         const snapshot = useSnapshot(form);
@@ -59,22 +59,15 @@ function makePage({ form, t, manager }) {
         const [updateStatus, setUpdateStatus] = React.useState('idle');
         const [updateMessage, setUpdateMessage] = React.useState('');
         const [updateLatest, setUpdateLatest] = React.useState('');
-        const [updateChannel, setUpdateChannel] = React.useState(() => {
-          try {
-            const saved = window.localStorage.getItem('metaontic-video.update-channel');
-            if (saved === 'stable' || saved === 'prerelease') return saved;
-          } catch {}
-          return (packageInfo.releaseNotes as any)?.prerelease || PLUGIN_VERSION.includes('-') ? 'prerelease' : 'stable';
-        });
+        const [availableVersions, setAvailableVersions] = React.useState([]);
         const updateRequest = React.useRef(0);
-        const channelCacheKey = `${UPDATE_CACHE_KEY}.${updateChannel}`;
         // 更新说明固定使用本机包内内容，不受远端版本和检查缓存影响。
         const releaseNotes = packageInfo.releaseNotes;
         const [updateAt, setUpdateAt] = React.useState('');
         // 一键在线更新：第一下把按钮转成「确认更新」，第二下才真的重装本插件
         const [updateConfirm, setUpdateConfirm] = React.useState(false);
         const [updateDeferred, setUpdateDeferred] = React.useState(() => {
-          try { return window.localStorage.getItem(`${channelCacheKey}.deferred`) || ''; }
+          try { return window.localStorage.getItem(`${UPDATE_CACHE_KEY}.deferred`) || ''; }
           catch { return ''; }
         });
 
@@ -113,8 +106,12 @@ function makePage({ form, t, manager }) {
         });
 
         const { readUpdateCache, rememberUpdateCheck, forgetUpdateCheck, checkForUpdate, runOnlineUpdate, deferUpdate } = createUpdateActions({
-          get UPDATE_CACHE_KEY() { return channelCacheKey; },
-          get updateChannel() { return updateChannel; },
+          get UPDATE_CACHE_KEY() { return UPDATE_CACHE_KEY; },
+          get availableVersions() { return availableVersions; },
+          get setAvailableVersions() { return setAvailableVersions; },
+          get PLUGIN_VERSION() { return PLUGIN_VERSION; },
+          get isNewerVersion() { return isNewerVersion; },
+          get fetchRecentVersions() { return fetchRecentVersions; },
           get updateRequest() { return updateRequest; },
           get UPDATE_MAX_AGE_MS() { return UPDATE_MAX_AGE_MS; },
           get setUpdateStatus() { return setUpdateStatus; },
@@ -175,21 +172,22 @@ function makePage({ form, t, manager }) {
         }, [serviceMode, Boolean(snapshot.secrets?.apiKey || value.apiKey), value.deviceId, props?.view]);
 
         // 进入完整设置页先显示缓存，同时后台检查；摘要视图不触发检查。
-        const updateTried = React.useRef('');
+        const updateTried = React.useRef(false);
         React.useEffect(() => {
-          if (props?.view === 'summary') { updateTried.current = ''; return; }
-          if (updateTried.current === updateChannel) return;
-          updateTried.current = updateChannel;
+          if (props?.view === 'summary') { updateTried.current = false; return; }
+          if (updateTried.current) return;
+          updateTried.current = true;
           setUpdateLatest(''); setUpdateConfirm(false); setUpdateAt(''); setUpdateStatus('idle'); setUpdateMessage('');
-          try { setUpdateDeferred(window.localStorage.getItem(`${channelCacheKey}.deferred`) || ''); } catch { setUpdateDeferred(''); }
+          try { setUpdateDeferred(window.localStorage.getItem(`${UPDATE_CACHE_KEY}.deferred`) || ''); } catch { setUpdateDeferred(''); }
           const cached = readUpdateCache();
           if (cached.latest) {
-            setUpdateLatest(cached.latest);
+            setAvailableVersions(cached.versions);
+            setUpdateLatest(isNewerVersion(cached.latest, PLUGIN_VERSION) ? cached.latest : cached.versions.includes(PLUGIN_VERSION) ? PLUGIN_VERSION : '');
             if (cached.at) setUpdateAt(new Date(cached.at).toLocaleTimeString());
             setUpdateStatus('ok');
           }
           checkForUpdate(true).catch(() => {});
-        }, [props?.view, updateChannel]);
+        }, [props?.view]);
 
         if (props && props.view === 'summary') {
           const configured = Boolean(value.model) || Boolean(snapshot.secrets?.apiKey);
@@ -684,20 +682,19 @@ function makePage({ form, t, manager }) {
 
         // 版本卡片：当前版本是构建时注入的常量，最新版本来自所选渠道已发布的 Release。
         // 有新版本时给出升级命令——用 git 源装的插件不会出现在「已安装」里的更新按钮上。
-        const updateAvailable = Boolean(updateLatest) && Boolean(PLUGIN_VERSION)
-          && updateLatest !== PLUGIN_VERSION
-          && (isNewerVersion(updateLatest, PLUGIN_VERSION)
-            || updateChannel !== ((packageInfo.releaseNotes as any)?.prerelease || PLUGIN_VERSION.includes('-') ? 'prerelease' : 'stable'));
+        const updateAvailable = Boolean(updateLatest) && availableVersions.includes(updateLatest)
+          && updateLatest !== PLUGIN_VERSION;
+        const isDowngrade = updateAvailable && isNewerVersion(PLUGIN_VERSION, updateLatest);
         const updateText = updateStatus === 'working'
           ? t('versionChecking')
           : (updateStatus === 'failed'
             ? updateMessage
             : (updateStatus === 'installing'
-              ? t('versionUpdating')
+              ? t(isDowngrade ? 'versionDowngrading' : 'versionUpdating')
               : ((updateStatus === 'restart' || updateStatus === 'applied')
                 ? updateMessage
                 : (updateStatus === 'ok'
-                  ? (updateAvailable ? t('versionNew', { version: updateLatest }) : t('versionLatest'))
+                  ? (updateAvailable ? t('versionTarget', { version: updateLatest }) : t('versionLatest'))
                   : ''))));
         // 失败红、成功绿（更新完/有新版本），其余用灰度文字
         const updateTone = updateStatus === 'failed'
@@ -728,18 +725,18 @@ function makePage({ form, t, manager }) {
               onClick: () => { checkForUpdate(false).catch(() => {}); },
             }, updateStatus === 'working' ? t('versionChecking') : t('versionCheck')),
           ]),
-          h('div', {key:'channel', className:'mov-cmd-row'}, [
-            h('label', {key:'label', htmlFor:'mov-update-channel', className:'mov-label'}, t('versionChannel')),
-            h('select', {key:'select', id:'mov-update-channel', className:'mov-input',
-              value:updateChannel, disabled:updateStatus === 'installing',
+          h('div', {key:'version-choice', className:'mov-cmd-row'}, [
+            h('label', {key:'label', htmlFor:'mov-update-version', className:'mov-label'}, t('versionSelect')),
+            h('select', {key:'select', id:'mov-update-version', className:'mov-input',
+              value:updateLatest, disabled:updateStatus === 'installing' || updateStatus === 'working' || !availableVersions.length,
               onChange:event => {
-                const channel = event.target.value;
-                if (!['stable','prerelease'].includes(channel)) return;
-                updateRequest.current++; setUpdateLatest(''); setUpdateConfirm(false); setUpdateChannel(channel);
-                try { window.localStorage.setItem('metaontic-video.update-channel', channel); } catch {}
+                const version = event.target.value;
+                if (!availableVersions.includes(version)) return;
+                updateRequest.current++; setUpdateLatest(version); setUpdateConfirm(false); setUpdateMessage('');
               },
-            }, [h('option',{key:'stable',value:'stable'},t('versionStable')), h('option',{key:'pre',value:'prerelease'},t('versionPrerelease'))]),
-            h('span',{key:'hint',className:'mov-hint'},t('versionChannelHint')),
+            }, [!updateLatest ? h('option',{key:'empty',value:'',disabled:true},t('versionChoose')) : null,
+              ...availableVersions.map(version => h('option',{key:version,value:version}, `v${version}${version === PLUGIN_VERSION ? ' · '+t('versionInstalled') : ''}`))]),
+            h('span',{key:'hint',className:'mov-hint'},t('versionSelectHint')),
           ]),
           releaseNotes?.items?.length ? h('div', { key: 'release-notes', 'data-field': 'releaseNotes' }, [
             h('div', { key: 'heading', style: { display: 'flex', alignItems: 'baseline', gap: 12 } }, [
@@ -771,10 +768,10 @@ function makePage({ form, t, manager }) {
                   else setUpdateConfirm(true);
                 },
               }, updateStatus === 'installing'
-                ? t('versionUpdating')
+                ? t(isDowngrade ? 'versionDowngrading' : 'versionUpdating')
                 : (updateConfirm
-                  ? t('versionUpdateConfirm', { version: updateLatest })
-                  : t('versionUpdate'))),
+                  ? t(isDowngrade ? 'versionDowngradeConfirm' : 'versionUpdateConfirm', { version: updateLatest })
+                  : t(isDowngrade ? 'versionDowngrade' : 'versionUpdate'))),
             ])
             : null,
           updateAvailable && updateConfirm
@@ -782,7 +779,7 @@ function makePage({ form, t, manager }) {
               key: 'confirm-hint',
               'data-field': 'updateConfirmHint',
               className: 'mov-hint',
-            }, t('versionUpdateConfirmHint'))
+            }, t(isDowngrade ? 'versionDowngradeConfirmHint' : 'versionUpdateConfirmHint'))
             : null,
           updateAvailable ? h('span', { key: 'hint', className: 'mov-hint' }, t('versionHint')) : null,
           (updateStatus === 'ok' && updateAt)
@@ -890,7 +887,7 @@ function makePage({ form, t, manager }) {
           // hover / focus 这类效果内联样式写不出来，集中在这张样式表里（class 都带 mov- 前缀）。
           h('style', { key: 'styles' }, PAGE_CSS),
           !notice || snapshot.value ? renderUpdateNotice({
-            h, t, available: updateAvailable, latest: updateLatest, deferred: updateDeferred,
+            h, t, available: updateAvailable, downgrade: isDowngrade, latest: updateLatest, deferred: updateDeferred,
             status: updateStatus, confirmed: updateConfirm,
             onUpdate: () => { if (updateConfirm) runOnlineUpdate().catch(() => {}); else setUpdateConfirm(true); },
             onLater: deferUpdate,
