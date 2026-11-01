@@ -18,7 +18,7 @@ export function formatMoney(value, symbol = '¥') {
   return `${symbol}${formatAmount(value)}`;
 }
 
-/** 每 100 万 token 的美元价：带参考素材（参考图 / 参考视频）时更便宜。 */
+/** 每 100 万 token 的美元价：仅含视频输入时使用 video 档；参考图和首尾帧仍属无视频输入。 */
 export function estimateRate(model, usesReference) {
   const id = String(model || '').toLowerCase();
   const hit = ESTIMATE_RATES.find(([prefix]) => id.startsWith(prefix));
@@ -45,23 +45,27 @@ export function estimatePlan(config, toolName, args) {
 /**
  * 每段的预估用量（token / 美元）。全量估算和「还要生成几段」的确认框共用这一套价目，
  * 两边算出来的数字才不会打架。
- * @param steps - 每段要有 seconds / kind，以及 usesReference（是否带参考素材）。
+ * @param steps - 每段要有 seconds / kind，以及 inputSeconds（真实输入视频时长）。
  */
 export function estimateSteps(config, steps, selectedResolution = undefined) {
   const resolution = resolveResolution(config, { resolution: selectedResolution });
-  const pixels = ESTIMATE_PIXELS[resolution] || ESTIMATE_PIXELS[FIXED_RESOLUTION];
-  const tokensPerSecond = (pixels[0] * pixels[1] * ESTIMATE_FPS) / ESTIMATE_TOKEN_DIVISOR;
   const model = resolveModel(config);
+  const pixels = resolution === '480p' && /^doubao-seedance-2-5/.test(model) ? [854, 480] : ESTIMATE_PIXELS[resolution] || ESTIMATE_PIXELS[FIXED_RESOLUTION];
+  const tokensPerSecond = (pixels[0] * pixels[1] * ESTIMATE_FPS) / ESTIMATE_TOKEN_DIVISOR;
   return {
     model,
     resolution,
     segments: steps.map((step, index) => {
-      const usesReference = step.usesReference === true;
-      const tokens = Math.round(tokensPerSecond * step.seconds);
+      const usesReference = step.kind === 'extend' || step.usesVideoInput === true;
+      const inputSeconds = usesReference ? Number(step.inputSeconds ?? steps[index - 1]?.seconds) : 0;
+      if (!Number.isFinite(inputSeconds) || inputSeconds < 0 || (usesReference && inputSeconds === 0)) throw new Error('续拍估价缺少实际输入视频时长，不能按纯生成费用估算。');
+      const tokens = Math.round(tokensPerSecond * (inputSeconds + step.seconds));
       return {
         index: index + 1,
         kind: step.kind,
         seconds: step.seconds,
+        inputSeconds,
+        billingMode: usesReference ? 'with_video_input' : 'without_video_input',
         tokens,
         usesReference,
         usd: (tokens * estimateRate(model, usesReference)) / 1e6,
@@ -76,20 +80,11 @@ export function estimateSteps(config, steps, selectedResolution = undefined) {
  */
 export function estimateUsage(config, toolName, args, actualPlan = undefined) {
   const plan = actualPlan ?? estimatePlan(config, toolName, args);
-  // 有首/尾帧或参考图，就算「带参考素材」，价目表里视频一档更便宜。
-  const referenceImages = Array.isArray(args?.referenceImages)
-    ? args.referenceImages
-    : (args?.referenceImages ? [args.referenceImages] : []);
-  const hasFrame = Boolean(
-    String(args?.firstFrameUrl ?? '').trim()
-    || String(args?.lastFrameUrl ?? '').trim()
-    || referenceImages.length,
-  );
   const groupRatio = finiteNumber(ref(config, 'estimateGroupRatio', 0.8)) ?? 1;
-  // 延长段一定带参考视频；直出段只有给了首/尾帧才算「有参考素材」
+  // 首段无视频输入（即使有参考图）；续拍按上一段完整视频输入计费。
   const { model, resolution, segments } = estimateSteps(
     config,
-    plan.map((step) => ({ ...step, usesReference: step.kind === 'extend' || hasFrame })),
+    plan.map((step, index) => ({ ...step, inputSeconds: step.inputSeconds ?? (step.kind === 'extend' ? (index ? plan[index - 1].seconds : args?.inputVideoSeconds) : 0) })),
     resolveResolution(config, args),
   );
   const usd = segments.reduce((sum, item) => sum + item.usd, 0) * groupRatio;

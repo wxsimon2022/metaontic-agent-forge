@@ -42,6 +42,7 @@ export function extendTool(liveConfig, deps, ctx) {
           type: 'string',
           description: '本段要续拍的剧情内容与人物设定；不要在提示词里重复已发生的情节。',
         },
+        inputVideoSeconds: { type: 'number', minimum: 0.001, description: '已有输入视频的真实时长（秒），用于费用预估；须核实素材，不猜测。续做自动读取上一段时长。' },
         videoUrl: {
           type: 'string',
           description: '参考视频的公网 URL（https:// 或 http://）。与 taskId 二选一。',

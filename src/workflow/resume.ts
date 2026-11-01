@@ -230,7 +230,7 @@ export function pickResumeOptions(args) {
   const keys = [
     'mode', 'ratio', 'generateAudio', 'watermark', 'segmentPrompts', 'transitionDescription', 'merge',
     // 这几个是 video_extend 的口径（延长方向、提示词写法、整片时间轴位置）
-    'direction', 'wording', 'startAt',
+    'direction', 'wording', 'startAt', 'inputVideoSeconds',
     'firstFrameUrl', 'lastFrameUrl', 'referenceImages', 'resolution', 'seed', 'user', 'returnLastFrame',
   ];
   const options = {};

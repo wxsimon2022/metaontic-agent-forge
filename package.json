@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.11.1",
+  "version": "3.11.2",
   "description": "DeepSeek Harness video creation plugin with a Video Creation Assistant for concepts, script review and confirmed production; supports reference images, video continuation, segment previews, resumable generation, local merging, and MetaOnticVideo, MetaOntic AI or Volcano Engine access.",
   "license": "MIT",
   "type": "module",
@@ -87,18 +87,14 @@
     "@deepseek-ai/schemastery": "~3.18.5"
   },
   "releaseNotes": {
-    "version": "3.11.1",
+    "version": "3.11.2",
     "prerelease": false,
-    "publishedAt": "2026-11-01T13:13:29Z",
+    "publishedAt": "2026-11-01T13:52:31Z",
     "items": [
-      "新增：阶段耗时日志，记录插件调用、轮询、下载、探测、接缝处理、合并及费用查询；脚本、示意图和审核等待独立标记，便于定位慢点。",
-      "优化：移除插件设置和配置工具中的全局“续拍方式”，改由已审核脚本及本次生成/续拍参数决定连续镜头、切镜和景别。",
-      "优化：规范分镜图实际展示：确认文件存在，登记后在正文内嵌图片并提供原图链接；无法内嵌时如实说明，用户未见图时先补展示。",
-      "优化：所有成果在正文提供可点击链接，覆盖脚本、示意图、转换图片、分段与合并视频、任务查询和恢复交付；有文件卡片仍保留链接。",
-      "优化：交付顺序调整为合并后完整视频优先，其后依次展示各分段；暂停或合并失败时只展示真实已有成果。",
-      "修复：服务端领 Key 与手填 Key 共用中转默认地址、模型与协议；界面和配置工具保存时原子补齐连接字段，运行端兼容旧配置缺地址，保留各渠道及图片/视频 Key 隔离。",
-      "修复：火山直连切回中转时恢复中转请求路径，避免沿用直连地址与路径。",
-      "修复：新任务不再受旧配置残留 mode 影响；续做保留记录中的续拍方式、过渡描述与已提交原请求，避免设置覆盖脚本。"
+      "优化：脚本费用明细逐段展示无视频/有视频输入档位、输入与输出秒数、单价和金额，方便核对续拍费用。",
+      "修复：续拍估价计入上一段完整视频输入，首段使用无视频输入单价，后续使用有视频输入单价；参考图和首尾帧不再误用含视频输入单价。",
+      "修复：统一脚本估价与制作确认口径，校准480P估算尺寸；恢复时读取上一段视频时长，外部视频时长未知时明确无法可靠估价。",
+      "修复：脚本审核新增分镜展示检查：present登记后还须在独立正文内嵌同版图片，缺失时拦截审核并提示补展示；内部看图、文字描述及上一轮旧图不能代替本轮展示。"
     ]
   }
 }

@@ -8,12 +8,13 @@ import { ffmpegInstallOptions, hasFfmpeg, resolveBinary } from '../media/ffmpeg.
 import { resumeDirOf, readPauseFile, resumePlanFrom, assertResumeConnection } from './resume.js';
 
 /** 剩下这几段的预估费用文案（确认框里给用户看钱）。 */
-export async function remainingCostText(config, exec, remainingSteps) {
+export async function remainingCostText(config, exec, remainingSteps, inputVideoSeconds = undefined) {
   if (isManualKey(config)) return { cost: `${connectionLabel(config)}按实际调用计费`, remain: '' };
   try {
     const estimated = estimateSteps(
       config,
-      remainingSteps.map((step) => ({ ...step, usesReference: true })),
+      remainingSteps.map((step, index) => ({ ...step, inputSeconds: index ? remainingSteps[index - 1].seconds : inputVideoSeconds })),
+      resolveResolution(config, exec?.arguments || {}),
     );
     const groupRatio = finiteNumber(ref(config, 'estimateGroupRatio', 0.8)) ?? 1;
     const usd = estimated.segments.reduce((sum, item) => sum + item.usd, 0) * groupRatio;
@@ -51,8 +52,8 @@ export async function confirmNextSegment(ctx, config, exec, {
     return { outcome: 'unavailable', reason: '当前权限模式关闭了审批提示' };
   }
   const rest = sumStepSeconds(remainingSteps);
-  const { cost, remain } = await remainingCostText(config, exec, remainingSteps);
-  const lastSeconds = finished?.[done - 1]?.seconds ?? 0;
+  const lastSeconds = finished?.[done - 1]?.durationSeconds ?? finished?.[done - 1]?.seconds ?? 0;
+  const { cost, remain } = await remainingCostText(config, exec, remainingSteps, lastSeconds);
   const alreadyDone = `第 ${done} 段（${lastSeconds} 秒）已经生成好`;
   try {
     const outcome = await approval.request({
@@ -275,7 +276,8 @@ export async function estimateArgsFor(config, toolName, args) {
     }
     plan = fullPlan.slice(Number(data.done) || 0);
   }
-  return { ...merged, remainingPlan: data.pendingTask || data.deliveryPending ? [] : plan,
+  const previous = (data.steps || []).at(-1);
+  return { ...merged, inputVideoSeconds: previous?.durationSeconds ?? previous?.seconds ?? merged.inputVideoSeconds, remainingPlan: data.pendingTask || data.deliveryPending ? [] : plan,
     duration: sumStepSeconds(plan) };
 }
 

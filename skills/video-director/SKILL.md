@@ -315,3 +315,7 @@ ffmpeg -y -f concat -safe 0 -i clips/concat.txt \
 交付文件顺序统一为：合并后的完整视频第一，其后依次为第一段、第二段及后续分段；present调用、正文文件链接和交付清单都遵守此顺序。暂停时已有累计合并视频标为“已完成部分合并视频”，不标成完整成片；合并失败或未合并时只按段号交付真实文件。
 
 阶段计时：编写脚本前用video_stage(stage:script_design,action:start)，完整脚本保存后finish原spanId；示意图绘制用storyboard_design，展示脚本用script_present。审核/制作/参考图/分段预览等待分别用script_review_wait、production_confirm_wait、reference_review_wait、segment_review_wait，展示成果用result_present。用户回复后结束对应等待标记；不得把等待混入脚本设计时间，不为计时重复生成内容。标记仅记录边界墙钟耗时，不等于模型纯推理时间；标记不可用仍正常推进，不猜耗时。
+
+估价按真实输入区分档位：首段生成无视频输入（参考图/首尾帧仍为无视频输入），每个续拍段有视频输入，用上一段完整视频时长加本段输出时长计token，切换到含视频输入单价；不把累计成片时长当上一段输入。脚本费用预估逐段列档位、输入/输出时长、单价与金额再合计；制作确认和恢复预检同口径，外部视频时长不明就明确无法可靠估价，不按纯生成费用兜底，不调用付费任务试算。
+
+脚本审核展示防漏：监听session/event，当前视频流程的present分镜图登记后，必须有assistant/message正文text内嵌同一绝对路径的图片，且文件仍存在，才放行脚本审核ask_user_question。reasoning、工具看图及仅present登记不算；新版图重置展示状态，不使用上一轮图。交付卡片在轮次结束后才可见，故先发独立图片正文再提问。只观测事件，不新增已弃用的session同步日志读取。

@@ -208,13 +208,13 @@ export const GATED_TOOLS = ['video_generate', 'video_extend', 'video_setup', 'vi
  * 实测 15 秒 720p 直出 = 324000 token → 408329 额度，与中转站日志里的预扣费一致，
  * 所以这套算法够用来做「够不够、大概多少钱」的预检。实际以中转站结算为准。
  */
-export const ESTIMATE_PIXELS = { '480p': [854, 480], '720p': [1280, 720], '1080p': [1920, 1080] };
+export const ESTIMATE_PIXELS = { '480p': [864, 496], '720p': [1280, 720], '1080p': [1920, 1080] };
 
 export const ESTIMATE_FPS = 24;
 
 export const ESTIMATE_TOKEN_DIVISOR = 1024;
 
-/** 每 100 万 token 的美元价：none = 没有参考素材，video = 带参考图 / 参考视频。 */
+/** 每 100 万 token 的美元价：none = 无视频输入（包括参考图/首尾帧），video = 有视频输入。 */
 export const ESTIMATE_RATES: Array<[string, { none: number; video: number }]> = [
   ['doubao-seedance-2-0-mini', { none: 3.150684931507, video: 1.917808219178 }],
   ['doubao-seedance-2-0-fast', { none: 5.068493150685, video: 3.013698630137 }],

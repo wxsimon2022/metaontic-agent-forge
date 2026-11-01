@@ -37,7 +37,7 @@ export function compareVideoCosts(config, args) {
       const inputSeconds = index ? plan[index - 1].seconds : 0;
       const tokens = (inputSeconds + step.seconds) * pixels[0] * pixels[1] * 24 / 1024;
       const rateCnyPerMillion = price[inputSeconds ? 1 : 0] * multiplier;
-      return { index: index + 1, kind: step.kind, seconds: step.seconds, inputSeconds, tokens, rateCnyPerMillion, cny: tokens * rateCnyPerMillion / 1e6 };
+      return { index: index + 1, kind: step.kind, seconds: step.seconds, inputSeconds, billingMode: inputSeconds ? 'with_video_input' : 'without_video_input', tokens, rateCnyPerMillion, cny: tokens * rateCnyPerMillion / 1e6 };
     });
     return { model: id, dimensions, groupRatio: multiplier, segments, cny: Math.round(segments.reduce((sum, s) => sum + s.cny, 0) * 10000) / 10000 };
   }
@@ -54,7 +54,7 @@ export function compareVideoCosts(config, args) {
 export function estimateTool(config) {
   return {
     name: 'video_estimate',
-    description: '脚本审核前必须调用的只读双方案费用试算：火山官方方案与当前MetaOnticVideo插件方案。duration为完整目标时长，resolution须用户已确认；按真实分段计入上一段视频输入。不会生成视频、扣费、查余额或修改配置。未知模型/画幅拒绝猜价。每次改稿涉及时长、清晰度、模型或分段须重算。',
+    description: '脚本审核前必须调用的只读双方案费用试算：火山官方方案与当前MetaOnticVideo插件方案。duration为完整目标时长，resolution须用户已确认；首段按无视频输入，后续续拍按有视频输入计价并计入上一段完整视频时长；参考图不算视频输入。必须在脚本末尾展示逐段档位、输入/输出秒数、单价及金额，不能只给合计。不会生成视频、扣费、查余额或修改配置。未知模型/画幅拒绝猜价。每次改稿涉及时长、清晰度、模型或分段须重算。',
     parameters: { type: 'object', properties: {
       duration: { type: 'integer', minimum: 4, maximum: 120, description: '当前完整脚本的目标总时长' },
       resolution: { type: 'string', enum: ['480p', '720p'], description: '用户已确认的视频清晰度' },
@@ -63,8 +63,9 @@ export function estimateTool(config) {
       groupRatio: { type: 'number', minimum: 0, maximum: 10, description: '仅在已核对Key分组权限和实际倍率时传入；不得为了显示低价假设0.8' },
     }, required: ['duration', 'resolution'] },
     output: { schema: { type: 'object' }, render(_args, value) {
+      const detail = (name, item) => item.segments.map(s => `${name}第${s.index}段：${s.inputSeconds ? '有视频输入' : '无视频输入'}；输入${s.inputSeconds}秒 + 输出${s.seconds}秒；单价¥${s.rateCnyPerMillion}/百万token；约¥${s.cny.toFixed(4)}`);
       const line = (name, item) => `${name}：约¥${item.cny.toFixed(2)}；${item.model}；${item.segments.map(s => s.seconds).join('+')}秒；倍率${item.groupRatio}`;
-      return [{ type: 'text', text: [`${value.duration}秒 / ${value.resolution.toUpperCase()} / ${value.ratio}（${value.estimateType}）`, line('火山官方方案', value.official), line('MetaOnticVideo插件方案', value.plugin), `价格核对日期：${value.priceDate}`, ...value.notes].join('\n') }];
+      return [{ type: 'text', text: [`${value.duration}秒 / ${value.resolution.toUpperCase()} / ${value.ratio}（${value.estimateType}）`, line('火山官方方案', value.official), line('MetaOnticVideo插件方案', value.plugin), ...detail('火山官方', value.official), ...detail('插件', value.plugin), `价格核对日期：${value.priceDate}`, ...value.notes].join('\n') }];
     } },
     isConcurrencySafe() { return true; },
     async execute(args) { return compareVideoCosts(config, args); },

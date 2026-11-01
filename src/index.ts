@@ -1,3 +1,4 @@
+import { createStoryboardReviewGuard } from './workflow/storyboard-review.js';
 import { withStageTiming } from './utils/timing.js';
 import { stageTool } from './tools/video-stage.js';
 /** Harness 插件入口：注册工具、动态提示词与可选宿主服务。 */
@@ -35,8 +36,11 @@ function asDisposer(value: unknown): (() => void) | undefined {
 export function apply(ctx: DshContext, config: any = {}) {
   // 可选服务的宿主对象（会话工作目录等），拿到就放进来
   const deps: Record<string, any> = {};
+  const storyboardReview = createStoryboardReviewGuard();
+  const storyboardObserver = (ctx as any).on('session/event', storyboardReview.observe);
   const register = (tool) => ctx.tools.register(withStageTiming(tool));
   const disposers = [
+    ...(typeof storyboardObserver === 'function' ? [storyboardObserver] : []),
     register(jsonSafeTool(stageTool())),
     register(jsonSafeTool(estimateTool(config))),
     register(jsonSafeTool(submissionTool(config))),
@@ -73,6 +77,8 @@ export function apply(ctx: DshContext, config: any = {}) {
   let gateCleanup;
   try {
     gateCleanup = ctx.on('tools/pre-execute', async (exec, next) => {
+      const storyboardGate = await storyboardReview.gate(exec);
+      if (storyboardGate) return storyboardGate;
       if (!GATED_TOOLS.includes(exec.name)) return next();
       try {
         return await preflightGate(ctx, config, exec);

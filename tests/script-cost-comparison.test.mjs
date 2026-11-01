@@ -56,3 +56,13 @@ test('all connection modes instruct the assistant to show both estimates before 
   assert.match(h.prompt(),/最低用量补足未计入/);
  }
 });
+
+test('60s breakdown labels first segment without video and all continuations with video input',async()=>{
+ const tool=setup({...base,model:'doubao-seedance-2-0-mini-260615'}).tool;
+ const result=await tool.execute({...args,duration:60});
+ assert.deepEqual(result.plugin.segments.map(s=>[s.billingMode,s.inputSeconds,s.rateCnyPerMillion]),[
+ ['without_video_input',0,23],['with_video_input',15,14],['with_video_input',15,14],['with_video_input',15,14]]);
+ const text=tool.output.render({},result)[0].text;
+ assert.match(text,/插件第1段：无视频输入；输入0秒 \+ 输出15秒/);
+ assert.match(text,/插件第2段：有视频输入；输入15秒 \+ 输出15秒/);
+});

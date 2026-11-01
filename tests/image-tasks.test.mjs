@@ -300,3 +300,12 @@ for(const toolName of ['video_generate','video_extend']) test(`${toolName}: resu
  assert.equal(h.videos,2);const bodies=h.calls.filter(c=>c.body?.model==='video').map(c=>c.body);
  assert.match(bodies[1].content[0].text,/下一位说话人的近景/);
 }));
+
+for(const resolution of ['480p','720p']) test(`script and approval continuation estimates agree at ${resolution}`,()=>fixture(async h=>{
+ h.config.model='doubao-seedance-2-0-mini-260615';h.config.estimateGroupRatio=1;
+ const script=await h.tools.get('video_estimate').execute({duration:30,resolution,ratio:'16:9',groupRatio:1});
+ const gate=api.estimateUsage(h.config,'video_generate',{duration:30,resolution});
+ assert.deepEqual(gate.segments.map(s=>s.inputSeconds),[0,15]);
+ assert.deepEqual(gate.segments.map(s=>s.tokens),script.plugin.segments.map(s=>s.tokens));
+ assert.ok(Math.abs(gate.usd*7.3-script.plugin.cny)<0.0001);
+}));
