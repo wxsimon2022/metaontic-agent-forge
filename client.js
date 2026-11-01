@@ -808,7 +808,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v2";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.10.0-beta.1".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.10.0-beta.2".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -979,10 +979,10 @@
         return;
       }
       const candidates = [
-        `${context.UPDATE_SPEC}#v${context.updateLatest}`,
-        `git+https://github.com/wxsimon2022/metaontic-video.git#v${context.updateLatest}`
+        `https://gitee.com/hackloop/metaontic-video/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`,
+        `https://github.com/wxsimon2022/metaontic-video/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`
       ];
-      const specUnresolvable = (text) => /Could not resolve|No matching version|ERR_PNPM_NO_MATCHING_VERSION/i.test(text);
+      const specUnresolvable = (text) => /Could not resolve|No matching version|ERR_PNPM_NO_MATCHING_VERSION|ERR_PNPM_FETCH_40[34]|HTTP[ :]+40[34]|404 Not Found|403 Forbidden/i.test(text);
       const trySpec = async (spec) => {
         for (let round = 1; round <= context.UPDATE_ATTEMPTS; round += 1) {
           let result = await install(spec);
@@ -1434,7 +1434,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.10.0-beta.1",
+    version: "3.10.0-beta.2",
     description: "DeepSeek Harness video creation plugin with a Video Creation Assistant for concepts, script review and confirmed production; supports reference images, video continuation, segment previews, resumable generation, local merging, and MetaOnticVideo, MetaOntic AI or Volcano Engine access.",
     license: "MIT",
     type: "module",
@@ -1506,7 +1506,8 @@
       esbuild: "^0.28.2",
       react: "^19.3.1",
       "react-dom": "^19.3.1",
-      typescript: "^5.9.3"
+      typescript: "^5.9.3",
+      hyperframes: "0.8.223"
     },
     scripts: {
       typecheck: "tsc -p tsconfig.json",
@@ -1517,21 +1518,16 @@
       preview: "node scripts/preview.mjs"
     },
     dependencies: {
-      "@deepseek-ai/schemastery": "~3.18.5",
-      hyperframes: "0.8.223"
+      "@deepseek-ai/schemastery": "~3.18.5"
     },
     releaseNotes: {
-      version: "3.10.0-beta.1",
+      version: "3.10.0-beta.2",
       prerelease: true,
-      publishedAt: "2026-11-01T11:02:04Z",
+      publishedAt: "2026-11-01T11:11:36Z",
       items: [
-        "\u65B0\u589E\uFF1A\u63D2\u4EF6\u7248\u672C\u5361\u7247\u652F\u6301\u5207\u6362\u6B63\u5F0F\u7248\u4E0E\u9884\u53D1\u5E03\u7248\u6E20\u9053\uFF0C\u786E\u8BA4\u540E\u5B89\u88C5\u5BF9\u5E94\u53D1\u5E03\u6807\u7B7E\uFF0C\u5E76\u652F\u6301\u5207\u56DE\u6B63\u5F0F\u7248\u3002",
-        "\u65B0\u589E\uFF1A\u53D1\u5E03\u9ED8\u8BA4\u91C7\u7528 beta \u9884\u53D1\u5E03\u7248\u672C\uFF0C\u589E\u52A0\u7248\u672C\u53F7\u4E0E\u9884\u53D1\u5E03\u6807\u8BB0\u6821\u9A8C\uFF0C\u53CC\u4ED3\u540C\u6B65\u53D1\u5E03\u6E20\u9053\u3002",
-        "\u4F18\u5316\uFF1A\u914D\u7F6E\u4FDD\u5B58\u7B49\u5F85\u8BBE\u5907\u540C\u6B65\u53CA\u81EA\u52A8\u53D6\u56DE Key \u5B8C\u6210\uFF0C\u51B2\u7A81\u65F6\u7ED1\u5B9A\u4FEE\u8BA2\u53F7\u5B89\u5168\u91CD\u8BD5\uFF0C\u4FDD\u7559\u4FDD\u5B58\u671F\u95F4\u7EE7\u7EED\u7F16\u8F91\u7684\u8F93\u5165\u3002",
-        "\u4F18\u5316\uFF1A\u4FDD\u5B58\u5931\u8D25\u533A\u5206\u914D\u7F6E\u51B2\u7A81\u3001\u53EA\u8BFB\u3001\u9875\u9762\u5931\u6548\u53CA\u8FDE\u63A5\u4E2D\u65AD\uFF0C\u589E\u52A0\u4E0D\u542B\u5BC6\u94A5\u4E0E\u5B57\u6BB5\u503C\u7684\u8BCA\u65AD\u4FE1\u606F\u3002",
-        "\u4F18\u5316\uFF1A\u66F4\u65B0\u7F13\u5B58\u6309\u6E20\u9053\u9694\u79BB\uFF0C\u5207\u6362\u540E\u5FFD\u7565\u65E7\u67E5\u8BE2\u7ED3\u679C\uFF0C\u5B89\u88C5\u4E0D\u56DE\u9000\u9ED8\u8BA4\u5206\u652F\u3001\u4E0D\u5148\u5378\u8F7D\u63D2\u4EF6\uFF1B\u540C\u6B65\u4F7F\u7528\u8BF4\u660E\u4E66\u4E0E PDF\u3002",
-        "\u4FEE\u590D\uFF1A\u5B9E\u9645\u8D39\u7528\u53EF\u7A7A\u5B57\u6BB5\u6539\u7528\u5BBF\u4E3B\u652F\u6301\u7684 Schema\uFF0C\u89E3\u51B3\u201C\u7EC4\u4EF6\u542F\u52A8\u5931\u8D25\u201D\u5BFC\u81F4\u63D2\u4EF6\u65E0\u6CD5\u52A0\u8F7D\u3002",
-        "\u4FEE\u590D\uFF1A\u91CD\u7F6E\u540E\u5148\u6838\u5BF9\u914D\u7F6E\u5E76\u5F15\u5BFC\u767B\u5F55\u6216\u586B\u5199 Key\uFF0C\u4FDD\u7559\u811A\u672C\u4E0E\u4EFB\u52A1\u8FDB\u5EA6\uFF0C\u907F\u514D\u8BEF\u5EFA\u8BAE\u91CD\u88C5\u6216\u91CD\u542F\u3002"
+        "\u4FEE\u590D\uFF1A\u79FB\u9664\u516C\u5171\u63D2\u4EF6\u5BF9 Hyperframes\u3001esbuild \u7B49\u6784\u5EFA\u5DE5\u5177\u7684\u8FD0\u884C\u4F9D\u8D56\uFF0C\u907F\u514D\u5728\u7EBF\u66F4\u65B0\u56E0\u5B89\u88C5\u811A\u672C\u88AB\u62E6\u622A\u800C\u62A5\u9519\u3002",
+        "\u4F18\u5316\uFF1A\u5728\u7EBF\u66F4\u65B0\u6539\u4E3A\u5B89\u88C5\u6240\u9009\u7248\u672C\u7684 Release \u6210\u54C1\u5305\uFF0CGitee \u9644\u4EF6\u4E0D\u53EF\u7528\u65F6\u5C1D\u8BD5\u540C\u7248 GitHub \u9644\u4EF6\uFF0C\u4E0D\u56DE\u9000\u65E7\u7248\u6216\u5F00\u53D1\u5206\u652F\u3002",
+        "\u4F18\u5316\uFF1A\u5185\u90E8 Hyperframes \u4EC5\u4FDD\u7559\u4E3A\u5F00\u53D1\u4F9D\u8D56\uFF0C\u516C\u5F00\u89C6\u9891\u751F\u6210\u548C\u5B9E\u9645\u8D39\u7528\u67E5\u8BE2\u65E0\u9700\u6279\u51C6\u989D\u5916\u6784\u5EFA\u811A\u672C\uFF1B\u540C\u6B65\u4F7F\u7528\u8BF4\u660E\u4E66\u4E0E PDF\u3002"
       ]
     }
   };

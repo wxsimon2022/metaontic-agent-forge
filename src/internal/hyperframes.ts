@@ -89,7 +89,7 @@ export function hyperframesTool(config: any, deps: Record<string, any>) {
         const require = createRequire(import.meta.url);
         cli = path.join(path.dirname(require.resolve('hyperframes/package.json')), 'bin/hyperframes.mjs');
       } catch {
-        return { status: 'dependency_missing', note: '插件的 Hyperframes 依赖缺失，请重新安装当前插件及其依赖。' };
+        return { status: 'dependency_missing', note: 'Hyperframes 为内部开发能力，公开插件包不包含该依赖；需在开发环境单独准备。' };
       }
       let cwd = process.cwd();
       if (deps.workdir && exec?.agent) cwd = await deps.workdir.ensure(exec.agent, exec.signal) || cwd;

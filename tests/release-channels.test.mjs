@@ -43,7 +43,7 @@ test('installation never falls back to master, even when a release tag fails to 
  PLUGIN_PACKAGE:'metaontic-video',UPDATE_ATTEMPTS:1,manager:()=>({manager:{
  installBundle:async spec=>{specs.push(spec);return {ok:false,error:{message:'Could not resolve'}};},
  removeBundle:()=>assert.fail('must not uninstall'),}})});
- await actions.runOnlineUpdate();assert.equal(specs.length,2);assert.ok(specs.every(spec=>spec.endsWith('#v3.10.0-beta.1')));
+ await actions.runOnlineUpdate();assert.equal(specs.length,2);assert.ok(specs.every(spec=>spec.endsWith('/v3.10.0-beta.1/metaontic-video-3.10.0-beta.1.tgz')));
 });
 test('release validation prevents mismatched version and prerelease flags',()=>{
  const pkg=(version,prerelease)=>({version,releaseNotes:{version,prerelease}});
@@ -60,4 +60,10 @@ test('channel caches remain independent',()=>{
  const beta=ctx.createUpdateActions({UPDATE_CACHE_KEY:'check.prerelease',UPDATE_MAX_AGE_MS:10000});
  stable.rememberUpdateCheck('3.9.0');beta.rememberUpdateCheck('3.10.0-beta.1');
  assert.equal(stable.readUpdateCache().latest,'3.9.0');assert.equal(beta.readUpdateCache().latest,'3.10.0-beta.1');
+});
+test('public runtime dependencies exclude build tools and internal rendering', async()=>{
+ const {readFileSync}=await import('node:fs');
+ const pkg=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8'));
+ assert.equal(pkg.dependencies.hyperframes,undefined);assert.equal(pkg.dependencies.esbuild,undefined);
+ assert.ok(pkg.devDependencies.hyperframes);
 });

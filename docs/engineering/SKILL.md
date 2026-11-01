@@ -66,3 +66,7 @@ Key 共用规则：A 接入固定共用登录下发的 Key，模型配置中不�
 ## 宿主 Schema 兼容性
 
 工具注册必须使用 Harness 支持的 JSON Schema 子集：type 只能为单个字符串，可空字段用 oneOf（如 number/null），不能写 type 数组或 anyOf。宿主会在注册时拒绝整个插件；仅导入构建包和模拟 register 成功不足以验收。注册测试遍历嵌套输出 schema，并用本机实际 dsh-tools assertSupportedJsonSchema 校验全部工具，覆盖结算金额、币种、换算参数和任务明细的 null 分支。
+
+## 安装依赖
+
+Hyperframes 属于隐藏的内部开发能力，只能放 devDependencies，不能随公共插件运行依赖引入 esbuild/sharp 等安装脚本。在线更新优先使用对应 Release 的 tgz 成品包，避免 Git 开发依赖；Gitee 附件不可用时只尝试同版本 GitHub 附件，不放宽 pnpm 供应链策略，不指导 approve-builds。发布前在空白 profile 使用同一 pnpm 运行时、strictDepBuilds:true 安装成品包验证，断言运行依赖树不存在 esbuild/hyperframes。

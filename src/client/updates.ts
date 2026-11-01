@@ -210,7 +210,7 @@ async function runOnlineUpdate() {
         ?? 'unknown');
     /** 过一会儿可能就好的失败：Gitee 排队（429）、超时、连接被掐。 */
     const worthRetrying = (text) => /429|queue overflowed|timed out|timeout|ETIMEDOUT|ECONNRESET|ECONNREFUSED|EAI_AGAIN|socket hang up|unable to access|network|fetch/i.test(text);
-    // 安装仅指向已检查的发布标签；不能回退到 master 或无后缀地址。
+    // 安装仅使用所选发布版本的成品包，避免 Git 安装引入构建依赖；禁止回退 master。
     if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(context.updateLatest || '')
         || (context.updateChannel === 'stable' && context.updateLatest.includes('-'))) {
         context.setUpdateStatus('failed');
@@ -218,11 +218,11 @@ async function runOnlineUpdate() {
         return;
     }
     const candidates = [
-      `${context.UPDATE_SPEC}#v${context.updateLatest}`,
-      `git+https://github.com/wxsimon2022/metaontic-video.git#v${context.updateLatest}`,
+      `https://gitee.com/hackloop/metaontic-video/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`,
+      `https://github.com/wxsimon2022/metaontic-video/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`,
     ];
     /** 这条 spec 装不上时值不值得换下一条：只有「这个 committish 解析不出来」才换。 */
-    const specUnresolvable = (text) => /Could not resolve|No matching version|ERR_PNPM_NO_MATCHING_VERSION/i.test(text);
+    const specUnresolvable = (text) => /Could not resolve|No matching version|ERR_PNPM_NO_MATCHING_VERSION|ERR_PNPM_FETCH_40[34]|HTTP[ :]+40[34]|404 Not Found|403 Forbidden/i.test(text);
     /** 限流/超时有界重试；已安装不先卸载，保留本地配置。 */
     const trySpec = async (spec) => {
         for (let round = 1; round <= context.UPDATE_ATTEMPTS; round += 1) {

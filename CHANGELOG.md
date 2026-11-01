@@ -2,6 +2,19 @@
 
 按版本倒序记录更新。较新版本沿用包内更新说明，早期版本依据 Git 标签与提交记录整理；日期为版本提交日期。标签存在不代表 npm 已发布。
 
+## v3.10.0-beta.2
+
+日期：2026-11-01 · 预发布 · [查看版本源码](https://github.com/wxsimon2022/metaontic-video/tree/v3.10.0-beta.2)
+
+### 修复
+
+- 移除公共插件对 Hyperframes、esbuild 等构建工具的运行依赖，避免在线更新因安装脚本被拦截而报错。
+
+### 优化
+
+- 在线更新改为安装所选版本的 Release 成品包，Gitee 附件不可用时尝试同版 GitHub 附件，不回退旧版或开发分支。
+- 内部 Hyperframes 仅保留为开发依赖，公开视频生成和实际费用查询无需批准额外构建脚本；同步使用说明书与 PDF。
+
 ## v3.10.0-beta.1
 
 日期：2026-11-01 · 预发布 · [查看版本源码](https://github.com/wxsimon2022/metaontic-video/tree/v3.10.0-beta.1)
