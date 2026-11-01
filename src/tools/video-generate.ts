@@ -107,7 +107,7 @@ export function videoTool(liveConfig, deps, ctx) {
         mode: {
           type: 'string',
           enum: ['continuous', 'closeup'],
-          description: '延长时的衔接方式：continuous=同机位连续（默认）；closeup=在台词结束处切近景。',
+          description: '由已审核脚本决定本次续拍：continuous=同机位连续（未指定时）；closeup=按脚本在完整对白或动作结束后切镜，具体景别以过渡描述为准。',
         },
         ratio: {
           type: 'string',
@@ -201,6 +201,7 @@ export function videoTool(liveConfig, deps, ctx) {
       assertResumeConnection(resume, config, args);
       if (resume?.toolName && resume.toolName !== TOOL_NAME) throw new Error(`这份进度请使用 ${resume.toolName} 继续。`);
       args = { ...(resume?.options || {}), ...args };
+      args.mode = args.mode || 'continuous';
       args.resolution = resolveResolution(config, args);
       if (args.transitionDescription !== undefined && typeof args.transitionDescription !== 'string') {
         throw new Error('过渡描述必须是文字。');

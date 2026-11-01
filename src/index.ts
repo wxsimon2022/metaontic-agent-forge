@@ -1,3 +1,5 @@
+import { withStageTiming } from './utils/timing.js';
+import { stageTool } from './tools/video-stage.js';
 /** Harness 插件入口：注册工具、动态提示词与可选宿主服务。 */
 import { withActualCost } from './workflow/actual-cost.js';
 import { withVideoExecution } from './workflow/execution.js';
@@ -33,22 +35,24 @@ function asDisposer(value: unknown): (() => void) | undefined {
 export function apply(ctx: DshContext, config: any = {}) {
   // 可选服务的宿主对象（会话工作目录等），拿到就放进来
   const deps: Record<string, any> = {};
+  const register = (tool) => ctx.tools.register(withStageTiming(tool));
   const disposers = [
-    ctx.tools.register(jsonSafeTool(estimateTool(config))),
-    ctx.tools.register(jsonSafeTool(submissionTool(config))),
-    ctx.tools.register(jsonSafeTool(prepareImageTool(config))),
-    ctx.tools.register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(videoTool(config, deps, ctx), config)), 'video_generate', config))),
-    ctx.tools.register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(extendTool(config, deps, ctx), config)), 'video_extend', config))),
-    ctx.tools.register(withVideoExecution(jsonSafeTool(withActualCost(taskTool(config), config)))),
-    ctx.tools.register(jsonSafeTool(setupTool(config))),
+    register(jsonSafeTool(stageTool())),
+    register(jsonSafeTool(estimateTool(config))),
+    register(jsonSafeTool(submissionTool(config))),
+    register(jsonSafeTool(prepareImageTool(config))),
+    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(videoTool(config, deps, ctx), config)), 'video_generate', config))),
+    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(extendTool(config, deps, ctx), config)), 'video_extend', config))),
+    register(withVideoExecution(jsonSafeTool(withActualCost(taskTool(config), config)))),
+    register(jsonSafeTool(setupTool(config))),
   ];
   // 雪藏功能：默认不注册，不进入对外技能和提示词，仅供内部显式启用。
   if (process.env.METAONTIC_VIDEO_INTERNAL_HYPERFRAMES === '1') {
-    disposers.push(ctx.tools.register(jsonSafeTool(hyperframesTool(config, deps))));
+    disposers.push(register(jsonSafeTool(hyperframesTool(config, deps))));
   }
   // 配置工具依赖宿主的 settings 服务；没有该服务时插件其余功能照常可用。
   const cleanup = ctx.inject(['settings'], (settingsCtx) => {
-    disposers.push(settingsCtx.tools.register(jsonSafeTool(configTool(config, settingsCtx.settings))));
+    disposers.push(settingsCtx.tools.register(withStageTiming(jsonSafeTool(configTool(config, settingsCtx.settings)))));
   });
   for (const dispose of [asDisposer(cleanup)]) if (dispose) disposers.push(dispose);
   // 新对话自带的使用说明：宿主没有 systemPrompt 服务时跳过，其余功能不受影响。

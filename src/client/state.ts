@@ -1,3 +1,4 @@
+import { connectionDefaults } from '../connection-defaults.js';
 /** 浏览器端 state：由入口注入宿主 React 与共享依赖。 */
 export function createSettingsState({ React }: any) {
 /** 订阅表单快照：宿主每次推送新值都会重渲染。 */
@@ -87,6 +88,19 @@ export function createSettingsState({ React }: any) {
       const ops = pending.filter(([key]) => key !== 'connectionMode' && !inactiveKeys.includes(key))
         .map(([key, next]) => ({ op: 'set', path: [key], value: next }));
       for (const key of inactiveKeys) ops.push({ op: 'set', path: [key], value: '' });
+      const saved = form.getSnapshot?.()?.value || {};
+      const values = { ...saved, ...Object.fromEntries(pending), connectionMode: nextMode };
+      if (saved.connectionMode === 'volcengine' && nextMode !== 'volcengine') {
+        for (const key of ['baseUrl', 'submitPath', 'queryPath']) {
+          if (!pending.some(([field]) => field === key)) values[key] = '';
+        }
+      }
+      for (const key of inactiveKeys) values[key] = '';
+      for (const [key, next] of Object.entries(connectionDefaults(values))) {
+        const existing = ops.findIndex((op) => op.path[0] === key);
+        if (existing >= 0) ops.splice(existing, 1);
+        ops.push({ op: 'set', path: [key], value: next });
+      }
       ops.push({ op: 'set', path: ['connectionMode'], value: nextMode });
       // 成功响应代表宿主已接受整批写入；插件可能已重载，旧控制器的快照不再更新。
       await persistBatch(form, ops);

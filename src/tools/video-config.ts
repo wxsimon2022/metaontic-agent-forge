@@ -1,3 +1,4 @@
+import { connectionDefaults } from '../connection-defaults.js';
 /** tools/video-config：从宿主入口拆出的独立职责模块。 */
 import { ref } from '../config.js';
 import { isMetaontic, isVolcengine, resolveBaseUrl, resolveSubmitPath, relayPreset, resolveModel, resolveApiKey, isServerIssuedKey } from '../providers/connection.js';
@@ -6,7 +7,7 @@ import { modelMaxSeconds } from '../workflow/planning.js';
 /** 用户可在插件内改的配置字段。 */
 export const CONFIG_FIELDS = [
   'connectionMode', 'metaonticApiKey', 'volcengineApiKey', 'apiKey', 'baseUrl', 'submitPath', 'queryPath', 'model', 'imageModel', 'imageUseVideoKey', 'imageApiKey',
-  'duration', 'singleMaxSeconds', 'mode', 'ratio', 'generateAudio', 'watermark',
+  'duration', 'singleMaxSeconds', 'ratio', 'generateAudio', 'watermark',
   'extraParams', 'pollIntervalMs', 'maxWaitMs',
   'pollErrorRetries',
   'seamTrimSeconds', 'mergeMode', 'outputDir', 'resumeLockStaleMinutes',
@@ -55,7 +56,7 @@ export function configView(config) {
 
 export function normalizeConnectionPatch(config, input) {
   const patch = { ...input };
-  if (patch.connectionMode === undefined) return patch;
+  if (patch.connectionMode === undefined) return { ...patch, ...connectionDefaults({ ...Object.fromEntries(Object.keys(config || {}).map(key => [key, ref(config, key, undefined)])), ...patch }) };
   const mode = patch.connectionMode;
   if (!['service', 'metaontic', 'volcengine'].includes(mode)) throw new Error('未知接入方式');
   const inactive = mode === 'volcengine'
@@ -63,8 +64,11 @@ export function normalizeConnectionPatch(config, input) {
     : mode === 'metaontic'
       ? ['volcengineApiKey', 'apiKey', 'keyOrigin', 'registerEmail', 'deviceId', 'deviceSecret', 'registerApi', 'registerToken']
       : ['volcengineApiKey', 'metaonticApiKey'];
+  if (ref(config, 'connectionMode', 'service') === 'volcengine' && mode !== 'volcengine') {
+    for (const key of ['baseUrl', 'submitPath', 'queryPath']) if (patch[key] === undefined) patch[key] = '';
+  }
   for (const key of inactive) patch[key] = '';
-  return patch;
+  return { ...patch, ...connectionDefaults({ ...Object.fromEntries(Object.keys(config || {}).map(key => [key, ref(config, key, undefined)])), ...patch }) };
 }
 
 /** 把字段改动合并进本插件在 profile patch 里的那条条目。 */
@@ -89,7 +93,7 @@ export function configTool(config, settings) {
     name: 'video_config',
     description:
       '读取或修改 MetaOnticVideo 插件自己的配置（baseUrl、submitPath、queryPath、model、imageModel、'
-      + 'duration、singleMaxSeconds、mode、ratio、generateAudio、'
+      + 'duration、singleMaxSeconds、ratio、generateAudio、'
       + 'watermark、extraParams、pollIntervalMs、maxWaitMs、mergeMode、'
       + 'outputDir、resumeLockStaleMinutes、'
       + 'ffmpegBinary、ffprobeBinary、registerEmail、registerApi、estimateGroupRatio）。'
@@ -121,7 +125,6 @@ export function configTool(config, settings) {
         imageModel: { type: 'string', enum: ['doubao-seedream-5-0-260128', 'doubao-seedream-5-0-pro-260628'], description: 'A/B 真人参考图非真人化模型' },
         model: { type: 'string', description: '模型 ID，例如 doubao-seedance-2-0-mini-260615。' },
         duration: { type: 'integer', minimum: 4, maximum: modelMaxSeconds(config), description: '每段新增秒数上限（4 至模型上限（2.0 为 15、2.5 为 30） 的整数，默认按模型上限、段数最少）。' },
-        mode: { type: 'string', enum: ['continuous', 'closeup'], description: '续拍方式。' },
         ratio: {
           type: 'string',
           enum: ['16:9', '9:16', '4:3', '3:4', '1:1', 'adaptive'],
@@ -212,6 +215,7 @@ export function configTool(config, settings) {
       if (action !== 'set') {
         throw new Error('action 只能是 get 或 set。');
       }
+      if (args?.mode !== undefined) throw new Error('续拍方式由已审核脚本决定，请在 video_generate/video_extend 的本次参数或过渡描述中指定，不再作为插件设置保存。');
       const readonly = Object.keys(args || {}).filter((key) => READ_ONLY_CONFIG_FIELDS.has(key));
       if (readonly.length) {
         throw new Error(

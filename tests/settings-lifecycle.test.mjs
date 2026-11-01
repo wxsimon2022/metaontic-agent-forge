@@ -2,7 +2,7 @@ import { sourceOf } from './source.mjs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-const source = sourceOf('client/state', 'client/settings', 'client/account', 'client/updates');
+const source = sourceOf('connection-defaults', 'client/state', 'client/settings', 'client/account', 'client/updates');
 function extract(name) {
   const start = source.search(new RegExp(`(?:async )?function ${name}\\(`));
   assert.ok(start >= 0, name);
@@ -28,6 +28,7 @@ function setup(fail = false) {
     settingsError: e => e.message, t: (key, args) => args ? `${key}: ${args.message}` : key,
     loadQuota: async () => {}, loadUsage: async () => {},
   });
+  vm.runInContext(sourceOf('connection-defaults'), ctx);
   for (const name of ['persistBatch', 'persistConnection', 'validateSettings', 'reset', 'applyRegistration']) vm.runInContext(extract(name), ctx);
   return { ctx, state, events, calls: () => calls };
 }

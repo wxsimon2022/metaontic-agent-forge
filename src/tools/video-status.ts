@@ -1,3 +1,4 @@
+import { artifactLink } from './results.js';
 /** tools/video-status：从宿主入口拆出的独立职责模块。 */
 import { resolveApiKey, assertConfigured, resolveModel, snapshotConfig } from '../providers/connection.js';
 import { getTask } from '../providers/transport.js';
@@ -46,7 +47,8 @@ export function taskTool(liveConfig) {
                 '视频任务已完成。',
                 `任务 ID：${taskId}`,
                 `模型：${model || '-'}`,
-                `视频链接（约 24 小时内有效）：${videoUrl || '（无）'}`,
+                `视频链接（约 24 小时内有效）：${artifactLink('观看视频', '', videoUrl) || '（无）'}`,
+                '正文须保留上述可点击链接，有present卡片也不能省略；查询不会重新生成视频。',
               ].join('\n'),
             },
           ];

@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 /** tools/results：从宿主入口拆出的独立职责模块。 */
 import { formatSeconds } from '../utils/files.js';
 
@@ -5,8 +6,15 @@ export function previewInstruction(value) {
   const latest = (value?.segments || []).filter((segment) => segment.status === 'succeeded').at(-1);
   const target = latest?.localPath || value?.videoPath || latest?.videoUrl || value?.videoUrl;
   return `【下一步：先展示视频，等待用户预览】请立即使用当前宿主的 present/文件展示工具展示本次完成的分段：${target || '见本次分段结果'}。`
+    + `正文附上 ${artifactLink('观看本段视频', latest?.localPath || value?.previewPath || value?.videoPath, latest?.videoUrl || value?.videoUrl)}。`
     + '不能只说“生成成功”或只列任务ID。展示后询问“先看这段，效果可以吗？确认后再继续下一段。”并结束本轮等待回复。'
     + '用户首次授权制作不等于已看过本段，不得自动resume或调用其他生成工具绕过预览；展示工具不可用时给出可点击视频路径或播放链接，仍须等待明确确认。';
+}
+
+export function artifactLink(label, localPath, videoUrl) {
+  const target = localPath ? resolve(localPath) : videoUrl;
+  if (!target) return '';
+  return `[${label}](<${String(target).replace(/</g, '%3C').replace(/>/g, '%3E')}>)`;
 }
 
 /** 多段成果逐项交付；只引用真实完成的文件，不将最后一段当作合并成片。 */
@@ -14,18 +22,24 @@ export function deliveryInstruction(value) {
   const segments = value?.segments || [];
   const completed = segments.filter(segment => segment.status === 'succeeded' && (segment.localPath || segment.videoUrl));
   const multiPart = segments.length > 1 || (value?.paused && (value?.remainingSeconds || 0) > 0);
-  if (!multiPart || !completed.length) return '';
+  if (!completed.length && !value?.videoPath && !value?.videoUrl) return '';
+  const linkRule = '请使用 present/文件展示工具登记实际视频文件，并在用户可见正文中始终逐项附上 Markdown 可点击链接：[观看视频](<绝对文件路径或真实播放URL>)。不能用反引号路径或普通文本路径代替链接；present成功也不能省略正文链接。卡片未验证时不得声称上方卡片可直接播放。已有文件直接交付，不重新生成。';
+  if (!multiPart) {
+    const segment = completed[0];
+    return ['【视频交付：正文必须有可点击链接】', artifactLink('观看视频', value.videoPath || segment?.localPath, segment?.videoUrl || value.videoUrl), linkRule].join('\n');
+  }
   const labels = ['第一段', '第二段', '第三段'];
   const items = completed.map((segment, i) => {
     const index = segment.index || i + 1;
-    return `${labels[index - 1] || `第${index}段`}：${segment.localPath || segment.videoUrl}`;
+    const label = labels[index - 1] || `第${index}段`;
+    return `${label}：${segment.localPath || segment.videoUrl}\n${artifactLink(label, segment.localPath, segment.videoUrl)}`;
   });
   const mergedPath = completed.length > 1 && value?.merged && value?.videoPath
     && !completed.some(segment => segment.localPath === value.videoPath) ? value.videoPath : '';
-  if (mergedPath) items.push(`${value.paused || value.partial || value.status !== 'succeeded' ? '已完成部分合并视频' : '合并后完整视频'}：${mergedPath}`);
+  if (mergedPath) items.unshift(artifactLink('打开合并视频', mergedPath, ''), `${value.paused || value.partial || value.status !== 'succeeded' ? '已完成部分合并视频' : '合并后完整视频'}：${mergedPath}`);
   else if (completed.length > 1) items.push('合并结果尚未交付：如实说明未合并、合并失败或等待交付，不将最后一段当作完整成片。');
   return ['【交付清单：每个分段与合并结果分别展示】', ...items,
-    '请实际使用 present/文件展示工具，按顺序逐项展示上述视频，不只展示最后一段或合并视频；每项标明对应段号或合并结果。展示工具不可用时，为每项提供可点击文件路径或播放链接。已有文件直接交付，不重新生成。',
+    linkRule, '请实际使用 present/文件展示工具，先展示合并成片，再按段号依次展示各分段；没有合并结果时只按段号展示分段。每项标明对应段号或合并结果，不只展示最后一段或合并视频。展示工具不可用时，为每项提供可点击文件路径或播放链接。已有文件直接交付，不重新生成。',
   ].join('\n');
 }
 
@@ -39,8 +53,8 @@ function recoveryInstruction(value, toolName) {
 function referenceReview(value, toolName) {
   return [{ type: 'text', text: [
     '【下一步：展示转换图片并等待用户确认，尚未重试视频】',
-    ...(value.convertedReferences || []).map((item, index) => `图片${index + 1}（${item.role}）：${item.imageUrl}`),
-    `先使用 present/图片展示工具逐张展示，确认是非真人且符合风格要求；用户明确同意后再调用 ${toolName}，传 resume="${value.resumeDir}"、referenceImagesReviewed:true。首次转换授权不等于结果确认。图片仍像真人或不满意时停止，不自动再次出图。视频重试另外计费。`,
+    ...(value.convertedReferences || []).map((item, index) => `图片${index + 1}（${item.role}）：${artifactLink(`打开图片${index + 1}`, item.localPath, item.imageUrl)}`),
+    `先使用 present/图片展示工具逐张展示，并在正文逐张内嵌图片及附可点击原图链接；卡片成功不能省略正文链接。确认是非真人且符合风格要求；用户明确同意后再调用 ${toolName}，传 resume="${value.resumeDir}"、referenceImagesReviewed:true。首次转换授权不等于结果确认。图片仍像真人或不满意时停止，不自动再次出图。视频重试另外计费。`,
   ].join('\n') }];
 }
 
@@ -93,7 +107,6 @@ export function renderResult(value) {
         text: [
           deliveryInstruction(value),
           '延长任务仍在生成中（已超出单次等待时间）。',
-          deliveryInstruction(value),
           recoveryInstruction(value, 'video_extend'),
           ...lines,
           `可用 video_status 查询任务 ${

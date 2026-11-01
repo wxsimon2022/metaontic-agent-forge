@@ -37,3 +37,8 @@ test('closeup fallback describes a deliberate cut without demanding identical fr
 test('non-text transition descriptions are refused before any request',()=>{
  assert.throws(()=>ctx.buildExtensionPrompt({...args,transitionDescription:{invalid:true}}),/过渡描述必须是文字/);
 });
+test('settings no longer provide a global continuation mode control',()=>{
+ const settings=vm.createContext({});vm.runInContext(sourceOf('client/config')+'\nObject.assign(globalThis,createClientConfig());',settings);
+ assert.equal(settings.SELECTS.mode,undefined);assert.equal(settings.FIELD_BY_KEY.mode,undefined);
+ assert.equal(settings.SECTIONS.some(s=>s.fields.includes('mode')),false);
+});

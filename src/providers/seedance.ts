@@ -1,3 +1,4 @@
+import { timedStage } from '../utils/timing.js';
 /** providers/seedance：从宿主入口拆出的独立职责模块。 */
 import { resolveModel, parseExtraParams, isOmniExtendModel, isVolcengine, snapshotConfig, resolveSubmitPath } from './connection.js';
 import { clampInteger } from '../utils/validation.js';
@@ -31,7 +32,8 @@ export function buildRequestBody(config, args, referenceVideoUrl) {
     modelMaxSeconds(config),
     modelMaxSeconds(config),
   );
-  const mode = args.mode || ref(config, 'mode', 'continuous');
+  // 续拍由本次已审核脚本决定，忽略旧版设置页残留的全局 mode。
+  const mode = args.mode === 'closeup' ? 'closeup' : 'continuous';
   const prompt = String(args.prompt ?? '').trim();
   const startAt = args.startAt == null ? null : Math.max(0, Math.round(Number(args.startAt)));
   const direction = args.direction === 'forward' ? 'forward' : 'backward';
@@ -133,7 +135,7 @@ async function runTaskOnce(config, body, signal, progress: { taskId?: string; on
   if (!taskId) throw new Error('创建任务失败：响应中缺少任务 ID。');
   try {
     await progress.onCreated?.(taskId);
-    const final = await waitForCompletion(config, taskId, signal);
+    const final = await timedStage('video_poll_wait', () => waitForCompletion(config, taskId, signal));
     if (['succeeded', 'failed', 'cancelled'].includes(final.status)) await finishSubmission(config, resolveSubmitPath(config), body);
     await appendRequestLog({ event: 'task_finished', taskId, status: final.status, errorCode: final.errorCode });
     return { ...final, taskId };

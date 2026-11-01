@@ -1,3 +1,4 @@
+import { artifactLink } from './results.js';
 /** 真人参考图先转为非真人风格，结果独立保存供视频工具引用。 */
 import { ref } from '../config.js';
 import { assertConfigured, resolveApiKey, isVolcengine, imageConfig } from '../providers/connection.js';
@@ -22,7 +23,7 @@ export function prepareImageTool(liveConfig, progress = {}) {
     },
     output: {
       schema: { type: 'object', properties: { taskId: { type: 'string' }, imageUrl: { type: 'string' }, model: { type: 'string' }, reviewRequired: { type: 'boolean' } } },
-      render(_args, value) { return [{ type: 'text', text: `非真人参考图：${value.imageUrl}\n图片模型：${value.model}\n请展示并核对风格与角色后再用于视频。` }]; },
+      render(_args, value) { return [{ type: 'text', text: `非真人参考图：${artifactLink('打开参考图', '', value.imageUrl)}\n图片模型：${value.model}\n请在正文内嵌图片并保留可点击原图链接，再核对风格与角色；有present卡片也不能省略链接。明确确认后再用于视频，不自动重画。` }]; },
     },
     timeoutMs: 480000,
     isConcurrencySafe() { return true; },

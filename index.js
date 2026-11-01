@@ -13,6 +13,26 @@ var __export = (target, all) => {
     __defProp(target, name, { get: all[name], enumerable: true });
 };
 
+// src/connection-defaults.ts
+function connectionDefaults(values) {
+  const text = (key, fallback) => String(values[key] ?? "").trim() || fallback;
+  const volc = values.connectionMode === "volcengine";
+  return {
+    ...volc ? { baseUrl: "https://ark.cn-beijing.volces.com" } : { baseUrl: text("baseUrl", METAONTIC_BASE_URL).replace(/\/+$/, "") },
+    submitPath: volc ? "/api/v3/contents/generations/tasks" : text("submitPath", "/doubao/api/v3/contents/generations/tasks"),
+    queryPath: volc ? "/api/v3/contents/generations/tasks/{task_id}" : text("queryPath", "/doubao/api/v3/contents/generations/tasks/{task_id}"),
+    model: text("model", "doubao-seedance-2-0-mini-260615"),
+    imageModel: text("imageModel", "doubao-seedream-5-0-260128"),
+    imageUseVideoKey: values.imageUseVideoKey !== false
+  };
+}
+var METAONTIC_BASE_URL;
+var init_connection_defaults = __esm({
+  "src/connection-defaults.ts"() {
+    METAONTIC_BASE_URL = "https://ai.bileego.com";
+  }
+});
+
 // src/config.ts
 import z from "@deepseek-ai/schemastery";
 function resolveResolution(config, args = {}) {
@@ -35,6 +55,7 @@ function envValue(names) {
 var Config, DEFAULT_MODEL, MAX_SEGMENTS, MIN_SECONDS, MIN_SEGMENT_SECONDS, MAX_SEGMENT_SECONDS, MAX_TOTAL_SECONDS, FIXED_RESOLUTION, DEFAULT_OUTPUT_DIR, CUMULATIVE_TOLERANCE_RATIO, CUMULATIVE_TOLERANCE_MIN_SECONDS, DEFAULT_REGISTER_API, DEFAULT_REGISTER_TOKEN, KEY_ORIGIN_REGISTER, DEFAULT_QUOTA_PER_UNIT, DEFAULT_USD_EXCHANGE_RATE, GATED_TOOLS, ESTIMATE_PIXELS, ESTIMATE_FPS, ESTIMATE_TOKEN_DIVISOR, ESTIMATE_RATES, RELAY_PRESET, SUCCESS_STATES, FAILED_STATES, CANCEL_STATES, QUOTA_HINTS, PRICE_HINTS, CONTENT_HINTS, VIDEO_URL_KEYS, GENERIC_URL_KEYS, IMAGE_KEY_TOKENS, IMAGE_EXTENSIONS, CONTINUOUS_TRANSITION, FORWARD_TRANSITION, CLOSEUP_TRANSITION, CONTENT_REJECTION_HINT, PLUGIN_VERSION;
 var init_config = __esm({
   "src/config.ts"() {
+    init_connection_defaults();
     Config = z.object({
       connectionMode: z.union(["service", "metaontic", "volcengine"]).default("service").description("\u63A5\u5165\u65B9\u5F0F\uFF1AA \u670D\u52A1\u7AEF\u9886 Key\uFF1BB MetaOntic AI\uFF1BC \u706B\u5C71\u5F15\u64CE\u76F4\u8FDE").volatile(),
       metaonticApiKey: z.string().default("").description("MetaOntic AI API Key").volatile(),
@@ -45,7 +66,7 @@ var init_config = __esm({
       ).volatile(),
       keyOrigin: z.string().default("").description("\u5BC6\u94A5\u6765\u6E90\u6807\u8BB0\uFF1A\u8BBE\u7F6E\u9875\u300C\u767B\u5F55\u300D\u6210\u529F\u540E\u5199\u5165 'register'\uFF0C\u63D2\u4EF6\u53EA\u8BA4\u670D\u52A1\u7AEF\u4E0B\u53D1\u7684 Key").volatile(),
       baseUrl: z.string().default("").description(
-        "\u57FA\u7840\u5730\u5740\uFF08\u4E2D\u8F6C\u7AD9\u7AD9\u5740\uFF09\uFF1B\u7559\u7A7A\u65F6\u8BFB\u73AF\u5883\u53D8\u91CF NEWAPI_VIDEO_BASE_URL / NEWAPI_BASE_URL\u3002\u793A\u4F8B https://ai.bileego.com\uFF08\u4E0D\u8981\u5E26 /v1\uFF0C\u4E5F\u4E0D\u8981\u91CD\u590D /api/v3\uFF09"
+        "\u57FA\u7840\u5730\u5740\uFF08\u4E2D\u8F6C\u7AD9\u7AD9\u5740\uFF09\uFF1B\u7559\u7A7A\u65F6\u8BFB\u73AF\u5883\u53D8\u91CF NEWAPI_VIDEO_BASE_URL / NEWAPI_BASE_URL\uFF0C\u518D\u4F7F\u7528 https://ai.bileego.com\u3002\u793A\u4F8B https://ai.bileego.com\uFF08\u4E0D\u8981\u5E26 /v1\uFF0C\u4E5F\u4E0D\u8981\u91CD\u590D /api/v3\uFF09"
       ).volatile(),
       submitPath: z.string().default("").description("\u521B\u5EFA\u4EFB\u52A1\u8DEF\u5F84\uFF1B\u7559\u7A7A\u7528\u4E2D\u8F6C\u7AD9\u9ED8\u8BA4\u503C /doubao/api/v3/contents/generations/tasks").volatile(),
       queryPath: z.string().default("").description("\u67E5\u8BE2\u4EFB\u52A1\u8DEF\u5F84\uFF0C{task_id} \u4F1A\u88AB\u4EFB\u52A1 ID \u66FF\u6362\uFF1B\u7559\u7A7A\u7528\u4E2D\u8F6C\u7AD9\u9ED8\u8BA4\u503C").volatile(),
@@ -73,7 +94,7 @@ var init_config = __esm({
       ).volatile(),
       ffmpegBinary: z.string().default("ffmpeg").description("ffmpeg \u53EF\u6267\u884C\u6587\u4EF6\uFF1BPATH \u91CC\u6CA1\u6709\u65F6\u586B\u7EDD\u5BF9\u8DEF\u5F84").volatile(),
       ffprobeBinary: z.string().default("ffprobe").description("ffprobe \u53EF\u6267\u884C\u6587\u4EF6\uFF1BPATH \u91CC\u6CA1\u6709\u65F6\u586B\u7EDD\u5BF9\u8DEF\u5F84").volatile(),
-      mode: z.union(["continuous", "closeup"]).default("continuous").description("continuous=\u540C\u673A\u4F4D\u8FDE\u7EED\u7EED\u62CD\uFF1Bcloseup=\u5728\u53F0\u8BCD\u7ED3\u675F\u5904\u5207\u8FD1\u666F\u7EED\u62CD").volatile(),
+      mode: z.union(["continuous", "closeup"]).default("continuous").description("\u65E7\u914D\u7F6E\u517C\u5BB9\u5B57\u6BB5\uFF0C\u65B0\u4EFB\u52A1\u4E0D\u518D\u8BFB\u53D6\uFF1B\u7EED\u62CD\u65B9\u5F0F\u7531\u5DF2\u5BA1\u6838\u811A\u672C\u7684\u5DE5\u5177\u53C2\u6570\u4E0E\u8FC7\u6E21\u63CF\u8FF0\u51B3\u5B9A").volatile(),
       ratio: z.union(["16:9", "9:16", "4:3", "3:4", "1:1", "adaptive"]).default("adaptive").description("\u753B\u9762\u6BD4\u4F8B\uFF1Bseedance 2.5 \u5EF6\u957F\u65F6\u56FA\u5B9A\u6539\u7528 adaptive").volatile(),
       generateAudio: z.boolean().default(true).description("\u662F\u5426\u751F\u6210\u97F3\u9891").volatile(),
       watermark: z.boolean().default(false).description("\u662F\u5426\u6DFB\u52A0\u6C34\u5370\uFF1B\u90E8\u5206\u4E2D\u8F6C\u7AD9\u53EA\u63A5\u53D7 true").volatile(),
@@ -108,7 +129,7 @@ var init_config = __esm({
       ["doubao-seedance-2-0-fast", { none: 5.068493150685, video: 3.013698630137 }]
     ];
     RELAY_PRESET = {
-      baseUrl: "",
+      baseUrl: METAONTIC_BASE_URL,
       submitPath: "/doubao/api/v3/contents/generations/tasks",
       queryPath: "/doubao/api/v3/contents/generations/tasks/{task_id}",
       model: DEFAULT_MODEL,
@@ -149,7 +170,7 @@ var init_config = __esm({
     FORWARD_TRANSITION = "\u5411\u524D\u5EF6\u957F\u65F6\uFF0C\u672C\u6BB5\u6700\u540E\u4E00\u5E27\u5FC5\u987B\u7D27\u63A5\u89C6\u98911\u7B2C\u4E00\u5E27\uFF0C\u4FDD\u6301\u540C\u4E00\u6784\u56FE\u3001\u4EBA\u7269\u5927\u5C0F\u3001\u5DE6\u53F3\u4F4D\u7F6E\u3001\u5934\u90E8\u671D\u5411\u3001\u89C6\u7EBF\u3001\u624B\u90E8\u4F4D\u7F6E\u548C\u52A8\u4F5C\u9636\u6BB5\u3002\u52A8\u4F5C\u671D\u5411\u89C6\u98911\u7684\u5F00\u573A\u52A8\u4F5C\u53D1\u5C55\uFF0C\u4E0D\u91CD\u590D\u524D\u6BB5\u52A8\u4F5C\u3001\u4E0D\u5B9A\u683C\u7B49\u5F85\u3001\u4E0D\u4ECE\u753B\u9762\u53E6\u4E00\u4FA7\u91CD\u65B0\u5165\u573A\uFF1B\u4E0D\u64C5\u81EA\u5207\u955C\u6216\u91CD\u65B0\u5C45\u4E2D\u3002";
     CLOSEUP_TRANSITION = "\u955C\u5934\u8854\u63A5\u5EFA\u8BAE\uFF08\u4EC5\u5728\u672C\u6BB5\u672A\u660E\u786E\u6307\u5B9A\u8FD0\u955C\u6216\u5207\u955C\u5B89\u6392\u65F6\u91C7\u7528\uFF09\uFF1A\u5728\u5B8C\u6574\u53F0\u8BCD\u7ED3\u675F\u5904\u81EA\u7136\u5207\u5230\u4E0B\u4E00\u4F4D\u8BF4\u8BDD\u4EBA\u7684\u8FD1\u666F\u6216\u542C\u8BDD\u4EBA\u7684\u53CD\u5E94\u8FD1\u666F\uFF0C\u518D\u7EE7\u7EED\u672C\u6BB5\u5267\u60C5\u3002\u4FDD\u6301\u8F74\u7EBF\u3001\u89C6\u7EBF\u65B9\u5411\u3001\u5DE6\u53F3\u4EBA\u7269\u5173\u7CFB\u3001\u670D\u88C5\u548C\u97F3\u8272\uFF0C\u4E0D\u4EA4\u6362\u89D2\u8272\uFF1B\u53EA\u6539\u53D8\u666F\u522B\uFF0C\u4E0D\u65B0\u589E\u573A\u666F\u3002";
     CONTENT_REJECTION_HINT = "\u53C2\u8003\u89C6\u9891\u88AB\u4E0A\u6E38\u5185\u5BB9\u5BA1\u6838\u62D2\u7EDD\uFF0C\u5EF6\u957F\u5DF2\u505C\u6B62\u3002Seedance \u542B\u4EBA\u8138\u7EED\u62CD\u9700\u4F7F\u7528\u540C\u4E00\u4E0A\u6E38\u8D26\u53F7\u7684\u53D7\u4FE1\u539F\u59CB\u89C6\u9891\u6216\u6388\u6743\u7D20\u6750\uFF1B\u8BF7\u786E\u8BA4\u4E2D\u8F6C\u7AD9\u900F\u4F20\u4E86\u539F\u59CB video_url \u4E0E reference_video\uFF0C\u4E14\u524D\u540E\u8BF7\u6C42\u4F7F\u7528\u540C\u4E00\u4E0A\u6E38\u8D26\u53F7\u3002\u4E0D\u4F1A\u81EA\u52A8\u53BB\u6389\u53C2\u8003\u89C6\u9891\u751F\u6210\uFF0C\u4EE5\u514D\u4EBA\u7269\u4E0D\u4E00\u81F4\u3002";
-    PLUGIN_VERSION = true ? "3.11.0".trim().replace(/^v/i, "") : "";
+    PLUGIN_VERSION = true ? "3.11.1".trim().replace(/^v/i, "") : "";
   }
 });
 
@@ -285,244 +306,16 @@ var init_connection = __esm({
   }
 });
 
-// src/workflow/actual-cost.ts
-init_connection();
-function number(value) {
-  if (typeof value !== "number" && typeof value !== "string" || typeof value === "string" && !value.trim()) return null;
-  const n = Number(value);
-  return Number.isFinite(n) && n >= 0 ? n : null;
-}
-function object(value) {
-  if (value && typeof value === "object" && !Array.isArray(value)) return value;
-  if (typeof value === "string") {
-    try {
-      return object(JSON.parse(value));
-    } catch {
-    }
-  }
-  return {};
-}
-function settledTaskCosts(logs, taskIds) {
-  return [...new Set(taskIds)].map((taskId) => {
-    const matches = logs.filter((row) => Number(row.type) === 2 && object(row.other).task_id === taskId && number(object(row.other).actual_quota) !== null).sort((a, b) => Number(b.created_at || 0) - Number(a.created_at || 0) || Number(b.id || 0) - Number(a.id || 0));
-    if (!matches.length) return { taskId, status: "pending", quota: null };
-    return { taskId, status: "settled", quota: number(object(matches[0].other).actual_quota) };
-  });
-}
-async function fetchActualCost(config, taskIds, signal) {
-  if (isVolcengine(config)) return void 0;
-  const tasks = settledTaskCosts([], taskIds);
-  if (!tasks.length) return void 0;
-  const pending = (reason) => ({ status: "pending", source: "relay_settlement", tasks, amount: null, currency: null, reason });
-  if (signal?.aborted) return pending("\u8D39\u7528\u5F85\u67E5\u8BE2\uFF1A\u672C\u6B21\u64CD\u4F5C\u5DF2\u505C\u6B62\uFF0C\u53EF\u7A0D\u540E\u7528video_status\u8865\u67E5\u3002");
-  const key = resolveApiKey(config);
-  const base = resolveBaseUrl(config).replace(/\/v1\/?$/, "");
-  if (!key || !base) return pending("\u8D39\u7528\u5F85\u67E5\u8BE2\uFF1A\u539F\u8C03\u7528\u8FDE\u63A5\u4E0D\u53EF\u7528\u3002");
-  const requestSignal = signal ? AbortSignal.any([signal, AbortSignal.timeout(8e3)]) : AbortSignal.timeout(8e3);
-  async function get(path10, authenticated) {
-    const response = await fetch(`${base}${path10}`, {
-      method: "GET",
-      redirect: "error",
-      signal: requestSignal,
-      headers: { accept: "application/json", ...authenticated ? { Authorization: `Bearer ${key}` } : {} }
-    });
-    if (!response.ok) throw Error(`HTTP ${response.status}`);
-    const body = await response.json();
-    if (body.success === false || body.code !== void 0 && body.code !== 0) throw Error("\u67E5\u8BE2\u4E0D\u53EF\u7528");
-    return body;
-  }
-  try {
-    const body = await get("/api/log/token", true);
-    const rows = Array.isArray(body.data) ? body.data : body.data?.items;
-    if (!Array.isArray(rows)) return pending("\u8D39\u7528\u5F85\u67E5\u8BE2\uFF1A\u4E2D\u8F6C\u7AD9\u672A\u8FD4\u56DE\u6709\u6548\u6D88\u8D39\u65E5\u5FD7\u3002");
-    const settled = settledTaskCosts(rows, taskIds);
-    const known = settled.filter((x) => x.status === "settled");
-    if (!known.length) return pending("\u5F85\u7ED3\u7B97\uFF1A\u672CKey\u6700\u8FD1\u65E5\u5FD7\u4E2D\u5C1A\u672A\u627E\u5230\u8BE5\u4EFB\u52A1\u7684\u6700\u7EC8\u7ED3\u7B97\uFF0C\u53EF\u7528video_status\u8865\u67E5\u3002");
-    let conversion;
-    try {
-      const settings = (await get("/api/status", false)).data;
-      const perUnit = number(settings?.quota_per_unit);
-      const exchange = number(settings?.usd_exchange_rate);
-      if (perUnit && exchange) conversion = { quotaPerUnit: perUnit, usdExchangeRate: exchange, currency: "CNY" };
-    } catch {
-    }
-    const quota = known.reduce((sum, task) => sum + task.quota, 0);
-    const taskCosts = settled.map((task) => ({
-      ...task,
-      amount: task.quota !== null && conversion ? Math.round(task.quota / conversion.quotaPerUnit * conversion.usdExchangeRate * 1e6) / 1e6 : null
-    }));
-    return {
-      status: known.length === settled.length ? "settled" : "partial",
-      source: "relay_settlement",
-      tasks: taskCosts,
-      quota,
-      amount: conversion ? Math.round(quota / conversion.quotaPerUnit * conversion.usdExchangeRate * 1e6) / 1e6 : null,
-      currency: conversion?.currency ?? null,
-      conversion: conversion ?? null,
-      reason: known.length !== settled.length ? "\u90E8\u5206\u4EFB\u52A1\u5F85\u7ED3\u7B97\uFF1B\u5F53\u524D\u91D1\u989D\u4EC5\u4E3A\u5DF2\u7ED3\u7B97\u5C0F\u8BA1\uFF0C\u4E0D\u662F\u6574\u6761\u89C6\u9891\u6700\u7EC8\u8D39\u7528\u3002" : conversion ? "" : "\u5DF2\u83B7\u53D6\u5B9E\u9645\u6D88\u8017\u989D\u5EA6\uFF0C\u91D1\u989D\u6362\u7B97\u8BBE\u7F6E\u6682\u4E0D\u53EF\u7528\u3002"
-    };
-  } catch {
-    return pending("\u8D39\u7528\u5F85\u67E5\u8BE2\uFF1A\u4E2D\u8F6C\u7AD9\u6D88\u8D39\u65E5\u5FD7\u67E5\u8BE2\u5931\u8D25\u6216\u65E0\u6743\u9650\uFF1B\u89C6\u9891\u7ED3\u679C\u4E0D\u53D7\u5F71\u54CD\uFF0C\u53EF\u7A0D\u540E\u7528video_status\u8865\u67E5\u3002");
-  }
-}
-function actualCostText(cost, partialVideo = false) {
-  if (!cost) return "";
-  const amount = (value) => `\xA5${value.toFixed(value >= 1 ? 2 : 4)}`;
-  if (cost.status === "pending") return `\u5B9E\u9645\u6D88\u8017\uFF1A${cost.reason}`;
-  const totalLabel = cost.status === "partial" ? "\u5DF2\u7ED3\u7B97\u5C0F\u8BA1" : partialVideo ? "\u5DF2\u751F\u6210\u90E8\u5206\u5B9E\u9645\u6D88\u8017" : "\u5B9E\u9645\u6D88\u8017\u5408\u8BA1";
-  const lines = cost.tasks.map((task) => task.status === "settled" ? `\u4EFB\u52A1 ${task.taskId} \u5B9E\u9645\u6D88\u8017\uFF1A${task.amount !== null ? amount(task.amount) : `${task.quota}\u989D\u5EA6`}` : `\u4EFB\u52A1 ${task.taskId}\uFF1A\u5F85\u7ED3\u7B97`);
-  lines.push(`${totalLabel}\uFF1A${cost.amount !== null ? amount(cost.amount) : `${cost.quota}\u989D\u5EA6`}\uFF08\u4E2D\u8F6C\u7AD9\u5B9E\u9645\u7ED3\u7B97\uFF0C\u89C6\u9891\u8D39\u7528\uFF09`);
-  if (cost.reason) lines.push(cost.reason);
-  return lines.join("\n");
-}
-var ACTUAL_COST_SCHEMA = { type: "object", properties: {
-  status: { type: "string", enum: ["pending", "partial", "settled"] },
-  source: { type: "string" },
-  quota: { type: "number" },
-  amount: { oneOf: [{ type: "number" }, { type: "null" }] },
-  currency: { oneOf: [{ type: "string" }, { type: "null" }] },
-  reason: { type: "string" },
-  conversion: { oneOf: [{ type: "object" }, { type: "null" }] },
-  tasks: { type: "array", items: { type: "object", properties: {
-    taskId: { type: "string" },
-    status: { type: "string" },
-    quota: { oneOf: [{ type: "number" }, { type: "null" }] },
-    amount: { oneOf: [{ type: "number" }, { type: "null" }] }
-  } } }
-} };
-function withActualCost(tool, liveConfig) {
-  return {
-    ...tool,
-    output: {
-      ...tool.output,
-      schema: { ...tool.output.schema, properties: { ...tool.output.schema.properties, actualCost: ACTUAL_COST_SCHEMA } },
-      render(args, value) {
-        const rendered = tool.output.render(args, value);
-        const text = actualCostText(value?.actualCost, Boolean(value?.paused || value?.status !== "succeeded"));
-        return text ? [...rendered, { type: "text", text }] : rendered;
-      }
-    },
-    async execute(args, exec) {
-      const config = snapshotConfig(liveConfig);
-      const result = await tool.execute(args, exec);
-      if (isVolcengine(config)) return result;
-      const ids = result?.segments ? result.segments.filter((s) => s.status === "succeeded" && s.taskId).map((s) => s.taskId) : result?.status === "succeeded" && result?.taskId ? [result.taskId] : [];
-      if (!ids.length) return result;
-      try {
-        const actualCost = await fetchActualCost(config, ids, exec?.signal);
-        return actualCost ? { ...result, actualCost } : result;
-      } catch {
-        return result;
-      }
-    }
-  };
-}
-
-// src/workflow/execution.ts
-import { createRequire } from "node:module";
-import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
-var progressRecordModule;
-async function appendVideoExecution(exec, phase) {
-  if (!exec?.agent?.session || !exec.callId) return;
-  try {
-    const resolver = createRequire(import.meta.url);
-    const modulePath = resolver.resolve("@deepseek-ai/dsh-session", {
-      paths: [path.dirname(process.argv[1] || process.execPath), path.dirname(fileURLToPath(import.meta.url))]
-    });
-    progressRecordModule ??= import(pathToFileURL(modulePath).href);
-    const { appendPluginRecord } = await progressRecordModule;
-    appendPluginRecord(exec.agent.session, "plugin:metaontic-video/execution", { callId: exec.callId, phase });
-  } catch {
-  }
-}
-function withVideoExecution(tool) {
-  return {
-    ...tool,
-    async execute(args, exec) {
-      await appendVideoExecution(exec, "start");
-      try {
-        return await tool.execute(args, exec);
-      } finally {
-        await appendVideoExecution(exec, "end");
-      }
-    }
-  };
-}
-
-// src/workflow/resume.ts
-init_config();
-import path5 from "node:path";
-import { readFile as readFile2, open as open2, rm as rm2, mkdir as mkdir4, writeFile, rename as rename2 } from "node:fs/promises";
-
-// src/utils/files.ts
-init_config();
-import path2 from "node:path";
-import { mkdir, stat } from "node:fs/promises";
-function tail(text, limit = 600) {
-  const clean = String(text || "").trim();
-  return clean.length > limit ? `\u2026${clean.slice(-limit)}` : clean;
-}
-function formatSeconds(value) {
-  const number2 = Number(value);
-  if (!Number.isFinite(number2)) return String(value ?? "");
-  return Number.isInteger(number2) ? String(number2) : number2.toFixed(1);
-}
-var tempSequence = 0;
-function uniqueSuffix(prefix = "tmp") {
-  tempSequence = (tempSequence + 1) % 1e9;
-  return `${prefix}-${process.pid}-${tempSequence}-${Math.random().toString(36).slice(2, 8)}`;
-}
-function fileStamp(date = /* @__PURE__ */ new Date()) {
-  const pad = (value) => String(value).padStart(2, "0");
-  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
-}
-async function allocateStamp(outDir, base) {
-  const parent = path2.join(outDir, "segments");
-  await mkdir(parent, { recursive: true });
-  for (let attempt = 1; attempt <= 100; attempt += 1) {
-    const stamp = attempt === 1 ? base : `${base}-${attempt}`;
-    const dir = path2.join(parent, stamp);
-    try {
-      await mkdir(dir);
-      return { stamp, segmentsDir: dir };
-    } catch (error) {
-      if (error?.code !== "EEXIST") throw error;
-    }
-  }
-  throw new Error(`\u65E0\u6CD5\u5728 ${parent} \u4E0B\u5206\u914D\u552F\u4E00\u7684\u5206\u6BB5\u76EE\u5F55\uFF08\u540C\u540D\u592A\u591A\uFF09\u3002`);
-}
-async function exists(file) {
-  try {
-    await stat(file);
-    return true;
-  } catch {
-    return false;
-  }
-}
-async function resolveOutputDir(config, exec, deps) {
-  const configured = String(ref(config, "outputDir", "")).trim();
-  if (configured) return path2.resolve(configured);
-  let cwd = "";
-  if (deps?.workdir && exec?.agent) {
-    try {
-      cwd = await deps.workdir.ensure(exec.agent, exec.signal) || "";
-    } catch {
-      cwd = "";
-    }
-  }
-  return path2.join(cwd || process.cwd(), DEFAULT_OUTPUT_DIR);
-}
-
-// src/workflow/resume.ts
-import os2 from "node:os";
+// src/utils/timing.ts
+import { randomUUID } from "node:crypto";
+import { performance } from "node:perf_hooks";
 
 // src/utils/logging.ts
 import { AsyncLocalStorage } from "node:async_hooks";
-import path4 from "node:path";
+import path3 from "node:path";
 
 // src/media/references.ts
-import path3 from "node:path";
+import path2 from "node:path";
 import os from "node:os";
 import { stat as stat2, mkdir as mkdir2, rename, rm, open, readdir, readFile } from "node:fs/promises";
 
@@ -611,7 +404,7 @@ function resolveBinary(config, key, fallback) {
   return String(ref(config, key, "")).trim() || fallback;
 }
 async function runProcess(binary, args, { signal, timeoutMs = 18e5, shell = false } = {}) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve2, reject) => {
     let child;
     try {
       child = spawn(binary, args, { stdio: ["ignore", "pipe", "pipe"], ...shell ? { shell: true } : {} });
@@ -633,7 +426,7 @@ async function runProcess(binary, args, { signal, timeoutMs = 18e5, shell = fals
       done = true;
       cleanup();
       if (error) reject(error);
-      else resolve(value);
+      else resolve2(value);
     }
     function onAbort() {
       child.kill("SIGKILL");
@@ -783,6 +576,65 @@ async function probeMedia(file, config, signal) {
   }
 }
 
+// src/utils/files.ts
+init_config();
+import path from "node:path";
+import { mkdir, stat } from "node:fs/promises";
+function tail(text, limit = 600) {
+  const clean = String(text || "").trim();
+  return clean.length > limit ? `\u2026${clean.slice(-limit)}` : clean;
+}
+function formatSeconds(value) {
+  const number2 = Number(value);
+  if (!Number.isFinite(number2)) return String(value ?? "");
+  return Number.isInteger(number2) ? String(number2) : number2.toFixed(1);
+}
+var tempSequence = 0;
+function uniqueSuffix(prefix = "tmp") {
+  tempSequence = (tempSequence + 1) % 1e9;
+  return `${prefix}-${process.pid}-${tempSequence}-${Math.random().toString(36).slice(2, 8)}`;
+}
+function fileStamp(date = /* @__PURE__ */ new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+}
+async function allocateStamp(outDir, base) {
+  const parent = path.join(outDir, "segments");
+  await mkdir(parent, { recursive: true });
+  for (let attempt = 1; attempt <= 100; attempt += 1) {
+    const stamp = attempt === 1 ? base : `${base}-${attempt}`;
+    const dir = path.join(parent, stamp);
+    try {
+      await mkdir(dir);
+      return { stamp, segmentsDir: dir };
+    } catch (error) {
+      if (error?.code !== "EEXIST") throw error;
+    }
+  }
+  throw new Error(`\u65E0\u6CD5\u5728 ${parent} \u4E0B\u5206\u914D\u552F\u4E00\u7684\u5206\u6BB5\u76EE\u5F55\uFF08\u540C\u540D\u592A\u591A\uFF09\u3002`);
+}
+async function exists(file) {
+  try {
+    await stat(file);
+    return true;
+  } catch {
+    return false;
+  }
+}
+async function resolveOutputDir(config, exec, deps) {
+  const configured = String(ref(config, "outputDir", "")).trim();
+  if (configured) return path.resolve(configured);
+  let cwd = "";
+  if (deps?.workdir && exec?.agent) {
+    try {
+      cwd = await deps.workdir.ensure(exec.agent, exec.signal) || "";
+    } catch {
+      cwd = "";
+    }
+  }
+  return path.join(cwd || process.cwd(), DEFAULT_OUTPUT_DIR);
+}
+
 // src/media/references.ts
 init_connection();
 var IMAGE_EXT_TO_MIME = {
@@ -816,7 +668,7 @@ function canvasSize(ratio) {
   return CANVAS_SIZES[String(ratio ?? "").trim()] || null;
 }
 function referenceCacheDir() {
-  return path3.join(os.tmpdir(), "metaontic-video-reference");
+  return path2.join(os.tmpdir(), "metaontic-video-reference");
 }
 async function isUsableFit(dest, width, height, config, signal) {
   const info = await stat2(dest).catch(() => null);
@@ -831,8 +683,8 @@ async function fitImageToCanvas(absPath, size, config, signal) {
   const media = await probeMedia(absPath, config, signal);
   if (media?.width === width && media?.height === height) return absPath;
   const info = await stat2(absPath).catch(() => null);
-  const key = `${path3.basename(absPath, path3.extname(absPath))}-${info?.size ?? 0}-${Math.round(info?.mtimeMs ?? 0)}-${width}x${height}.jpg`;
-  const dest = path3.join(referenceCacheDir(), key);
+  const key = `${path2.basename(absPath, path2.extname(absPath))}-${info?.size ?? 0}-${Math.round(info?.mtimeMs ?? 0)}-${width}x${height}.jpg`;
+  const dest = path2.join(referenceCacheDir(), key);
   if (await isUsableFit(dest, width, height, config, signal)) return dest;
   const running = fitInFlight.get(dest);
   if (running) {
@@ -879,10 +731,10 @@ var UPLOAD_ALIAS_PATTERN = /^(?:latest|newest|recent|最近上传(?:的图片)?|
 var UPLOAD_WINDOW_MS = 2 * 60 * 60 * 1e3;
 function dshHome() {
   const fromEnv = String(typeof process !== "undefined" && process.env?.DSH_HOME || "").trim();
-  return fromEnv || path3.join(os.homedir(), ".dsh");
+  return fromEnv || path2.join(os.homedir(), ".dsh");
 }
 function attachmentObjectsDir() {
-  return path3.join(dshHome(), "attachments", "v1", "objects");
+  return path2.join(dshHome(), "attachments", "v1", "objects");
 }
 async function sniffFileImage(file) {
   let handle;
@@ -905,11 +757,11 @@ async function findRecentUploadedImages(windowMs = UPLOAD_WINDOW_MS) {
   const found = [];
   for (const shard of shards) {
     if (!shard.isDirectory()) continue;
-    const dir = path3.join(root, shard.name);
+    const dir = path2.join(root, shard.name);
     const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
     for (const entry of entries) {
       if (!entry.isFile()) continue;
-      const abs = path3.join(dir, entry.name);
+      const abs = path2.join(dir, entry.name);
       const info = await stat2(abs).catch(() => null);
       if (!info || info.mtimeMs < cutoff) continue;
       const mime = await sniffFileImage(abs);
@@ -970,8 +822,8 @@ async function resolveImageInput(value, label, fit = null) {
       uploadIndex: index
     };
   } else {
-    abs = path3.resolve(raw.startsWith("~/") || raw === "~" ? path3.join(os.homedir(), raw.slice(1)) : raw);
-    const ext = path3.extname(abs).toLowerCase();
+    abs = path2.resolve(raw.startsWith("~/") || raw === "~" ? path2.join(os.homedir(), raw.slice(1)) : raw);
+    const ext = path2.extname(abs).toLowerCase();
     if (!IMAGE_EXT_TO_MIME[ext]) {
       throw new Error(
         `${label} \u65E2\u4E0D\u662F http(s) \u94FE\u63A5\u3001base64\uFF0C\u4E5F\u4E0D\u662F\u652F\u6301\u7684\u56FE\u7247\u6587\u4EF6\uFF1A${brief(raw)}\u3002\u672C\u673A\u56FE\u7247\u8BF7\u7528 ${Object.keys(IMAGE_EXT_TO_MIME).join(" / ")} \u4E4B\u4E00\uFF0C\u7528\u6237\u521A\u5728\u5BF9\u8BDD\u91CC\u4E0A\u4F20\u7684\u56FE\u76F4\u63A5\u5199 latest\u3002`
@@ -1029,18 +881,258 @@ var requestLogContext = new AsyncLocalStorage();
 function requestLogPath() {
   const now = /* @__PURE__ */ new Date();
   const date = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
-  return path4.join(dshHome(), "logs", "metaontic-video", date, "requests.jsonl");
+  return path3.join(dshHome(), "logs", "metaontic-video", date, "requests.jsonl");
 }
 async function appendRequestLog(record) {
   try {
     const file = requestLogPath();
-    await mkdir3(path4.dirname(file), { recursive: true, mode: 448 });
+    await mkdir3(path3.dirname(file), { recursive: true, mode: 448 });
     await appendFile(file, JSON.stringify({ time: (/* @__PURE__ */ new Date()).toISOString(), pluginVersion: PLUGIN_VERSION, ...requestLogContext.getStore(), ...record }) + "\n", { mode: 384 });
   } catch {
   }
 }
 
+// src/utils/timing.ts
+async function timedStage(stage, operation) {
+  const spanId = randomUUID();
+  const startedAt = (/* @__PURE__ */ new Date()).toISOString();
+  const start = performance.now();
+  await appendRequestLog({ event: "stage_started", stage, spanId, startedAt });
+  let outcome = "error";
+  try {
+    const result = await operation();
+    outcome = ["failed", "unknown", "timeout", "cancelled", "pending", "review_required"].includes(result?.status) ? result.status : "success";
+    return result;
+  } catch (error) {
+    outcome = error?.name === "AbortError" || error?.code === "ABORTED" ? "cancelled" : "error";
+    throw error;
+  } finally {
+    await appendRequestLog({
+      event: "stage_finished",
+      stage,
+      spanId,
+      startedAt,
+      finishedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      elapsedMs: Math.round((performance.now() - start) * 1e3) / 1e3,
+      outcome
+    });
+  }
+}
+function withStageTiming(tool) {
+  return { ...tool, async execute(args, exec) {
+    const context = { ...requestLogContext.getStore(), callId: exec?.callId || randomUUID(), tool: tool.name };
+    return requestLogContext.run(context, () => timedStage(`tool:${tool.name}`, () => tool.execute(args, exec)));
+  } };
+}
+
+// src/tools/video-stage.ts
+import { randomUUID as randomUUID2 } from "node:crypto";
+import { performance as performance2 } from "node:perf_hooks";
+var STAGES = ["script_design", "storyboard_design", "script_present", "script_review_wait", "production_confirm_wait", "reference_review_wait", "segment_review_wait", "result_present"];
+var pendingStages = /* @__PURE__ */ new Map();
+function stageTool() {
+  return {
+    name: "video_stage",
+    description: "\u53EA\u8BFB\u8BA1\u65F6\u6807\u8BB0\uFF0C\u4E0D\u751F\u6210\u3001\u4E0D\u6263\u8D39\u3001\u4E0D\u6539\u914D\u7F6E\u3002\u811A\u672C\u8BBE\u8BA1/\u793A\u610F\u56FE/\u5C55\u793A/\u7B49\u5F85\u5BA1\u6838\u7B49\u9636\u6BB5\u5F00\u59CB\u65F6action=start\uFF0C\u7ED3\u675F\u65F6action=finish\u5E76\u4F20\u539FspanId\u3002\u8017\u65F6\u662F\u6807\u8BB0\u8FB9\u754C\u95F4\u5899\u949F\u65F6\u95F4\uFF08\u5305\u542B\u5DE5\u5177\u8C03\u5EA6\uFF09\uFF0C\u4E0D\u662F\u6A21\u578B\u7EAF\u63A8\u7406\u8017\u65F6\uFF1B\u7B49\u5F85\u7528\u6237\u5355\u72EC\u8BB0\u9636\u6BB5\u3002\u7F3A\u5931\u5F00\u59CB\u6216\u70ED\u91CD\u8F7D\u4E22\u5931\u6807\u8BB0\u65F6\u8FD4\u56DEunavailable\uFF0C\u4E0D\u731C\u8017\u65F6\u3002",
+    parameters: { type: "object", properties: { action: { type: "string", enum: ["start", "finish"] }, stage: { type: "string", enum: STAGES }, spanId: { type: "string" }, outcome: { type: "string", enum: ["success", "cancelled", "error"] } }, required: ["action", "stage"] },
+    output: { schema: { type: "object", properties: { status: { type: "string" }, spanId: { type: "string" }, elapsedMs: { type: "number" } } }, render(_args, value) {
+      return [{ type: "text", text: JSON.stringify(value) }];
+    } },
+    timeoutMs: 1e4,
+    isConcurrencySafe() {
+      return true;
+    },
+    async execute(args) {
+      if (!STAGES.includes(args?.stage)) throw new Error("\u672A\u77E5\u8BA1\u65F6\u9636\u6BB5");
+      if (args.action === "start") {
+        if (pendingStages.size >= 512) return { status: "unavailable" };
+        const spanId = randomUUID2(), startedAt = (/* @__PURE__ */ new Date()).toISOString();
+        pendingStages.set(spanId, { stage: args.stage, startedAt, start: performance2.now() });
+        await appendRequestLog({ event: "stage_started", stage: args.stage, spanId, startedAt, source: "assistant_marker" });
+        return { status: "started", spanId };
+      }
+      if (args.action !== "finish") throw new Error("\u672A\u77E5\u8BA1\u65F6\u52A8\u4F5C");
+      const entry = pendingStages.get(args.spanId);
+      if (!entry || entry.stage !== args.stage) return { status: "unavailable" };
+      pendingStages.delete(args.spanId);
+      const elapsedMs = Math.round((performance2.now() - entry.start) * 1e3) / 1e3;
+      const outcome = ["success", "cancelled", "error"].includes(args.outcome) ? args.outcome : "success";
+      await appendRequestLog({ event: "stage_finished", stage: entry.stage, spanId: args.spanId, startedAt: entry.startedAt, finishedAt: (/* @__PURE__ */ new Date()).toISOString(), elapsedMs, outcome, source: "assistant_marker" });
+      return { status: "finished", spanId: args.spanId, elapsedMs };
+    }
+  };
+}
+
+// src/workflow/actual-cost.ts
+init_connection();
+function number(value) {
+  if (typeof value !== "number" && typeof value !== "string" || typeof value === "string" && !value.trim()) return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+function object(value) {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    try {
+      return object(JSON.parse(value));
+    } catch {
+    }
+  }
+  return {};
+}
+function settledTaskCosts(logs, taskIds) {
+  return [...new Set(taskIds)].map((taskId) => {
+    const matches = logs.filter((row) => Number(row.type) === 2 && object(row.other).task_id === taskId && number(object(row.other).actual_quota) !== null).sort((a, b) => Number(b.created_at || 0) - Number(a.created_at || 0) || Number(b.id || 0) - Number(a.id || 0));
+    if (!matches.length) return { taskId, status: "pending", quota: null };
+    return { taskId, status: "settled", quota: number(object(matches[0].other).actual_quota) };
+  });
+}
+async function fetchActualCost(config, taskIds, signal) {
+  if (isVolcengine(config)) return void 0;
+  const tasks = settledTaskCosts([], taskIds);
+  if (!tasks.length) return void 0;
+  const pending = (reason) => ({ status: "pending", source: "relay_settlement", tasks, amount: null, currency: null, reason });
+  if (signal?.aborted) return pending("\u8D39\u7528\u5F85\u67E5\u8BE2\uFF1A\u672C\u6B21\u64CD\u4F5C\u5DF2\u505C\u6B62\uFF0C\u53EF\u7A0D\u540E\u7528video_status\u8865\u67E5\u3002");
+  const key = resolveApiKey(config);
+  const base = resolveBaseUrl(config).replace(/\/v1\/?$/, "");
+  if (!key || !base) return pending("\u8D39\u7528\u5F85\u67E5\u8BE2\uFF1A\u539F\u8C03\u7528\u8FDE\u63A5\u4E0D\u53EF\u7528\u3002");
+  const requestSignal = signal ? AbortSignal.any([signal, AbortSignal.timeout(8e3)]) : AbortSignal.timeout(8e3);
+  async function get(path10, authenticated) {
+    const response = await fetch(`${base}${path10}`, {
+      method: "GET",
+      redirect: "error",
+      signal: requestSignal,
+      headers: { accept: "application/json", ...authenticated ? { Authorization: `Bearer ${key}` } : {} }
+    });
+    if (!response.ok) throw Error(`HTTP ${response.status}`);
+    const body = await response.json();
+    if (body.success === false || body.code !== void 0 && body.code !== 0) throw Error("\u67E5\u8BE2\u4E0D\u53EF\u7528");
+    return body;
+  }
+  try {
+    const body = await get("/api/log/token", true);
+    const rows = Array.isArray(body.data) ? body.data : body.data?.items;
+    if (!Array.isArray(rows)) return pending("\u8D39\u7528\u5F85\u67E5\u8BE2\uFF1A\u4E2D\u8F6C\u7AD9\u672A\u8FD4\u56DE\u6709\u6548\u6D88\u8D39\u65E5\u5FD7\u3002");
+    const settled = settledTaskCosts(rows, taskIds);
+    const known = settled.filter((x) => x.status === "settled");
+    if (!known.length) return pending("\u5F85\u7ED3\u7B97\uFF1A\u672CKey\u6700\u8FD1\u65E5\u5FD7\u4E2D\u5C1A\u672A\u627E\u5230\u8BE5\u4EFB\u52A1\u7684\u6700\u7EC8\u7ED3\u7B97\uFF0C\u53EF\u7528video_status\u8865\u67E5\u3002");
+    let conversion;
+    try {
+      const settings = (await get("/api/status", false)).data;
+      const perUnit = number(settings?.quota_per_unit);
+      const exchange = number(settings?.usd_exchange_rate);
+      if (perUnit && exchange) conversion = { quotaPerUnit: perUnit, usdExchangeRate: exchange, currency: "CNY" };
+    } catch {
+    }
+    const quota = known.reduce((sum, task) => sum + task.quota, 0);
+    const taskCosts = settled.map((task) => ({
+      ...task,
+      amount: task.quota !== null && conversion ? Math.round(task.quota / conversion.quotaPerUnit * conversion.usdExchangeRate * 1e6) / 1e6 : null
+    }));
+    return {
+      status: known.length === settled.length ? "settled" : "partial",
+      source: "relay_settlement",
+      tasks: taskCosts,
+      quota,
+      amount: conversion ? Math.round(quota / conversion.quotaPerUnit * conversion.usdExchangeRate * 1e6) / 1e6 : null,
+      currency: conversion?.currency ?? null,
+      conversion: conversion ?? null,
+      reason: known.length !== settled.length ? "\u90E8\u5206\u4EFB\u52A1\u5F85\u7ED3\u7B97\uFF1B\u5F53\u524D\u91D1\u989D\u4EC5\u4E3A\u5DF2\u7ED3\u7B97\u5C0F\u8BA1\uFF0C\u4E0D\u662F\u6574\u6761\u89C6\u9891\u6700\u7EC8\u8D39\u7528\u3002" : conversion ? "" : "\u5DF2\u83B7\u53D6\u5B9E\u9645\u6D88\u8017\u989D\u5EA6\uFF0C\u91D1\u989D\u6362\u7B97\u8BBE\u7F6E\u6682\u4E0D\u53EF\u7528\u3002"
+    };
+  } catch {
+    return pending("\u8D39\u7528\u5F85\u67E5\u8BE2\uFF1A\u4E2D\u8F6C\u7AD9\u6D88\u8D39\u65E5\u5FD7\u67E5\u8BE2\u5931\u8D25\u6216\u65E0\u6743\u9650\uFF1B\u89C6\u9891\u7ED3\u679C\u4E0D\u53D7\u5F71\u54CD\uFF0C\u53EF\u7A0D\u540E\u7528video_status\u8865\u67E5\u3002");
+  }
+}
+function actualCostText(cost, partialVideo = false) {
+  if (!cost) return "";
+  const amount = (value) => `\xA5${value.toFixed(value >= 1 ? 2 : 4)}`;
+  if (cost.status === "pending") return `\u5B9E\u9645\u6D88\u8017\uFF1A${cost.reason}`;
+  const totalLabel = cost.status === "partial" ? "\u5DF2\u7ED3\u7B97\u5C0F\u8BA1" : partialVideo ? "\u5DF2\u751F\u6210\u90E8\u5206\u5B9E\u9645\u6D88\u8017" : "\u5B9E\u9645\u6D88\u8017\u5408\u8BA1";
+  const lines = cost.tasks.map((task) => task.status === "settled" ? `\u4EFB\u52A1 ${task.taskId} \u5B9E\u9645\u6D88\u8017\uFF1A${task.amount !== null ? amount(task.amount) : `${task.quota}\u989D\u5EA6`}` : `\u4EFB\u52A1 ${task.taskId}\uFF1A\u5F85\u7ED3\u7B97`);
+  lines.push(`${totalLabel}\uFF1A${cost.amount !== null ? amount(cost.amount) : `${cost.quota}\u989D\u5EA6`}\uFF08\u4E2D\u8F6C\u7AD9\u5B9E\u9645\u7ED3\u7B97\uFF0C\u89C6\u9891\u8D39\u7528\uFF09`);
+  if (cost.reason) lines.push(cost.reason);
+  return lines.join("\n");
+}
+var ACTUAL_COST_SCHEMA = { type: "object", properties: {
+  status: { type: "string", enum: ["pending", "partial", "settled"] },
+  source: { type: "string" },
+  quota: { type: "number" },
+  amount: { oneOf: [{ type: "number" }, { type: "null" }] },
+  currency: { oneOf: [{ type: "string" }, { type: "null" }] },
+  reason: { type: "string" },
+  conversion: { oneOf: [{ type: "object" }, { type: "null" }] },
+  tasks: { type: "array", items: { type: "object", properties: {
+    taskId: { type: "string" },
+    status: { type: "string" },
+    quota: { oneOf: [{ type: "number" }, { type: "null" }] },
+    amount: { oneOf: [{ type: "number" }, { type: "null" }] }
+  } } }
+} };
+function withActualCost(tool, liveConfig) {
+  return {
+    ...tool,
+    output: {
+      ...tool.output,
+      schema: { ...tool.output.schema, properties: { ...tool.output.schema.properties, actualCost: ACTUAL_COST_SCHEMA } },
+      render(args, value) {
+        const rendered = tool.output.render(args, value);
+        const text = actualCostText(value?.actualCost, Boolean(value?.paused || value?.status !== "succeeded"));
+        return text ? [...rendered, { type: "text", text }] : rendered;
+      }
+    },
+    async execute(args, exec) {
+      const config = snapshotConfig(liveConfig);
+      const result = await tool.execute(args, exec);
+      if (isVolcengine(config)) return result;
+      const ids = result?.segments ? result.segments.filter((s) => s.status === "succeeded" && s.taskId).map((s) => s.taskId) : result?.status === "succeeded" && result?.taskId ? [result.taskId] : [];
+      if (!ids.length) return result;
+      try {
+        const actualCost = await timedStage("actual_cost_query", () => fetchActualCost(config, ids, exec?.signal));
+        return actualCost ? { ...result, actualCost } : result;
+      } catch {
+        return result;
+      }
+    }
+  };
+}
+
+// src/workflow/execution.ts
+import { createRequire } from "node:module";
+import path4 from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+var progressRecordModule;
+async function appendVideoExecution(exec, phase) {
+  if (!exec?.agent?.session || !exec.callId) return;
+  try {
+    const resolver = createRequire(import.meta.url);
+    const modulePath = resolver.resolve("@deepseek-ai/dsh-session", {
+      paths: [path4.dirname(process.argv[1] || process.execPath), path4.dirname(fileURLToPath(import.meta.url))]
+    });
+    progressRecordModule ??= import(pathToFileURL(modulePath).href);
+    const { appendPluginRecord } = await progressRecordModule;
+    appendPluginRecord(exec.agent.session, "plugin:metaontic-video/execution", { callId: exec.callId, phase });
+  } catch {
+  }
+}
+function withVideoExecution(tool) {
+  return {
+    ...tool,
+    async execute(args, exec) {
+      await appendVideoExecution(exec, "start");
+      try {
+        return await tool.execute(args, exec);
+      } finally {
+        await appendVideoExecution(exec, "end");
+      }
+    }
+  };
+}
+
 // src/workflow/resume.ts
+init_config();
+import path5 from "node:path";
+import { readFile as readFile2, open as open2, rm as rm2, mkdir as mkdir4, writeFile, rename as rename2 } from "node:fs/promises";
+import os2 from "node:os";
 init_connection();
 
 // src/workflow/planning.ts
@@ -1464,7 +1556,7 @@ function jsonSafeTool(tool) {
 
 // src/providers/submissions.ts
 import path6 from "node:path";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomUUID as randomUUID3 } from "node:crypto";
 import { mkdir as mkdir5, readFile as readFile3, writeFile as writeFile2, rename as rename3, rm as rm3, open as open3, readdir as readdir2 } from "node:fs/promises";
 init_connection();
 
@@ -1639,14 +1731,14 @@ async function relayRequestCore(config, path10, { method = "GET", body, signal }
   return data;
 }
 function sleep(ms, signal) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve2, reject) => {
     if (signal?.aborted) {
       reject(abortError());
       return;
     }
     const timer = setTimeout(() => {
       signal?.removeEventListener("abort", onAbort);
-      resolve();
+      resolve2();
     }, ms);
     function onAbort() {
       clearTimeout(timer);
@@ -1731,7 +1823,7 @@ function directory() {
   return path6.join(dshHome(), "state", "metaontic-video", "submissions");
 }
 async function save(file, record) {
-  const temporary = `${file}.${randomUUID()}.tmp`;
+  const temporary = `${file}.${randomUUID3()}.tmp`;
   try {
     await writeFile2(temporary, JSON.stringify(record), { mode: 384 });
     await rename3(temporary, file);
@@ -1867,141 +1959,43 @@ function submissionTool(liveConfig) {
   };
 }
 
-// src/tools/video-prepare-image.ts
-init_config();
-init_connection();
-
-// src/providers/seedream.ts
-init_config();
-init_connection();
-init_connection();
-async function generateSeedreamImage(liveConfig, body, signal, existingTaskId, progress = {}) {
-  const config = imageConfig(liveConfig);
-  const prefix = /\/v1$/i.test(resolveBaseUrl(config)) ? "" : "/v1";
-  let taskId = String(existingTaskId || "").trim();
-  if (!taskId) {
-    const submitted = await guardedSubmit(config, `${prefix}/tasks/doubao`, body, signal, progress.scope);
-    taskId = String(submitted?.task_id || submitted?.id || "").trim();
-    if (!taskId) throw new Error("\u56FE\u7247\u63D0\u4EA4\u54CD\u5E94\u7F3A\u5C11 task_id\uFF0C\u65E0\u6CD5\u786E\u8BA4\u662F\u5426\u521B\u5EFA\u6210\u529F\uFF1B\u8BF7\u68C0\u67E5\u8C03\u7528\u8BB0\u5F55\uFF0C\u4E0D\u8981\u91CD\u590D\u63D0\u4EA4\u3002");
-  }
-  await progress.onCreated?.(taskId);
-  const taskPath = `${prefix}/tasks/${encodeURIComponent(taskId)}`;
-  const timeoutMs = Math.max(1e3, Number(ref(config, "imageMaxWaitMs", 3e5)) || 3e5);
-  const deadline = Date.now() + timeoutMs;
-  const budgetSignal = AbortSignal.timeout(timeoutMs);
-  const waitSignal = signal ? AbortSignal.any([signal, budgetSignal]) : budgetSignal;
-  try {
-    for (; ; ) {
-      const task = await relayRequest(config, taskPath, { signal: waitSignal });
-      const status = String(task?.status || "").toLowerCase();
-      if (FAILED_STATES.has(status)) {
-        if (body) await finishSubmission(config, `${prefix}/tasks/doubao`, body);
-        else await finishKnownTask(config, taskId);
-        throw Object.assign(new Error(`\u56FE\u7247\u751F\u6210\u5931\u8D25\uFF1A${task?.fail_reason || task?.error?.message || status}`), { terminal: true });
-      }
-      if (SUCCESS_STATES.has(status)) break;
-      if (Date.now() >= deadline) throw new Error("\u56FE\u7247\u751F\u6210\u7B49\u5F85\u8D85\u65F6");
-      await sleep(Math.min(3e3, deadline - Date.now()), waitSignal);
-    }
-    const result = await relayRequest(config, `${taskPath}/artifacts`, { signal: waitSignal });
-    const item = (result?.artifacts || []).find((item2) => /image/i.test(String(item2?.type || "")) && /^https?:\/\//i.test(String(item2?.content_url || "")));
-    if (!item) throw new Error("\u4EFB\u52A1\u5DF2\u5B8C\u6210\u4F46\u6CA1\u6709\u53EF\u7528\u56FE\u7247\u4EA7\u7269");
-    const completed = { imageUrl: String(item.content_url), taskId };
-    await progress.onCompleted?.(completed);
-    if (progress.onCompleted) {
-      if (body) await finishSubmission(config, `${prefix}/tasks/doubao`, body);
-      else await finishKnownTask(config, taskId);
-    }
-    return completed;
-  } catch (error) {
-    throw Object.assign(new Error(`${error?.message || error}\uFF08\u56FE\u7247 task_id=${taskId}\uFF09\u3002${error?.terminal ? "\u4EFB\u52A1\u5DF2\u5931\u8D25\uFF0C\u672A\u91CD\u8BD5\u3002" : "\u5DF2\u505C\u6B62\u7B49\u5F85\uFF0C\u4E0D\u91CD\u590D\u63D0\u4EA4\uFF1B\u53EF\u7528 video_prepare_image \u7684 taskId \u67E5\u8BE2\u6B64\u56FE\u7247\u4EFB\u52A1\u3002"}`), { taskId, terminal: Boolean(error?.terminal), code: error?.code || "image_task_error" });
-  }
-}
-
-// src/tools/video-prepare-image.ts
-var IMAGE_MODELS = ["doubao-seedream-5-0-260128", "doubao-seedream-5-0-pro-260628"];
-function prepareImageTool(liveConfig, progress = {}) {
-  return {
-    name: "video_prepare_image",
-    description: "A/B \u6A21\u5F0F\uFF1A\u7528 Seedream \u628A\u771F\u4EBA\u53C2\u8003\u56FE\u8F6C\u4E3A\u660E\u663E\u7684\u975E\u771F\u4EBA\u63D2\u753B\u6216\u52A8\u753B\u89D2\u8272\u3002\u987B\u5148\u8BF4\u660E\u56FE\u7247\u8C03\u7528\u5355\u72EC\u8BA1\u8D39\u5E76\u786E\u8BA4\u98CE\u683C\uFF1B\u8FD4\u56DE imageUrl\uFF0C\u53EF\u4EA4\u7ED9 video_generate/video_extend \u7684\u53C2\u8003\u56FE\u6216\u9996\u5C3E\u5E27\u3002\u4E0D\u80FD\u8BC6\u522B\u56FE\u7247\u662F\u5426\u771F\u4EBA\uFF0C\u7531\u52A9\u624B\u770B\u56FE\u6216\u6839\u636E\u7528\u6237\u8BF4\u660E\u5224\u65AD\uFF1B\u5931\u8D25\u7981\u6B62\u6539\u7528\u539F\u771F\u4EBA\u56FE\u751F\u6210\u89C6\u9891\u3002",
-    parameters: {
-      type: "object",
-      properties: {
-        taskId: { type: "string", description: "\u67E5\u8BE2\u5DF2\u63D0\u4EA4\u56FE\u7247\u4EFB\u52A1\u5E76\u53D6\u4EF6\uFF0C\u4E0D\u91CD\u65B0\u63D0\u4EA4\u6216\u6263\u53D6\u65B0\u7684\u751F\u6210\u8D39\u7528\uFF1B\u586B\u5199\u65F6\u65E0\u9700 image/style\u3002" },
-        seed: { type: "integer", description: "\u53EF\u9009\u968F\u673A\u79CD\u5B50\u3002\u7528\u6237\u8981\u6C42\u91CD\u65B0\u51FA\u56FE\u65F6\u4F7F\u7528\u4E0D\u540C seed \u5E76\u786E\u8BA4\u8D39\u7528\uFF1B\u76F8\u540C\u53C2\u6570\u7684\u91CD\u590D\u8C03\u7528\u4F1A\u590D\u7528\u5DF2\u63D0\u4EA4\u4EFB\u52A1\u3002" },
-        image: { type: "string", description: "\u539F\u56FE\u516C\u7F51 URL\u3001base64\u3001\u672C\u673A\u8DEF\u5F84\u6216 latest\u3002" },
-        style: { type: "string", description: "\u5DF2\u4E0E\u7528\u6237\u786E\u5B9A\u7684\u975E\u771F\u4EBA\u98CE\u683C\uFF0C\u4F8B\u5982\u4E8C\u7EF4\u52A8\u753B\u3001\u5361\u901A\u6216\u63D2\u753B\u3002" }
-      },
-      required: []
-    },
-    output: {
-      schema: { type: "object", properties: { taskId: { type: "string" }, imageUrl: { type: "string" }, model: { type: "string" }, reviewRequired: { type: "boolean" } } },
-      render(_args, value) {
-        return [{ type: "text", text: `\u975E\u771F\u4EBA\u53C2\u8003\u56FE\uFF1A${value.imageUrl}
-\u56FE\u7247\u6A21\u578B\uFF1A${value.model}
-\u8BF7\u5C55\u793A\u5E76\u6838\u5BF9\u98CE\u683C\u4E0E\u89D2\u8272\u540E\u518D\u7528\u4E8E\u89C6\u9891\u3002` }];
-      }
-    },
-    timeoutMs: 48e4,
-    isConcurrencySafe() {
-      return true;
-    },
-    async execute(args, exec) {
-      const config = imageConfig(liveConfig);
-      if (isVolcengine(config)) throw new Error("\u771F\u4EBA\u53C2\u8003\u56FE\u9884\u5904\u7406\u76EE\u524D\u652F\u6301 A\u3001B \u63A5\u5165\u65B9\u5F0F\u3002");
-      assertConfigured(config, resolveApiKey(config));
-      const model = String(ref(config, "imageModel", IMAGE_MODELS[0]));
-      if (!IMAGE_MODELS.includes(model)) throw new Error("\u8BF7\u9009\u62E9\u53D7\u652F\u6301\u7684 Seedream \u56FE\u7247\u6A21\u578B\u3002");
-      if (args?.taskId !== void 0 && !String(args.taskId).trim()) throw new Error("\u56FE\u7247 taskId \u4E0D\u80FD\u4E3A\u7A7A\u767D\u3002");
-      if (args?.taskId) {
-        const result2 = await generateSeedreamImage(config, void 0, exec?.signal, String(args.taskId).trim(), progress);
-        return { ...result2, model, reviewRequired: true };
-      }
-      const style = String(args?.style || "").trim();
-      if (!style) throw new Error("\u8BF7\u5148\u786E\u5B9A\u975E\u771F\u4EBA\u753B\u9762\u98CE\u683C\u3002");
-      if (args?.seed !== void 0 && !Number.isSafeInteger(args.seed)) throw new Error("seed \u5FC5\u987B\u662F\u5B89\u5168\u6574\u6570\u3002");
-      const image = await resolveImageInput(args?.image, "\u771F\u4EBA\u53C2\u8003\u56FE");
-      const result = await generateSeedreamImage(config, {
-        ...args?.seed !== void 0 ? { seed: args.seed } : {},
-        model,
-        image: [image.url],
-        size: "2048x2048",
-        n: 1,
-        response_format: "url",
-        watermark: false,
-        prompt: `\u5C06\u53C2\u8003\u7167\u7247\u4E2D\u7684\u771F\u4EBA\u8F6C\u6362\u4E3A\u660E\u663E\u7684\u975E\u771F\u4EBA\u827A\u672F\u89D2\u8272\uFF0C\u98CE\u683C\uFF1A${style}\u3002\u4FDD\u7559\u670D\u88C5\u3001\u53D1\u578B\u3001\u59FF\u6001\u3001\u6784\u56FE\u548C\u573A\u666F\u5173\u7CFB\uFF0C\u4F7F\u7528\u6E05\u6670\u7684\u7ED8\u753B\u6216\u52A8\u753B\u6750\u8D28\u4E0E\u9020\u578B\uFF0C\u4E0D\u8981\u8F93\u51FA\u6444\u5F71\u3001\u5199\u5B9E\u76AE\u80A4\u6216\u770B\u8D77\u6765\u4ECD\u662F\u771F\u4EBA\u7167\u7247\u7684\u753B\u9762\u3002\u4E0D\u6DFB\u52A0\u6587\u5B57\u3002`
-      }, exec?.signal, void 0, progress);
-      return { ...result, model, reviewRequired: true };
-    }
-  };
-}
-
-// src/tools/video-generate.ts
-init_config();
-
 // src/tools/results.ts
+import { resolve } from "node:path";
 function previewInstruction(value) {
   const latest = (value?.segments || []).filter((segment) => segment.status === "succeeded").at(-1);
   const target = latest?.localPath || value?.videoPath || latest?.videoUrl || value?.videoUrl;
-  return `\u3010\u4E0B\u4E00\u6B65\uFF1A\u5148\u5C55\u793A\u89C6\u9891\uFF0C\u7B49\u5F85\u7528\u6237\u9884\u89C8\u3011\u8BF7\u7ACB\u5373\u4F7F\u7528\u5F53\u524D\u5BBF\u4E3B\u7684 present/\u6587\u4EF6\u5C55\u793A\u5DE5\u5177\u5C55\u793A\u672C\u6B21\u5B8C\u6210\u7684\u5206\u6BB5\uFF1A${target || "\u89C1\u672C\u6B21\u5206\u6BB5\u7ED3\u679C"}\u3002\u4E0D\u80FD\u53EA\u8BF4\u201C\u751F\u6210\u6210\u529F\u201D\u6216\u53EA\u5217\u4EFB\u52A1ID\u3002\u5C55\u793A\u540E\u8BE2\u95EE\u201C\u5148\u770B\u8FD9\u6BB5\uFF0C\u6548\u679C\u53EF\u4EE5\u5417\uFF1F\u786E\u8BA4\u540E\u518D\u7EE7\u7EED\u4E0B\u4E00\u6BB5\u3002\u201D\u5E76\u7ED3\u675F\u672C\u8F6E\u7B49\u5F85\u56DE\u590D\u3002\u7528\u6237\u9996\u6B21\u6388\u6743\u5236\u4F5C\u4E0D\u7B49\u4E8E\u5DF2\u770B\u8FC7\u672C\u6BB5\uFF0C\u4E0D\u5F97\u81EA\u52A8resume\u6216\u8C03\u7528\u5176\u4ED6\u751F\u6210\u5DE5\u5177\u7ED5\u8FC7\u9884\u89C8\uFF1B\u5C55\u793A\u5DE5\u5177\u4E0D\u53EF\u7528\u65F6\u7ED9\u51FA\u53EF\u70B9\u51FB\u89C6\u9891\u8DEF\u5F84\u6216\u64AD\u653E\u94FE\u63A5\uFF0C\u4ECD\u987B\u7B49\u5F85\u660E\u786E\u786E\u8BA4\u3002`;
+  return `\u3010\u4E0B\u4E00\u6B65\uFF1A\u5148\u5C55\u793A\u89C6\u9891\uFF0C\u7B49\u5F85\u7528\u6237\u9884\u89C8\u3011\u8BF7\u7ACB\u5373\u4F7F\u7528\u5F53\u524D\u5BBF\u4E3B\u7684 present/\u6587\u4EF6\u5C55\u793A\u5DE5\u5177\u5C55\u793A\u672C\u6B21\u5B8C\u6210\u7684\u5206\u6BB5\uFF1A${target || "\u89C1\u672C\u6B21\u5206\u6BB5\u7ED3\u679C"}\u3002\u6B63\u6587\u9644\u4E0A ${artifactLink("\u89C2\u770B\u672C\u6BB5\u89C6\u9891", latest?.localPath || value?.previewPath || value?.videoPath, latest?.videoUrl || value?.videoUrl)}\u3002\u4E0D\u80FD\u53EA\u8BF4\u201C\u751F\u6210\u6210\u529F\u201D\u6216\u53EA\u5217\u4EFB\u52A1ID\u3002\u5C55\u793A\u540E\u8BE2\u95EE\u201C\u5148\u770B\u8FD9\u6BB5\uFF0C\u6548\u679C\u53EF\u4EE5\u5417\uFF1F\u786E\u8BA4\u540E\u518D\u7EE7\u7EED\u4E0B\u4E00\u6BB5\u3002\u201D\u5E76\u7ED3\u675F\u672C\u8F6E\u7B49\u5F85\u56DE\u590D\u3002\u7528\u6237\u9996\u6B21\u6388\u6743\u5236\u4F5C\u4E0D\u7B49\u4E8E\u5DF2\u770B\u8FC7\u672C\u6BB5\uFF0C\u4E0D\u5F97\u81EA\u52A8resume\u6216\u8C03\u7528\u5176\u4ED6\u751F\u6210\u5DE5\u5177\u7ED5\u8FC7\u9884\u89C8\uFF1B\u5C55\u793A\u5DE5\u5177\u4E0D\u53EF\u7528\u65F6\u7ED9\u51FA\u53EF\u70B9\u51FB\u89C6\u9891\u8DEF\u5F84\u6216\u64AD\u653E\u94FE\u63A5\uFF0C\u4ECD\u987B\u7B49\u5F85\u660E\u786E\u786E\u8BA4\u3002`;
+}
+function artifactLink(label, localPath, videoUrl) {
+  const target = localPath ? resolve(localPath) : videoUrl;
+  if (!target) return "";
+  return `[${label}](<${String(target).replace(/</g, "%3C").replace(/>/g, "%3E")}>)`;
 }
 function deliveryInstruction(value) {
   const segments = value?.segments || [];
   const completed = segments.filter((segment) => segment.status === "succeeded" && (segment.localPath || segment.videoUrl));
   const multiPart = segments.length > 1 || value?.paused && (value?.remainingSeconds || 0) > 0;
-  if (!multiPart || !completed.length) return "";
+  if (!completed.length && !value?.videoPath && !value?.videoUrl) return "";
+  const linkRule = "\u8BF7\u4F7F\u7528 present/\u6587\u4EF6\u5C55\u793A\u5DE5\u5177\u767B\u8BB0\u5B9E\u9645\u89C6\u9891\u6587\u4EF6\uFF0C\u5E76\u5728\u7528\u6237\u53EF\u89C1\u6B63\u6587\u4E2D\u59CB\u7EC8\u9010\u9879\u9644\u4E0A Markdown \u53EF\u70B9\u51FB\u94FE\u63A5\uFF1A[\u89C2\u770B\u89C6\u9891](<\u7EDD\u5BF9\u6587\u4EF6\u8DEF\u5F84\u6216\u771F\u5B9E\u64AD\u653EURL>)\u3002\u4E0D\u80FD\u7528\u53CD\u5F15\u53F7\u8DEF\u5F84\u6216\u666E\u901A\u6587\u672C\u8DEF\u5F84\u4EE3\u66FF\u94FE\u63A5\uFF1Bpresent\u6210\u529F\u4E5F\u4E0D\u80FD\u7701\u7565\u6B63\u6587\u94FE\u63A5\u3002\u5361\u7247\u672A\u9A8C\u8BC1\u65F6\u4E0D\u5F97\u58F0\u79F0\u4E0A\u65B9\u5361\u7247\u53EF\u76F4\u63A5\u64AD\u653E\u3002\u5DF2\u6709\u6587\u4EF6\u76F4\u63A5\u4EA4\u4ED8\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u3002";
+  if (!multiPart) {
+    const segment = completed[0];
+    return ["\u3010\u89C6\u9891\u4EA4\u4ED8\uFF1A\u6B63\u6587\u5FC5\u987B\u6709\u53EF\u70B9\u51FB\u94FE\u63A5\u3011", artifactLink("\u89C2\u770B\u89C6\u9891", value.videoPath || segment?.localPath, segment?.videoUrl || value.videoUrl), linkRule].join("\n");
+  }
   const labels = ["\u7B2C\u4E00\u6BB5", "\u7B2C\u4E8C\u6BB5", "\u7B2C\u4E09\u6BB5"];
   const items = completed.map((segment, i) => {
     const index = segment.index || i + 1;
-    return `${labels[index - 1] || `\u7B2C${index}\u6BB5`}\uFF1A${segment.localPath || segment.videoUrl}`;
+    const label = labels[index - 1] || `\u7B2C${index}\u6BB5`;
+    return `${label}\uFF1A${segment.localPath || segment.videoUrl}
+${artifactLink(label, segment.localPath, segment.videoUrl)}`;
   });
   const mergedPath = completed.length > 1 && value?.merged && value?.videoPath && !completed.some((segment) => segment.localPath === value.videoPath) ? value.videoPath : "";
-  if (mergedPath) items.push(`${value.paused || value.partial || value.status !== "succeeded" ? "\u5DF2\u5B8C\u6210\u90E8\u5206\u5408\u5E76\u89C6\u9891" : "\u5408\u5E76\u540E\u5B8C\u6574\u89C6\u9891"}\uFF1A${mergedPath}`);
+  if (mergedPath) items.unshift(artifactLink("\u6253\u5F00\u5408\u5E76\u89C6\u9891", mergedPath, ""), `${value.paused || value.partial || value.status !== "succeeded" ? "\u5DF2\u5B8C\u6210\u90E8\u5206\u5408\u5E76\u89C6\u9891" : "\u5408\u5E76\u540E\u5B8C\u6574\u89C6\u9891"}\uFF1A${mergedPath}`);
   else if (completed.length > 1) items.push("\u5408\u5E76\u7ED3\u679C\u5C1A\u672A\u4EA4\u4ED8\uFF1A\u5982\u5B9E\u8BF4\u660E\u672A\u5408\u5E76\u3001\u5408\u5E76\u5931\u8D25\u6216\u7B49\u5F85\u4EA4\u4ED8\uFF0C\u4E0D\u5C06\u6700\u540E\u4E00\u6BB5\u5F53\u4F5C\u5B8C\u6574\u6210\u7247\u3002");
   return [
     "\u3010\u4EA4\u4ED8\u6E05\u5355\uFF1A\u6BCF\u4E2A\u5206\u6BB5\u4E0E\u5408\u5E76\u7ED3\u679C\u5206\u522B\u5C55\u793A\u3011",
     ...items,
-    "\u8BF7\u5B9E\u9645\u4F7F\u7528 present/\u6587\u4EF6\u5C55\u793A\u5DE5\u5177\uFF0C\u6309\u987A\u5E8F\u9010\u9879\u5C55\u793A\u4E0A\u8FF0\u89C6\u9891\uFF0C\u4E0D\u53EA\u5C55\u793A\u6700\u540E\u4E00\u6BB5\u6216\u5408\u5E76\u89C6\u9891\uFF1B\u6BCF\u9879\u6807\u660E\u5BF9\u5E94\u6BB5\u53F7\u6216\u5408\u5E76\u7ED3\u679C\u3002\u5C55\u793A\u5DE5\u5177\u4E0D\u53EF\u7528\u65F6\uFF0C\u4E3A\u6BCF\u9879\u63D0\u4F9B\u53EF\u70B9\u51FB\u6587\u4EF6\u8DEF\u5F84\u6216\u64AD\u653E\u94FE\u63A5\u3002\u5DF2\u6709\u6587\u4EF6\u76F4\u63A5\u4EA4\u4ED8\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u3002"
+    linkRule,
+    "\u8BF7\u5B9E\u9645\u4F7F\u7528 present/\u6587\u4EF6\u5C55\u793A\u5DE5\u5177\uFF0C\u5148\u5C55\u793A\u5408\u5E76\u6210\u7247\uFF0C\u518D\u6309\u6BB5\u53F7\u4F9D\u6B21\u5C55\u793A\u5404\u5206\u6BB5\uFF1B\u6CA1\u6709\u5408\u5E76\u7ED3\u679C\u65F6\u53EA\u6309\u6BB5\u53F7\u5C55\u793A\u5206\u6BB5\u3002\u6BCF\u9879\u6807\u660E\u5BF9\u5E94\u6BB5\u53F7\u6216\u5408\u5E76\u7ED3\u679C\uFF0C\u4E0D\u53EA\u5C55\u793A\u6700\u540E\u4E00\u6BB5\u6216\u5408\u5E76\u89C6\u9891\u3002\u5C55\u793A\u5DE5\u5177\u4E0D\u53EF\u7528\u65F6\uFF0C\u4E3A\u6BCF\u9879\u63D0\u4F9B\u53EF\u70B9\u51FB\u6587\u4EF6\u8DEF\u5F84\u6216\u64AD\u653E\u94FE\u63A5\u3002\u5DF2\u6709\u6587\u4EF6\u76F4\u63A5\u4EA4\u4ED8\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u3002"
   ].join("\n");
 }
 function recoveryInstruction(value, toolName) {
@@ -2013,8 +2007,8 @@ function recoveryInstruction(value, toolName) {
 function referenceReview(value, toolName) {
   return [{ type: "text", text: [
     "\u3010\u4E0B\u4E00\u6B65\uFF1A\u5C55\u793A\u8F6C\u6362\u56FE\u7247\u5E76\u7B49\u5F85\u7528\u6237\u786E\u8BA4\uFF0C\u5C1A\u672A\u91CD\u8BD5\u89C6\u9891\u3011",
-    ...(value.convertedReferences || []).map((item, index) => `\u56FE\u7247${index + 1}\uFF08${item.role}\uFF09\uFF1A${item.imageUrl}`),
-    `\u5148\u4F7F\u7528 present/\u56FE\u7247\u5C55\u793A\u5DE5\u5177\u9010\u5F20\u5C55\u793A\uFF0C\u786E\u8BA4\u662F\u975E\u771F\u4EBA\u4E14\u7B26\u5408\u98CE\u683C\u8981\u6C42\uFF1B\u7528\u6237\u660E\u786E\u540C\u610F\u540E\u518D\u8C03\u7528 ${toolName}\uFF0C\u4F20 resume="${value.resumeDir}"\u3001referenceImagesReviewed:true\u3002\u9996\u6B21\u8F6C\u6362\u6388\u6743\u4E0D\u7B49\u4E8E\u7ED3\u679C\u786E\u8BA4\u3002\u56FE\u7247\u4ECD\u50CF\u771F\u4EBA\u6216\u4E0D\u6EE1\u610F\u65F6\u505C\u6B62\uFF0C\u4E0D\u81EA\u52A8\u518D\u6B21\u51FA\u56FE\u3002\u89C6\u9891\u91CD\u8BD5\u53E6\u5916\u8BA1\u8D39\u3002`
+    ...(value.convertedReferences || []).map((item, index) => `\u56FE\u7247${index + 1}\uFF08${item.role}\uFF09\uFF1A${artifactLink(`\u6253\u5F00\u56FE\u7247${index + 1}`, item.localPath, item.imageUrl)}`),
+    `\u5148\u4F7F\u7528 present/\u56FE\u7247\u5C55\u793A\u5DE5\u5177\u9010\u5F20\u5C55\u793A\uFF0C\u5E76\u5728\u6B63\u6587\u9010\u5F20\u5185\u5D4C\u56FE\u7247\u53CA\u9644\u53EF\u70B9\u51FB\u539F\u56FE\u94FE\u63A5\uFF1B\u5361\u7247\u6210\u529F\u4E0D\u80FD\u7701\u7565\u6B63\u6587\u94FE\u63A5\u3002\u786E\u8BA4\u662F\u975E\u771F\u4EBA\u4E14\u7B26\u5408\u98CE\u683C\u8981\u6C42\uFF1B\u7528\u6237\u660E\u786E\u540C\u610F\u540E\u518D\u8C03\u7528 ${toolName}\uFF0C\u4F20 resume="${value.resumeDir}"\u3001referenceImagesReviewed:true\u3002\u9996\u6B21\u8F6C\u6362\u6388\u6743\u4E0D\u7B49\u4E8E\u7ED3\u679C\u786E\u8BA4\u3002\u56FE\u7247\u4ECD\u50CF\u771F\u4EBA\u6216\u4E0D\u6EE1\u610F\u65F6\u505C\u6B62\uFF0C\u4E0D\u81EA\u52A8\u518D\u6B21\u51FA\u56FE\u3002\u89C6\u9891\u91CD\u8BD5\u53E6\u5916\u8BA1\u8D39\u3002`
   ].join("\n") }];
 }
 function renderResult(value) {
@@ -2071,7 +2065,6 @@ function renderResult(value) {
         text: [
           deliveryInstruction(value),
           "\u5EF6\u957F\u4EFB\u52A1\u4ECD\u5728\u751F\u6210\u4E2D\uFF08\u5DF2\u8D85\u51FA\u5355\u6B21\u7B49\u5F85\u65F6\u95F4\uFF09\u3002",
-          deliveryInstruction(value),
           recoveryInstruction(value, "video_extend"),
           ...lines,
           `\u53EF\u7528 video_status \u67E5\u8BE2\u4EFB\u52A1 ${segments.at(-1)?.taskId || "\uFF08\u672A\u77E5\uFF09"} \u7684\u72B6\u6001\u4E0E\u89C6\u9891\u94FE\u63A5\u3002`
@@ -2216,7 +2209,120 @@ function renderVideoResult(value) {
   return [{ type: "text", text: parts.filter(Boolean).join("\n") }];
 }
 
+// src/tools/video-prepare-image.ts
+init_config();
+init_connection();
+
+// src/providers/seedream.ts
+init_config();
+init_connection();
+init_connection();
+async function generateSeedreamImageCore(liveConfig, body, signal, existingTaskId, progress = {}) {
+  const config = imageConfig(liveConfig);
+  const prefix = /\/v1$/i.test(resolveBaseUrl(config)) ? "" : "/v1";
+  let taskId = String(existingTaskId || "").trim();
+  if (!taskId) {
+    const submitted = await guardedSubmit(config, `${prefix}/tasks/doubao`, body, signal, progress.scope);
+    taskId = String(submitted?.task_id || submitted?.id || "").trim();
+    if (!taskId) throw new Error("\u56FE\u7247\u63D0\u4EA4\u54CD\u5E94\u7F3A\u5C11 task_id\uFF0C\u65E0\u6CD5\u786E\u8BA4\u662F\u5426\u521B\u5EFA\u6210\u529F\uFF1B\u8BF7\u68C0\u67E5\u8C03\u7528\u8BB0\u5F55\uFF0C\u4E0D\u8981\u91CD\u590D\u63D0\u4EA4\u3002");
+  }
+  await progress.onCreated?.(taskId);
+  const taskPath = `${prefix}/tasks/${encodeURIComponent(taskId)}`;
+  const timeoutMs = Math.max(1e3, Number(ref(config, "imageMaxWaitMs", 3e5)) || 3e5);
+  const deadline = Date.now() + timeoutMs;
+  const budgetSignal = AbortSignal.timeout(timeoutMs);
+  const waitSignal = signal ? AbortSignal.any([signal, budgetSignal]) : budgetSignal;
+  try {
+    for (; ; ) {
+      const task = await relayRequest(config, taskPath, { signal: waitSignal });
+      const status = String(task?.status || "").toLowerCase();
+      if (FAILED_STATES.has(status)) {
+        if (body) await finishSubmission(config, `${prefix}/tasks/doubao`, body);
+        else await finishKnownTask(config, taskId);
+        throw Object.assign(new Error(`\u56FE\u7247\u751F\u6210\u5931\u8D25\uFF1A${task?.fail_reason || task?.error?.message || status}`), { terminal: true });
+      }
+      if (SUCCESS_STATES.has(status)) break;
+      if (Date.now() >= deadline) throw new Error("\u56FE\u7247\u751F\u6210\u7B49\u5F85\u8D85\u65F6");
+      await sleep(Math.min(3e3, deadline - Date.now()), waitSignal);
+    }
+    const result = await relayRequest(config, `${taskPath}/artifacts`, { signal: waitSignal });
+    const item = (result?.artifacts || []).find((item2) => /image/i.test(String(item2?.type || "")) && /^https?:\/\//i.test(String(item2?.content_url || "")));
+    if (!item) throw new Error("\u4EFB\u52A1\u5DF2\u5B8C\u6210\u4F46\u6CA1\u6709\u53EF\u7528\u56FE\u7247\u4EA7\u7269");
+    const completed = { imageUrl: String(item.content_url), taskId };
+    await progress.onCompleted?.(completed);
+    if (progress.onCompleted) {
+      if (body) await finishSubmission(config, `${prefix}/tasks/doubao`, body);
+      else await finishKnownTask(config, taskId);
+    }
+    return completed;
+  } catch (error) {
+    throw Object.assign(new Error(`${error?.message || error}\uFF08\u56FE\u7247 task_id=${taskId}\uFF09\u3002${error?.terminal ? "\u4EFB\u52A1\u5DF2\u5931\u8D25\uFF0C\u672A\u91CD\u8BD5\u3002" : "\u5DF2\u505C\u6B62\u7B49\u5F85\uFF0C\u4E0D\u91CD\u590D\u63D0\u4EA4\uFF1B\u53EF\u7528 video_prepare_image \u7684 taskId \u67E5\u8BE2\u6B64\u56FE\u7247\u4EFB\u52A1\u3002"}`), { taskId, terminal: Boolean(error?.terminal), code: error?.code || "image_task_error" });
+  }
+}
+async function generateSeedreamImage(...args) {
+  return timedStage("image_conversion", () => generateSeedreamImageCore(...args));
+}
+
+// src/tools/video-prepare-image.ts
+var IMAGE_MODELS = ["doubao-seedream-5-0-260128", "doubao-seedream-5-0-pro-260628"];
+function prepareImageTool(liveConfig, progress = {}) {
+  return {
+    name: "video_prepare_image",
+    description: "A/B \u6A21\u5F0F\uFF1A\u7528 Seedream \u628A\u771F\u4EBA\u53C2\u8003\u56FE\u8F6C\u4E3A\u660E\u663E\u7684\u975E\u771F\u4EBA\u63D2\u753B\u6216\u52A8\u753B\u89D2\u8272\u3002\u987B\u5148\u8BF4\u660E\u56FE\u7247\u8C03\u7528\u5355\u72EC\u8BA1\u8D39\u5E76\u786E\u8BA4\u98CE\u683C\uFF1B\u8FD4\u56DE imageUrl\uFF0C\u53EF\u4EA4\u7ED9 video_generate/video_extend \u7684\u53C2\u8003\u56FE\u6216\u9996\u5C3E\u5E27\u3002\u4E0D\u80FD\u8BC6\u522B\u56FE\u7247\u662F\u5426\u771F\u4EBA\uFF0C\u7531\u52A9\u624B\u770B\u56FE\u6216\u6839\u636E\u7528\u6237\u8BF4\u660E\u5224\u65AD\uFF1B\u5931\u8D25\u7981\u6B62\u6539\u7528\u539F\u771F\u4EBA\u56FE\u751F\u6210\u89C6\u9891\u3002",
+    parameters: {
+      type: "object",
+      properties: {
+        taskId: { type: "string", description: "\u67E5\u8BE2\u5DF2\u63D0\u4EA4\u56FE\u7247\u4EFB\u52A1\u5E76\u53D6\u4EF6\uFF0C\u4E0D\u91CD\u65B0\u63D0\u4EA4\u6216\u6263\u53D6\u65B0\u7684\u751F\u6210\u8D39\u7528\uFF1B\u586B\u5199\u65F6\u65E0\u9700 image/style\u3002" },
+        seed: { type: "integer", description: "\u53EF\u9009\u968F\u673A\u79CD\u5B50\u3002\u7528\u6237\u8981\u6C42\u91CD\u65B0\u51FA\u56FE\u65F6\u4F7F\u7528\u4E0D\u540C seed \u5E76\u786E\u8BA4\u8D39\u7528\uFF1B\u76F8\u540C\u53C2\u6570\u7684\u91CD\u590D\u8C03\u7528\u4F1A\u590D\u7528\u5DF2\u63D0\u4EA4\u4EFB\u52A1\u3002" },
+        image: { type: "string", description: "\u539F\u56FE\u516C\u7F51 URL\u3001base64\u3001\u672C\u673A\u8DEF\u5F84\u6216 latest\u3002" },
+        style: { type: "string", description: "\u5DF2\u4E0E\u7528\u6237\u786E\u5B9A\u7684\u975E\u771F\u4EBA\u98CE\u683C\uFF0C\u4F8B\u5982\u4E8C\u7EF4\u52A8\u753B\u3001\u5361\u901A\u6216\u63D2\u753B\u3002" }
+      },
+      required: []
+    },
+    output: {
+      schema: { type: "object", properties: { taskId: { type: "string" }, imageUrl: { type: "string" }, model: { type: "string" }, reviewRequired: { type: "boolean" } } },
+      render(_args, value) {
+        return [{ type: "text", text: `\u975E\u771F\u4EBA\u53C2\u8003\u56FE\uFF1A${artifactLink("\u6253\u5F00\u53C2\u8003\u56FE", "", value.imageUrl)}
+\u56FE\u7247\u6A21\u578B\uFF1A${value.model}
+\u8BF7\u5728\u6B63\u6587\u5185\u5D4C\u56FE\u7247\u5E76\u4FDD\u7559\u53EF\u70B9\u51FB\u539F\u56FE\u94FE\u63A5\uFF0C\u518D\u6838\u5BF9\u98CE\u683C\u4E0E\u89D2\u8272\uFF1B\u6709present\u5361\u7247\u4E5F\u4E0D\u80FD\u7701\u7565\u94FE\u63A5\u3002\u660E\u786E\u786E\u8BA4\u540E\u518D\u7528\u4E8E\u89C6\u9891\uFF0C\u4E0D\u81EA\u52A8\u91CD\u753B\u3002` }];
+      }
+    },
+    timeoutMs: 48e4,
+    isConcurrencySafe() {
+      return true;
+    },
+    async execute(args, exec) {
+      const config = imageConfig(liveConfig);
+      if (isVolcengine(config)) throw new Error("\u771F\u4EBA\u53C2\u8003\u56FE\u9884\u5904\u7406\u76EE\u524D\u652F\u6301 A\u3001B \u63A5\u5165\u65B9\u5F0F\u3002");
+      assertConfigured(config, resolveApiKey(config));
+      const model = String(ref(config, "imageModel", IMAGE_MODELS[0]));
+      if (!IMAGE_MODELS.includes(model)) throw new Error("\u8BF7\u9009\u62E9\u53D7\u652F\u6301\u7684 Seedream \u56FE\u7247\u6A21\u578B\u3002");
+      if (args?.taskId !== void 0 && !String(args.taskId).trim()) throw new Error("\u56FE\u7247 taskId \u4E0D\u80FD\u4E3A\u7A7A\u767D\u3002");
+      if (args?.taskId) {
+        const result2 = await generateSeedreamImage(config, void 0, exec?.signal, String(args.taskId).trim(), progress);
+        return { ...result2, model, reviewRequired: true };
+      }
+      const style = String(args?.style || "").trim();
+      if (!style) throw new Error("\u8BF7\u5148\u786E\u5B9A\u975E\u771F\u4EBA\u753B\u9762\u98CE\u683C\u3002");
+      if (args?.seed !== void 0 && !Number.isSafeInteger(args.seed)) throw new Error("seed \u5FC5\u987B\u662F\u5B89\u5168\u6574\u6570\u3002");
+      const image = await resolveImageInput(args?.image, "\u771F\u4EBA\u53C2\u8003\u56FE");
+      const result = await generateSeedreamImage(config, {
+        ...args?.seed !== void 0 ? { seed: args.seed } : {},
+        model,
+        image: [image.url],
+        size: "2048x2048",
+        n: 1,
+        response_format: "url",
+        watermark: false,
+        prompt: `\u5C06\u53C2\u8003\u7167\u7247\u4E2D\u7684\u771F\u4EBA\u8F6C\u6362\u4E3A\u660E\u663E\u7684\u975E\u771F\u4EBA\u827A\u672F\u89D2\u8272\uFF0C\u98CE\u683C\uFF1A${style}\u3002\u4FDD\u7559\u670D\u88C5\u3001\u53D1\u578B\u3001\u59FF\u6001\u3001\u6784\u56FE\u548C\u573A\u666F\u5173\u7CFB\uFF0C\u4F7F\u7528\u6E05\u6670\u7684\u7ED8\u753B\u6216\u52A8\u753B\u6750\u8D28\u4E0E\u9020\u578B\uFF0C\u4E0D\u8981\u8F93\u51FA\u6444\u5F71\u3001\u5199\u5B9E\u76AE\u80A4\u6216\u770B\u8D77\u6765\u4ECD\u662F\u771F\u4EBA\u7167\u7247\u7684\u753B\u9762\u3002\u4E0D\u6DFB\u52A0\u6587\u5B57\u3002`
+      }, exec?.signal, void 0, progress);
+      return { ...result, model, reviewRequired: true };
+    }
+  };
+}
+
 // src/tools/video-generate.ts
+init_config();
 init_connection();
 
 // src/prompts/generation.ts
@@ -2709,7 +2815,7 @@ function buildRequestBody(config, args, referenceVideoUrl) {
     modelMaxSeconds(config),
     modelMaxSeconds(config)
   );
-  const mode = args.mode || ref(config, "mode", "continuous");
+  const mode = args.mode === "closeup" ? "closeup" : "continuous";
   const prompt = String(args.prompt ?? "").trim();
   const startAt = args.startAt == null ? null : Math.max(0, Math.round(Number(args.startAt)));
   const direction = args.direction === "forward" ? "forward" : "backward";
@@ -2786,7 +2892,7 @@ async function runTaskOnce(config, body, signal, progress = {}) {
   if (!taskId) throw new Error("\u521B\u5EFA\u4EFB\u52A1\u5931\u8D25\uFF1A\u54CD\u5E94\u4E2D\u7F3A\u5C11\u4EFB\u52A1 ID\u3002");
   try {
     await progress.onCreated?.(taskId);
-    const final = await waitForCompletion(config, taskId, signal);
+    const final = await timedStage("video_poll_wait", () => waitForCompletion(config, taskId, signal));
     if (["succeeded", "failed", "cancelled"].includes(final.status)) await finishSubmission(config, resolveSubmitPath(config), body);
     await appendRequestLog({ event: "task_finished", taskId, status: final.status, errorCode: final.errorCode });
     return { ...final, taskId };
@@ -3154,7 +3260,7 @@ async function downloadSegmentsAndMerge(config, {
     );
     try {
       if (!await exists(dest)) {
-        await downloadFile(segment.videoUrl, dest, { signal });
+        await timedStage("segment_download", () => downloadFile(segment.videoUrl, dest, { signal }));
       }
     } catch (failure) {
       if (failure?.code === "ABORTED") throw failure;
@@ -3170,7 +3276,7 @@ async function downloadSegmentsAndMerge(config, {
       path: dest,
       bytes: (await stat3(dest)).size
     });
-    const media = await probeMedia(dest, config, signal);
+    const media = await timedStage("segment_probe", () => probeMedia(dest, config, signal));
     if (media?.durationSeconds) {
       segment.durationSeconds = Number(media.durationSeconds.toFixed(2));
       const cumulative = segments.slice(0, index + 1).reduce((sum, item) => sum + (item.seconds || 0), 0);
@@ -3219,11 +3325,11 @@ async function downloadSegmentsAndMerge(config, {
       return { files, segmentsDir, deliveredSeconds, merged: true, mergeMode: "single", videoPath: finalPath };
     }
     await appendRequestLog({ event: "merge_started", inputPaths: files, videoPath: finalPath });
-    const prepared = await prepareSeamTrims(config, files, finalPath, { signal });
+    const prepared = await timedStage("seam_prepare", () => prepareSeamTrims(config, files, finalPath, { signal }));
     await appendRequestLog({ event: "seam_trims_prepared", cuts: prepared.cuts });
     let merged;
     try {
-      merged = await mergeClips(config, prepared.files, finalPath, { signal });
+      merged = await timedStage("video_merge", () => mergeClips(config, prepared.files, finalPath, { signal }));
     } finally {
       await cleanupSegmentTemps(prepared.temps);
     }
@@ -3310,7 +3416,7 @@ function videoTool(liveConfig, deps, ctx) {
         mode: {
           type: "string",
           enum: ["continuous", "closeup"],
-          description: "\u5EF6\u957F\u65F6\u7684\u8854\u63A5\u65B9\u5F0F\uFF1Acontinuous=\u540C\u673A\u4F4D\u8FDE\u7EED\uFF08\u9ED8\u8BA4\uFF09\uFF1Bcloseup=\u5728\u53F0\u8BCD\u7ED3\u675F\u5904\u5207\u8FD1\u666F\u3002"
+          description: "\u7531\u5DF2\u5BA1\u6838\u811A\u672C\u51B3\u5B9A\u672C\u6B21\u7EED\u62CD\uFF1Acontinuous=\u540C\u673A\u4F4D\u8FDE\u7EED\uFF08\u672A\u6307\u5B9A\u65F6\uFF09\uFF1Bcloseup=\u6309\u811A\u672C\u5728\u5B8C\u6574\u5BF9\u767D\u6216\u52A8\u4F5C\u7ED3\u675F\u540E\u5207\u955C\uFF0C\u5177\u4F53\u666F\u522B\u4EE5\u8FC7\u6E21\u63CF\u8FF0\u4E3A\u51C6\u3002"
         },
         ratio: {
           type: "string",
@@ -3395,6 +3501,7 @@ function videoTool(liveConfig, deps, ctx) {
       assertResumeConnection(resume, config2, args);
       if (resume?.toolName && resume.toolName !== TOOL_NAME) throw new Error(`\u8FD9\u4EFD\u8FDB\u5EA6\u8BF7\u4F7F\u7528 ${resume.toolName} \u7EE7\u7EED\u3002`);
       args = { ...resume?.options || {}, ...args };
+      args.mode = args.mode || "continuous";
       args.resolution = resolveResolution(config2, args);
       if (args.transitionDescription !== void 0 && typeof args.transitionDescription !== "string") {
         throw new Error("\u8FC7\u6E21\u63CF\u8FF0\u5FC5\u987B\u662F\u6587\u5B57\u3002");
@@ -3739,7 +3846,7 @@ function extendTool(liveConfig, deps, ctx) {
         mode: {
           type: "string",
           enum: ["continuous", "closeup"],
-          description: "continuous=\u540C\u673A\u4F4D\u8FDE\u7EED\u7EED\u62CD\uFF08\u9ED8\u8BA4\uFF09\uFF1Bcloseup=\u5728\u5B8C\u6574\u53F0\u8BCD\u7ED3\u675F\u5904\u81EA\u7136\u5207\u5230\u8FD1\u666F\u6216\u53CD\u5E94\u955C\u5934\u3002"
+          description: "\u7531\u5DF2\u5BA1\u6838\u811A\u672C\u51B3\u5B9A\u672C\u6B21\u7EED\u62CD\uFF1Acontinuous=\u540C\u673A\u4F4D\u8FDE\u7EED\uFF08\u672A\u6307\u5B9A\u65F6\uFF09\uFF1Bcloseup=\u6309\u811A\u672C\u5207\u6362\u8FD1\u666F\u6216\u53CD\u5E94\u955C\u5934\uFF0C\u5177\u4F53\u5B89\u6392\u4EE5\u8FC7\u6E21\u63CF\u8FF0\u4E3A\u51C6\u3002"
         },
         startAt: {
           type: "number",
@@ -3819,6 +3926,7 @@ function extendTool(liveConfig, deps, ctx) {
       assertResumeConnection(resume, config2, args);
       if (resume?.toolName && resume.toolName !== TOOL_NAME) throw new Error(`\u8FD9\u4EFD\u8FDB\u5EA6\u8BF7\u4F7F\u7528 ${resume.toolName} \u7EE7\u7EED\u3002`);
       args = { ...resume?.options || {}, ...args };
+      args.mode = args.mode || "continuous";
       args.resolution = resolveResolution(config2, args);
       if (args.transitionDescription !== void 0 && typeof args.transitionDescription !== "string") {
         throw new Error("\u8FC7\u6E21\u63CF\u8FF0\u5FC5\u987B\u662F\u6587\u5B57\u3002");
@@ -4128,7 +4236,8 @@ function taskTool(liveConfig) {
                 "\u89C6\u9891\u4EFB\u52A1\u5DF2\u5B8C\u6210\u3002",
                 `\u4EFB\u52A1 ID\uFF1A${taskId}`,
                 `\u6A21\u578B\uFF1A${model || "-"}`,
-                `\u89C6\u9891\u94FE\u63A5\uFF08\u7EA6 24 \u5C0F\u65F6\u5185\u6709\u6548\uFF09\uFF1A${videoUrl || "\uFF08\u65E0\uFF09"}`
+                `\u89C6\u9891\u94FE\u63A5\uFF08\u7EA6 24 \u5C0F\u65F6\u5185\u6709\u6548\uFF09\uFF1A${artifactLink("\u89C2\u770B\u89C6\u9891", "", videoUrl) || "\uFF08\u65E0\uFF09"}`,
+                "\u6B63\u6587\u987B\u4FDD\u7559\u4E0A\u8FF0\u53EF\u70B9\u51FB\u94FE\u63A5\uFF0C\u6709present\u5361\u7247\u4E5F\u4E0D\u80FD\u7701\u7565\uFF1B\u67E5\u8BE2\u4E0D\u4F1A\u91CD\u65B0\u751F\u6210\u89C6\u9891\u3002"
               ].join("\n")
             }
           ];
@@ -4364,7 +4473,7 @@ import path9 from "node:path";
 import { createRequire as createRequire2 } from "node:module";
 import { stat as stat4, mkdir as mkdir8 } from "node:fs/promises";
 function runHyperframes(cli, args, cwd, config, signal) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve2, reject) => {
     if (signal?.aborted) return reject(new Error("Hyperframes \u5DF2\u53D6\u6D88\u3002"));
     let output = "";
     const child = spawn2(process.execPath, [cli, ...args], {
@@ -4411,7 +4520,7 @@ function runHyperframes(cli, args, cwd, config, signal) {
     child.once("close", (code) => {
       cleanup();
       if (stopped) reject(stopped);
-      else resolve({ code: code ?? 1, output });
+      else resolve2({ code: code ?? 1, output });
     });
   });
 }
@@ -4574,6 +4683,7 @@ function estimateTool(config) {
 }
 
 // src/tools/video-config.ts
+init_connection_defaults();
 init_config();
 init_connection();
 var CONFIG_FIELDS = [
@@ -4590,7 +4700,6 @@ var CONFIG_FIELDS = [
   "imageApiKey",
   "duration",
   "singleMaxSeconds",
-  "mode",
   "ratio",
   "generateAudio",
   "watermark",
@@ -4640,12 +4749,15 @@ function configView(config) {
 }
 function normalizeConnectionPatch(config, input) {
   const patch = { ...input };
-  if (patch.connectionMode === void 0) return patch;
+  if (patch.connectionMode === void 0) return { ...patch, ...connectionDefaults({ ...Object.fromEntries(Object.keys(config || {}).map((key) => [key, ref(config, key, void 0)])), ...patch }) };
   const mode = patch.connectionMode;
   if (!["service", "metaontic", "volcengine"].includes(mode)) throw new Error("\u672A\u77E5\u63A5\u5165\u65B9\u5F0F");
   const inactive = mode === "volcengine" ? ["metaonticApiKey", "apiKey", "keyOrigin", "baseUrl", "submitPath", "queryPath", "registerEmail", "deviceId", "deviceSecret", "registerApi", "registerToken"] : mode === "metaontic" ? ["volcengineApiKey", "apiKey", "keyOrigin", "registerEmail", "deviceId", "deviceSecret", "registerApi", "registerToken"] : ["volcengineApiKey", "metaonticApiKey"];
+  if (ref(config, "connectionMode", "service") === "volcengine" && mode !== "volcengine") {
+    for (const key of ["baseUrl", "submitPath", "queryPath"]) if (patch[key] === void 0) patch[key] = "";
+  }
   for (const key of inactive) patch[key] = "";
-  return patch;
+  return { ...patch, ...connectionDefaults({ ...Object.fromEntries(Object.keys(config || {}).map((key) => [key, ref(config, key, void 0)])), ...patch }) };
 }
 async function writeProfileConfig(settings, config, patch) {
   const entryId = String(ref(config, "entryId", "metaontic-video")).trim();
@@ -4666,7 +4778,7 @@ async function writeProfileConfig(settings, config, patch) {
 function configTool(config, settings) {
   return {
     name: "video_config",
-    description: "\u8BFB\u53D6\u6216\u4FEE\u6539 MetaOnticVideo \u63D2\u4EF6\u81EA\u5DF1\u7684\u914D\u7F6E\uFF08baseUrl\u3001submitPath\u3001queryPath\u3001model\u3001imageModel\u3001duration\u3001singleMaxSeconds\u3001mode\u3001ratio\u3001generateAudio\u3001watermark\u3001extraParams\u3001pollIntervalMs\u3001maxWaitMs\u3001mergeMode\u3001outputDir\u3001resumeLockStaleMinutes\u3001ffmpegBinary\u3001ffprobeBinary\u3001registerEmail\u3001registerApi\u3001estimateGroupRatio\uFF09\u3002apiKey \u53EA\u80FD\u7531\u8BBE\u7F6E\u9875\u300C\u767B\u5F55\u300D\u65F6\u670D\u52A1\u7AEF\u4E0B\u53D1\uFF0C\u8FD9\u91CC\u53EA\u80FD\u770B\u3001\u4E0D\u80FD\u6539\uFF1B\u4EC5\u670D\u52A1\u7AEF\u6A21\u5F0F\u6362 Key \u9700\u8981\u767B\u5F55\uFF1BMetaOntic AI \u4F7F\u7528 metaonticApiKey\uFF0C\u706B\u5C71\u76F4\u8FDE\u4F7F\u7528 volcengineApiKey\uFF0C\u53EF\u624B\u52A8\u914D\u7F6E\u3002\u6539\u52A8\u5199\u8FDB profile \u7684 cordis.patch.yml\uFF0C\u5BBF\u4E3B\u91CD\u8F7D\u540E\u751F\u6548\u3002\u7528\u6237\u8BF4\u300C\u628A\u4E2D\u8F6C\u7AD9\u5730\u5740/\u6A21\u578B/\u65F6\u957F\u6539\u6210 X\u300D\u65F6\u7528 action=set\uFF0C\u770B\u5F53\u524D\u503C\u7528 action=get\uFF1Bduration \u662F\u6BCF\u6BB5\u65B0\u589E\u79D2\u6570\u4E0A\u9650\uFF084 \u81F3\u6A21\u578B\u4E0A\u9650\uFF082.0 \u4E3A 15\u30012.5 \u4E3A 30\uFF09\uFF0C\u9ED8\u8BA4\u6309\u6A21\u578B\u4E0A\u9650\u3001\u6BB5\u6570\u6700\u5C11\uFF09\uFF0CsingleMaxSeconds \u4E3A\u517C\u5BB9\u65E7\u914D\u7F6E\u4FDD\u7559\uFF0C\u76F4\u51FA\u4E0A\u9650\u7531\u6A21\u578B\u6620\u5C04\u3002",
+    description: "\u8BFB\u53D6\u6216\u4FEE\u6539 MetaOnticVideo \u63D2\u4EF6\u81EA\u5DF1\u7684\u914D\u7F6E\uFF08baseUrl\u3001submitPath\u3001queryPath\u3001model\u3001imageModel\u3001duration\u3001singleMaxSeconds\u3001ratio\u3001generateAudio\u3001watermark\u3001extraParams\u3001pollIntervalMs\u3001maxWaitMs\u3001mergeMode\u3001outputDir\u3001resumeLockStaleMinutes\u3001ffmpegBinary\u3001ffprobeBinary\u3001registerEmail\u3001registerApi\u3001estimateGroupRatio\uFF09\u3002apiKey \u53EA\u80FD\u7531\u8BBE\u7F6E\u9875\u300C\u767B\u5F55\u300D\u65F6\u670D\u52A1\u7AEF\u4E0B\u53D1\uFF0C\u8FD9\u91CC\u53EA\u80FD\u770B\u3001\u4E0D\u80FD\u6539\uFF1B\u4EC5\u670D\u52A1\u7AEF\u6A21\u5F0F\u6362 Key \u9700\u8981\u767B\u5F55\uFF1BMetaOntic AI \u4F7F\u7528 metaonticApiKey\uFF0C\u706B\u5C71\u76F4\u8FDE\u4F7F\u7528 volcengineApiKey\uFF0C\u53EF\u624B\u52A8\u914D\u7F6E\u3002\u6539\u52A8\u5199\u8FDB profile \u7684 cordis.patch.yml\uFF0C\u5BBF\u4E3B\u91CD\u8F7D\u540E\u751F\u6548\u3002\u7528\u6237\u8BF4\u300C\u628A\u4E2D\u8F6C\u7AD9\u5730\u5740/\u6A21\u578B/\u65F6\u957F\u6539\u6210 X\u300D\u65F6\u7528 action=set\uFF0C\u770B\u5F53\u524D\u503C\u7528 action=get\uFF1Bduration \u662F\u6BCF\u6BB5\u65B0\u589E\u79D2\u6570\u4E0A\u9650\uFF084 \u81F3\u6A21\u578B\u4E0A\u9650\uFF082.0 \u4E3A 15\u30012.5 \u4E3A 30\uFF09\uFF0C\u9ED8\u8BA4\u6309\u6A21\u578B\u4E0A\u9650\u3001\u6BB5\u6570\u6700\u5C11\uFF09\uFF0CsingleMaxSeconds \u4E3A\u517C\u5BB9\u65E7\u914D\u7F6E\u4FDD\u7559\uFF0C\u76F4\u51FA\u4E0A\u9650\u7531\u6A21\u578B\u6620\u5C04\u3002",
     parameters: {
       type: "object",
       properties: {
@@ -4689,7 +4801,6 @@ function configTool(config, settings) {
         imageModel: { type: "string", enum: ["doubao-seedream-5-0-260128", "doubao-seedream-5-0-pro-260628"], description: "A/B \u771F\u4EBA\u53C2\u8003\u56FE\u975E\u771F\u4EBA\u5316\u6A21\u578B" },
         model: { type: "string", description: "\u6A21\u578B ID\uFF0C\u4F8B\u5982 doubao-seedance-2-0-mini-260615\u3002" },
         duration: { type: "integer", minimum: 4, maximum: modelMaxSeconds(config), description: "\u6BCF\u6BB5\u65B0\u589E\u79D2\u6570\u4E0A\u9650\uFF084 \u81F3\u6A21\u578B\u4E0A\u9650\uFF082.0 \u4E3A 15\u30012.5 \u4E3A 30\uFF09 \u7684\u6574\u6570\uFF0C\u9ED8\u8BA4\u6309\u6A21\u578B\u4E0A\u9650\u3001\u6BB5\u6570\u6700\u5C11\uFF09\u3002" },
-        mode: { type: "string", enum: ["continuous", "closeup"], description: "\u7EED\u62CD\u65B9\u5F0F\u3002" },
         ratio: {
           type: "string",
           enum: ["16:9", "9:16", "4:3", "3:4", "1:1", "adaptive"],
@@ -4776,6 +4887,7 @@ function configTool(config, settings) {
       if (action !== "set") {
         throw new Error("action \u53EA\u80FD\u662F get \u6216 set\u3002");
       }
+      if (args?.mode !== void 0) throw new Error("\u7EED\u62CD\u65B9\u5F0F\u7531\u5DF2\u5BA1\u6838\u811A\u672C\u51B3\u5B9A\uFF0C\u8BF7\u5728 video_generate/video_extend \u7684\u672C\u6B21\u53C2\u6570\u6216\u8FC7\u6E21\u63CF\u8FF0\u4E2D\u6307\u5B9A\uFF0C\u4E0D\u518D\u4F5C\u4E3A\u63D2\u4EF6\u8BBE\u7F6E\u4FDD\u5B58\u3002");
       const readonly = Object.keys(args || {}).filter((key) => READ_ONLY_CONFIG_FIELDS.has(key));
       if (readonly.length) {
         throw new Error(
@@ -4810,9 +4922,15 @@ function buildPromptGuidance(config) {
   const singleMax = resolveSingleMax(config);
   const segmentSeconds = resolveSegmentSeconds(config);
   return [
+    "\xB7 \u5206\u955C\u56FE\u5FC5\u987B\u5B9E\u9645\u53EF\u89C1\uFF1A\u5148\u786E\u8BA4\u5F53\u524D\u9879\u76EE/\u7248\u672C\u7684SVG\u6216PNG\u6587\u4EF6\u771F\u5B9E\u5B58\u5728\uFF0C\u518D\u8C03\u7528present\u767B\u8BB0\u5E76\u7B49\u5F85\u6210\u529F\uFF0C\u7136\u540E\u5728\u7528\u6237\u53EF\u89C1\u6B63\u6587\u8F93\u51FAMarkdown\u5185\u5D4C\u56FE\u7247\uFF08\u611F\u53F9\u53F7+\u56FE\u7247\u6807\u7B7E+\u5C16\u62EC\u53F7\u5305\u88F9\u7684\u7EDD\u5BF9\u8DEF\u5F84\uFF09\uFF0C\u540C\u65F6\u7ED9\u51FA\u6253\u5F00\u539F\u56FE\u7684\u6587\u4EF6\u94FE\u63A5\u3002present\u53EA\u767B\u8BB0\u4EA4\u4ED8\uFF0C\u4E0D\u7B49\u4E8E\u6B63\u6587\u5DF2\u7ECF\u6E32\u67D3\uFF1Bread_image\u7B49\u6A21\u578B\u770B\u56FE\u5DE5\u5177\u6210\u529F\u4E5F\u4E0D\u7B49\u4E8E\u7528\u6237\u770B\u5230\u56FE\u3002\u4E0D\u80FD\u53EA\u8BF4\u5DF2\u753B\u597D\u3001\u53EA\u7ED9\u76EE\u5F55\u6216\u5F39\u5BA1\u6838\u7A97\u3002SVG/HTML\u4E0D\u80FD\u5185\u5D4C\u65F6\u7528\u5DF2\u6709\u672C\u5730\u5DE5\u5177\u5BFC\u51FAPNG\uFF0C\u4E0D\u80FD\u4E3A\u6B64\u64C5\u81EA\u8C03\u7528\u4ED8\u8D39\u51FA\u56FE\u6216\u5B89\u88C5\u8F6F\u4EF6\uFF1B\u786E\u5B9E\u65E0\u6CD5\u5185\u5D4C\u65F6\u660E\u786E\u8BF4\u660E\u5E76\u63D0\u4F9B\u5B9E\u9645\u53EF\u6253\u5F00\u6587\u4EF6\uFF0C\u4E0D\u58F0\u79F0\u5DF2\u5C55\u793A\u6210\u529F\u3002\u5148\u53D1\u51FA\u5305\u542B\u56FE\u7247/\u6253\u5F00\u5165\u53E3\u7684\u6B63\u6587\uFF0C\u518D\u53D1\u811A\u672C\u5BA1\u6838\u63D0\u95EE\uFF0C\u7981\u6B62\u4E0E\u5C55\u793A\u5DE5\u5177\u5E76\u884C\u3002\u7528\u6237\u8BF4\u6CA1\u770B\u5230\u56FE\u65F6\u5148\u8865\u5C55\u793A\u540C\u4E00\u7248\u56FE\uFF0C\u4E0D\u76F4\u63A5\u7EE7\u7EED\u5BA1\u6838\u6216\u91CD\u65B0\u751F\u6210\u89C6\u9891\u3002",
+    "\xB7 \u7EED\u62CD\u65B9\u5F0F\u7531\u672C\u7248\u5DF2\u5BA1\u6838\u811A\u672C\u51B3\u5B9A\uFF0C\u4E0D\u5728\u63D2\u4EF6\u8BBE\u7F6E\u9875\u914D\u7F6E\uFF0C\u4E0D\u7528video_config\u4FDD\u5B58\u5168\u5C40mode\u3002\u6BCF\u6BB5\u660E\u786E\u8FDE\u7EED\u955C\u5934\u8FD8\u662F\u6709\u52A8\u673A\u7684\u666F\u522B\u5207\u6362\uFF0C\u5E76\u5199\u5165\u8FC7\u6E21\u63CF\u8FF0\uFF1B\u5B9E\u9645\u8C03\u7528\u4F20\u76F8\u5E94mode\u6216transitionDescription\u3002\u672A\u6307\u5B9A\u65F6\u7528\u8FDE\u7EED\u7EED\u62CD\uFF0C\u65E7\u914D\u7F6Emode\u4E0D\u5F71\u54CD\u65B0\u4EFB\u52A1\uFF1Bresume\u4FDD\u7559\u8BB0\u5F55\u91CC\u7684mode\u4E0E\u8FC7\u6E21\uFF0C\u5DF2\u63D0\u4EA4\u4EFB\u52A1\u539F\u8BF7\u6C42\u4E0D\u6539\u3002",
     "\xB7 \u5B98\u65B9\u63D0\u793A\u8BCD\u7EC6\u5219\uFF1A\u5148\u5B9A\u4E49\u4EBA\u7269\u3001\u9053\u5177\u3001\u573A\u666F\u7B49\u4E3B\u4F53\uFF0C\u4F7F\u75282\u20133\u4E2A\u7A33\u5B9A\u53EF\u8BC6\u522B\u7279\u5F81\u4E0E\u7D20\u6750\u7F16\u53F7\u5EFA\u7ACB\u7ED1\u5B9A\uFF0C\u540E\u6587\u56FA\u5B9A\u4F7F\u7528\u540C\u4E00\u6807\u7B7E\u3002\u6BCF\u4E2A\u751F\u6210\u6BB5\u5185\u90E8\u6309\u955C\u59341/\u955C\u59342/\u955C\u59343\u7684\u4E8B\u4EF6\u987A\u5E8F\u5199\u8C01\u3001\u5728\u54EA\u3001\u505A\u4EC0\u4E48\u3001\u955C\u5934\u600E\u4E48\u52A8\u53CA\u58F0\u97F3\uFF0C\u4E0D\u5F3A\u884C\u51D1\u6EE1\u4E09\u4E2A\u955C\u5934\uFF1B\u5206\u955C\u7F16\u53F7\u4E0D\u589E\u52A0\u4ED8\u8D39\u751F\u6210\u6B21\u6570\uFF0C2.0\u4E0D\u5F3A\u5236\u9010\u955C\u79D2\u70B9\u3002\u52A8\u4F5C\u5199\u5177\u4F53\u90E8\u4F4D\u3001\u5E45\u5EA6\u3001\u901F\u5EA6\u3001\u529B\u5EA6\u548C\u60EF\u6027\u627F\u63A5\uFF0C\u7528\u53EF\u89C1\u8868\u60C5/\u59FF\u6001\u8868\u73B0\u60C5\u7EEA\uFF1B\u4E00\u822C\u4F18\u5148\u4F4E\u7F13\u8FDE\u7EED\u5C0F\u52A8\u4F5C\uFF0C\u52A8\u4F5C\u620F\u4E0E\u7528\u6237\u660E\u786E\u5267\u60C5\u4F18\u5148\uFF0C\u4E0D\u64C5\u81EA\u6539\u5199\u3002\u5C06\u666F\u522B\uFF08\u8FDC\u666F/\u5168\u666F/\u4E2D\u666F/\u8FD1\u666F/\u7279\u5199\uFF09\u3001\u89C6\u89D2\uFF08\u4FEF\u62CD/\u4EF0\u62CD/\u822A\u62CD/\u5FAE\u8DDD\u7B49\uFF09\u3001\u8FD0\u955C\uFF08\u63A8/\u62C9/\u6447/\u79FB/\u73AF\u7ED5/\u8DDF\u968F/\u5347\u964D/\u53D8\u7126\uFF09\u5206\u522B\u5199\u6E05\uFF0C\u4E00\u4E2A\u955C\u5934\u5C3D\u91CF\u53EA\u5B89\u6392\u4E00\u79CD\u8FD0\u955C\uFF0C\u907F\u514D\u4E92\u76F8\u77DB\u76FE\u3002\u753B\u8D28\u63CF\u8FF0\u5199\u7EB9\u7406\u3001\u8272\u5F69\u548C\u5149\u5F71\u8D28\u611F\uFF0C\u4E0D\u80FD\u4EE3\u66FF\u7528\u6237\u786E\u8BA4\u7684480P/720P\u53C2\u6570\uFF1B\u89C6\u89C9\u98CE\u683C\u4E0E\u7528\u6237\u65B9\u6848\u4E00\u81F4\uFF0C\u9010\u6BB5\u4FDD\u6301\u7EDF\u4E00\u3002\u7EA6\u675F\u8BCD\u6309\u9700\u6C42\u660E\u786E\u65E0\u5B57\u5E55\u3001\u65E0\u65B0\u589ELogo\u6216\u6C34\u5370\u3001\u4E3B\u4F53\u7A33\u5B9A\u4E0D\u53D8\u5F62\u4E0E\u65E0\u95EA\u70C1\uFF0C\u4F46\u4E0D\u5F97\u8986\u76D6\u7528\u6237\u660E\u786E\u8981\u6C42\u7684\u5B57\u5E55\u3001\u54C1\u724C\u6807\u8BC6\u6216\u6C34\u5370\u3002",
     "\xB7 \u811A\u672C\u4E0E\u9010\u6BB5\u63D0\u793A\u8BCD\u91C7\u7528\u5B98\u65B9\u8FDB\u9636\u516C\u5F0F\uFF1A\u7CBE\u51C6\u4E3B\u4F53\u3001\u52A8\u4F5C\u7EC6\u8282\u3001\u573A\u666F\u73AF\u5883\u3001\u5149\u5F71\u8272\u8C03\u3001\u955C\u5934\u8FD0\u955C\u3001\u89C6\u89C9\u98CE\u683C\u3001\u753B\u8D28\u3001\u7EA6\u675F\u6761\u4EF6\u3002\u6BCF\u4E2A\u7EED\u62CD\u6BB5\u5728\u811A\u672C\u5206\u6BB5\u8868\u4E2D\u53E6\u5199\u660E\u786E\u7684\u8FC7\u6E21\u753B\u9762\u63CF\u8FF0\uFF1A\u4E0A\u4E00\u6BB5\u63A5\u7F1D\u72B6\u6001\u2192\u672C\u6BB5\u8D77\u59CB\u52A8\u4F5C\u4E0E\u955C\u5934\u2192\u58F0\u97F3\u4EA4\u63A5\uFF1B\u540C\u666F\u522B\u8FDE\u7EED\u6216\u5207\u4E2D\u666F/\u8FD1\u666F\u7531\u5267\u60C5\u51B3\u5B9A\uFF0C\u4E0D\u56E0\u5206\u6BB5\u81EA\u52A8\u6362\u573A\u666F\u3002\u8BE5\u63CF\u8FF0\u4E0E\u5B8C\u6574\u811A\u672C\u3001\u793A\u610F\u56FE\u4E00\u540C\u5C55\u793A\u5BA1\u6838\uFF0C\u4FEE\u6539\u540E\u91CD\u65B0\u5BA1\u6838\u3002\u6267\u884C\u65F6\u5C06\u8BE5\u6BB5\u5DF2\u5BA1\u6838\u63CF\u8FF0\u5199\u5165 segmentPrompts \u5BF9\u5E94\u6761\u76EE\u7684\u5355\u884C\u3010\u8FC7\u6E21\u753B\u9762\u3011\uFF0C\u6216 video_extend.transitionDescription\uFF1B\u76F4\u63A5\u7528\u201C\u89C6\u98911\u201D\u6307\u4EE3\u7D20\u6750\u5E76\u4F7F\u7528\u5411\u524D/\u5411\u540E\u5EF6\u957F\u89C6\u98911\uFF0C\u4E0D\u5199\u53C2\u8003\u89C6\u98911\u3002\u8F68\u9053\u8865\u5168\u591A\u4E2A\u65E2\u6709\u89C6\u9891\u7684\u5B98\u65B9\u53E5\u5F0F\u4EC5\u4F5C\u8BBE\u8BA1\u53C2\u8003\uFF0C\u4E0D\u5047\u79F0\u5F53\u524D\u5DE5\u5177\u5DF2\u652F\u6301\u591A\u89C6\u9891\u8F93\u5165\uFF0C\u4E5F\u4E0D\u4E3A\u8F6C\u573A\u64C5\u81EA\u589E\u52A0\u4ED8\u8D39\u4EFB\u52A1\u3002\u4FDD\u7559\u4EBA\u7269/\u58F0\u97F3/\u98CE\u683C\u8FDE\u7EED\u6027\uFF0C\u4E0D\u4FDD\u8BC1\u5B8C\u5168\u6D88\u9664\u63A5\u7F1D\u8DF3\u53D8\u3002",
-    "\xB7 \u957F\u89C6\u9891\u4EA4\u4ED8\uFF1A\u76EE\u6807\u8D85\u8FC715\u79D2\u4E14\u5B9E\u9645\u5206\u6BB5\u751F\u6210\u65F6\uFF0C\u6BCF\u6B21\u5DE5\u5177\u8FD4\u56DE\u540E\u6309\u6BB5\u53F7\u5206\u522B\u5C55\u793A\u7B2C\u4E00\u6BB5\u3001\u7B2C\u4E8C\u6BB5\u53CA\u540E\u7EED\u5168\u90E8\u5DF2\u5B8C\u6210\u5206\u6BB5\uFF1B\u5168\u90E8\u751F\u6210\u4E14\u5408\u5E76\u6210\u529F\u540E\uFF0C\u8FD8\u987B\u5355\u72EC\u5C55\u793A\u5408\u5E76\u540E\u5B8C\u6574\u89C6\u9891\u3002\u4F7F\u7528 present/\u6587\u4EF6\u5C55\u793A\u5DE5\u5177\u9010\u9879\u5C55\u793A\u5E76\u6807\u6CE8\u6BB5\u53F7\uFF0C\u4E0D\u5F97\u53EA\u7ED9\u5408\u5E76\u89C6\u9891\u3001\u53EA\u7ED9\u6700\u540E\u4E00\u6BB5\u6216\u53EA\u5217\u76EE\u5F55\u3002\u6682\u505C\u65F6\u5148\u4EA4\u4ED8\u5DF2\u5B8C\u6210\u5206\u6BB5\uFF0C\u5408\u5E76\u5931\u8D25\u4ECD\u4EA4\u4ED8\u5206\u6BB5\u5E76\u6309\u539Fresume\u91CD\u8BD5\u4EA4\u4ED8\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u3002\u53EA\u4F7F\u7528\u7ED3\u679C\u4E2D\u771F\u5B9E\u8FD4\u56DE\u7684localPath/videoUrl\u548C\u5DF2\u786E\u8BA4\u5408\u5E76\u7684videoPath\uFF1B\u5355\u6BB5\u76F4\u51FA\u4E0D\u865A\u6784\u7B2C\u4E8C\u6BB5\u6216\u5408\u5E76\u7ED3\u679C\u3002",
+    "\xB7 \u6D41\u7A0B\u8017\u65F6\u65E5\u5FD7\uFF1A\u9636\u6BB5\u8BA1\u65F6\uFF1A\u7F16\u5199\u811A\u672C\u524D\u7528video_stage(stage:script_design,action:start)\uFF0C\u5B8C\u6574\u811A\u672C\u4FDD\u5B58\u540Efinish\u539FspanId\uFF1B\u793A\u610F\u56FE\u7ED8\u5236\u7528storyboard_design\uFF0C\u5C55\u793A\u811A\u672C\u7528script_present\u3002\u5BA1\u6838/\u5236\u4F5C/\u53C2\u8003\u56FE/\u5206\u6BB5\u9884\u89C8\u7B49\u5F85\u5206\u522B\u7528script_review_wait\u3001production_confirm_wait\u3001reference_review_wait\u3001segment_review_wait\uFF0C\u5C55\u793A\u6210\u679C\u7528result_present\u3002\u7528\u6237\u56DE\u590D\u540E\u7ED3\u675F\u5BF9\u5E94\u7B49\u5F85\u6807\u8BB0\uFF1B\u4E0D\u5F97\u628A\u7B49\u5F85\u6DF7\u5165\u811A\u672C\u8BBE\u8BA1\u65F6\u95F4\uFF0C\u4E0D\u4E3A\u8BA1\u65F6\u91CD\u590D\u751F\u6210\u5185\u5BB9\u3002\u6807\u8BB0\u4EC5\u8BB0\u5F55\u8FB9\u754C\u5899\u949F\u8017\u65F6\uFF0C\u4E0D\u7B49\u4E8E\u6A21\u578B\u7EAF\u63A8\u7406\u65F6\u95F4\uFF1B\u6807\u8BB0\u4E0D\u53EF\u7528\u4ECD\u6B63\u5E38\u63A8\u8FDB\uFF0C\u4E0D\u731C\u8017\u65F6\u3002",
+    "\xB7 \u5168\u90E8\u6587\u4EF6\u4EA4\u4ED8\uFF1A\u6240\u6709\u7528\u6237\u4EA4\u4ED8\u7684\u6587\u4EF6\uFF08\u811A\u672C\u3001\u5206\u955C\u793A\u610F\u56FE\u3001\u8F6C\u6362\u56FE\u7247\u3001\u5355\u6BB5/\u7EED\u62CD\u9884\u89C8\u3001\u5408\u5E76\u6210\u7247\u3001\u6062\u590D\u540E\u6210\u679C\u3001\u5BFC\u51FAPDF\u7B49\uFF09\u90FD\u987B\u5728\u7528\u6237\u53EF\u89C1\u6B63\u6587\u7ED9\u51FA\u9010\u9879\u53EF\u70B9\u51FBMarkdown\u94FE\u63A5\uFF0C\u4E0D\u80FD\u53EA\u7ED9\u76EE\u5F55\u3001\u53CD\u5F15\u53F7\u6216\u666E\u901A\u6587\u672C\u8DEF\u5F84\uFF1B\u672C\u5730\u8DEF\u5F84\u5148\u786E\u8BA4\u6587\u4EF6\u5B58\u5728\u5E76\u8F6C\u7EDD\u5BF9\u8DEF\u5F84\uFF0C\u7528\u5C16\u62EC\u53F7\u5305\u88F9\u3002\u56FE\u7247\u53E6\u987B\u5185\u5D4C\uFF0C\u811A\u672C\u53E6\u987B\u5B8C\u6574\u5C55\u793A\u6B63\u6587\uFF1Bpresent\u767B\u8BB0\u6210\u529F\u4ECD\u4FDD\u7559\u94FE\u63A5\uFF0C\u4E0D\u58F0\u79F0\u5361\u7247\u5DF2\u64AD\u653E\u3002\u53EA\u94FE\u63A5\u771F\u5B9E\u8FD4\u56DE\u6216\u5DF2\u6838\u5B9E\u6587\u4EF6\uFF0C\u4E0D\u7F16\u9020\u8DEF\u5F84\uFF0C\u4E0D\u4E3A\u8865\u94FE\u63A5\u91CD\u65B0\u4ED8\u8D39\u751F\u6210\u3002\u6062\u590D\u76EE\u5F55\u3001\u4EFB\u52A1ID\u3001\u914D\u7F6E\u6587\u4EF6\u7B49\u5185\u90E8\u53C2\u6570\u7EE7\u7EED\u6309\u539F\u53C2\u6570\u4F7F\u7528\uFF0C\u4E0D\u5F53\u4F5C\u53EF\u64AD\u653E\u6210\u679C\u3002",
+    "\xB7 \u89C6\u9891\u6587\u4EF6\u94FE\u63A5\uFF1A\u89C6\u9891\u4EA4\u4ED8\u6B63\u6587\u5FC5\u987B\u9010\u9879\u9644Markdown\u53EF\u70B9\u51FB\u94FE\u63A5\uFF0C\u4F8B\u5982[\u89C2\u770B\u7B2C\u4E00\u6BB5](<\u7EDD\u5BF9\u6587\u4EF6\u8DEF\u5F84>)\uFF0C\u8DEF\u5F84\u542B\u7A7A\u683C\u4E5F\u7528\u5C16\u62EC\u53F7\u5305\u88F9\uFF1B\u6709present\u4ECD\u987B\u7ED9\u6B63\u6587\u94FE\u63A5\uFF0C\u666E\u901A\u6587\u672C\u6216\u53CD\u5F15\u53F7\u8DEF\u5F84\u4E0D\u7B97\u94FE\u63A5\uFF0C\u672A\u7ECF\u9A8C\u8BC1\u4E0D\u5F97\u8BF4\u4E0A\u65B9\u5361\u7247\u53EF\u76F4\u63A5\u64AD\u653E\u3002\u7F3A\u6587\u4EF6\u5148\u67E5\u539F\u4EFB\u52A1\u548C\u4EA4\u4ED8\u8DEF\u5F84\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u3002",
+    "\xB7 \u4EA4\u4ED8\u6587\u4EF6\u6392\u5E8F\uFF1A\u4EA4\u4ED8\u6587\u4EF6\u987A\u5E8F\u7EDF\u4E00\u4E3A\uFF1A\u5408\u5E76\u540E\u7684\u5B8C\u6574\u89C6\u9891\u7B2C\u4E00\uFF0C\u5176\u540E\u4F9D\u6B21\u4E3A\u7B2C\u4E00\u6BB5\u3001\u7B2C\u4E8C\u6BB5\u53CA\u540E\u7EED\u5206\u6BB5\uFF1Bpresent\u8C03\u7528\u3001\u6B63\u6587\u6587\u4EF6\u94FE\u63A5\u548C\u4EA4\u4ED8\u6E05\u5355\u90FD\u9075\u5B88\u6B64\u987A\u5E8F\u3002\u6682\u505C\u65F6\u5DF2\u6709\u7D2F\u8BA1\u5408\u5E76\u89C6\u9891\u6807\u4E3A\u201C\u5DF2\u5B8C\u6210\u90E8\u5206\u5408\u5E76\u89C6\u9891\u201D\uFF0C\u4E0D\u6807\u6210\u5B8C\u6574\u6210\u7247\uFF1B\u5408\u5E76\u5931\u8D25\u6216\u672A\u5408\u5E76\u65F6\u53EA\u6309\u6BB5\u53F7\u4EA4\u4ED8\u771F\u5B9E\u6587\u4EF6\u3002",
+    "\xB7 \u957F\u89C6\u9891\u4EA4\u4ED8\uFF1A\u76EE\u6807\u8D85\u8FC715\u79D2\u4E14\u5B9E\u9645\u5206\u6BB5\u751F\u6210\u65F6\uFF0C\u6BCF\u6B21\u5DE5\u5177\u8FD4\u56DE\u540E\u5206\u522B\u5C55\u793A\u5168\u90E8\u5DF2\u5B8C\u6210\u5206\u6BB5\uFF1B\u5168\u90E8\u751F\u6210\u4E14\u5408\u5E76\u6210\u529F\u65F6\uFF0C\u5148\u5C55\u793A\u5408\u5E76\u540E\u5B8C\u6574\u89C6\u9891\uFF0C\u518D\u6309\u6BB5\u53F7\u5C55\u793A\u7B2C\u4E00\u6BB5\u3001\u7B2C\u4E8C\u6BB5\u53CA\u540E\u7EED\u5206\u6BB5\u3002\u4F7F\u7528 present/\u6587\u4EF6\u5C55\u793A\u5DE5\u5177\u9010\u9879\u5C55\u793A\u5E76\u6807\u6CE8\u6BB5\u53F7\uFF0C\u4E0D\u5F97\u53EA\u7ED9\u5408\u5E76\u89C6\u9891\u3001\u53EA\u7ED9\u6700\u540E\u4E00\u6BB5\u6216\u53EA\u5217\u76EE\u5F55\u3002\u6682\u505C\u65F6\u5148\u4EA4\u4ED8\u5DF2\u5B8C\u6210\u5206\u6BB5\uFF0C\u5408\u5E76\u5931\u8D25\u4ECD\u4EA4\u4ED8\u5206\u6BB5\u5E76\u6309\u539Fresume\u91CD\u8BD5\u4EA4\u4ED8\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u3002\u53EA\u4F7F\u7528\u7ED3\u679C\u4E2D\u771F\u5B9E\u8FD4\u56DE\u7684localPath/videoUrl\u548C\u5DF2\u786E\u8BA4\u5408\u5E76\u7684videoPath\uFF1B\u5355\u6BB5\u76F4\u51FA\u4E0D\u865A\u6784\u7B2C\u4E8C\u6BB5\u6216\u5408\u5E76\u7ED3\u679C\u3002",
     "\xB7 \u91CD\u7F6E\u63D2\u4EF6\u540E\u7684\u6062\u590D\uFF1A\u91CD\u7F6E\u53EA\u6E05\u9664\u914D\u7F6E\u4E0E\u767B\u5F55\u72B6\u6001\uFF0C\u4E0D\u4EE3\u8868\u63D2\u4EF6\u88AB\u5378\u8F7D\u6216\u505C\u7528\u3002\u5148\u8C03\u7528 video_config(action:get) \u6838\u5BF9\u5F53\u524D\u5B9E\u9645\u63A5\u5165\u4E0E\u5BC6\u94A5\u72B6\u6001\uFF0C\u4E0D\u6CBF\u7528\u91CD\u7F6E\u524D\u7684\u914D\u7F6E\u7ED3\u8BBA\uFF1B\u670D\u52A1\u7AEF\u6A21\u5F0F\u5F15\u5BFC\u63D2\u4EF6\u8BE6\u60C5\u9875\u767B\u5F55\uFF0CMetaOntic AI \u5F15\u5BFC\u9009\u62E9\u8BE5\u63A5\u5165\u5E76\u586B\u5199\u89C6\u9891/\u56FE\u7247 Key \u540E\u4FDD\u5B58\uFF0C\u706B\u5C71\u76F4\u8FDE\u586B\u5199\u706B\u5C71 Key \u540E\u4FDD\u5B58\u3002\u4E0D\u8981\u5728\u804A\u5929\u4E2D\u7D22\u53D6\u6216\u5C55\u793A Key\u3002\u7F3A Key\u3001\u91CD\u7F6E\u540E\u672A\u914D\u7F6E\u3001\u4FDD\u5B58\u5931\u8D25\u4E0D\u5C5E\u4E8E\u5DE5\u5177\u7F3A\u5931\uFF0C\u7981\u6B62\u636E\u6B64\u5EFA\u8BAE\u91CD\u88C5\u3001\u91CD\u65B0\u542F\u7528\u6216\u91CD\u542F App\uFF1B\u53EA\u6709\u660E\u786E restart-required \u624D\u63D0\u793A\u91CD\u542F\u3002\u5DE5\u5177\u6682\u4E0D\u53EF\u89C1\u65F6\u5148\u5237\u65B0\u5DE5\u5177\u53D1\u73B0\u6216\u8BA9\u7528\u6237\u91CD\u65B0\u6253\u5F00\u63D2\u4EF6\u8BE6\u60C5\u6838\u5BF9\u72B6\u6001\uFF1B\u4EC5\u786E\u8BA4\u5B9E\u9645\u672A\u5B89\u88C5/\u5DF2\u7981\u7528\u65F6\u624D\u6307\u5BFC\u5B89\u88C5/\u542F\u7528\u3002\u4FDD\u7559\u5DF2\u5BA1\u6838\u811A\u672C\u3001\u6E05\u6670\u5EA6\u3001\u6587\u4EF6\u3001\u4EFB\u52A1ID\u4E0E\u6062\u590D\u8FDB\u5EA6\uFF1B\u914D\u7F6E\u6062\u590D\u540E\u5148\u68C0\u67E5\u539F\u4EFB\u52A1\u72B6\u6001\uFF0C\u4E0D\u81EA\u52A8\u91CD\u65B0\u751F\u6210\u3001\u4E0D\u9ED8\u8BA4\u91CD\u95EE\u811A\u672C\uFF0C\u65E7\u786E\u8BA4\u7A97\u53E3\u5931\u6548\u65F6\u53EA\u8865\u7F3A\u5931\u7684\u5F53\u524D\u5236\u4F5C\u786E\u8BA4\uFF0C\u811A\u672C\u6216\u5236\u4F5C\u53C2\u6570\u53D8\u66F4\u4ECD\u987B\u91CD\u65B0\u5BA1\u6838\u4E0E\u8D39\u7528\u786E\u8BA4\u3002",
     "\xB7 \u771F\u4EBA\u56FE\u751F\u89C6\u9891\uFF1AA\u3001B \u6A21\u5F0F\u5206\u522B\u914D\u7F6E\u89C6\u9891\u6A21\u578B model \u4E0E\u56FE\u7247\u6A21\u578B imageModel\u3002\u56FE\u7247\u6A21\u578B\u652F\u6301 doubao-seedream-5-0-260128\u3001doubao-seedream-5-0-pro-260628\u3002\u52A9\u624B\u5148\u770B\u56FE\u6216\u6839\u636E\u7528\u6237\u8BF4\u660E\u5224\u65AD\u662F\u5426\u771F\u4EBA\uFF0C\u4E0D\u80FD\u770B\u56FE\u65F6\u5148\u6F84\u6E05\uFF0C\u4E0D\u80FD\u5047\u79F0\u5DF2\u81EA\u52A8\u8BC6\u522B\u3002\u786E\u8BA4\u771F\u4EBA\u65F6\uFF0C\u5148\u4E0E\u7528\u6237\u786E\u5B9A\u660E\u663E\u975E\u771F\u4EBA\u98CE\u683C\uFF0C\u5728\u5236\u4F5C\u786E\u8BA4\u4E2D\u8BF4\u660E\u56FE\u7247\u9884\u5904\u7406\u53E6\u884C\u8BA1\u8D39\uFF1B\u4F7F\u7528 video_prepare_image \u5904\u7406\u6BCF\u4E00\u5F20\u771F\u4EBA\u53C2\u8003\u56FE\uFF08\u542B\u9996\u5C3E\u5E27\uFF09\uFF0C\u5C55\u793A\u8FD4\u56DE\u56FE\u7247\u5E76\u6838\u5BF9\u5DF2\u6210\u4E3A\u975E\u771F\u4EBA\u89D2\u8272\u540E\uFF0C\u4EC5\u5C06\u5904\u7406\u7ED3\u679C\u7528\u4E8E\u89C6\u9891\u3002\u5373\u4F7F\u4E8B\u5148\u6CA1\u6709\u8BC6\u522B\u5230\u771F\u4EBA\uFF0C\u89C6\u9891\u63A5\u53E3\u660E\u786E\u8FD4\u56DE\u771F\u4EBA\u9650\u5236\u65F6\uFF0C\u63D2\u4EF6\u4F1A\u53E6\u884C\u8BE2\u95EE\u662F\u5426\u7528 Seedream \u8F6C\u4E3A\u975E\u771F\u4EBA\u4E8C\u7EF4\u52A8\u753B\u98CE\u683C\uFF0C\u9010\u5F20\u4FDD\u5B58\u56FE\u7247\u4EFB\u52A1\u548C\u7ED3\u679C\uFF1B\u8F6C\u6362\u5B8C\u6210\u8FD4\u56DEreview_required\u540E\uFF0C\u5FC5\u987B\u9010\u5F20\u5C55\u793A\u56FE\u7247\u5E76\u7B49\u7528\u6237\u6838\u5BF9\u4E3A\u975E\u771F\u4EBA\u4E14\u540C\u610F\u91CD\u8BD5\uFF0C\u518D\u5E26\u539Fresume\u548CreferenceImagesReviewed:true\u7EED\u505A\u4E00\u6B21\uFF0C\u8BF4\u660E\u56FE\u7247\u4E0E\u89C6\u9891\u91CD\u8BD5\u5206\u522B\u8BA1\u8D39\uFF1B\u53EA\u6709\u7528\u6237\u660E\u786E\u5141\u8BB8\u624D\u8F6C\u6362\uFF0C\u62D2\u7EDD\u3001\u53D6\u6D88\u6216\u65E0\u6CD5\u786E\u8BA4\u90FD\u505C\u6B62\uFF0C\u7981\u6B62\u52A9\u624B\u7ED5\u8FC7\u786E\u8BA4\u6216\u81EA\u884C\u91CD\u590D\u63D0\u4EA4\u3002\u5904\u7406\u5931\u8D25\u6216\u7ED3\u679C\u4ECD\u50CF\u771F\u4EBA\u5219\u505C\u6B62\uFF0C\u4E0D\u5C06\u539F\u771F\u4EBA\u56FE\u63D0\u4EA4\u89C6\u9891\uFF0C\u4E5F\u4E0D\u53CD\u590D\u81EA\u52A8\u91CD\u8BD5\u4ED8\u8D39\u8C03\u7528\u3002\u975E\u771F\u4EBA\u539F\u56FE\u76F4\u63A5\u4F7F\u7528\u3002C \u6A21\u5F0F\u76EE\u524D\u672A\u63A5\u6B64\u5DE5\u5177\uFF0C\u987B\u5148\u51C6\u5907\u975E\u771F\u4EBA\u53C2\u8003\u56FE\u3002",
     "\xB7 \u63D0\u4EA4\u8D85\u65F6\u3001\u65AD\u7F51\u6216\u54CD\u5E94\u7F3A\u5C11ID\u65F6\uFF0C\u82E5\u8FD4\u56DEsubmission_unknown\u53CA\u63D0\u4EA4\u8BB0\u5F55ID\uFF0C\u7981\u6B62\u91CD\u65B0\u751F\u6210\uFF1B\u5148\u7528media_submission\u8BFB\u53D6\u8BB0\u5F55\u5E76\u8BA9\u7528\u6237\u6838\u5BF9\u6E20\u9053\u65E5\u5FD7\u3002\u627E\u5230\u539F\u4EFB\u52A1ID\u540E\u5173\u8054\u67E5\u8BE2\uFF1B\u53EA\u6709\u7528\u6237\u660E\u786E\u786E\u8BA4\u672A\u521B\u5EFA\uFF0C\u624D\u89E3\u9501\u5E76\u7ECF\u8D39\u7528\u786E\u8BA4\u540E\u518D\u6B21\u63D0\u4EA4\u3002\u63D2\u4EF6\u4E0D\u5047\u8BBE\u4E2D\u8F6C\u7AD9\u652F\u6301\u5E42\u7B49\u3002\u8F6C\u6362\u7684\u9636\u6BB5\u3001\u4EFB\u52A1\u4E0E\u7ED3\u679C\u968F\u65AD\u70B9\u4FDD\u5B58\uFF0C\u7EED\u505A\u4E0D\u4ECE\u5934\u8F6C\u6362\u3002",
@@ -4824,7 +4942,7 @@ function buildPromptGuidance(config) {
     "\xB7 \u5148\u8BC4\u4F30\u7528\u6237\u65B9\u6848\u5B8C\u6574\u5EA6\uFF1A\u4E3B\u9898/\u76EE\u6807\u3001\u4E3B\u4F53\u3001\u4E3B\u8981\u5185\u5BB9\u4E0E\u53D1\u5C55\u3001\u7ED3\u5C3E\u6216\u5C55\u793A\u7ED3\u679C\u53CA\u660E\u786E\u7EA6\u675F\u662F\u5426\u8DB3\u4EE5\u5199\u811A\u672C\uFF1B\u98CE\u666F\u4E0E\u5C55\u793A\u4E0D\u5F3A\u6C42\u51B2\u7A81\uFF0C\u7F3A\u65F6\u957F\u6216\u753B\u5E45\u53EF\u7528\u9ED8\u8BA4\u503C\uFF0C\u4E0D\u56E0\u6B64\u5224\u4E3A\u4E0D\u5B8C\u5584\u3002\u4E0D\u5B8C\u5584\u4E14\u5C1A\u672A\u6388\u6743\u65F6\uFF0C\u7B80\u77ED\u6307\u51FA\u5173\u952E\u7F3A\u53E3\uFF0C\u5148\u95EE\u201C\u8981\u4E0D\u8981\u6211\u5E2E\u4F60\u5B8C\u5584\u65B9\u6848\uFF1F\u201D\uFF0C\u63D0\u4F9B\u201C\u5E2E\u6211\u5B8C\u5584 / \u4FDD\u7559\u539F\u65B9\u6848\u201D\uFF0C\u7B49\u5F85\u660E\u786E\u7B54\u590D\uFF0C\u4E0D\u64C5\u81EA\u6269\u5199\u5267\u60C5\u3002\u5DF2\u6709\u201C\u4F60\u53D1\u6325\u201D\u201C\u5E2E\u6211\u5B8C\u5584\u201D\u7B49\u6388\u6743\u5219\u4E0D\u91CD\u590D\u8BE2\u95EE\u662F\u5426\u5B8C\u5584\uFF0C\u4F46\u5B8C\u5584\u524D\u5FC5\u987B\u786E\u8BA4\u521B\u610F\u65B9\u5411\uFF1A\u65B9\u5411\u4E0D\u660E\u786E\u65F6\u5148\u95EE\u4E00\u4E2A\u7B80\u77ED\u95EE\u9898\uFF0C\u63D0\u4F9B2\u20133\u4E2A\u7B80\u6D01\u3001\u4E92\u65A5\u7684\u5355\u9009\u65B9\u5411\u5E76\u5141\u8BB8\u81EA\u7531\u8F93\u5165\uFF0C\u7B49\u5F85\u7528\u6237\u7B54\u590D\u540E\u518D\u5B8C\u5584\uFF0C\u4E0D\u5F97\u81EA\u884C\u9009\u65B9\u5411\u6216\u968F\u610F\u8865\u5199\u5267\u60C5\u3002\u7528\u6237\u5DF2\u660E\u786E\u521B\u610F\u65B9\u5411\u65F6\u6309\u8BE5\u65B9\u5411\u5B8C\u5584\uFF0C\u4E0D\u91CD\u590D\u8BE2\u95EE\uFF0C\u4E0D\u64C5\u81EA\u6269\u5927\u8303\u56F4\u3002\u5B8C\u6574\u65B9\u6848\u4FDD\u7559\u4E3B\u9898\u3001\u89D2\u8272\u5173\u7CFB\u3001\u60C5\u8282\u987A\u5E8F\u3001\u7ED3\u5C3E\u3001\u5173\u952E\u5BF9\u767D\u3001\u98CE\u683C\u548C\u9650\u5236\uFF0C\u53EA\u6DA6\u8272\u63AA\u8F9E\u3001\u6574\u7406\u683C\u5F0F\u548C\u8F6C\u6210\u5206\u955C\uFF0C\u4E0D\u64C5\u81EA\u589E\u5220\u89D2\u8272/\u4E8B\u4EF6/\u53CD\u8F6C\u3002\u5185\u5BB9\u53D6\u820D\u3001\u65F6\u957F\u538B\u7F29\u6216\u5267\u60C5\u7ED3\u5C3E\u8C03\u6574\u987B\u5148\u5F81\u5F97\u540C\u610F\u3002\u7528\u6237\u9009\u62E9\u4FDD\u7559\u65F6\u5FE0\u4E8E\u539F\u610F\u6574\u7406\uFF0C\u4EC5\u6F84\u6E05\u65E0\u6CD5\u6267\u884C\u7684\u5FC5\u8981\u4FE1\u606F\u3002\u662F\u5426\u5B8C\u5584\u4E0D\u4EE3\u66FF\u811A\u672C\u5BA1\u6838\u6216\u5236\u4F5C\u6388\u6743\uFF1B\u5B8C\u6574\u65B9\u6848\u4E0D\u589E\u52A0\u5B8C\u5584\u8BE2\u95EE\u3002\u9ED8\u8BA415\u79D2\u30019:16\uFF0C\u89C6\u9891\u6E05\u6670\u5EA6\u4EC5\u652F\u6301480P\u3001720P\u3002\u6574\u7406\u811A\u672C\u65F6\u5FC5\u987B\u8BA9\u7528\u6237\u660E\u786E\u9009\u62E9\u6216\u786E\u8BA4\u6E05\u6670\u5EA6\uFF1B\u672A\u6307\u5B9A\u65F6\u901A\u8FC7\u63D0\u95EE\u5DE5\u5177\u63D0\u4F9B\u201C480P / 720P\u201D\u4E24\u4E2A\u5355\u9009\u9879\uFF0C\u4E0D\u5F97\u4EE5\u9ED8\u8BA4\u503C\u4EE3\u66FF\u7528\u6237\u786E\u8BA4\uFF0C\u672A\u7B54\u3001\u53D6\u6D88\u6216pending\u4E0D\u5F97\u81EA\u884C\u4F7F\u7528\u9ED8\u8BA4\u503C\u8FDB\u5165\u5236\u4F5C\u3002\u7528\u6237\u5728\u672C\u6B21\u9700\u6C42\u5DF2\u660E\u786E\u6307\u5B9A\u65F6\u76F4\u63A5\u8BB0\u5F55\uFF0C\u4E0D\u91CD\u590D\u8BE2\u95EE\u3002\u628A\u786E\u8BA4\u503C\u5199\u5165script.md\u7684\u201C\u89C6\u9891\u6E05\u6670\u5EA6\u201D\uFF0C\u811A\u672C\u89C4\u683C\u548C\u5236\u4F5C\u786E\u8BA4\u90FD\u5C55\u793A\u8BE5\u503C\uFF0C\u8C03\u7528video_generate/video_extend\u65F6\u663E\u5F0F\u4F20resolution=480p\u6216720p\uFF1B\u6539\u7A3F\u672A\u6D89\u53CA\u6E05\u6670\u5EA6\u65F6\u4FDD\u7559\u5DF2\u786E\u8BA4\u9009\u62E9\uFF0C\u6539\u53D8\u6E05\u6670\u5EA6\u987B\u91CD\u65B0\u786E\u8BA4\uFF0C\u6062\u590D\u5DF2\u63D0\u4EA4\u4EFB\u52A1\u6CBF\u7528\u539F\u503C\uFF1B\u6309\u539F\u65B9\u6848\u786E\u5B9A\u98CE\u683C\u4E0E\u58F0\u97F3\uFF0C\u65E0\u5FC5\u8981\u4E0D\u52A0\u5BF9\u767D\uFF0C\u5B57\u5E55\u672A\u6307\u5B9A\u4E0D\u52A0\u3002\u6574\u7406\u540E\u5148\u5B8C\u6574\u5C55\u793A\u6545\u4E8B\u3001\u89C4\u683C/\u98CE\u683C/\u58F0\u97F3\u3001\u4EBA\u7269\u6216\u4E3B\u4F53\u548C\u65F6\u95F4/\u753B\u9762/\u5B8C\u6574\u5BF9\u767D\u8868\uFF0C\u518D\u5BA1\u6838\uFF1B\u6BCF\u6B21\u6539\u7A3F\u4FDD\u7559\u6EE1\u610F\u90E8\u5206\uFF0C\u4E0D\u8BA9\u7528\u6237\u6539\u6A21\u578B\u63D0\u793A\u8BCD\u3002\u63A5\u5165\u65B9\u5F0F\u4EC5\u7528\u4E8E\u8FDE\u63A5\u4E0E\u8D39\u7528\u5224\u65AD\uFF0C\u4E0D\u5F53\u4F5C\u521B\u4F5C\u80FD\u529B\u5199\u8FDB\u5BA3\u4F20\u89C6\u9891\uFF0C\u9664\u975E\u7528\u6237\u660E\u786E\u8981\u63A5\u5165\u6559\u7A0B\u3002",
     "\xB7 **\u751F\u6210\u4E00\u6761\u65B0\u89C6\u9891\u5FC5\u987B\u5148\u8FC7\u4E24\u9053\u786E\u8BA4\uFF0C\u7F3A\u4E00\u4E0D\u53EF**\uFF1A\u2460 \u5148\u628A**\u89C6\u9891\u811A\u672C**\u5199\u51FA\u6765\u4EA4\u7ED9\u7528\u6237**\u5BA1\u6838**\uFF08\u811A\u672C\u8981\u542B\uFF1A\u753B\u9762\u98CE\u683C\u3001\u4EBA\u7269\u5F62\u8C61\u3001\u5206\u955C\u2014\u2014\u9010\u955C\u7684\u955C\u5934 / \u65F6\u95F4 / \u753B\u9762\u3001\u5BF9\u767D\u2014\u2014\u6709\u5BF9\u8BDD\u5C31\u9010\u53E5\u5199\u6E05\u8C01\u5728\u51E0\u79D2\u8BF4\u4EC0\u4E48\uFF09\uFF1B\u2461 \u811A\u672C\u5BA1\u6838\u901A\u8FC7\u540E\uFF0C**\u518D\u5355\u72EC\u95EE\u4E00\u6B21\u8981\u4E0D\u8981\u5F00\u59CB\u505A**\uFF08\u6240\u6709\u63A5\u5165\u65B9\u5F0F\u5747\u590D\u8FF0\u5F53\u524D\u811A\u672C\u7684\u53CC\u65B9\u6848\u57FA\u7840\u4F30\u4EF7\u5E76\u8BF4\u660E\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39\uFF1B\u4EC5\u670D\u52A1\u7AEF\u6A21\u5F0F\u6838\u5BF9\u989D\u5EA6\uFF09\uFF0C\u7528\u6237\u70B9\u5934\u4E86\u624D\u8C03\u7528 video_generate\u3002\u811A\u672C\u4E00\u6539\uFF0C\u4E24\u9053\u786E\u8BA4\u5168\u90E8\u4F5C\u5E9F\uFF0C\u8981\u91CD\u65B0\u8D70\u3002\u7528\u6237\u8BF4\u300C\u76F4\u63A5\u751F\u6210\u300D\u4E5F\u8981\u5148\u8D70\u8FD9\u4E24\u6B65\uFF0C\u4E0D\u8981\u8DF3\u8FC7\u3002\u7ED9\u5DF2\u6709\u89C6\u9891\u63A5\u957F\uFF08video_extend\uFF09\u4E0D\u9700\u8981\u811A\u672C\uFF0C\u4F46\u540C\u6837\u8981\u5148\u786E\u8BA4\u518D\u8C03\u7528\u3002",
     "\xB7 \u4EC5A/B\u63A5\u5165\uFF1Avideo_generate\u3001video_extend\u53CAvideo_status\u5B8C\u6210\u540E\u82E5\u8FD4\u56DEactualCost\uFF0C\u4EA4\u4ED8\u89C6\u9891\u65F6\u4E00\u5E76\u5C55\u793A\u4E2D\u8F6C\u7AD9\u771F\u5B9E\u6D88\u8017\uFF08\u9010\u4EFB\u52A1\u548C\u5408\u8BA1\uFF09\uFF1Bpaused\u53EA\u79F0\u5DF2\u751F\u6210\u90E8\u5206\uFF0Cpartial\u53EA\u79F0\u5DF2\u7ED3\u7B97\u5C0F\u8BA1\uFF0Cpending\u8BF4\u660E\u5F85\u7ED3\u7B97/\u5F85\u67E5\u8BE2\u3002\u5B9E\u9645\u91D1\u989D\u53D6\u4E2D\u8F6C\u6700\u7EC8\u7ED3\u7B97\u800C\u975E\u4F30\u4EF7\u3001\u9884\u6263\u6216\u4F59\u989D\u5DEE\uFF1B\u6CA1\u6709\u91D1\u989D\u4E0D\u8981\u62A50\u3002\u53EF\u7528\u539FtaskId\u8C03\u7528video_status\u8865\u67E5\u8D39\u7528\uFF0C\u4E0D\u56E0\u8D39\u7528\u7F3A\u5931\u91CD\u65B0\u751F\u6210\u3001\u91CD\u8BD5\u4ED8\u8D39\u4EFB\u52A1\u6216\u5EF6\u8FDF\u4EA4\u4ED8\u3002\u53EA\u7EDF\u8BA1\u89C6\u9891\u8D39\u7528\uFF0C\u56FE\u7247\u4E0E\u989D\u5916\u91CD\u505A\u53E6\u8BA1\uFF1BC\u706B\u5C71\u76F4\u8FDE\u4E0D\u63D0\u4F9B\u6B64\u4E2D\u8F6C\u8D26\u5355\u67E5\u8BE2\u3002",
-    "\xB7 \u6BCF\u6B21\u65B0\u811A\u672C\u53CA\u6539\u7A3F\u5BA1\u6838\u524D\uFF0C\u65E0\u8BBA\u5355\u6BB5\u8FD8\u662F\u591A\u6BB5\uFF0C\u90FD\u5148\u8BFB\u53D6video-director\u7684references/segment-storyboard.md\u5E76\u5B9E\u9645\u5C55\u793A\u5F53\u524D\u7248\u955C\u5934\u53C2\u8003\u793A\u610F\u56FE\uFF1B\u4E00\u955C\u5230\u5E95\u4E5F\u5C55\u793A\u5173\u952E\u6784\u56FE\u4E0E\u52A8\u4F5C\u3002\u9700\u8981\u62C6\u5206\u751F\u6210\u65F6\u53E6\u5C55\u793A\u5206\u6BB5\u8868\uFF08\u6BB5\u53F7\u3001\u5168\u7247\u65F6\u95F4\u3001\u751F\u6210\u65F6\u957F\u3001\u751F\u6210/\u7EED\u62CD\u3001\u4E3B\u8981\u753B\u9762\u4E0E\u65B0\u5BF9\u767D\u3001\u8D77\u6B62\u72B6\u6001\u53CA\u4EA4\u63A5\uFF09\u3002\u6309\u5F53\u524D\u6A21\u578B\u548C\u5B9E\u9645\u5206\u6BB5\u89C4\u5219\u6838\u5BF9\uFF0C\u4E0D\u8C03\u7528\u751F\u6210\u5DE5\u5177\u8BD5\u7B97\uFF0C\u4E0D\u6309\u5206\u955C\u6570\u589E\u52A0\u4ED8\u8D39\u8C03\u7528\u3002\u7528\u672C\u5730HTML/SVG\u753B\u5E76present\u672C\u7248\u6784\u56FE\u4E0E\u52A8\u4F5C\u793A\u610F\u56FE\uFF0C\u660E\u786E\u6807\u6CE8\u201C\u793A\u610F\uFF0C\u975E\u5B9E\u9645\u751F\u6210\u753B\u9762\u201D\uFF0C\u518D\u5F39\u811A\u672C\u5BA1\u6838\u7A97\u3002\u6539\u7A3F\u540C\u6B65\u66F4\u65B0\u56FE\u8868\uFF0C\u4E0D\u589E\u52A0\u7B2C\u4E09\u9053\u786E\u8BA4\uFF1B\u793A\u610F\u56FE\u4E0D\u80FD\u4EE3\u66FF\u771F\u5B9E\u9010\u6BB5\u9884\u89C8\u3002\u9ED8\u8BA4\u4E0D\u8C03\u7528\u4ED8\u8D39\u51FA\u56FE\u6A21\u578B\uFF0C\u7528\u6237\u9700\u8981AI\u6548\u679C\u56FE\u65F6\u5148\u786E\u8BA4\u53EF\u7528\u5DE5\u5177\u548C\u8D39\u7528\uFF0C\u4E0D\u5047\u79F0\u63D2\u4EF6\u5DF2\u6709\u6587\u751F\u56FE\u80FD\u529B\u3002",
+    "\xB7 \u6BCF\u6B21\u65B0\u811A\u672C\u53CA\u6539\u7A3F\u5BA1\u6838\u524D\uFF0C\u65E0\u8BBA\u5355\u6BB5\u8FD8\u662F\u591A\u6BB5\uFF0C\u90FD\u5148\u8BFB\u53D6video-director\u7684references/segment-storyboard.md\u5E76\u5B9E\u9645\u5C55\u793A\u5F53\u524D\u7248\u955C\u5934\u53C2\u8003\u793A\u610F\u56FE\uFF1B\u4E00\u955C\u5230\u5E95\u4E5F\u5C55\u793A\u5173\u952E\u6784\u56FE\u4E0E\u52A8\u4F5C\u3002\u9700\u8981\u62C6\u5206\u751F\u6210\u65F6\u53E6\u5C55\u793A\u5206\u6BB5\u8868\uFF08\u6BB5\u53F7\u3001\u5168\u7247\u65F6\u95F4\u3001\u751F\u6210\u65F6\u957F\u3001\u751F\u6210/\u7EED\u62CD\u3001\u4E3B\u8981\u753B\u9762\u4E0E\u65B0\u5BF9\u767D\u3001\u8D77\u6B62\u72B6\u6001\u53CA\u4EA4\u63A5\uFF09\u3002\u6309\u5F53\u524D\u6A21\u578B\u548C\u5B9E\u9645\u5206\u6BB5\u89C4\u5219\u6838\u5BF9\uFF0C\u4E0D\u8C03\u7528\u751F\u6210\u5DE5\u5177\u8BD5\u7B97\uFF0C\u4E0D\u6309\u5206\u955C\u6570\u589E\u52A0\u4ED8\u8D39\u8C03\u7528\u3002\u7528\u672C\u5730SVG/PNG\u753B\u672C\u7248\u6784\u56FE\u4E0E\u52A8\u4F5C\u793A\u610F\u56FE\uFF0CHTML\u53EF\u4F5C\u9644\u52A0\u9884\u89C8\uFF1Bpresent\u767B\u8BB0\u540E\uFF0C\u5728\u6B63\u6587\u5185\u5D4C\u5F53\u524D\u7248\u56FE\u7247\u5E76\u7ED9\u6253\u5F00\u539F\u56FE\u94FE\u63A5\uFF0C\u660E\u786E\u6807\u6CE8\u201C\u793A\u610F\uFF0C\u975E\u5B9E\u9645\u751F\u6210\u753B\u9762\u201D\uFF0C\u5148\u53D1\u56FE\u7247\u6B63\u6587\u518D\u5F39\u811A\u672C\u5BA1\u6838\u7A97\u3002\u6539\u7A3F\u540C\u6B65\u66F4\u65B0\u56FE\u8868\uFF0C\u4E0D\u589E\u52A0\u7B2C\u4E09\u9053\u786E\u8BA4\uFF1B\u793A\u610F\u56FE\u4E0D\u80FD\u4EE3\u66FF\u771F\u5B9E\u9010\u6BB5\u9884\u89C8\u3002\u9ED8\u8BA4\u4E0D\u8C03\u7528\u4ED8\u8D39\u51FA\u56FE\u6A21\u578B\uFF0C\u7528\u6237\u9700\u8981AI\u6548\u679C\u56FE\u65F6\u5148\u786E\u8BA4\u53EF\u7528\u5DE5\u5177\u548C\u8D39\u7528\uFF0C\u4E0D\u5047\u79F0\u63D2\u4EF6\u5DF2\u6709\u6587\u751F\u56FE\u80FD\u529B\u3002",
     "\xB7 \u4E0D\u8BBA\u63A5\u5165\u65B9\u5F0F\u662FMetaOnticVideo\u3001MetaOntic AI\u8FD8\u662F\u706B\u5C71\u76F4\u8FDE\uFF0C\u5747\u5FC5\u987B\u9884\u4F30\u8D39\u7528\uFF0C\u4E0D\u5F97\u8DF3\u8FC7\u3002\u6BCF\u6B21\u811A\u672C\u5BA1\u6838\u524D\u5148\u8C03\u7528\u53EA\u8BFBvideo_estimate\uFF08\u76EE\u6807\u603B\u65F6\u957F\u3001\u7528\u6237\u5DF2\u786E\u8BA4resolution\u3001\u753B\u5E45\u548C\u771F\u5B9EsegmentSeconds\uFF09\uFF0C\u5C06\u8FD4\u56DE\u7684\u706B\u5C71\u5B98\u65B9\u65B9\u6848\u4E0EMetaOnticVideo\u63D2\u4EF6\u65B9\u6848\u4E24\u9879\u4EBA\u6C11\u5E01\u57FA\u7840\u4F30\u4EF7\u3001\u5404\u81EA\u6A21\u578B/\u5206\u6BB5/\u500D\u7387/\u65E5\u671F\u5199\u5165script.md\u6700\u540E\u7684\u201C\u8D39\u7528\u9884\u4F30\u201D\u4E00\u8282\uFF0C\u653E\u5728\u5B8C\u6574\u5267\u60C5\u3001\u5206\u955C\u3001\u5BF9\u767D\u3001\u7ED3\u5C3E\u53CA\u5206\u6BB5\u65B9\u6848\u4E4B\u540E\uFF1B\u6B63\u6587\u5C55\u793A\u811A\u672C\u65F6\u4E5F\u6309\u76F8\u540C\u987A\u5E8F\u5728\u672B\u5C3E\u5B8C\u6574\u5C55\u793A\u8FD9\u4E24\u9879\u91D1\u989D\u4E0E\u8BA1\u8D39\u524D\u63D0\uFF0C\u518D\u5F39\u5BA1\u6838\u7A97\u53E3\u3002\u4E0D\u5F97\u53EA\u5199\u5728\u5DE5\u5177\u7ED3\u679C\u3001\u6587\u4EF6\u5916\u7684\u8865\u5145\u6D88\u606F\u6216\u5236\u4F5C\u786E\u8BA4\u91CC\u3002\u8D85\u8FC715\u79D2\u7684\u5B98\u65B9\u53C2\u7167\u91C7\u75282.5\uFF0C\u8D85\u8FC730\u79D2\u4E5F\u5FC5\u987B\u5982\u5B9E\u5217\u4E3A\u5206\u6BB5\uFF1B\u63D2\u4EF6\u6309\u5F53\u524D\u5B9E\u9645\u6A21\u578B\u4E0E\u5206\u6BB5\u65B9\u6848\uFF0C\u7EED\u62CD\u5305\u542B\u4E0A\u4E00\u6BB5\u5B8C\u6574\u89C6\u9891\u8F93\u5165\u3002\u624B\u586BKey\u672A\u6838\u5B9E\u5206\u7EC4\u4E0D\u5F97\u5047\u8BBE0.8\u6298\u6263\uFF1B\u4E0D\u628A\u53C2\u8003\u56FE\u7247\u5F53\u53C2\u8003\u89C6\u9891\u8BA1\u4EF7\u3002\u5FC5\u987B\u6807\u660E\u6700\u4F4E\u7528\u91CF\u8865\u8DB3\u672A\u8BA1\u5165\u3001\u56FE\u7247\u8F6C\u6362/\u91CD\u505A/\u72EC\u7ACB\u914D\u97F3\u53E6\u8BA1\u3001\u5B9E\u9645\u4EE5\u8D26\u5355\u4E3A\u51C6\u53CA\u6A21\u578B\u6548\u679C\u4E0D\u540C\u3002\u53C2\u6570\u6539\u53D8\u91CD\u7B97\uFF0C\u8BD5\u7B97\u4E0D\u8C03\u7528\u751F\u6210\u5DE5\u5177\u3001\u4E0D\u8981\u6C42\u767B\u5F55\u6216\u989D\u5916\u5BA1\u6279\u3001\u4E0D\u66FF\u4EE3\u4E24\u9053\u786E\u8BA4\uFF1B\u5DE5\u5177\u62D2\u7EDD\u6216\u7F3A\u5C11\u53EF\u9760\u4EF7\u76EE\u65F6\u8BF4\u660E\u65E0\u6CD5\u53EF\u9760\u4F30\u7B97\u5E76\u6838\u5BF9\u4F9D\u636E\uFF0C\u7981\u6B62\u731C\u4EF7\u6216\u663E\u793A0\u5143\u3002\u5F53\u524D\u6BCF\u6B21\u751F\u6210\u5BA1\u6279\u53EF\u80FD\u53EA\u4F30\u672C\u6B21\u4E00\u6BB5\uFF0C\u4E0D\u80FD\u5192\u5145\u5168\u7247\u9884\u7B97\u3002",
     "\xB7 \u811A\u672C\u5C55\u793A\u662F\u5BA1\u6838\u7684\u5F3A\u5236\u524D\u7F6E\uFF1A\u9996\u6B21\u548C\u6BCF\u6B21\u6539\u7A3F\u5148\u4FDD\u5B58\u672C\u7248\u5B8C\u6574script.md\uFF08\u72B6\u6001\u4E3A\u8349\u7A3F\u3001\u6CE8\u660E\u7248\u672C\uFF09\uFF0C\u518D\u5728\u7528\u6237\u53EF\u89C1\u6B63\u6587\u5C55\u793A\u6545\u4E8B\u3001\u89C4\u683C/\u98CE\u683C\u3001\u4EBA\u7269\u6216\u4E3B\u4F53\u3001\u5206\u955C\u65F6\u95F4\u8868\u3001\u5B8C\u6574\u5BF9\u767D/\u58F0\u97F3\u4E0E\u7ED3\u5C3E\uFF1B\u53EA\u5199\u6587\u4EF6\u3001\u7ED9\u8DEF\u5F84\u3001\u6458\u8981\u3001\u4FEE\u6539\u70B9\u6216\u793A\u610F\u56FE\u4E0D\u7B97\u5C55\u793A\u3002\u6709present/\u6587\u4EF6\u5C55\u793A\u5DE5\u5177\u65F6\u53E6\u884C\u5C55\u793A\u672C\u7248script.md\uFF0C\u7B49\u5F85\u8C03\u7528\u5B8C\u6210\u540E\u624D\u8C03\u7528\u5BA1\u6838\u63D0\u95EE\u5DE5\u5177\uFF0C\u7981\u6B62\u5E76\u884C\u6216\u540C\u4E00\u5DE5\u5177\u6279\u6B21\u540C\u65F6\u53D1\u51FA\u3002\u5C55\u793A\u5931\u8D25\u3001\u4E0D\u652F\u6301Markdown\u6216\u5DE5\u5177\u7F3A\u5931\u65F6\uFF0C\u5148\u5728\u6B63\u6587\u5B8C\u6574\u8D34\u51FA\u811A\u672C\uFF0C\u518D\u63D0\u95EE\u3002\u5BA1\u6838\u7A97\u53E3\u53EA\u7528\u4E8E\u7B80\u77ED\u786E\u8BA4\uFF0C\u7981\u6B62\u628A\u5B8C\u6574\u811A\u672C\u653E\u5165question\u3001header\u3001\u9009\u9879\u6216\u9009\u9879\u63CF\u8FF0\uFF1B\u811A\u672C\u4E0E\u793A\u610F\u56FE\u5148\u5728\u7A97\u53E3\u5916\u5B8C\u6574\u5C55\u793A\uFF0C\u7B49\u5F85\u5B8C\u6210\u518D\u63D0\u95EE\u3002\u5DF2\u5F39\u7A97\u5374\u6F0F\u5C55\u793A\u65F6\uFF0C\u5148\u8865\u5B8C\u6574\u811A\u672C\u5E76\u91CD\u65B0\u5BA1\u6838\uFF0C\u4E0D\u6CBF\u7528\u8BE5\u6B21\u7B54\u590D\uFF0C\u4E0D\u8FDB\u5165\u5236\u4F5C\u786E\u8BA4\u6216\u751F\u6210\u3002",
     "\xB7 \u811A\u672Cscript.md\u7684\u5143\u4FE1\u606F\u7EDF\u4E00\u7528\u4E2D\u6587\uFF1A\u7248\u672C\uFF08\u7B2C1\u7248\u3001\u7B2C2\u7248\uFF09\u3001\u72B6\u6001\uFF08\u8349\u7A3F/\u5DF2\u5BA1\u6838/\u5DF2\u786E\u8BA4\u5236\u4F5C\uFF09\u3001\u5BA1\u6838\u65F6\u95F4\u3001\u5BA1\u6838\u4EBA\u3001\u5236\u4F5C\u786E\u8BA4\u65F6\u95F4\u3001\u5236\u4F5C\u786E\u8BA4\u4EBA\uFF1B\u786E\u8BA4\u4EBA\u586B\u201C\u7528\u6237\u201D\uFF0C\u672A\u786E\u8BA4\u7684\u65F6\u95F4\u548C\u4EBA\u5458\u7559\u7A7A\u3002\u6539\u7A3F\u9000\u56DE\u8349\u7A3F\uFF0C\u6E05\u7A7A\u5BA1\u6838\u4E0E\u5236\u4F5C\u786E\u8BA4\u7684\u65F6\u95F4\u53CA\u4EBA\u5458\u3002\u8BFB\u53D6\u65E7\u811A\u672C\u65F6\u8BC6\u522B\u539F\u82F1\u6587\u5143\u4FE1\u606F\u5E76\u5728\u4E0B\u6B21\u4FDD\u5B58\u65F6\u8F6C\u6362\u4E3A\u4E2D\u6587\uFF0C\u4E0D\u6539\u53D8\u65E2\u6709\u786E\u8BA4\u4E8B\u5B9E\u3002\u6B64\u7EA6\u5B9A\u4EC5\u7528\u4E8E\u7528\u6237\u53EF\u89C1\u811A\u672C\uFF0C\u4E0D\u4FEE\u6539\u5DE5\u5177\u6216\u63A5\u53E3\u7684JSON\u5B57\u6BB5\u3002",
@@ -4852,20 +4970,22 @@ function asDisposer(value) {
 }
 function apply(ctx, config = {}) {
   const deps = {};
+  const register = (tool) => ctx.tools.register(withStageTiming(tool));
   const disposers = [
-    ctx.tools.register(jsonSafeTool(estimateTool(config))),
-    ctx.tools.register(jsonSafeTool(submissionTool(config))),
-    ctx.tools.register(jsonSafeTool(prepareImageTool(config))),
-    ctx.tools.register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(videoTool(config, deps, ctx), config)), "video_generate", config))),
-    ctx.tools.register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(extendTool(config, deps, ctx), config)), "video_extend", config))),
-    ctx.tools.register(withVideoExecution(jsonSafeTool(withActualCost(taskTool(config), config)))),
-    ctx.tools.register(jsonSafeTool(setupTool(config)))
+    register(jsonSafeTool(stageTool())),
+    register(jsonSafeTool(estimateTool(config))),
+    register(jsonSafeTool(submissionTool(config))),
+    register(jsonSafeTool(prepareImageTool(config))),
+    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(videoTool(config, deps, ctx), config)), "video_generate", config))),
+    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(extendTool(config, deps, ctx), config)), "video_extend", config))),
+    register(withVideoExecution(jsonSafeTool(withActualCost(taskTool(config), config)))),
+    register(jsonSafeTool(setupTool(config)))
   ];
   if (process.env.METAONTIC_VIDEO_INTERNAL_HYPERFRAMES === "1") {
-    disposers.push(ctx.tools.register(jsonSafeTool(hyperframesTool(config, deps))));
+    disposers.push(register(jsonSafeTool(hyperframesTool(config, deps))));
   }
   const cleanup = ctx.inject(["settings"], (settingsCtx) => {
-    disposers.push(settingsCtx.tools.register(jsonSafeTool(configTool(config, settingsCtx.settings))));
+    disposers.push(settingsCtx.tools.register(withStageTiming(jsonSafeTool(configTool(config, settingsCtx.settings)))));
   });
   for (const dispose of [asDisposer(cleanup)]) if (dispose) disposers.push(dispose);
   const promptCleanup = ctx.inject(["systemPrompt"], (promptCtx) => promptCtx.systemPrompt.section({

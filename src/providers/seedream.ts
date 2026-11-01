@@ -1,3 +1,4 @@
+import { timedStage } from '../utils/timing.js';
 /** 中转站异步图片协议：提交 → 轮询 → 取件，不使用同步备选。 */
 import { ref, FAILED_STATES, SUCCESS_STATES } from '../config.js';
 import { resolveBaseUrl } from './connection.js';
@@ -5,7 +6,7 @@ import { guardedSubmit, finishSubmission, finishKnownTask } from './submissions.
 import { imageConfig } from './connection.js';
 import { relayRequest, sleep } from './transport.js';
 
-export async function generateSeedreamImage(liveConfig, body, signal, existingTaskId?: string, progress: { onCreated?: (id: string) => Promise<void>; onCompleted?: (result: any) => Promise<void>; scope?: string } = {}) {
+async function generateSeedreamImageCore(liveConfig, body, signal, existingTaskId?: string, progress: { onCreated?: (id: string) => Promise<void>; onCompleted?: (result: any) => Promise<void>; scope?: string } = {}) {
   const config = imageConfig(liveConfig);
   // 视频配置通常保存站址；也兼容用户保存了以 /v1 结尾的地址。
   const prefix = /\/v1$/i.test(resolveBaseUrl(config)) ? '' : '/v1';
@@ -48,4 +49,8 @@ export async function generateSeedreamImage(liveConfig, body, signal, existingTa
   } catch (error) {
     throw Object.assign(new Error(`${error?.message || error}（图片 task_id=${taskId}）。${error?.terminal ? '任务已失败，未重试。' : '已停止等待，不重复提交；可用 video_prepare_image 的 taskId 查询此图片任务。'}`), { taskId, terminal: Boolean(error?.terminal), code: error?.code || 'image_task_error' });
   }
+}
+
+export async function generateSeedreamImage(...args: Parameters<typeof generateSeedreamImageCore>) {
+  return timedStage('image_conversion', () => generateSeedreamImageCore(...args));
 }

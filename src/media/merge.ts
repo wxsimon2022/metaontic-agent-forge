@@ -1,3 +1,4 @@
+import { timedStage } from '../utils/timing.js';
 /** media/merge：从宿主入口拆出的独立职责模块。 */
 import { type RunOptions } from '../providers/types.js';
 import { uniqueSuffix, exists, tail, formatSeconds } from '../utils/files.js';
@@ -255,7 +256,7 @@ export async function downloadSegmentsAndMerge(config, {
     try {
       // 已经下过的分段（接着做时复用）直接用现成文件：上游链接可能已经过期。
       if (!(await exists(dest))) {
-        await downloadFile(segment.videoUrl, dest, { signal });
+        await timedStage('segment_download', () => downloadFile(segment.videoUrl, dest, { signal }));
       }
     } catch (failure) {
       if (failure?.code === 'ABORTED') throw failure;
@@ -267,7 +268,7 @@ export async function downloadSegmentsAndMerge(config, {
     await appendRequestLog({ event: 'segment_saved', index: segment.index, taskId: segment.taskId, path: dest,
       bytes: (await stat(dest)).size });
 
-    const media = await probeMedia(dest, config, signal);
+    const media = await timedStage('segment_probe', () => probeMedia(dest, config, signal));
     if (media?.durationSeconds) {
       segment.durationSeconds = Number(media.durationSeconds.toFixed(2));
       const cumulative = segments.slice(0, index + 1)
@@ -321,11 +322,11 @@ export async function downloadSegmentsAndMerge(config, {
       return { files, segmentsDir, deliveredSeconds, merged: true, mergeMode: 'single', videoPath: finalPath };
     }
     await appendRequestLog({ event: 'merge_started', inputPaths: files, videoPath: finalPath });
-    const prepared = await prepareSeamTrims(config, files, finalPath, { signal });
+    const prepared = await timedStage('seam_prepare', () => prepareSeamTrims(config, files, finalPath, { signal }));
     await appendRequestLog({ event: 'seam_trims_prepared', cuts: prepared.cuts });
     let merged;
     try {
-      merged = await mergeClips(config, prepared.files, finalPath, { signal });
+      merged = await timedStage('video_merge', () => mergeClips(config, prepared.files, finalPath, { signal }));
     } finally {
       await cleanupSegmentTemps(prepared.temps);
     }

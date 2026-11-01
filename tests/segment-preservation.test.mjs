@@ -17,6 +17,7 @@ for (const cumulative of [false, true]) for (const cuts of [false, true]) {
       await fs.writeFile(originals[1], 'second-source');
       const source = sourceOf('media/merge');
       const context = vm.createContext({
+        timedStage: async (_stage, operation) => operation(),
         ref: (config, key, fallback) => config[key] ?? fallback,
         path, ...fs, appendRequestLog: async () => {}, exists: async file => { try { await fs.stat(file); return true; } catch { return false; } },
         hasFfmpeg: async () => true,

@@ -86,7 +86,7 @@ export function extendTool(liveConfig, deps, ctx) {
           type: 'string',
           enum: ['continuous', 'closeup'],
           description:
-            'continuous=同机位连续续拍（默认）；closeup=在完整台词结束处自然切到近景或反应镜头。',
+            '由已审核脚本决定本次续拍：continuous=同机位连续（未指定时）；closeup=按脚本切换近景或反应镜头，具体安排以过渡描述为准。',
         },
         startAt: {
           type: 'number',
@@ -176,6 +176,7 @@ export function extendTool(liveConfig, deps, ctx) {
       assertResumeConnection(resume, config, args);
       if (resume?.toolName && resume.toolName !== TOOL_NAME) throw new Error(`这份进度请使用 ${resume.toolName} 继续。`);
       args = { ...(resume?.options || {}), ...args };
+      args.mode = args.mode || 'continuous';
       args.resolution = resolveResolution(config, args);
       if (args.transitionDescription !== undefined && typeof args.transitionDescription !== 'string') {
         throw new Error('过渡描述必须是文字。');

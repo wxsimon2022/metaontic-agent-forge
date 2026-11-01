@@ -2,7 +2,7 @@ import { sourceOf } from './source.mjs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-const source = sourceOf('client/state');
+const source = sourceOf('connection-defaults', 'client/state');
 const context = vm.createContext({});
 vm.runInContext(source + '\nObject.assign(globalThis, createSettingsState({}));', context);
 const modes = ['service', 'metaontic', 'volcengine'];
@@ -14,7 +14,7 @@ for (const from of modes) for (const to of modes) test(`atomic save ${from} -> $
     async mutate(ops) { calls++; const staged = { ...disk }; for (const op of ops) staged[op.path[0]] = op.value; Object.assign(disk, staged); return true; },
     getSnapshot() { if (calls) throw new Error('disposed controller snapshot must not be used'); return {status:'ready', writable:true, revision:1, value:{...disk}}; },
   }, [['connectionMode', to], [keyFor[to], 'new-key']], to);
-  assert.equal(calls, 1); assert.equal(disk.connectionMode, to); assert.equal(disk[keyFor[to]], 'new-key');
+  assert.equal(calls, 1); assert.ok(disk.baseUrl); assert.ok(disk.submitPath); assert.ok(disk.queryPath); assert.ok(disk.model); assert.ok(disk.imageModel); assert.equal(disk.connectionMode, to); assert.equal(disk[keyFor[to]], 'new-key');
   for (const mode of modes.filter(mode => mode !== to)) assert.equal(({ ...inherited, ...disk })[keyFor[mode]], '');
 });
 test('rejected atomic writes report failure without falling back to partial writes', async () => {
@@ -92,3 +92,45 @@ test('unready and read-only forms do not attempt writes', async () => {
     await assert.rejects(context.persistBatch({ getSnapshot: () => state, async mutate() { assert.fail('must not write'); } }, []), /settingsUnavailable|readOnly/);
   }
 });
+
+test('saved manual connection reloads with complete addresses, models and isolated keys', async () => {
+  const runtime = vm.createContext({
+    ref: (config, key, fallback) => config[key] ?? fallback,
+    envValue: () => '',
+    RELAY_PRESET: {baseUrl:'https://ai.bileego.com', submitPath:'/doubao/api/v3/contents/generations/tasks', queryPath:'/doubao/api/v3/contents/generations/tasks/{task_id}',model:'doubao-seedance-2-0-mini-260615'},
+  });
+  vm.runInContext(sourceOf('connection-defaults', 'providers/connection'), runtime);
+  for (const mode of ['metaontic', 'volcengine']) {
+    const disk = {};
+    await context.persistConnection({
+      getSnapshot: () => ({status:'ready',revision:1,value:disk}),
+      async mutate(ops) { for (const op of ops) disk[op.path[0]]=op.value; return true; },
+    }, [[keyFor[mode], 'video-key'], ['imageUseVideoKey', false], ['imageApiKey', 'image-key']], mode);
+    const reloaded = JSON.parse(JSON.stringify(disk));
+    const snap = runtime.snapshotConfig(reloaded);
+    assert.equal(snap.baseUrl, mode === 'metaontic' ? 'https://ai.bileego.com' : 'https://ark.cn-beijing.volces.com');
+    for (const field of ['baseUrl','submitPath','queryPath','model','imageModel']) assert.ok(reloaded[field], field);
+    assert.equal(runtime.resolveApiKey(snap), 'video-key');
+    if(mode === 'metaontic') assert.equal(runtime.resolveApiKey(runtime.imageConfig(snap)), 'image-key');
+  }
+  assert.equal(runtime.resolveBaseUrl({connectionMode:'metaontic'}),'https://ai.bileego.com');
+});
+
+test('save preserves custom relay address and models without copying hidden secret values', async () => {
+  const disk = {connectionMode:'metaontic',baseUrl:'https://custom.example',model:'custom-video',imageModel:'custom-image'};
+  let writes;
+  await context.persistConnection({
+    getSnapshot: () => ({status:'ready',revision:1,value:disk,secrets:{metaonticApiKey:true}}),
+    async mutate(ops) {writes=ops; for(const op of ops) disk[op.path[0]]=op.value; return true;},
+  }, [], 'metaontic');
+  assert.equal(disk.baseUrl,'https://custom.example');
+  assert.equal(disk.model,'custom-video'); assert.equal(disk.imageModel,'custom-image');
+  assert.ok(!writes.some(op=>op.path[0]==='metaonticApiKey'));
+});
+
+ test('switching from Volcano restores relay endpoints instead of retaining direct paths', async () => {
+ const disk = {connectionMode:'volcengine',baseUrl:'https://ark.cn-beijing.volces.com',submitPath:'/api/v3/contents/generations/tasks',queryPath:'/api/v3/contents/generations/tasks/{task_id}'};
+ await context.persistConnection({getSnapshot:()=>({status:'ready',revision:1,value:disk}),async mutate(ops){for(const op of ops) disk[op.path[0]]=op.value; return true;}}, [['metaonticApiKey','manual']], 'metaontic');
+ assert.equal(disk.baseUrl,'https://ai.bileego.com');
+ assert.equal(disk.submitPath,'/doubao/api/v3/contents/generations/tasks');
+ });

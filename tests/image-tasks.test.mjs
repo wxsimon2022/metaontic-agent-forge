@@ -14,6 +14,7 @@ export {prepareImageTool} from './src/tools/video-prepare-image.ts';
 export {estimateUsage} from './src/workflow/costs.ts';
 export {preflightGate,estimateArgsFor} from './src/workflow/approval.ts';
 export {pickResumeOptions} from './src/workflow/resume.ts';
+export {configTool} from './src/tools/video-config.ts';
 export {reconcileSubmission} from './src/providers/submissions.ts';
 `,resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',outfile:path.join(temp,'plugin.mjs')});
 const api=await import(pathToFileURL(path.join(temp,'plugin.mjs')));
@@ -273,4 +274,29 @@ for(const toolName of ['video_generate','video_extend']) test(`${toolName}: inva
  h.flags.videoReject=false;
  await assert.rejects(h.tools.get(toolName).execute({prompt:'story',duration:30,segmentPrompts:['first','second'],videoUrl:'https://example.com/source.mp4',transitionDescription:{invalid:true},merge:false},h.exec),/过渡描述必须是文字/);
  assert.equal(h.videos,0);assert.equal(h.calls.length,0);
+}));
+
+test('legacy global continuation mode does not override new script requests',()=>fixture(async h=>{
+ h.config.mode='closeup';
+ const plain=api.buildRequestBody(h.config,{prompt:'人物继续说话',duration:15},'https://example.com/source.mp4').body.content[0].text;
+ assert.match(plain,/保持同一构图/);assert.doesNotMatch(plain,/下一位说话人的近景/);
+ const scripted=api.buildRequestBody(h.config,{prompt:'人物继续说话',duration:15,mode:'closeup'},'https://example.com/source.mp4').body.content[0].text;
+ assert.match(scripted,/下一位说话人的近景/);
+}));
+test('video_config no longer exposes or saves a global continuation mode',()=>fixture(async h=>{
+ let writes=0;
+ const tool=api.configTool(h.config,{mutate(){writes++;}});
+ assert.equal(tool.parameters.properties.mode,undefined);
+ await assert.rejects(tool.execute({action:'set',mode:'closeup'}),/续拍方式由已审核脚本决定/);
+ assert.equal(writes,0);
+}));
+for(const toolName of ['video_generate','video_extend']) test(`${toolName}: resume retains script continuation mode after global config changes`,()=>fixture(async h=>{
+ h.flags.videoReject=false;h.config.mode='continuous';
+ const initial={prompt:'人物继续说话',segmentPrompts:['第一段新动作','第二段新对白'],mode:'closeup',merge:false};
+ const first=await h.tools.get(toolName).execute(toolName==='video_generate'?{...initial,duration:30}:{...initial,videoUrl:'https://example.com/source.mp4',duration:15,segments:2},h.exec);
+ const record=JSON.parse(await readFile(path.join(first.resumeDir,'paused-plan.json'),'utf8'));assert.equal(record.options.mode,'closeup');
+ h.config.mode='continuous';
+ await h.tools.get(toolName).execute({resume:first.resumeDir},h.exec);
+ assert.equal(h.videos,2);const bodies=h.calls.filter(c=>c.body?.model==='video').map(c=>c.body);
+ assert.match(bodies[1].content[0].text,/下一位说话人的近景/);
 }));

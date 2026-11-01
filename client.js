@@ -280,14 +280,13 @@
       connectionMode: ["service", "metaontic", "volcengine"],
       model: MODEL_OPTIONS,
       imageModel: ["doubao-seedream-5-0-260128", "doubao-seedream-5-0-pro-260628"],
-      mode: ["continuous", "closeup"],
       ratio: ["16:9", "9:16", "4:3", "3:4", "1:1", "adaptive"],
       mergeMode: ["copy", "reencode"]
     };
     const SECTIONS = [
       { key: "sectionConnection", fields: ["connectionMode"] },
       { key: "sectionModels", fields: ["imageUseVideoKey", "model", "metaonticApiKey", "volcengineApiKey", "imageModel", "imageApiKey"] },
-      { key: "sectionVideo", fields: ["mode", "ratio", "generateAudio"] }
+      { key: "sectionVideo", fields: ["ratio", "generateAudio"] }
     ];
     const FIELDS = [
       { key: "connectionMode", kind: "select", wide: true },
@@ -299,7 +298,6 @@
       { key: "imageModel", kind: "select", wide: true },
       { key: "imageUseVideoKey", kind: "switch", wide: true },
       { key: "imageApiKey", kind: "text", secret: true, wide: true },
-      { key: "mode", kind: "select" },
       { key: "ratio", kind: "select" },
       { key: "generateAudio", kind: "switch" },
       { key: "watermark", kind: "switch" },
@@ -363,7 +361,6 @@
     }
     function optionLabel(t, key, option) {
       if (key === "connectionMode") return t(option);
-      if (key === "mode") return option === "closeup" ? t("modeCloseup") : t("modeContinuous");
       if (key === "mergeMode") {
         if (option === "reencode") return t("mergeModeReencode");
         return option === "copy" ? t("mergeModeCopy") : t("mergeModeSeamless");
@@ -506,9 +503,6 @@
       registerFailed: "\u767B\u5F55\u5931\u8D25\uFF1A{message}",
       registerDisabled: "\u767B\u5F55\u670D\u52A1\u6682\u4E0D\u53EF\u7528\uFF1A{message}",
       registerNoKey: "\u767B\u5F55\u670D\u52A1\u672A\u8FD4\u56DE\u5BC6\u94A5\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u6216\u8054\u7CFB\u7BA1\u7406\u5458\u3002",
-      mode: "\u7EED\u62CD\u65B9\u5F0F",
-      modeContinuous: "\u540C\u673A\u4F4D\u8FDE\u7EED",
-      modeCloseup: "\u5207\u8FD1\u666F",
       ratio: "\u753B\u9762\u6BD4\u4F8B",
       generateAudio: "\u751F\u6210\u97F3\u9891",
       watermark: "\u6DFB\u52A0\u6C34\u5370",
@@ -655,9 +649,6 @@
       sectionCombinedHint: "Appearance, merging, runtime and local tools",
       toolsHint: "Usually leave blank. Set executable paths only if installed tools are not detected.",
       segmentsRetained: "Original segments are always retained for preview, resume and editing.",
-      mode: "Continuation",
-      modeContinuous: "Same camera",
-      modeCloseup: "Cut to close-up",
       ratio: "Aspect ratio",
       generateAudio: "Generate audio",
       watermark: "Add watermark",
@@ -689,6 +680,21 @@
       resetFailed: "Reset failed: {message}"
     };
     return { zh, en };
+  }
+
+  // src/connection-defaults.ts
+  var METAONTIC_BASE_URL = "https://ai.bileego.com";
+  function connectionDefaults(values) {
+    const text = (key, fallback) => String(values[key] ?? "").trim() || fallback;
+    const volc = values.connectionMode === "volcengine";
+    return {
+      ...volc ? { baseUrl: "https://ark.cn-beijing.volces.com" } : { baseUrl: text("baseUrl", METAONTIC_BASE_URL).replace(/\/+$/, "") },
+      submitPath: volc ? "/api/v3/contents/generations/tasks" : text("submitPath", "/doubao/api/v3/contents/generations/tasks"),
+      queryPath: volc ? "/api/v3/contents/generations/tasks/{task_id}" : text("queryPath", "/doubao/api/v3/contents/generations/tasks/{task_id}"),
+      model: text("model", "doubao-seedance-2-0-mini-260615"),
+      imageModel: text("imageModel", "doubao-seedream-5-0-260128"),
+      imageUseVideoKey: values.imageUseVideoKey !== false
+    };
   }
 
   // src/client/state.ts
@@ -791,6 +797,19 @@
       ] : nextMode === "metaontic" ? ["volcengineApiKey", "apiKey", "keyOrigin", "registerEmail", "deviceId", "deviceSecret", "registerApi", "registerToken"] : ["volcengineApiKey", "metaonticApiKey"];
       const ops = pending.filter(([key]) => key !== "connectionMode" && !inactiveKeys.includes(key)).map(([key, next]) => ({ op: "set", path: [key], value: next }));
       for (const key of inactiveKeys) ops.push({ op: "set", path: [key], value: "" });
+      const saved = form.getSnapshot?.()?.value || {};
+      const values = { ...saved, ...Object.fromEntries(pending), connectionMode: nextMode };
+      if (saved.connectionMode === "volcengine" && nextMode !== "volcengine") {
+        for (const key of ["baseUrl", "submitPath", "queryPath"]) {
+          if (!pending.some(([field]) => field === key)) values[key] = "";
+        }
+      }
+      for (const key of inactiveKeys) values[key] = "";
+      for (const [key, next] of Object.entries(connectionDefaults(values))) {
+        const existing = ops.findIndex((op) => op.path[0] === key);
+        if (existing >= 0) ops.splice(existing, 1);
+        ops.push({ op: "set", path: [key], value: next });
+      }
       ops.push({ op: "set", path: ["connectionMode"], value: nextMode });
       await persistBatch(form, ops);
     }
@@ -804,7 +823,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.11.0".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.11.1".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1420,7 +1439,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.11.0",
+    version: "3.11.1",
     description: "DeepSeek Harness video creation plugin with a Video Creation Assistant for concepts, script review and confirmed production; supports reference images, video continuation, segment previews, resumable generation, local merging, and MetaOnticVideo, MetaOntic AI or Volcano Engine access.",
     license: "MIT",
     type: "module",
@@ -1507,17 +1526,18 @@
       "@deepseek-ai/schemastery": "~3.18.5"
     },
     releaseNotes: {
-      version: "3.11.0",
+      version: "3.11.1",
       prerelease: false,
-      publishedAt: "2026-11-01T12:33:09Z",
+      publishedAt: "2026-11-01T13:13:29Z",
       items: [
-        "\u65B0\u589E\uFF1A\u7EED\u62CD\u652F\u6301\u8FC7\u6E21\u753B\u9762\u63CF\u8FF0\uFF0C\u968F\u811A\u672C\u5BA1\u6838\u5E76\u4F20\u5165\u89C6\u9891\u8BF7\u6C42\uFF1B\u9010\u6BB5\u63CF\u8FF0\u4F18\u5148\u4E8E\u901A\u7528\u63CF\u8FF0\uFF0C\u6682\u505C\u7EED\u505A\u6CBF\u7528\u5DF2\u786E\u8BA4\u5185\u5BB9\u3002",
-        "\u65B0\u589E\uFF1A\u5B8C\u5584\u811A\u672C\u4E0E\u9010\u6BB5\u63D0\u793A\u8BCD\uFF1A\u7EDF\u4E00\u4E3B\u4F53\u6807\u7B7E\uFF0C\u6309\u5206\u955C\u987A\u5E8F\u63CF\u8FF0\u52A8\u4F5C\u3001\u573A\u666F\u548C\u955C\u5934\uFF0C\u5E76\u660E\u786E\u5149\u5F71\u3001\u98CE\u683C\u3001\u753B\u8D28\u53CA\u7EA6\u675F\u6761\u4EF6\u3002",
-        "\u4F18\u5316\uFF1A\u591A\u6BB5\u89C6\u9891\u9010\u9879\u4EA4\u4ED8\u7B2C\u4E00\u6BB5\u3001\u7B2C\u4E8C\u6BB5\u53CA\u540E\u7EED\u5168\u90E8\u5206\u6BB5\uFF0C\u5E76\u5355\u72EC\u5C55\u793A\u771F\u5B9E\u5408\u5E76\u6210\u7247\uFF1B\u6682\u505C\u6216\u5408\u5E76\u5931\u8D25\u65F6\u4ECD\u4EA4\u4ED8\u5DF2\u5B8C\u6210\u5206\u6BB5\u3002",
-        "\u4F18\u5316\uFF1A\u79FB\u9664\u7248\u672C\u9009\u62E9\u548C\u964D\u7EA7\u5165\u53E3\uFF0C\u4EC5\u4FDD\u7559\u68C0\u67E5\u66F4\u65B0\u53CA\u4E8C\u6B21\u786E\u8BA4\u66F4\u65B0\u5230\u66F4\u9AD8\u7684\u6700\u65B0\u6B63\u5F0F\u7248\u3002",
-        "\u4F18\u5316\uFF1AMetaOntic AI \u63A5\u5165\u663E\u793A\u4E13\u7528 Key \u914D\u7F6E\u63D0\u793A\uFF0C\u5E76\u63D0\u4F9B ai.bileego.com \u6CE8\u518C\u83B7\u53D6 Key \u7684\u94FE\u63A5\uFF1B\u540C\u6B65\u4F7F\u7528\u8BF4\u660E\u4E66\u4E0E PDF\u3002",
-        "\u4FEE\u590D\uFF1A\u660E\u786E\u8FC7\u6E21\u5B89\u6392\u5207\u955C\u65F6\uFF0C\u53D6\u6D88\u63A5\u7F1D\u5904\u76F8\u540C\u673A\u4F4D\u3001\u666F\u522B\u548C\u7126\u6BB5\u7684\u51B2\u7A81\u7EA6\u675F\uFF1B\u81EA\u52A8\u63D0\u793A\u8BCD\u76F4\u63A5\u4F7F\u7528\u201C\u89C6\u98911\u201D\u6307\u4EE3\u5EF6\u957F\u7D20\u6750\u3002",
-        "\u4FEE\u590D\uFF1A\u8FC7\u6E21\u63CF\u8FF0\u6301\u4E45\u5316\u5230\u65AD\u70B9\uFF0C\u975E\u6CD5\u63CF\u8FF0\u5728\u63D0\u4EA4\u524D\u62D2\u7EDD\uFF1B\u4E0D\u5411\u4E0A\u6E38\u6DFB\u52A0\u4E0D\u652F\u6301\u7684\u53C2\u6570\uFF0C\u4E0D\u56E0\u5E94\u7528\u65B0\u63CF\u8FF0\u91CD\u590D\u63D0\u4EA4\u5DF2\u6709\u4EFB\u52A1\u3002"
+        "\u65B0\u589E\uFF1A\u9636\u6BB5\u8017\u65F6\u65E5\u5FD7\uFF0C\u8BB0\u5F55\u63D2\u4EF6\u8C03\u7528\u3001\u8F6E\u8BE2\u3001\u4E0B\u8F7D\u3001\u63A2\u6D4B\u3001\u63A5\u7F1D\u5904\u7406\u3001\u5408\u5E76\u53CA\u8D39\u7528\u67E5\u8BE2\uFF1B\u811A\u672C\u3001\u793A\u610F\u56FE\u548C\u5BA1\u6838\u7B49\u5F85\u72EC\u7ACB\u6807\u8BB0\uFF0C\u4FBF\u4E8E\u5B9A\u4F4D\u6162\u70B9\u3002",
+        "\u4F18\u5316\uFF1A\u79FB\u9664\u63D2\u4EF6\u8BBE\u7F6E\u548C\u914D\u7F6E\u5DE5\u5177\u4E2D\u7684\u5168\u5C40\u201C\u7EED\u62CD\u65B9\u5F0F\u201D\uFF0C\u6539\u7531\u5DF2\u5BA1\u6838\u811A\u672C\u53CA\u672C\u6B21\u751F\u6210/\u7EED\u62CD\u53C2\u6570\u51B3\u5B9A\u8FDE\u7EED\u955C\u5934\u3001\u5207\u955C\u548C\u666F\u522B\u3002",
+        "\u4F18\u5316\uFF1A\u89C4\u8303\u5206\u955C\u56FE\u5B9E\u9645\u5C55\u793A\uFF1A\u786E\u8BA4\u6587\u4EF6\u5B58\u5728\uFF0C\u767B\u8BB0\u540E\u5728\u6B63\u6587\u5185\u5D4C\u56FE\u7247\u5E76\u63D0\u4F9B\u539F\u56FE\u94FE\u63A5\uFF1B\u65E0\u6CD5\u5185\u5D4C\u65F6\u5982\u5B9E\u8BF4\u660E\uFF0C\u7528\u6237\u672A\u89C1\u56FE\u65F6\u5148\u8865\u5C55\u793A\u3002",
+        "\u4F18\u5316\uFF1A\u6240\u6709\u6210\u679C\u5728\u6B63\u6587\u63D0\u4F9B\u53EF\u70B9\u51FB\u94FE\u63A5\uFF0C\u8986\u76D6\u811A\u672C\u3001\u793A\u610F\u56FE\u3001\u8F6C\u6362\u56FE\u7247\u3001\u5206\u6BB5\u4E0E\u5408\u5E76\u89C6\u9891\u3001\u4EFB\u52A1\u67E5\u8BE2\u548C\u6062\u590D\u4EA4\u4ED8\uFF1B\u6709\u6587\u4EF6\u5361\u7247\u4ECD\u4FDD\u7559\u94FE\u63A5\u3002",
+        "\u4F18\u5316\uFF1A\u4EA4\u4ED8\u987A\u5E8F\u8C03\u6574\u4E3A\u5408\u5E76\u540E\u5B8C\u6574\u89C6\u9891\u4F18\u5148\uFF0C\u5176\u540E\u4F9D\u6B21\u5C55\u793A\u5404\u5206\u6BB5\uFF1B\u6682\u505C\u6216\u5408\u5E76\u5931\u8D25\u65F6\u53EA\u5C55\u793A\u771F\u5B9E\u5DF2\u6709\u6210\u679C\u3002",
+        "\u4FEE\u590D\uFF1A\u670D\u52A1\u7AEF\u9886 Key \u4E0E\u624B\u586B Key \u5171\u7528\u4E2D\u8F6C\u9ED8\u8BA4\u5730\u5740\u3001\u6A21\u578B\u4E0E\u534F\u8BAE\uFF1B\u754C\u9762\u548C\u914D\u7F6E\u5DE5\u5177\u4FDD\u5B58\u65F6\u539F\u5B50\u8865\u9F50\u8FDE\u63A5\u5B57\u6BB5\uFF0C\u8FD0\u884C\u7AEF\u517C\u5BB9\u65E7\u914D\u7F6E\u7F3A\u5730\u5740\uFF0C\u4FDD\u7559\u5404\u6E20\u9053\u53CA\u56FE\u7247/\u89C6\u9891 Key \u9694\u79BB\u3002",
+        "\u4FEE\u590D\uFF1A\u706B\u5C71\u76F4\u8FDE\u5207\u56DE\u4E2D\u8F6C\u65F6\u6062\u590D\u4E2D\u8F6C\u8BF7\u6C42\u8DEF\u5F84\uFF0C\u907F\u514D\u6CBF\u7528\u76F4\u8FDE\u5730\u5740\u4E0E\u8DEF\u5F84\u3002",
+        "\u4FEE\u590D\uFF1A\u65B0\u4EFB\u52A1\u4E0D\u518D\u53D7\u65E7\u914D\u7F6E\u6B8B\u7559 mode \u5F71\u54CD\uFF1B\u7EED\u505A\u4FDD\u7559\u8BB0\u5F55\u4E2D\u7684\u7EED\u62CD\u65B9\u5F0F\u3001\u8FC7\u6E21\u63CF\u8FF0\u4E0E\u5DF2\u63D0\u4EA4\u539F\u8BF7\u6C42\uFF0C\u907F\u514D\u8BBE\u7F6E\u8986\u76D6\u811A\u672C\u3002"
       ]
     }
   };

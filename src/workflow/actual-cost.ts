@@ -1,3 +1,4 @@
+import { timedStage } from '../utils/timing.js';
 /** A/B视频完成后的真实结算查询。只读本Key日志，绝不用预扣或估价冒充实际金额。 */
 import { snapshotConfig, isVolcengine, resolveApiKey, resolveBaseUrl } from '../providers/connection.js';
 
@@ -111,7 +112,7 @@ export function withActualCost(tool, liveConfig) {
         : result?.status === 'succeeded' && result?.taskId ? [result.taskId] : [];
       if (!ids.length) return result;
       try {
-        const actualCost = await fetchActualCost(config, ids, exec?.signal);
+        const actualCost = await timedStage('actual_cost_query', () => fetchActualCost(config, ids, exec?.signal));
         return actualCost ? { ...result, actualCost } : result;
       } catch { return result; } // 费用展示异常绝不能触发付费视频重做。
     },

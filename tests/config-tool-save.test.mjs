@@ -1,3 +1,4 @@
+import { sourceOf } from './source.mjs';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -11,6 +12,7 @@ function harness(write) {
     modelMaxSeconds: () => 15, writeProfileConfig: write,
     configView: config => ({ stored: {}, effective: { connectionMode: config.connectionMode } }),
   });
+  vm.runInContext(sourceOf('connection-defaults'), c);
   for (const name of ['normalizeConnectionPatch', 'maskSecrets', 'configTool']) {
     const start = source.indexOf(`function ${name}(`);
     vm.runInContext(source.slice(start, source.indexOf('\n}', start) + 2), c);
@@ -28,7 +30,7 @@ test('video_config clears inactive credentials in the same persisted patch and m
 });
 test('video_config keeps unrelated edits scoped and reports persistence failures', async () => {
   const c = harness(async () => { throw new Error('disk failure'); });
-  assert.deepEqual(JSON.parse(JSON.stringify(c.normalizeConnectionPatch({}, { model: 'new' }))), { model: 'new' });
+  assert.equal(c.normalizeConnectionPatch({}, { model: 'new' }).model, 'new');
   assert.throws(() => c.normalizeConnectionPatch({}, { connectionMode: 'wrong' }), /未知/);
   await assert.rejects(c.configTool({}, {}).execute({ action: 'set', connectionMode: 'volcengine' }), /disk failure/);
 });

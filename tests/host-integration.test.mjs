@@ -39,7 +39,7 @@ test('published host preserves schema, tool registration, live configuration and
   assert.ok(plugin.Config);
   const config = { connectionMode: 'metaontic', metaonticApiKey: 'test', model: 'seedance-2-0' };
   const host = harness(config, '/tmp');
-  assert.deepEqual([...host.tools.keys()].sort(), ['media_submission', 'video_config', 'video_estimate', 'video_extend', 'video_generate', 'video_prepare_image', 'video_setup', 'video_status']);
+  assert.deepEqual([...host.tools.keys()].sort(), ['media_submission', 'video_config', 'video_estimate', 'video_extend', 'video_generate', 'video_prepare_image', 'video_setup', 'video_stage', 'video_status']);
   assert.match(host.prompt(), /直出上限 15 秒/);
   config.model = 'seedance-2-5';
   assert.match(host.prompt(), /直出上限 30 秒/);
@@ -47,7 +47,7 @@ test('published host preserves schema, tool registration, live configuration and
   assert.equal(decision.kind, 'ask');
   assert.match(decision.displayReason.zh, /实际用量计费/);
   host.dispose();
-  assert.equal(host.disposed(), 8);
+  assert.equal(host.disposed(), 9);
 });
 
 for (const mode of ['service', 'metaontic', 'volcengine']) test(`${mode}: bundled tools submit, query, pause, resume and extend through split modules`, async () => {

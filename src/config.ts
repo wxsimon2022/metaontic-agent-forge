@@ -1,3 +1,4 @@
+import { METAONTIC_BASE_URL } from './connection-defaults.js';
 /** config：从宿主入口拆出的独立职责模块。 */
 import z from '@deepseek-ai/schemastery';
 
@@ -23,7 +24,7 @@ export const Config = z.object({
   baseUrl: z.string()
     .default('')
     .description(
-      '基础地址（中转站站址）；留空时读环境变量 NEWAPI_VIDEO_BASE_URL / NEWAPI_BASE_URL。'
+      '基础地址（中转站站址）；留空时读环境变量 NEWAPI_VIDEO_BASE_URL / NEWAPI_BASE_URL，再使用 https://ai.bileego.com。'
       + '示例 https://ai.bileego.com（不要带 /v1，也不要重复 /api/v3）',
     )
     .volatile(),
@@ -109,7 +110,7 @@ export const Config = z.object({
     .volatile(),
   mode: z.union(['continuous', 'closeup'])
     .default('continuous')
-    .description('continuous=同机位连续续拍；closeup=在台词结束处切近景续拍')
+    .description('旧配置兼容字段，新任务不再读取；续拍方式由已审核脚本的工具参数与过渡描述决定')
     .volatile(),
   ratio: z.union(['16:9', '9:16', '4:3', '3:4', '1:1', 'adaptive'])
     .default('adaptive')
@@ -221,7 +222,7 @@ export const ESTIMATE_RATES: Array<[string, { none: number; video: number }]> = 
 
 /** provider 预设：字段留空时按这里的顺序回退到环境变量，再回退到预设默认值。 */
 export const RELAY_PRESET = {
-    baseUrl: '',
+    baseUrl: METAONTIC_BASE_URL,
     submitPath: '/doubao/api/v3/contents/generations/tasks',
     queryPath: '/doubao/api/v3/contents/generations/tasks/{task_id}',
     model: DEFAULT_MODEL,

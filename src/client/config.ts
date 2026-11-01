@@ -19,7 +19,6 @@ export function createClientConfig() {
       connectionMode: ['service', 'metaontic', 'volcengine'],
       model: MODEL_OPTIONS,
       imageModel: ['doubao-seedream-5-0-260128', 'doubao-seedream-5-0-pro-260628'],
-      mode: ['continuous', 'closeup'],
       ratio: ['16:9', '9:16', '4:3', '3:4', '1:1', 'adaptive'],
       mergeMode: ['copy', 'reencode'],
     };
@@ -31,7 +30,7 @@ export function createClientConfig() {
     const SECTIONS = [
       { key: 'sectionConnection', fields: ['connectionMode'] },
       { key: 'sectionModels', fields: ['imageUseVideoKey', 'model', 'metaonticApiKey', 'volcengineApiKey', 'imageModel', 'imageApiKey'] },
-      { key: 'sectionVideo', fields: ['mode', 'ratio', 'generateAudio'] },
+      { key: 'sectionVideo', fields: ['ratio', 'generateAudio'] },
     ];
     const FIELDS = [
       { key: 'connectionMode', kind: 'select', wide: true },
@@ -43,7 +42,6 @@ export function createClientConfig() {
       { key: 'imageModel', kind: 'select', wide: true },
       { key: 'imageUseVideoKey', kind: 'switch', wide: true },
       { key: 'imageApiKey', kind: 'text', secret: true, wide: true },
-      { key: 'mode', kind: 'select' },
       { key: 'ratio', kind: 'select' },
       { key: 'generateAudio', kind: 'switch' },
       { key: 'watermark', kind: 'switch' },
@@ -107,7 +105,6 @@ export function createClientConfig() {
 
     function optionLabel(t, key, option) {
       if (key === 'connectionMode') return t(option);
-      if (key === 'mode') return option === 'closeup' ? t('modeCloseup') : t('modeContinuous');
       if (key === 'mergeMode') {
         if (option === 'reencode') return t('mergeModeReencode');
         return option === 'copy' ? t('mergeModeCopy') : t('mergeModeSeamless');
