@@ -78,6 +78,10 @@ export function extendTool(liveConfig, deps, ctx) {
           maximum: 10,
           description: '连续延长几段，默认 1；每段都引用上一段的结果，适合做出更长的成片。',
         },
+        transitionDescription: {
+          type: 'string',
+          description: '已审核的续拍过渡描述：视频1接缝状态→本段动作/镜头衔接→声音延续，直接使用“视频1”，不写“参考视频1”。多段共用时作为通用描述；video_generate 可在各条 segmentPrompts 内用单行【过渡画面】指定该段过渡并优先采用。仅作用于续拍，首次直出不引用视频1。',
+        },
         mode: {
           type: 'string',
           enum: ['continuous', 'closeup'],
@@ -173,6 +177,9 @@ export function extendTool(liveConfig, deps, ctx) {
       if (resume?.toolName && resume.toolName !== TOOL_NAME) throw new Error(`这份进度请使用 ${resume.toolName} 继续。`);
       args = { ...(resume?.options || {}), ...args };
       args.resolution = resolveResolution(config, args);
+      if (args.transitionDescription !== undefined && typeof args.transitionDescription !== 'string') {
+        throw new Error('过渡描述必须是文字。');
+      }
 
       const prompt = String(args?.prompt ?? '').trim() || String(resume?.prompt ?? '').trim();
       if (!prompt) {

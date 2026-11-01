@@ -228,7 +228,7 @@ export function resumePlanFrom(data, { askedTotal, segmentSeconds }) {
 /** 续做时要沿用的参数：调用方只传 resume 时，靠这份记录还原上次的口径。 */
 export function pickResumeOptions(args) {
   const keys = [
-    'mode', 'ratio', 'generateAudio', 'watermark', 'segmentPrompts', 'merge',
+    'mode', 'ratio', 'generateAudio', 'watermark', 'segmentPrompts', 'transitionDescription', 'merge',
     // 这几个是 video_extend 的口径（延长方向、提示词写法、整片时间轴位置）
     'direction', 'wording', 'startAt',
     'firstFrameUrl', 'lastFrameUrl', 'referenceImages', 'resolution', 'seed', 'user', 'returnLastFrame',

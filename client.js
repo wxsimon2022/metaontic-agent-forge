@@ -381,6 +381,8 @@
       apiKeyConfigured: "\u5DF2\u914D\u7F6E\uFF0C\u7559\u7A7A\u4FDD\u7559\u73B0\u6709\u5BC6\u94A5",
       connectionMode: "\u63A5\u5165\u65B9\u5F0F",
       connectionModeHint: "\u90AE\u7BB1\u767B\u5F55\u9886\u53D6\u5BC6\u94A5\uFF0C\u6216\u4F7F\u7528\u81EA\u5DF1\u7684 MetaOntic AI\u3001\u706B\u5C71\u5F15\u64CE\u5BC6\u94A5\u3002\u5207\u6362\u540E\u4FDD\u5B58\u751F\u6548\u3002",
+      connectionMetaonticHint: "\u4F7F\u7528 MetaOntic AI \u7684 API Key\uFF0C\u586B\u5199\u540E\u4FDD\u5B58\u751F\u6548\u3002",
+      connectionMetaonticRegister: "\u6CE8\u518C\u83B7\u53D6 Key",
       volcengineKeyHint: "\u586B\u5199\u706B\u5C71\u65B9\u821F\u63A7\u5236\u53F0\u7684 API Key \u540E\u4FDD\u5B58\uFF0C\u8D39\u7528\u7531\u706B\u5C71\u5F15\u64CE\u8D26\u6237\u627F\u62C5\u3002\u9700\u8981\u81EA\u884C\u6838\u5BF9\u597D Key \u7684\u6A21\u578B\u80FD\u529B\u3002",
       metaontic: "B \xB7 MetaOntic AI",
       metaonticApiKey: "MetaOntic AI API Key",
@@ -473,17 +475,6 @@
       versionNew: "\u6709\u65B0\u7248\u672C v{version}",
       versionFailed: "\u68C0\u67E5\u66F4\u65B0\u5931\u8D25\uFF1A{message}",
       versionUpdate: "\u7ACB\u5373\u66F4\u65B0",
-      versionDowngrade: "\u964D\u7EA7\u7248\u672C",
-      versionDowngradeConfirm: "\u786E\u8BA4\u964D\u7EA7\u5230 v{version}",
-      versionDowngradeConfirmHint: "\u5C06\u5B89\u88C5\u66F4\u4F4E\u7248\u672C\uFF0C\u6062\u590D\u8BE5\u7248\u672C\u539F\u6709\u884C\u4E3A\u4E0E\u4F9D\u8D56\u3002\u8BBE\u7F6E\u9875\u53EF\u80FD\u77ED\u6682\u5173\u95ED\uFF0C\u73B0\u6709\u914D\u7F6E\u4E0E\u5BC6\u94A5\u4F1A\u4FDD\u7559\u3002",
-      versionDowngrading: "\u964D\u7EA7\u4E2D\u2026",
-      versionDowngradeDone: "\u5DF2\u964D\u7EA7\u5230 v{version}\uFF0C\u5DF2\u901A\u8FC7\u70ED\u52A0\u8F7D\u751F\u6548\uFF0C\u65E0\u9700\u91CD\u542F\u3002\u73B0\u6709\u5BF9\u8BDD\u4E0B\u4E00\u8F6E\u4F7F\u7528\u8BE5\u7248\u672C\u89C4\u5219\u3002",
-      versionDowngradePending: "v{version} \u5DF2\u5B89\u88C5\uFF0C\u5F53\u524D\u914D\u7F6E\u5C1A\u672A\u542F\u7528\u8BE5\u7248\u672C\uFF0C\u8BF7\u5728\u63D2\u4EF6\u9875\u68C0\u67E5\u542F\u7528\u72B6\u6001\u3002",
-      versionDowngradeRestart: "\u5DF2\u5B89\u88C5\u8F83\u4F4E\u7248\u672C v{version}\uFF1A\u91CD\u542F Harness \u540E\u751F\u6548\u3002",
-      versionDowngradeCancelled: "\u964D\u7EA7\u5DF2\u53D6\u6D88\u3002",
-      versionDowngradeRetry: "\u964D\u7EA7\u672A\u5B8C\u6210\uFF0C\u6B63\u5728\u91CD\u8BD5\uFF08{attempt}/{total}\uFF09\u2026",
-      versionDowngradeFailed: "\u7248\u672C\u964D\u7EA7\u5931\u8D25\uFF1A{message}",
-      versionDowngradeUnavailable: "\u5F53\u524D\u8F6F\u4EF6\u4E0D\u652F\u6301\u5728\u7EBF\u964D\u7EA7\uFF0C\u8BF7\u5230\u63D2\u4EF6\u9875\u6DFB\u52A0\u6240\u9009\u7248\u672C\u6210\u54C1\u5305\u3002",
       versionOptional: "\u8FD9\u662F\u666E\u901A\u66F4\u65B0\uFF0C\u4F60\u53EF\u4EE5\u81EA\u884C\u51B3\u5B9A\u662F\u5426\u5347\u7EA7\u3002\u7A0D\u540E\u5904\u7406\u4E0D\u5F71\u54CD\u7EE7\u7EED\u4F7F\u7528\uFF0C\u63D2\u4EF6\u4E0D\u4F1A\u81EA\u52A8\u5B89\u88C5\u3002",
       versionLater: "\u7A0D\u540E\u518D\u8BF4",
       versionUpdateConfirm: "\u786E\u8BA4\u66F4\u65B0\u5230 v{version}",
@@ -536,11 +527,6 @@
       seamTrimSecondsHint: "\u5206\u522B\u88C1\u526A\u7B2C 2\u30013\u2026\u6BB5\u5F00\u5934\uFF0C\u4F8B\u5982 0.5,0\u3002\u7559\u7A7A\u4F7F\u7528\u6A21\u578B\u9ED8\u8BA4\u503C\uFF0C\u586B 0 \u5173\u95ED\uFF1B\u6BCF\u9879\u4E3A 0\u20133 \u79D2\u3002",
       waitSecondsHint: "\u81F3\u5C11 1 \u79D2\uFF0C\u652F\u6301\u5C0F\u6570\u3002\u6700\u957F\u7B49\u5F85\u65F6\u95F4\u4E0D\u5F97\u5C0F\u4E8E\u67E5\u8BE2\u95F4\u9694\u3002",
       versionHistory: "\u5386\u53F2\u66F4\u65B0",
-      versionSelect: "\u5207\u6362\u7248\u672C",
-      versionChoose: "\u8BF7\u9009\u62E9\u7248\u672C",
-      versionInstalled: "\u5F53\u524D\u7248\u672C",
-      versionTarget: "\u6240\u9009\u7248\u672C v{version}",
-      versionSelectHint: "\u652F\u6301\u6700\u8FD1 3 \u4E2A\u6B63\u5F0F\u7248\u672C\uFF1B\u9009\u62E9\u540E\u786E\u8BA4\u624D\u5B89\u88C5\u3002\u56DE\u9000\u65E7\u7248\u4F1A\u6062\u590D\u8BE5\u7248\u672C\u539F\u6709\u884C\u4E3A\u4E0E\u4F9D\u8D56\uFF0C\u8BF7\u5148\u67E5\u770B\u66F4\u65B0\u8BF4\u660E\u3002",
       versionCheckFirst: "\u8BF7\u5148\u68C0\u67E5\u5E76\u9009\u62E9\u53EF\u7528\u7684\u6B63\u5F0F\u7248\u672C\uFF0C\u518D\u786E\u8BA4\u5B89\u88C5\u3002",
       unknownConnection: "\u672A\u77E5\u63A5\u5165\u65B9\u5F0F\uFF0C\u8BF7\u91CD\u65B0\u9009\u62E9\u3002",
       atomicUnsupported: "\u5F53\u524D Harness \u4E0D\u652F\u6301\u6279\u91CF\u4FDD\u5B58\uFF0C\u8BF7\u66F4\u65B0 Harness \u540E\u91CD\u8BD5\u3002",
@@ -559,6 +545,8 @@
       apiKeyConfigured: "Configured; leave blank to keep the current key",
       connectionMode: "Connection",
       connectionModeHint: "Log in by email to receive a key, or use your own MetaOntic AI or Volcano Engine key. Save to apply a change.",
+      connectionMetaonticHint: "Use your MetaOntic AI API key, then save to apply.",
+      connectionMetaonticRegister: "Register to get a key",
       volcengineKeyHint: "Enter an API key from the Volcano Ark console and save. No email login required. Billed to your Volcano Engine account. Check which models your key can access.",
       metaontic: "B \xB7 MetaOntic AI",
       metaonticApiKey: "MetaOntic AI API Key",
@@ -636,17 +624,6 @@
       versionNew: "v{version} is available",
       versionFailed: "Update check failed: {message}",
       versionUpdate: "Update now",
-      versionDowngrade: "Downgrade",
-      versionDowngradeConfirm: "Confirm downgrade to v{version}",
-      versionDowngradeConfirmHint: "An older version restores its original behavior and dependencies. Settings may briefly close; settings and keys are kept.",
-      versionDowngrading: "Downgrading\u2026",
-      versionDowngradeDone: "Downgraded to v{version} through hot reload; no restart needed. Existing conversations use that version on the next turn.",
-      versionDowngradePending: "v{version} installed but not activated. Check its enabled state in Plugins.",
-      versionDowngradeRestart: "Older version v{version} installed; restart Harness to apply it.",
-      versionDowngradeCancelled: "Downgrade cancelled.",
-      versionDowngradeRetry: "Downgrade incomplete. Retrying ({attempt}/{total})\u2026",
-      versionDowngradeFailed: "Downgrade failed: {message}",
-      versionDowngradeUnavailable: "Online downgrade is unavailable. Add the selected release archive from Plugins.",
       versionOptional: "This update is optional. You can keep using the plugin and update later. It will not install automatically.",
       versionLater: "Later",
       versionUpdateConfirm: "Confirm update to v{version}",
@@ -699,11 +676,6 @@
       seamTrimSecondsHint: "Trim the start of segments 2, 3, etc., e.g. 0.5,0. Leave blank for model defaults; use 0 to disable. Each value: 0\u20133 seconds.",
       waitSecondsHint: "At least 1 second; decimals allowed. Maximum wait must be at least the check interval.",
       versionHistory: "Update history",
-      versionSelect: "Switch version",
-      versionChoose: "Select a version",
-      versionInstalled: "Installed",
-      versionTarget: "Selected version v{version}",
-      versionSelectHint: "Choose from the latest 3 stable releases, then confirm installation. Older versions retain their original behavior and dependencies; review their notes first.",
       versionCheckFirst: "Check and select an available stable version before confirming installation.",
       unknownConnection: "Unknown connection method. Select one again.",
       atomicUnsupported: "This version of Harness does not support batch saving. Update Harness and try again.",
@@ -832,7 +804,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.10.0".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.11.0".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -946,9 +918,7 @@
         const latest = versions[0];
         if (context.updateRequest && request !== context.updateRequest.current) return "";
         context.setUpdateConfirm?.(false);
-        context.setAvailableVersions?.(versions);
-        const selected = !context.PLUGIN_VERSION || context.isNewerVersion?.(latest, context.PLUGIN_VERSION) ? latest : versions.includes(context.PLUGIN_VERSION) ? context.PLUGIN_VERSION : "";
-        context.setUpdateLatest(selected);
+        context.setUpdateLatest(latest);
         context.setUpdateAt((/* @__PURE__ */ new Date()).toLocaleTimeString());
         context.setUpdateStatus("ok");
         rememberUpdateCheck(latest, versions);
@@ -964,16 +934,19 @@
     }
     async function runOnlineUpdate() {
       if (context.updateConfirm !== true) return;
-      const downgrading = context.isNewerVersion?.(context.PLUGIN_VERSION, context.updateLatest) === true;
-      const operationKey = (key) => downgrading ? key.replace("versionUpdate", "versionDowngrade") : key;
       context.setUpdateConfirm(false);
+      if (context.PLUGIN_VERSION && context.isNewerVersion?.(context.updateLatest, context.PLUGIN_VERSION) !== true) {
+        context.setUpdateStatus("ok");
+        context.setUpdateMessage(context.t("versionLatest"));
+        return;
+      }
       context.setUpdateStatus("installing");
       context.setUpdateMessage("");
       const probe = context.manager ? context.manager() : { manager: null, tried: ["\u672A\u6CE8\u5165"] };
       const pluginManager = probe.manager;
       if (!pluginManager || typeof pluginManager.installBundle !== "function") {
         context.setUpdateStatus("failed");
-        context.setUpdateMessage(context.t(operationKey("versionUpdateUnavailable"), { detail: probe.tried.join("\uFF0C") }));
+        context.setUpdateMessage(context.t("versionUpdateUnavailable", { detail: probe.tried.join("\uFF0C") }));
         return;
       }
       const requestId = `${context.PLUGIN_PACKAGE}-update-${Date.now()}`;
@@ -1008,7 +981,7 @@
           const text = failureText(result);
           const transient = worthRetrying(text);
           if (transient && round < context.UPDATE_ATTEMPTS) {
-            context.setUpdateMessage(context.t(operationKey("versionUpdateRetry"), { attempt: round + 1, total: context.UPDATE_ATTEMPTS }));
+            context.setUpdateMessage(context.t("versionUpdateRetry", { attempt: round + 1, total: context.UPDATE_ATTEMPTS }));
             await new Promise((resolve) => window.setTimeout(resolve, round * 1200));
             continue;
           }
@@ -1031,21 +1004,21 @@
       if (!outcome) {
         context.setUpdateStatus("failed");
         context.setUpdateMessage([
-          context.t(operationKey("versionUpdateFailed"), { message: failure }),
+          context.t("versionUpdateFailed", { message: failure }),
           worthRetrying(failure) || /429|queue overflowed/i.test(failure) ? context.t("versionUpdateRateLimited") : ""
         ].filter(Boolean).join(" "));
         return;
       }
       if (outcome.application === "cancelled") {
         context.setUpdateStatus("ok");
-        context.setUpdateMessage(context.t(operationKey("versionUpdateCancelled")));
+        context.setUpdateMessage(context.t("versionUpdateCancelled"));
         return;
       }
       forgetUpdateCheck();
       const version = outcome.version || context.updateLatest;
       context.setUpdateLatest("");
       context.setUpdateStatus(outcome.application === "restart-required" ? "restart" : "applied");
-      context.setUpdateMessage(outcome.application === "restart-required" ? context.t(operationKey("versionUpdateRestart"), { version }) : context.t(operationKey(outcome.application === "applied" ? "versionUpdateDone" : "versionUpdatePending"), { version }));
+      context.setUpdateMessage(outcome.application === "restart-required" ? context.t("versionUpdateRestart", { version }) : context.t(outcome.application === "applied" ? "versionUpdateDone" : "versionUpdatePending", { version }));
     }
     function deferUpdate() {
       context.setUpdateConfirm(false);
@@ -1057,12 +1030,12 @@
     }
     return { deferUpdate, readUpdateCache, rememberUpdateCheck, forgetUpdateCheck, checkForUpdate, runOnlineUpdate };
   }
-  function renderUpdateNotice({ h, t, available, latest, deferred, status, confirmed, downgrade = false, onUpdate, onLater }) {
+  function renderUpdateNotice({ h, t, available, latest, deferred, status, confirmed, onUpdate, onLater }) {
     if (!available || deferred === latest || status === "installing") return null;
     return h("div", { key: "update-notice", className: "mov-notice", role: "status", "data-field": "update-notice" }, [
-      h("strong", { key: "title" }, t("versionTarget", { version: latest })),
+      h("strong", { key: "title" }, t("versionNew", { version: latest })),
       h("p", { key: "optional" }, t("versionOptional")),
-      confirmed ? h("p", { key: "confirm" }, t(downgrade ? "versionDowngradeConfirmHint" : "versionUpdateConfirmHint")) : null,
+      confirmed ? h("p", { key: "confirm" }, t("versionUpdateConfirmHint")) : null,
       h("div", { key: "actions", className: "mov-cmd-row" }, [
         h(
           "button",
@@ -1073,7 +1046,7 @@
             "data-action": confirmed ? "update-notice-confirm" : "update-notice-open",
             onClick: onUpdate
           },
-          confirmed ? t(downgrade ? "versionDowngradeConfirm" : "versionUpdateConfirm", { version: latest }) : t(downgrade ? "versionDowngrade" : "versionUpdate")
+          confirmed ? t("versionUpdateConfirm", { version: latest }) : t("versionUpdate")
         ),
         h("button", { key: "later", type: "button", className: "mov-btn mov-btn-sm", "data-action": "update-later", onClick: onLater }, t("versionLater"))
       ])
@@ -1447,7 +1420,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.10.0",
+    version: "3.11.0",
     description: "DeepSeek Harness video creation plugin with a Video Creation Assistant for concepts, script review and confirmed production; supports reference images, video continuation, segment previews, resumable generation, local merging, and MetaOnticVideo, MetaOntic AI or Volcano Engine access.",
     license: "MIT",
     type: "module",
@@ -1534,24 +1507,23 @@
       "@deepseek-ai/schemastery": "~3.18.5"
     },
     releaseNotes: {
-      version: "3.10.0",
+      version: "3.11.0",
       prerelease: false,
-      publishedAt: "2026-11-01T11:28:47Z",
+      publishedAt: "2026-11-01T12:33:09Z",
       items: [
-        "\u65B0\u589E\uFF1A\u63D2\u4EF6\u7248\u672C\u5361\u7247\u652F\u6301\u6700\u8FD1 3 \u4E2A\u6B63\u5F0F\u7248\u672C\u5207\u6362\uFF0C\u6309\u7248\u672C\u53F7\u6392\u5E8F\u53BB\u91CD\uFF0C\u9AD8\u7248\u672C\u663E\u793A\u66F4\u65B0\u3001\u4F4E\u7248\u672C\u663E\u793A\u964D\u7EA7\uFF0C\u4E8C\u6B21\u786E\u8BA4\u540E\u624D\u5B89\u88C5\u3002",
-        "\u4F18\u5316\uFF1A\u79FB\u9664\u9884\u53D1\u5E03\u5165\u53E3\uFF0C\u540E\u7EED\u4EC5\u53D1\u5E03\u6B63\u5F0F\u7248\uFF1B\u8FC7\u6EE4\u8349\u7A3F\u4E0E\u9884\u53D1\u5E03\uFF0C\u68C0\u67E5\u66F4\u65B0\u4E0D\u9ED8\u8BA4\u9009\u4E2D\u66F4\u4F4E\u7248\u672C\u3002",
-        "\u4F18\u5316\uFF1A\u914D\u7F6E\u4FDD\u5B58\u7B49\u5F85\u8BBE\u5907\u540C\u6B65\u53CA\u81EA\u52A8\u53D6\u56DE Key \u5B8C\u6210\uFF0C\u51B2\u7A81\u65F6\u7ED1\u5B9A\u4FEE\u8BA2\u53F7\u5B89\u5168\u91CD\u8BD5\uFF0C\u4FDD\u7559\u4FDD\u5B58\u671F\u95F4\u7EE7\u7EED\u7F16\u8F91\u7684\u8F93\u5165\u3002",
-        "\u4F18\u5316\uFF1A\u4FDD\u5B58\u5931\u8D25\u533A\u5206\u914D\u7F6E\u51B2\u7A81\u3001\u53EA\u8BFB\u3001\u9875\u9762\u5931\u6548\u53CA\u8FDE\u63A5\u4E2D\u65AD\uFF0C\u589E\u52A0\u4E0D\u542B\u5BC6\u94A5\u4E0E\u5B57\u6BB5\u503C\u7684\u8BCA\u65AD\u4FE1\u606F\u3002",
-        "\u4F18\u5316\uFF1A\u5728\u7EBF\u66F4\u65B0\u5B89\u88C5\u5BF9\u5E94 Release \u6210\u54C1\u5305\uFF0CGitee \u4E0D\u53EF\u7528\u65F6\u5C1D\u8BD5\u540C\u7248 GitHub \u9644\u4EF6\uFF0C\u4E0D\u56DE\u9000\u65E7\u7248\u6216\u9ED8\u8BA4\u5206\u652F\u3001\u4E0D\u5148\u5378\u8F7D\u63D2\u4EF6\uFF1B\u540C\u6B65\u4F7F\u7528\u8BF4\u660E\u4E66\u4E0E PDF\u3002",
-        "\u4FEE\u590D\uFF1A\u5B9E\u9645\u8D39\u7528\u53EF\u7A7A\u5B57\u6BB5\u6539\u7528\u5BBF\u4E3B\u652F\u6301\u7684 Schema\uFF0C\u89E3\u51B3\u201C\u7EC4\u4EF6\u542F\u52A8\u5931\u8D25\u201D\u5BFC\u81F4\u63D2\u4EF6\u65E0\u6CD5\u52A0\u8F7D\u3002",
-        "\u4FEE\u590D\uFF1A\u79FB\u9664\u516C\u5171\u63D2\u4EF6\u5BF9 Hyperframes\u3001esbuild \u7B49\u6784\u5EFA\u5DE5\u5177\u7684\u8FD0\u884C\u4F9D\u8D56\uFF0C\u89E3\u51B3\u5728\u7EBF\u66F4\u65B0\u56E0\u5B89\u88C5\u811A\u672C\u88AB\u62E6\u622A\u800C\u62A5\u9519\u3002",
-        "\u4FEE\u590D\uFF1A\u91CD\u7F6E\u540E\u5148\u6838\u5BF9\u914D\u7F6E\u5E76\u5F15\u5BFC\u767B\u5F55\u6216\u586B\u5199 Key\uFF0C\u4FDD\u7559\u811A\u672C\u4E0E\u4EFB\u52A1\u8FDB\u5EA6\uFF0C\u907F\u514D\u8BEF\u5EFA\u8BAE\u91CD\u88C5\u6216\u91CD\u542F\u3002"
+        "\u65B0\u589E\uFF1A\u7EED\u62CD\u652F\u6301\u8FC7\u6E21\u753B\u9762\u63CF\u8FF0\uFF0C\u968F\u811A\u672C\u5BA1\u6838\u5E76\u4F20\u5165\u89C6\u9891\u8BF7\u6C42\uFF1B\u9010\u6BB5\u63CF\u8FF0\u4F18\u5148\u4E8E\u901A\u7528\u63CF\u8FF0\uFF0C\u6682\u505C\u7EED\u505A\u6CBF\u7528\u5DF2\u786E\u8BA4\u5185\u5BB9\u3002",
+        "\u65B0\u589E\uFF1A\u5B8C\u5584\u811A\u672C\u4E0E\u9010\u6BB5\u63D0\u793A\u8BCD\uFF1A\u7EDF\u4E00\u4E3B\u4F53\u6807\u7B7E\uFF0C\u6309\u5206\u955C\u987A\u5E8F\u63CF\u8FF0\u52A8\u4F5C\u3001\u573A\u666F\u548C\u955C\u5934\uFF0C\u5E76\u660E\u786E\u5149\u5F71\u3001\u98CE\u683C\u3001\u753B\u8D28\u53CA\u7EA6\u675F\u6761\u4EF6\u3002",
+        "\u4F18\u5316\uFF1A\u591A\u6BB5\u89C6\u9891\u9010\u9879\u4EA4\u4ED8\u7B2C\u4E00\u6BB5\u3001\u7B2C\u4E8C\u6BB5\u53CA\u540E\u7EED\u5168\u90E8\u5206\u6BB5\uFF0C\u5E76\u5355\u72EC\u5C55\u793A\u771F\u5B9E\u5408\u5E76\u6210\u7247\uFF1B\u6682\u505C\u6216\u5408\u5E76\u5931\u8D25\u65F6\u4ECD\u4EA4\u4ED8\u5DF2\u5B8C\u6210\u5206\u6BB5\u3002",
+        "\u4F18\u5316\uFF1A\u79FB\u9664\u7248\u672C\u9009\u62E9\u548C\u964D\u7EA7\u5165\u53E3\uFF0C\u4EC5\u4FDD\u7559\u68C0\u67E5\u66F4\u65B0\u53CA\u4E8C\u6B21\u786E\u8BA4\u66F4\u65B0\u5230\u66F4\u9AD8\u7684\u6700\u65B0\u6B63\u5F0F\u7248\u3002",
+        "\u4F18\u5316\uFF1AMetaOntic AI \u63A5\u5165\u663E\u793A\u4E13\u7528 Key \u914D\u7F6E\u63D0\u793A\uFF0C\u5E76\u63D0\u4F9B ai.bileego.com \u6CE8\u518C\u83B7\u53D6 Key \u7684\u94FE\u63A5\uFF1B\u540C\u6B65\u4F7F\u7528\u8BF4\u660E\u4E66\u4E0E PDF\u3002",
+        "\u4FEE\u590D\uFF1A\u660E\u786E\u8FC7\u6E21\u5B89\u6392\u5207\u955C\u65F6\uFF0C\u53D6\u6D88\u63A5\u7F1D\u5904\u76F8\u540C\u673A\u4F4D\u3001\u666F\u522B\u548C\u7126\u6BB5\u7684\u51B2\u7A81\u7EA6\u675F\uFF1B\u81EA\u52A8\u63D0\u793A\u8BCD\u76F4\u63A5\u4F7F\u7528\u201C\u89C6\u98911\u201D\u6307\u4EE3\u5EF6\u957F\u7D20\u6750\u3002",
+        "\u4FEE\u590D\uFF1A\u8FC7\u6E21\u63CF\u8FF0\u6301\u4E45\u5316\u5230\u65AD\u70B9\uFF0C\u975E\u6CD5\u63CF\u8FF0\u5728\u63D0\u4EA4\u524D\u62D2\u7EDD\uFF1B\u4E0D\u5411\u4E0A\u6E38\u6DFB\u52A0\u4E0D\u652F\u6301\u7684\u53C2\u6570\uFF0C\u4E0D\u56E0\u5E94\u7528\u65B0\u63CF\u8FF0\u91CD\u590D\u63D0\u4EA4\u5DF2\u6709\u4EFB\u52A1\u3002"
       ]
     }
   };
 
   // src/client/settings.ts
-  function createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, fetchRecentVersions, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS }) {
+  function createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS }) {
     function makePage({ form, t, manager }) {
       return function ConfigPage(props) {
         const snapshot = useSnapshot(form);
@@ -1605,7 +1577,6 @@
         const [updateStatus, setUpdateStatus] = React.useState("idle");
         const [updateMessage, setUpdateMessage] = React.useState("");
         const [updateLatest, setUpdateLatest] = React.useState("");
-        const [availableVersions, setAvailableVersions] = React.useState([]);
         const updateRequest = React.useRef(0);
         const releaseNotes = package_default.releaseNotes;
         const [updateAt, setUpdateAt] = React.useState("");
@@ -1716,20 +1687,11 @@
           get UPDATE_CACHE_KEY() {
             return UPDATE_CACHE_KEY;
           },
-          get availableVersions() {
-            return availableVersions;
-          },
-          get setAvailableVersions() {
-            return setAvailableVersions;
-          },
           get PLUGIN_VERSION() {
             return PLUGIN_VERSION;
           },
           get isNewerVersion() {
             return isNewerVersion;
-          },
-          get fetchRecentVersions() {
-            return fetchRecentVersions;
           },
           get updateRequest() {
             return updateRequest;
@@ -1839,8 +1801,7 @@
           }
           const cached = readUpdateCache();
           if (cached.latest) {
-            setAvailableVersions(cached.versions);
-            setUpdateLatest(isNewerVersion(cached.latest, PLUGIN_VERSION) ? cached.latest : cached.versions.includes(PLUGIN_VERSION) ? PLUGIN_VERSION : "");
+            setUpdateLatest(cached.latest);
             if (cached.at) setUpdateAt(new Date(cached.at).toLocaleTimeString());
             setUpdateStatus("ok");
           }
@@ -2013,7 +1974,7 @@
           ]);
         }
         const hints = {
-          connectionMode: t("connectionModeHint"),
+          connectionMode: selectedMode === "metaontic" ? [t("connectionMetaonticHint"), " ", h("a", { key: "metaontic-register", href: "https://ai.bileego.com/", target: "_blank", rel: "noopener noreferrer", style: { textDecoration: "underline" } }, t("connectionMetaonticRegister"))] : t("connectionModeHint"),
           metaonticApiKey: t("metaonticKeyHint"),
           volcengineApiKey: t("volcengineKeyHint"),
           model: t("modelHint"),
@@ -2276,9 +2237,8 @@
           usageAt ? h("span", { key: "updated-at", className: "mov-foot-note" }, t("quotaUpdatedAt", { time: usageAt })) : null,
           usageMessage ? h("span", { key: "message", className: "mov-hint" }, usageMessage) : null
         ]) : null;
-        const updateAvailable = Boolean(updateLatest) && availableVersions.includes(updateLatest) && updateLatest !== PLUGIN_VERSION;
-        const isDowngrade = updateAvailable && isNewerVersion(PLUGIN_VERSION, updateLatest);
-        const updateText = updateStatus === "working" ? t("versionChecking") : updateStatus === "failed" ? updateMessage : updateStatus === "installing" ? t(isDowngrade ? "versionDowngrading" : "versionUpdating") : updateStatus === "restart" || updateStatus === "applied" ? updateMessage : updateStatus === "ok" ? updateAvailable ? t("versionTarget", { version: updateLatest }) : t("versionLatest") : "";
+        const updateAvailable = Boolean(updateLatest) && Boolean(PLUGIN_VERSION) && isNewerVersion(updateLatest, PLUGIN_VERSION);
+        const updateText = updateStatus === "working" ? t("versionChecking") : updateStatus === "failed" ? updateMessage : updateStatus === "installing" ? t("versionUpdating") : updateStatus === "restart" || updateStatus === "applied" ? updateMessage : updateStatus === "ok" ? updateAvailable ? t("versionNew", { version: updateLatest }) : t("versionLatest") : "";
         const updateTone = updateStatus === "failed" ? TOKENS.error : updateStatus === "restart" || updateStatus === "applied" || updateAvailable ? TOKENS.success : TOKENS.muted;
         const versionBox = h("div", {
           key: "version",
@@ -2307,28 +2267,6 @@
                 });
               }
             }, updateStatus === "working" ? t("versionChecking") : t("versionCheck"))
-          ]),
-          h("div", { key: "version-choice", className: "mov-cmd-row" }, [
-            h("label", { key: "label", htmlFor: "mov-update-version", className: "mov-label" }, t("versionSelect")),
-            h("select", {
-              key: "select",
-              id: "mov-update-version",
-              className: "mov-input",
-              value: updateLatest,
-              disabled: updateStatus === "installing" || updateStatus === "working" || !availableVersions.length,
-              onChange: (event) => {
-                const version = event.target.value;
-                if (!availableVersions.includes(version)) return;
-                updateRequest.current++;
-                setUpdateLatest(version);
-                setUpdateConfirm(false);
-                setUpdateMessage("");
-              }
-            }, [
-              !updateLatest ? h("option", { key: "empty", value: "", disabled: true }, t("versionChoose")) : null,
-              ...availableVersions.map((version) => h("option", { key: version, value: version }, `v${version}${version === PLUGIN_VERSION ? " \xB7 " + t("versionInstalled") : ""}`))
-            ]),
-            h("span", { key: "hint", className: "mov-hint" }, t("versionSelectHint"))
           ]),
           releaseNotes?.items?.length ? h("div", { key: "release-notes", "data-field": "releaseNotes" }, [
             h("div", { key: "heading", style: { display: "flex", alignItems: "baseline", gap: 12 } }, [
@@ -2360,13 +2298,13 @@
                 });
                 else setUpdateConfirm(true);
               }
-            }, updateStatus === "installing" ? t(isDowngrade ? "versionDowngrading" : "versionUpdating") : updateConfirm ? t(isDowngrade ? "versionDowngradeConfirm" : "versionUpdateConfirm", { version: updateLatest }) : t(isDowngrade ? "versionDowngrade" : "versionUpdate"))
+            }, updateStatus === "installing" ? t("versionUpdating") : updateConfirm ? t("versionUpdateConfirm", { version: updateLatest }) : t("versionUpdate"))
           ]) : null,
           updateAvailable && updateConfirm ? h("span", {
             key: "confirm-hint",
             "data-field": "updateConfirmHint",
             className: "mov-hint"
-          }, t(isDowngrade ? "versionDowngradeConfirmHint" : "versionUpdateConfirmHint")) : null,
+          }, t("versionUpdateConfirmHint")) : null,
           updateAvailable ? h("span", { key: "hint", className: "mov-hint" }, t("versionHint")) : null,
           updateStatus === "ok" && updateAt ? h("span", { key: "at", className: "mov-foot-note" }, t("versionCheckedAt", { time: updateAt })) : null
         ]);
@@ -2463,7 +2401,6 @@
             h,
             t,
             available: updateAvailable,
-            downgrade: isDowngrade,
             latest: updateLatest,
             deferred: updateDeferred,
             status: updateStatus,
@@ -2517,8 +2454,8 @@
       const { PLUGIN_OWNED_KEYS, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE } = createClientConfig();
       const { zh, en } = createDictionaries();
       const { useSnapshot, same, validateSettings, persistConnection, persistBatch } = createSettingsState({ React });
-      const { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, fetchRecentVersions, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell } = createUpdates({ h });
-      const { makePage } = createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, fetchRecentVersions, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS });
+      const { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell } = createUpdates({ h });
+      const { makePage } = createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS });
       return {
         inject: ["slots", "locale", "configForms", "uiSession"],
         apply(ctx) {

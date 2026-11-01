@@ -80,7 +80,7 @@ export function videoTool(liveConfig, deps, ctx) {
         },
         segmentPrompts: {
           type: 'array', items: { type: 'string', minLength: 1 },
-          description: '多段生成必须提供：按完整计划顺序，每段一条独立提示词，含稳定主体标签、动作起止状态、本段新对白和运镜。2.0按事件顺序；2.5可用本段从0秒起的连续时间区间。续做默认沿用原数组，不传整份剧本替代每段。',
+          description: '多段生成必须提供：按完整计划顺序，每段一条独立提示词，含稳定主体标签、动作起止状态、本段新对白和运镜。2.0按事件顺序；2.5可用本段从0秒起的连续时间区间。续拍段另含单行【过渡画面】描述上一段到本段的动作、镜头与声音交接；续做默认沿用原数组，不传整份剧本替代每段。',
         },
         referenceImages: {
           type: 'array',
@@ -99,6 +99,10 @@ export function videoTool(liveConfig, deps, ctx) {
           description:
             '仅在超过单段上限时才用：每段延长多少秒，默认用配置里的每段秒数；'
             + '4 至模型上限（2.0 为 15、2.5 为 30） 的整数（如 5/8/10/14），默认按模型上限：按上限拆、段数最少。',
+        },
+        transitionDescription: {
+          type: 'string',
+          description: '已审核的续拍过渡描述：视频1接缝状态→本段动作/镜头衔接→声音延续，直接使用“视频1”，不写“参考视频1”。多段共用时作为通用描述；video_generate 可在各条 segmentPrompts 内用单行【过渡画面】指定该段过渡并优先采用。仅作用于续拍，首次直出不引用视频1。',
         },
         mode: {
           type: 'string',
@@ -198,6 +202,9 @@ export function videoTool(liveConfig, deps, ctx) {
       if (resume?.toolName && resume.toolName !== TOOL_NAME) throw new Error(`这份进度请使用 ${resume.toolName} 继续。`);
       args = { ...(resume?.options || {}), ...args };
       args.resolution = resolveResolution(config, args);
+      if (args.transitionDescription !== undefined && typeof args.transitionDescription !== 'string') {
+        throw new Error('过渡描述必须是文字。');
+      }
 
       const prompt = String(args?.prompt ?? '').trim() || String(resume?.prompt ?? '').trim();
       if (!prompt) {

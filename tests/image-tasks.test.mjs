@@ -244,3 +244,33 @@ test('speech instructions reach generation and both extension directions without
  assert.equal(silent.body.generate_audio,false);
  assert.match(silent.body.content[0].text,/无对白时不新增人声/);
 }));
+
+for(const connectionMode of ['service','metaontic','volcengine']) test(`${connectionMode}: reviewed transition enters the native video request without a new API parameter`,()=>fixture(async h=>{
+ h.config.connectionMode=connectionMode;h.config.volcengineApiKey='c';
+ const transition='承接视频1中男子放下茶杯的动作，切到女子近景，环境声连续。';
+ const {body}=api.buildRequestBody(h.config,{prompt:'镜头1：女子抬头说{我知道了。}',duration:15,resolution:'480p',mode:'continuous',transitionDescription:transition},'https://example.com/source.mp4');
+ const text=body.content.find(c=>c.type==='text').text;
+ assert.ok(text.includes(transition));assert.doesNotMatch(text,/参考\s*视频\s*1/);
+ assert.equal(body.transitionDescription,undefined);assert.equal(body.resolution,'480p');
+ assert.equal(body.content.find(c=>c.type==='video_url').role,'reference_video');
+}));
+
+for(const toolName of ['video_generate','video_extend']) test(`${toolName}: approved transition survives pause and resume without another submission`,()=>fixture(async h=>{
+ h.flags.videoReject=false;
+ const transition='承接视频1末尾的点头动作，切到女子中景，原配乐连续。';
+ const initial={prompt:'镜头1：人物缓慢抬头回应。',segmentPrompts:['镜头1：男子放下茶杯。','镜头1：女子抬头回应。'],transitionDescription:transition,merge:false,resolution:'480p'};
+ const first=await h.tools.get(toolName).execute(toolName==='video_generate'?{...initial,duration:30}:{...initial,videoUrl:'https://example.com/source.mp4',duration:15,segments:2},h.exec);
+ assert.equal(first.paused,true);
+ const record=JSON.parse(await readFile(path.join(first.resumeDir,'paused-plan.json'),'utf8'));
+ assert.equal(record.options.transitionDescription,transition);
+ const result=await h.tools.get(toolName).execute({resume:first.resumeDir},h.exec);
+ assert.equal(result.status,'succeeded');assert.equal(h.videos,2);
+ const bodies=h.calls.filter(c=>c.body?.model==='video').map(c=>c.body);
+ assert.ok(bodies[1].content.find(c=>c.type==='text').text.includes(transition));
+ if(toolName==='video_generate') assert.ok(!bodies[0].content[0].text.includes(transition));
+}));
+for(const toolName of ['video_generate','video_extend']) test(`${toolName}: invalid transition is rejected before any paid submission`,()=>fixture(async h=>{
+ h.flags.videoReject=false;
+ await assert.rejects(h.tools.get(toolName).execute({prompt:'story',duration:30,segmentPrompts:['first','second'],videoUrl:'https://example.com/source.mp4',transitionDescription:{invalid:true},merge:false},h.exec),/过渡描述必须是文字/);
+ assert.equal(h.videos,0);assert.equal(h.calls.length,0);
+}));

@@ -9,6 +9,26 @@ export function previewInstruction(value) {
     + '用户首次授权制作不等于已看过本段，不得自动resume或调用其他生成工具绕过预览；展示工具不可用时给出可点击视频路径或播放链接，仍须等待明确确认。';
 }
 
+/** 多段成果逐项交付；只引用真实完成的文件，不将最后一段当作合并成片。 */
+export function deliveryInstruction(value) {
+  const segments = value?.segments || [];
+  const completed = segments.filter(segment => segment.status === 'succeeded' && (segment.localPath || segment.videoUrl));
+  const multiPart = segments.length > 1 || (value?.paused && (value?.remainingSeconds || 0) > 0);
+  if (!multiPart || !completed.length) return '';
+  const labels = ['第一段', '第二段', '第三段'];
+  const items = completed.map((segment, i) => {
+    const index = segment.index || i + 1;
+    return `${labels[index - 1] || `第${index}段`}：${segment.localPath || segment.videoUrl}`;
+  });
+  const mergedPath = completed.length > 1 && value?.merged && value?.videoPath
+    && !completed.some(segment => segment.localPath === value.videoPath) ? value.videoPath : '';
+  if (mergedPath) items.push(`${value.paused || value.partial || value.status !== 'succeeded' ? '已完成部分合并视频' : '合并后完整视频'}：${mergedPath}`);
+  else if (completed.length > 1) items.push('合并结果尚未交付：如实说明未合并、合并失败或等待交付，不将最后一段当作完整成片。');
+  return ['【交付清单：每个分段与合并结果分别展示】', ...items,
+    '请实际使用 present/文件展示工具，按顺序逐项展示上述视频，不只展示最后一段或合并视频；每项标明对应段号或合并结果。展示工具不可用时，为每项提供可点击文件路径或播放链接。已有文件直接交付，不重新生成。',
+  ].join('\n');
+}
+
 function recoveryInstruction(value, toolName) {
   if (!value?.resumeDir) return '';
   if (value.deliveryError || value.ffmpegMissing) return `生成进度已保存。交付尚未完成，请用 ${toolName} 的 resume="${value.resumeDir}" 重试下载或合并，不会重新生成或重复扣费。`;
@@ -41,7 +61,7 @@ export function renderResult(value) {
   });
 
   if (status === 'succeeded') {
-    const parts = [recoveryInstruction(value, 'video_extend')];
+    const parts = [deliveryInstruction(value), recoveryInstruction(value, 'video_extend')];
     if (paused) {
       parts.push(previewInstruction(value));
       parts.push(
@@ -62,7 +82,7 @@ export function renderResult(value) {
         + '前面几段不会重新生成、不会重复扣费。',
       );
     }
-    parts.push(`最终视频链接（约 24 小时内有效）：${videoUrl || '（无）'}`);
+    parts.push(`最后一段上游链接（约 24 小时内有效）：${videoUrl || '（无）'}`);
     if (note) parts.push(note);
     return [{ type: 'text', text: parts.filter(Boolean).join('\n') }];
   }
@@ -71,7 +91,9 @@ export function renderResult(value) {
       {
         type: 'text',
         text: [
+          deliveryInstruction(value),
           '延长任务仍在生成中（已超出单次等待时间）。',
+          deliveryInstruction(value),
           recoveryInstruction(value, 'video_extend'),
           ...lines,
           `可用 video_status 查询任务 ${
@@ -86,6 +108,7 @@ export function renderResult(value) {
       {
         type: 'text',
         text: [
+          deliveryInstruction(value),
           recoveryInstruction(value, 'video_extend'),
           '没能确认这段延长任务的状态（查询失败，不是任务失败）。任务已经提交，可能仍在生成；'
           + '用 video_status 按任务 ID 复查，不要重新提交。',
@@ -96,12 +119,13 @@ export function renderResult(value) {
     ];
   }
   if (status === 'cancelled') {
-    return [{ type: 'text', text: `延长任务已取消。\n${lines.join('\n')}` }];
+    return [{ type: 'text', text: [deliveryInstruction(value), `延长任务已取消。\n${lines.join('\n')}`].filter(Boolean).join('\n') }];
   }
   return [
     {
       type: 'text',
       text: [
+        deliveryInstruction(value),
         `视频延长失败${error ? `：${error}` : ''}。`,
         ...lines,
         videoUrl ? `已完成部分的视频链接：${videoUrl}` : '',
@@ -166,7 +190,7 @@ export function renderVideoResult(value) {
       : `${head} → ${segment.videoUrl}`;
   });
 
-  const parts = [recoveryInstruction(value, 'video_generate'), ...(paused ? [previewInstruction(value)] : [])];
+  const parts = [deliveryInstruction(value), recoveryInstruction(value, 'video_generate'), ...(paused ? [previewInstruction(value)] : [])];
   if (status === 'succeeded') {
     if (paused) {
       parts.push(

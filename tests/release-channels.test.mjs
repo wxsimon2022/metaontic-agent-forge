@@ -74,26 +74,28 @@ test('recent list merges sources, sorts numerically, deduplicates and caps at th
    : [{tag_name:'v3.11.0'},{tag_name:'v3.10.0'},{tag_name:'v9.0.0',prerelease:true}]});
  assert.deepEqual(Array.from(await ctx.fetchRecentVersions()),['3.11.0','3.10.0','3.9.0']);
 });
-test('manual old-version selection installs exactly that stable artifact',async()=>{
- const ctx=setup([]);const specs=[];
- const actions=ctx.createUpdateActions({updateConfirm:true,updateLatest:'3.8.2',availableVersions:['3.10.0','3.9.0','3.8.2'],
- setUpdateConfirm(){},setUpdateStatus(){},setUpdateMessage(){},setUpdateLatest(){},t:key=>key,
- UPDATE_ATTEMPTS:1,PLUGIN_PACKAGE:'metaontic-video',manager:()=>({manager:{installBundle:async spec=>{
-   specs.push(spec);return {ok:true,value:{application:'applied',version:'3.8.2'}};}}})});
- await actions.runOnlineUpdate();assert.equal(specs.length,1);assert.ok(specs[0].endsWith('/v3.8.2/metaontic-video-3.8.2.tgz'));
+test('older and identical versions cannot install even if the action is called directly',async()=>{
+ const ctx=setup([]);
+ for(const target of ['3.8.2','3.10.0']) {
+  let installs=0;
+  const actions=ctx.createUpdateActions({PLUGIN_VERSION:'3.10.0',isNewerVersion:ctx.isNewerVersion,
+   updateConfirm:true,updateLatest:target,setUpdateConfirm(){},setUpdateStatus(){},setUpdateMessage(){},t:key=>key,
+   manager:()=>({manager:{installBundle:async()=>{installs++;}}})});
+  await actions.runOnlineUpdate();assert.equal(installs,0);
+ }
 });
 test('new check does not default to downgrading an installed newer version',async()=>{
  const ctx=setup([]);let target;let versions;
  const actions=ctx.createUpdateActions({PLUGIN_VERSION:'3.10.0',isNewerVersion:ctx.isNewerVersion,
  fetchRecentVersions:async()=>['3.9.0','3.8.2','3.8.1'],setUpdateConfirm(){},setUpdateLatest:v=>target=v,
  setAvailableVersions:v=>versions=v,setUpdateAt(){},setUpdateStatus(){},setUpdateMessage(){}});
- await actions.checkForUpdate(true);assert.equal(target,'');assert.equal(versions.length,3);
+ await actions.checkForUpdate(true);assert.equal(target,'3.9.0');assert.equal(ctx.isNewerVersion(target,'3.10.0'),false);
 });
-test('lower-version installation reports downgrade instead of update',async()=>{
+test('higher-version installation reports a successful update',async()=>{
  const ctx=setup([]);const messages=[];
- const actions=ctx.createUpdateActions({PLUGIN_VERSION:'3.10.0',isNewerVersion:ctx.isNewerVersion,
- updateConfirm:true,updateLatest:'3.8.2',availableVersions:['3.10.0','3.9.0','3.8.2'],
+ const actions=ctx.createUpdateActions({PLUGIN_VERSION:'3.8.2',isNewerVersion:ctx.isNewerVersion,
+ updateConfirm:true,updateLatest:'3.10.0',availableVersions:['3.10.0','3.9.0','3.8.2'],
  setUpdateConfirm(){},setUpdateStatus(){},setUpdateMessage:key=>messages.push(key),setUpdateLatest(){},t:key=>key,
  UPDATE_ATTEMPTS:1,PLUGIN_PACKAGE:'metaontic-video',manager:()=>({manager:{installBundle:async()=>({ok:true,value:{application:'applied',version:'3.8.2'}})}})});
- await actions.runOnlineUpdate();assert.equal(messages.at(-1),'versionDowngradeDone');
+ await actions.runOnlineUpdate();assert.equal(messages.at(-1),'versionUpdateDone');
 });

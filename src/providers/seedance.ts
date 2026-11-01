@@ -38,7 +38,7 @@ export function buildRequestBody(config, args, referenceVideoUrl) {
   const wording = args.wording === 'after' ? 'after' : 'extend';
 
   const content = [
-    { type: 'text', text: buildExtensionPrompt({ prompt, seconds, startAt, mode, direction, wording }) },
+    { type: 'text', text: buildExtensionPrompt({ prompt, seconds, startAt, mode, direction, wording, transitionDescription: args.transitionDescription }) },
     { type: 'video_url', video_url: { url: referenceVideoUrl }, role: 'reference_video' },
   ];
 

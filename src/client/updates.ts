@@ -149,10 +149,7 @@ async function checkForUpdate(silent = false) {
         const latest = versions[0];
         if (context.updateRequest && request !== context.updateRequest.current) return '';
         context.setUpdateConfirm?.(false);
-        context.setAvailableVersions?.(versions);
-        const selected = !context.PLUGIN_VERSION || context.isNewerVersion?.(latest, context.PLUGIN_VERSION)
-          ? latest : versions.includes(context.PLUGIN_VERSION) ? context.PLUGIN_VERSION : '';
-        context.setUpdateLatest(selected);
+        context.setUpdateLatest(latest);
         context.setUpdateAt(new Date().toLocaleTimeString());
         context.setUpdateStatus('ok');
         rememberUpdateCheck(latest, versions);
@@ -171,9 +168,12 @@ async function checkForUpdate(silent = false) {
 /** 仅在用户二次确认后安装已发布标签，保留当前插件作为失败退路。 */
 async function runOnlineUpdate() {
     if (context.updateConfirm !== true) return;
-    const downgrading = context.isNewerVersion?.(context.PLUGIN_VERSION, context.updateLatest) === true;
-    const operationKey = key => downgrading ? key.replace('versionUpdate', 'versionDowngrade') : key;
     context.setUpdateConfirm(false);
+    if (context.PLUGIN_VERSION && context.isNewerVersion?.(context.updateLatest, context.PLUGIN_VERSION) !== true) {
+        context.setUpdateStatus('ok');
+        context.setUpdateMessage(context.t('versionLatest'));
+        return;
+    }
     // 先把「更新中」摆上：重装会把本插件的客户端模块换掉，页面随时可能消失，
     // 用户至少要立刻看到按钮/文案变了，而不是以为点了没反应。
     context.setUpdateStatus('installing');
@@ -182,7 +182,7 @@ async function runOnlineUpdate() {
     const pluginManager = probe.manager;
     if (!pluginManager || typeof pluginManager.installBundle !== 'function') {
         context.setUpdateStatus('failed');
-        context.setUpdateMessage(context.t(operationKey('versionUpdateUnavailable'), { detail: probe.tried.join('，') }));
+        context.setUpdateMessage(context.t('versionUpdateUnavailable', { detail: probe.tried.join('，') }));
         return;
     }
     const requestId = `${context.PLUGIN_PACKAGE}-update-${Date.now()}`;
@@ -228,7 +228,7 @@ async function runOnlineUpdate() {
             const text = failureText(result);
             const transient = worthRetrying(text);
             if (transient && round < context.UPDATE_ATTEMPTS) {
-                context.setUpdateMessage(context.t(operationKey('versionUpdateRetry'), { attempt: round + 1, total: context.UPDATE_ATTEMPTS }));
+                context.setUpdateMessage(context.t('versionUpdateRetry', { attempt: round + 1, total: context.UPDATE_ATTEMPTS }));
                 await new Promise((resolve) => window.setTimeout(resolve, round * 1200));
                 continue;
             }
@@ -252,7 +252,7 @@ async function runOnlineUpdate() {
     if (!outcome) {
         context.setUpdateStatus('failed');
         context.setUpdateMessage([
-            context.t(operationKey('versionUpdateFailed'), { message: failure }),
+            context.t('versionUpdateFailed', { message: failure }),
             worthRetrying(failure) || /429|queue overflowed/i.test(failure)
                 ? context.t('versionUpdateRateLimited')
                 : '',
@@ -261,7 +261,7 @@ async function runOnlineUpdate() {
     }
     if (outcome.application === 'cancelled') {
         context.setUpdateStatus('ok');
-        context.setUpdateMessage(context.t(operationKey('versionUpdateCancelled')));
+        context.setUpdateMessage(context.t('versionUpdateCancelled'));
         return;
     }
     // 装好了：缓存作废，卡片不再是「有新版本」，只报更新结果
@@ -270,8 +270,8 @@ async function runOnlineUpdate() {
     context.setUpdateLatest('');
     context.setUpdateStatus(outcome.application === 'restart-required' ? 'restart' : 'applied');
     context.setUpdateMessage(outcome.application === 'restart-required'
-        ? context.t(operationKey('versionUpdateRestart'), { version })
-        : context.t(operationKey(outcome.application === 'applied' ? 'versionUpdateDone' : 'versionUpdatePending'), { version }));
+        ? context.t('versionUpdateRestart', { version })
+        : context.t(outcome.application === 'applied' ? 'versionUpdateDone' : 'versionUpdatePending', { version }));
 }
 function deferUpdate() {
     context.setUpdateConfirm(false);
@@ -282,16 +282,16 @@ function deferUpdate() {
 }
 
 /** Ordinary updates are optional: checking and dismissing never install anything. */
-export function renderUpdateNotice({ h, t, available, latest, deferred, status, confirmed, downgrade = false, onUpdate, onLater }) {
+export function renderUpdateNotice({ h, t, available, latest, deferred, status, confirmed, onUpdate, onLater }) {
   if (!available || deferred === latest || status === 'installing') return null;
   return h('div', { key: 'update-notice', className: 'mov-notice', role: 'status', 'data-field': 'update-notice' }, [
-    h('strong', { key: 'title' }, t('versionTarget', { version: latest })),
+    h('strong', { key: 'title' }, t('versionNew', { version: latest })),
     h('p', { key: 'optional' }, t('versionOptional')),
-    confirmed ? h('p', { key: 'confirm' }, t(downgrade ? 'versionDowngradeConfirmHint' : 'versionUpdateConfirmHint')) : null,
+    confirmed ? h('p', { key: 'confirm' }, t('versionUpdateConfirmHint')) : null,
     h('div', { key: 'actions', className: 'mov-cmd-row' }, [
       h('button', { key: 'update', type: 'button', className: 'mov-btn mov-btn-sm mov-btn-primary',
         'data-action': confirmed ? 'update-notice-confirm' : 'update-notice-open', onClick: onUpdate },
-        confirmed ? t(downgrade ? 'versionDowngradeConfirm' : 'versionUpdateConfirm', { version: latest }) : t(downgrade ? 'versionDowngrade' : 'versionUpdate')),
+        confirmed ? t('versionUpdateConfirm', { version: latest }) : t('versionUpdate')),
       h('button', { key: 'later', type: 'button', className: 'mov-btn mov-btn-sm', 'data-action': 'update-later', onClick: onLater }, t('versionLater')),
     ]),
   ]);
