@@ -28,10 +28,18 @@ const TOKENS = {
       .mov-advanced-toggle { cursor: pointer; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
       .mov-advanced-toggle .mov-hint { display: block; margin: 5px 0 0 16px; font-weight: 400; }
       .mov-advanced-toggle:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 5px; border-radius: 4px; }
-      .mov-advanced-body { display: flex; flex-direction: column; gap: 12px; border-top: 1px solid ${TOKENS.border}; margin-top: 14px; padding-top: 16px; }
+      .mov-advanced-body { display: flex; flex-direction: column; gap: 18px; border-top: 1px solid ${TOKENS.border}; margin-top: 14px; padding-top: 16px; }
       .mov-advanced-body .mov-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; align-items: start; }
       .mov-advanced-body .mov-field-wide { grid-column: auto; }
-      @container (max-width: 480px) { .mov-advanced-body .mov-grid { grid-template-columns: minmax(0, 1fr); } }
+      .mov-advanced-group { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+      .mov-advanced-group + .mov-advanced-group { border-top: 1px solid ${TOKENS.border}; padding-top: 16px; }
+      .mov-advanced-group .mov-label { min-height: 30px; display: flex; align-items: flex-end; }
+      .mov-advanced-tools .mov-grid { grid-template-columns: minmax(0, 1fr); }
+      .mov-advanced-tools .mov-label { min-height: 0; }
+      .mov-advanced-group[data-group="advancedPicture"] .mov-grid { grid-template-columns: minmax(0, 1fr); }
+      .mov-advanced-group[data-group="advancedPicture"] .mov-switch { justify-content: space-between; flex-direction: row-reverse; }
+
+      @container (max-width: 480px) { .mov-advanced-body .mov-grid { grid-template-columns: minmax(0, 1fr); } .mov-advanced-group .mov-label { min-height: 0; } }
       .mov-advanced { container-type: inline-size; }
       .mov-section-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
       /* 标题左边一道主色竖条，代替纯文字分组标题 */
@@ -45,6 +53,27 @@ const TOKENS = {
       @container (max-width: 480px) { .mov-parameter-group .mov-grid { grid-template-columns: minmax(0, 1fr); } }
       .mov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 14px 18px; }
       .mov-field { display: flex; flex-direction: column; min-width: 0; }
+      .mov-model-settings { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+      .mov-model-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .mov-model-grid-single { grid-template-columns: minmax(0, 1fr); }
+      .mov-model-card { display: flex; flex-direction: column; gap: 14px; padding: 12px; border: 1px solid ${TOKENS.border}; border-radius: 10px; min-width: 0; }
+      .mov-parameter-group > .mov-card { border: 0; padding: 0; background: transparent; }
+      @container (max-width: 600px) { .mov-model-grid { grid-template-columns: minmax(0, 1fr); } }
+
+      .mov-av-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .mov-av-card { display: flex; flex-direction: column; min-width: 0; padding: 12px; gap: 8px; border: 1px solid ${TOKENS.border}; border-radius: 10px; background: ${TOKENS.cardFill}; }
+      .mov-av-card > .mov-label { margin-bottom: -2px; }
+      .mov-av-card .mov-hint { margin-top: auto; }
+      .mov-av-audio .mov-switch { justify-content: space-between; gap: 12px; padding: 0; border: 0; background: transparent; }
+      .mov-av-audio .mov-switch span { order: 0; }
+      .mov-av-audio .mov-switch input { appearance: none; order: 1; flex: 0 0 34px; width: 34px; height: 20px; margin: 0; border: 1px solid ${TOKENS.border}; border-radius: 999px; background: ${TOKENS.border}; position: relative; transition: background .15s; }
+      .mov-av-audio .mov-switch input::after { content: ''; position: absolute; width: 14px; height: 14px; left: 2px; top: 2px; border-radius: 50%; background: white; transition: transform .15s; }
+      .mov-av-audio .mov-switch input:checked { background: ${TOKENS.primaryFill}; border-color: ${TOKENS.primaryFill}; }
+      .mov-av-audio .mov-switch input:checked::after { transform: translateX(14px); }
+      .mov-av-audio .mov-switch input:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 3px; }
+      @container (max-width: 480px) { .mov-av-grid { grid-template-columns: minmax(0, 1fr); } }
+      @media (prefers-reduced-motion: reduce) { .mov-av-audio .mov-switch input, .mov-av-audio .mov-switch input::after { transition: none; } }
+
       /* 开关没有标签行，靠底对齐才能跟旁边输入框的控制线齐平 */
       .mov-field-switch { justify-content: flex-end; }
       .mov-field-wide { grid-column: 1 / -1; }

@@ -396,6 +396,33 @@ function makePage({ form, t, manager }) {
 
         // 配置区分成几节，每节一个标题 + 一个自适应网格。
         const renderGrid = (section) => {
+          if (section.key === 'sectionModels') {
+            const shared = serviceMode || (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false;
+            const common = !serviceMode && !directMode
+              ? [fieldCell(FIELD_BY_KEY.imageUseVideoKey), ...(shared ? [fieldCell(FIELD_BY_KEY.metaonticApiKey)] : [])] : [];
+            const videoFields = ['model', ...(!serviceMode && (directMode || !shared) ? [directMode ? 'volcengineApiKey' : 'metaonticApiKey'] : [])];
+            const imageFields = ['imageModel', ...(!shared ? ['imageApiKey'] : [])];
+            return h('div', { key: section.key, className: 'mov-model-settings' }, [
+              ...common,
+              h('div', { key: 'models', className: `mov-model-grid${directMode ? ' mov-model-grid-single' : ''}` }, [
+                h('div', { key: 'video', className: 'mov-model-card', 'data-group': 'video-model' }, videoFields.map(key => fieldCell(FIELD_BY_KEY[key]))),
+                !directMode ? h('div', { key: 'image', className: 'mov-model-card', 'data-group': 'image-model' }, imageFields.map(key => fieldCell(FIELD_BY_KEY[key]))) : null,
+              ]),
+            ]);
+          }
+          if (section.key === 'sectionVideo') {
+            return h('div', { key: section.key, className: 'mov-av-grid' }, [
+              h('div', { key: 'picture', className: 'mov-av-card' }, [
+                fieldCell(FIELD_BY_KEY.ratio),
+                h('span', { key: 'hint', className: 'mov-hint' }, t('ratioLayoutHint')),
+              ]),
+              h('div', { key: 'audio', className: 'mov-av-card mov-av-audio' }, [
+                h('span', { key: 'label', className: 'mov-label' }, t('audioSettings')),
+                control(FIELD_BY_KEY.generateAudio),
+                h('span', { key: 'hint', className: 'mov-hint' }, t('audioLayoutHint')),
+              ]),
+            ]);
+          }
           const shared = serviceMode || (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false;
           const videoKey = directMode ? 'volcengineApiKey' : serviceMode ? 'apiKey' : 'metaonticApiKey';
           const fields = section.key === 'sectionModels'
@@ -411,13 +438,14 @@ function makePage({ form, t, manager }) {
             && (key !== 'metaonticApiKey' || selectedMode === 'metaontic'))
             .map((key) => fieldCell(FIELD_BY_KEY[key])).filter(Boolean));
         };
-        const rows = [
+        const settingsRows = () => [
           h('div', { key: 'generation', className: 'mov-section' }, [
             h('div', { key: 'title', className: 'mov-section-title' }, t('sectionGeneration')),
             ...SECTIONS.map(section =>
               h('div', { key: section.key, className: 'mov-parameter-group' }, [
                 h('div', { key: 'heading', className: 'mov-parameter-heading' }, t(section.key)),
                 renderGrid(section),
+                section.key === 'sectionConnection' ? registerBox : null,
               ])),
           ]),
           h('details', { key: 'advanced', className: 'mov-section mov-advanced' }, [
@@ -426,9 +454,16 @@ function makePage({ form, t, manager }) {
               h('span', { key: 'hint', className: 'mov-hint' }, t('sectionCombinedHint')),
             ]),
             h('div', { key: 'body', className: 'mov-advanced-body' }, [
-              renderGrid({ key: 'advancedFields', fields: ['mergeMode', 'watermark', 'seamTrimSeconds', 'pollIntervalMs', 'maxWaitMs', 'ffmpegBinary', 'ffprobeBinary'] }),
-              h('p', { key: 'toolsHint', className: 'mov-hint', style: { margin: 0 } }, t('toolsHint')),
-              h('p', { key: 'retained', className: 'mov-hint', style: { margin: 0 } }, t('segmentsRetained')),
+              ...[
+                { key: 'advancedPicture', fields: ['watermark'] },
+                { key: 'advancedMerge', fields: ['mergeMode', 'seamTrimSeconds'], hint: 'segmentsRetained' },
+                { key: 'advancedWait', fields: ['pollIntervalMs', 'maxWaitMs'] },
+                { key: 'advancedTools', fields: ['ffmpegBinary', 'ffprobeBinary'], hint: 'toolsHint' },
+              ].map(group => h('div', { key: group.key, className: `mov-advanced-group${group.key === 'advancedTools' ? ' mov-advanced-tools' : ''}`, 'data-group': group.key }, [
+                h('div', { key: 'title', className: 'mov-parameter-heading' }, t(group.key)),
+                renderGrid(group),
+                group.hint ? h('p', { key: 'hint', className: 'mov-hint', style: { margin: 0 } }, t(group.hint)) : null,
+              ])),
             ]),
           ]),
         ];
@@ -864,7 +899,7 @@ function makePage({ form, t, manager }) {
         // 配置读不出来（没有表单 / 不可写）时只显示提示，配置项与卡片一律不渲染。
         const blobs = notice && !snapshot.value
           ? []
-          : [registerBox, footer, resetRow, ...(serviceMode ? [quotaBox, usageBox] : []), versionBox];
+          : [footer, ...(serviceMode ? [quotaBox, usageBox] : []), versionBox, resetRow];
 
         return h('div', { className: 'mov-page' }, [
           // hover / focus 这类效果内联样式写不出来，集中在这张样式表里（class 都带 mov- 前缀）。
@@ -876,7 +911,7 @@ function makePage({ form, t, manager }) {
             onLater: deferUpdate,
           }) : null,
           notice ? h('p', { key: 'notice', className: 'mov-notice' }, notice) : null,
-          ...(notice && !snapshot.value ? [] : rows),
+          ...(notice && !snapshot.value ? [] : settingsRows()),
           ...blobs,
           supportOpen ? h('dialog', {
             key: 'support-dialog', ref: supportDialog, className: 'mov-support-dialog',

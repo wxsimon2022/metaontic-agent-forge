@@ -21,10 +21,18 @@
       .mov-advanced-toggle { cursor: pointer; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
       .mov-advanced-toggle .mov-hint { display: block; margin: 5px 0 0 16px; font-weight: 400; }
       .mov-advanced-toggle:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 5px; border-radius: 4px; }
-      .mov-advanced-body { display: flex; flex-direction: column; gap: 12px; border-top: 1px solid ${TOKENS.border}; margin-top: 14px; padding-top: 16px; }
+      .mov-advanced-body { display: flex; flex-direction: column; gap: 18px; border-top: 1px solid ${TOKENS.border}; margin-top: 14px; padding-top: 16px; }
       .mov-advanced-body .mov-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; align-items: start; }
       .mov-advanced-body .mov-field-wide { grid-column: auto; }
-      @container (max-width: 480px) { .mov-advanced-body .mov-grid { grid-template-columns: minmax(0, 1fr); } }
+      .mov-advanced-group { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+      .mov-advanced-group + .mov-advanced-group { border-top: 1px solid ${TOKENS.border}; padding-top: 16px; }
+      .mov-advanced-group .mov-label { min-height: 30px; display: flex; align-items: flex-end; }
+      .mov-advanced-tools .mov-grid { grid-template-columns: minmax(0, 1fr); }
+      .mov-advanced-tools .mov-label { min-height: 0; }
+      .mov-advanced-group[data-group="advancedPicture"] .mov-grid { grid-template-columns: minmax(0, 1fr); }
+      .mov-advanced-group[data-group="advancedPicture"] .mov-switch { justify-content: space-between; flex-direction: row-reverse; }
+
+      @container (max-width: 480px) { .mov-advanced-body .mov-grid { grid-template-columns: minmax(0, 1fr); } .mov-advanced-group .mov-label { min-height: 0; } }
       .mov-advanced { container-type: inline-size; }
       .mov-section-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
       /* \u6807\u9898\u5DE6\u8FB9\u4E00\u9053\u4E3B\u8272\u7AD6\u6761\uFF0C\u4EE3\u66FF\u7EAF\u6587\u5B57\u5206\u7EC4\u6807\u9898 */
@@ -38,6 +46,27 @@
       @container (max-width: 480px) { .mov-parameter-group .mov-grid { grid-template-columns: minmax(0, 1fr); } }
       .mov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 14px 18px; }
       .mov-field { display: flex; flex-direction: column; min-width: 0; }
+      .mov-model-settings { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+      .mov-model-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .mov-model-grid-single { grid-template-columns: minmax(0, 1fr); }
+      .mov-model-card { display: flex; flex-direction: column; gap: 14px; padding: 12px; border: 1px solid ${TOKENS.border}; border-radius: 10px; min-width: 0; }
+      .mov-parameter-group > .mov-card { border: 0; padding: 0; background: transparent; }
+      @container (max-width: 600px) { .mov-model-grid { grid-template-columns: minmax(0, 1fr); } }
+
+      .mov-av-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .mov-av-card { display: flex; flex-direction: column; min-width: 0; padding: 12px; gap: 8px; border: 1px solid ${TOKENS.border}; border-radius: 10px; background: ${TOKENS.cardFill}; }
+      .mov-av-card > .mov-label { margin-bottom: -2px; }
+      .mov-av-card .mov-hint { margin-top: auto; }
+      .mov-av-audio .mov-switch { justify-content: space-between; gap: 12px; padding: 0; border: 0; background: transparent; }
+      .mov-av-audio .mov-switch span { order: 0; }
+      .mov-av-audio .mov-switch input { appearance: none; order: 1; flex: 0 0 34px; width: 34px; height: 20px; margin: 0; border: 1px solid ${TOKENS.border}; border-radius: 999px; background: ${TOKENS.border}; position: relative; transition: background .15s; }
+      .mov-av-audio .mov-switch input::after { content: ''; position: absolute; width: 14px; height: 14px; left: 2px; top: 2px; border-radius: 50%; background: white; transition: transform .15s; }
+      .mov-av-audio .mov-switch input:checked { background: ${TOKENS.primaryFill}; border-color: ${TOKENS.primaryFill}; }
+      .mov-av-audio .mov-switch input:checked::after { transform: translateX(14px); }
+      .mov-av-audio .mov-switch input:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 3px; }
+      @container (max-width: 480px) { .mov-av-grid { grid-template-columns: minmax(0, 1fr); } }
+      @media (prefers-reduced-motion: reduce) { .mov-av-audio .mov-switch input, .mov-av-audio .mov-switch input::after { transition: none; } }
+
       /* \u5F00\u5173\u6CA1\u6709\u6807\u7B7E\u884C\uFF0C\u9760\u5E95\u5BF9\u9F50\u624D\u80FD\u8DDF\u65C1\u8FB9\u8F93\u5165\u6846\u7684\u63A7\u5236\u7EBF\u9F50\u5E73 */
       .mov-field-switch { justify-content: flex-end; }
       .mov-field-wide { grid-column: 1 / -1; }
@@ -493,6 +522,10 @@
       sectionVideo: "\u753B\u9762\u4E0E\u58F0\u97F3",
       sectionModels: "\u6A21\u578B\u914D\u7F6E",
       sectionCombined: "\u66F4\u591A\u8BBE\u7F6E",
+      advancedPicture: "\u753B\u9762",
+      advancedMerge: "\u89C6\u9891\u5408\u5E76",
+      advancedWait: "\u67E5\u8BE2\u4E0E\u7B49\u5F85",
+      advancedTools: "\u672C\u5730\u5DE5\u5177",
       sectionCombinedHint: "\u753B\u9762 \xB7 \u5408\u5E76 \xB7 \u7B49\u5F85 \xB7 \u672C\u5730\u5DE5\u5177",
       toolsHint: "\u901A\u5E38\u65E0\u9700\u586B\u5199\uFF1B\u5DF2\u5B89\u88C5\u4F46\u65E0\u6CD5\u81EA\u52A8\u8BC6\u522B\u65F6\uFF0C\u53EF\u6307\u5B9A\u53EF\u6267\u884C\u6587\u4EF6\u8DEF\u5F84\u3002",
       segmentsRetained: "\u6240\u6709\u539F\u59CB\u5206\u6BB5\u81EA\u52A8\u4FDD\u7559\uFF0C\u4FBF\u4E8E\u9884\u89C8\u3001\u7EED\u505A\u548C\u91CD\u65B0\u526A\u8F91\u3002",
@@ -504,6 +537,9 @@
       registerDisabled: "\u767B\u5F55\u670D\u52A1\u6682\u4E0D\u53EF\u7528\uFF1A{message}",
       registerNoKey: "\u767B\u5F55\u670D\u52A1\u672A\u8FD4\u56DE\u5BC6\u94A5\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u6216\u8054\u7CFB\u7BA1\u7406\u5458\u3002",
       ratio: "\u753B\u9762\u6BD4\u4F8B",
+      audioSettings: "\u58F0\u97F3\u8BBE\u7F6E",
+      ratioLayoutHint: "\u9009\u62E9\u6A2A\u5C4F\u3001\u7AD6\u5C4F\u6216\u81EA\u52A8\u9002\u914D\u753B\u9762\u3002",
+      audioLayoutHint: "\u5BF9\u767D\u3001\u97F3\u4E50\u4E0E\u73AF\u5883\u58F0\u6309\u811A\u672C\u5B89\u6392\u3002",
       generateAudio: "\u751F\u6210\u97F3\u9891",
       watermark: "\u6DFB\u52A0\u6C34\u5370",
       pollIntervalMs: "\u72B6\u6001\u67E5\u8BE2\u95F4\u9694\uFF08\u79D2\uFF09",
@@ -646,10 +682,17 @@
       sectionVideo: "Picture & audio",
       sectionModels: "Models",
       sectionCombined: "More settings",
+      advancedPicture: "Picture",
+      advancedMerge: "Video merging",
+      advancedWait: "Polling & waiting",
+      advancedTools: "Local tools",
       sectionCombinedHint: "Appearance, merging, runtime and local tools",
       toolsHint: "Usually leave blank. Set executable paths only if installed tools are not detected.",
       segmentsRetained: "Original segments are always retained for preview, resume and editing.",
       ratio: "Aspect ratio",
+      audioSettings: "Audio settings",
+      ratioLayoutHint: "Choose landscape, portrait or adaptive framing.",
+      audioLayoutHint: "Dialogue, music and ambience follow the script.",
       generateAudio: "Generate audio",
       watermark: "Add watermark",
       pollIntervalMs: "Status check interval (seconds)",
@@ -823,7 +866,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.11.2".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.11.3".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1439,7 +1482,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.11.2",
+    version: "3.11.3",
     description: "DeepSeek Harness video creation plugin with a Video Creation Assistant for concepts, script review and confirmed production; supports reference images, video continuation, segment previews, resumable generation, local merging, and MetaOnticVideo, MetaOntic AI or Volcano Engine access.",
     license: "MIT",
     type: "module",
@@ -1526,14 +1569,15 @@
       "@deepseek-ai/schemastery": "~3.18.5"
     },
     releaseNotes: {
-      version: "3.11.2",
+      version: "3.11.3",
       prerelease: false,
-      publishedAt: "2026-11-01T13:52:31Z",
+      publishedAt: "2026-11-01T14:23:13Z",
       items: [
-        "\u4F18\u5316\uFF1A\u811A\u672C\u8D39\u7528\u660E\u7EC6\u9010\u6BB5\u5C55\u793A\u65E0\u89C6\u9891/\u6709\u89C6\u9891\u8F93\u5165\u6863\u4F4D\u3001\u8F93\u5165\u4E0E\u8F93\u51FA\u79D2\u6570\u3001\u5355\u4EF7\u548C\u91D1\u989D\uFF0C\u65B9\u4FBF\u6838\u5BF9\u7EED\u62CD\u8D39\u7528\u3002",
-        "\u4FEE\u590D\uFF1A\u7EED\u62CD\u4F30\u4EF7\u8BA1\u5165\u4E0A\u4E00\u6BB5\u5B8C\u6574\u89C6\u9891\u8F93\u5165\uFF0C\u9996\u6BB5\u4F7F\u7528\u65E0\u89C6\u9891\u8F93\u5165\u5355\u4EF7\uFF0C\u540E\u7EED\u4F7F\u7528\u6709\u89C6\u9891\u8F93\u5165\u5355\u4EF7\uFF1B\u53C2\u8003\u56FE\u548C\u9996\u5C3E\u5E27\u4E0D\u518D\u8BEF\u7528\u542B\u89C6\u9891\u8F93\u5165\u5355\u4EF7\u3002",
-        "\u4FEE\u590D\uFF1A\u7EDF\u4E00\u811A\u672C\u4F30\u4EF7\u4E0E\u5236\u4F5C\u786E\u8BA4\u53E3\u5F84\uFF0C\u6821\u51C6480P\u4F30\u7B97\u5C3A\u5BF8\uFF1B\u6062\u590D\u65F6\u8BFB\u53D6\u4E0A\u4E00\u6BB5\u89C6\u9891\u65F6\u957F\uFF0C\u5916\u90E8\u89C6\u9891\u65F6\u957F\u672A\u77E5\u65F6\u660E\u786E\u65E0\u6CD5\u53EF\u9760\u4F30\u4EF7\u3002",
-        "\u4FEE\u590D\uFF1A\u811A\u672C\u5BA1\u6838\u65B0\u589E\u5206\u955C\u5C55\u793A\u68C0\u67E5\uFF1Apresent\u767B\u8BB0\u540E\u8FD8\u987B\u5728\u72EC\u7ACB\u6B63\u6587\u5185\u5D4C\u540C\u7248\u56FE\u7247\uFF0C\u7F3A\u5931\u65F6\u62E6\u622A\u5BA1\u6838\u5E76\u63D0\u793A\u8865\u5C55\u793A\uFF1B\u5185\u90E8\u770B\u56FE\u3001\u6587\u5B57\u63CF\u8FF0\u53CA\u4E0A\u4E00\u8F6E\u65E7\u56FE\u4E0D\u80FD\u4EE3\u66FF\u672C\u8F6E\u5C55\u793A\u3002"
+        "\u4F18\u5316\uFF1A\u89C6\u9891\u6A21\u578B\u4E0E\u56FE\u7247\u6A21\u578B\u5206\u522B\u5206\u7EC4\uFF0C\u5171\u7528\u5F00\u5173\u548C\u5171\u7528Key\u4F4D\u4E8E\u6A21\u578B\u4E0A\u65B9\uFF0C\u72EC\u7ACBKey\u5F52\u5165\u5BF9\u5E94\u6A21\u578B\u3002",
+        "\u4F18\u5316\uFF1A\u767B\u5F55\u533A\u79FB\u81F3\u63A5\u5165\u65B9\u5F0F\u4E0B\u65B9\uFF0C\u91CD\u7F6E\u5165\u53E3\u79FB\u81F3\u8BBE\u7F6E\u9875\u5E95\u90E8\uFF0C\u7EDF\u4E00\u914D\u7F6E\u533A\u7684\u6807\u7B7E\u3001\u95F4\u8DDD\u4E0E\u5BF9\u9F50\u3002",
+        "\u4F18\u5316\uFF1A\u753B\u9762\u6BD4\u4F8B\u4E0E\u58F0\u97F3\u8BBE\u7F6E\u4F7F\u7528\u5E76\u6392\u5361\u7247\u548C\u6E05\u6670\u7684\u58F0\u97F3\u5F00\u5173\uFF0C\u7A84\u7A97\u53E3\u81EA\u52A8\u4E0A\u4E0B\u6392\u5217\u3002",
+        "\u4F18\u5316\uFF1A\u66F4\u591A\u8BBE\u7F6E\u6309\u753B\u9762\u3001\u89C6\u9891\u5408\u5E76\u3001\u67E5\u8BE2\u4E0E\u7B49\u5F85\u3001\u672C\u5730\u5DE5\u5177\u5206\u7EC4\uFF1B\u6210\u5BF9\u53C2\u6570\u5BF9\u9F50\uFF0C\u5DE5\u5177\u8DEF\u5F84\u5360\u6574\u884C\uFF0C\u5E2E\u52A9\u8BF4\u660E\u5F52\u5165\u5BF9\u5E94\u5206\u7EC4\u3002",
+        "\u4F18\u5316\uFF1A\u5B8C\u5584\u5BBD\u7A84\u7A97\u53E3\u53CA\u660E\u6697\u4E3B\u9898\u5E03\u5C40\uFF0C\u540C\u6B65\u4E2D\u82F1\u6587\u6587\u6848\u3001\u771F\u5B9E\u6307\u5357\u914D\u56FE\u548C\u4F7F\u7528\u8BF4\u660E\u4E66PDF\u3002"
       ]
     }
   };
@@ -2009,6 +2053,32 @@
           ]);
         }
         const renderGrid = (section) => {
+          if (section.key === "sectionModels") {
+            const shared2 = serviceMode || (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false;
+            const common = !serviceMode && !directMode ? [fieldCell(FIELD_BY_KEY.imageUseVideoKey), ...shared2 ? [fieldCell(FIELD_BY_KEY.metaonticApiKey)] : []] : [];
+            const videoFields = ["model", ...!serviceMode && (directMode || !shared2) ? [directMode ? "volcengineApiKey" : "metaonticApiKey"] : []];
+            const imageFields = ["imageModel", ...!shared2 ? ["imageApiKey"] : []];
+            return h("div", { key: section.key, className: "mov-model-settings" }, [
+              ...common,
+              h("div", { key: "models", className: `mov-model-grid${directMode ? " mov-model-grid-single" : ""}` }, [
+                h("div", { key: "video", className: "mov-model-card", "data-group": "video-model" }, videoFields.map((key) => fieldCell(FIELD_BY_KEY[key]))),
+                !directMode ? h("div", { key: "image", className: "mov-model-card", "data-group": "image-model" }, imageFields.map((key) => fieldCell(FIELD_BY_KEY[key]))) : null
+              ])
+            ]);
+          }
+          if (section.key === "sectionVideo") {
+            return h("div", { key: section.key, className: "mov-av-grid" }, [
+              h("div", { key: "picture", className: "mov-av-card" }, [
+                fieldCell(FIELD_BY_KEY.ratio),
+                h("span", { key: "hint", className: "mov-hint" }, t("ratioLayoutHint"))
+              ]),
+              h("div", { key: "audio", className: "mov-av-card mov-av-audio" }, [
+                h("span", { key: "label", className: "mov-label" }, t("audioSettings")),
+                control(FIELD_BY_KEY.generateAudio),
+                h("span", { key: "hint", className: "mov-hint" }, t("audioLayoutHint"))
+              ])
+            ]);
+          }
           const shared = serviceMode || (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false;
           const videoKey = directMode ? "volcengineApiKey" : serviceMode ? "apiKey" : "metaonticApiKey";
           const fields = section.key === "sectionModels" ? directMode ? ["model", videoKey] : serviceMode ? ["model", "imageModel"] : shared ? ["imageUseVideoKey", videoKey, "model", "imageModel"] : ["imageUseVideoKey", "model", videoKey, "imageModel", "imageApiKey"] : section.fields;
@@ -2018,12 +2088,13 @@
             fields.filter((key) => (key !== "volcengineApiKey" || directMode) && (!["imageModel", "imageUseVideoKey", "imageApiKey"].includes(key) || !directMode) && (key !== "imageApiKey" || (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) === false) && (key !== "metaonticApiKey" || selectedMode === "metaontic")).map((key) => fieldCell(FIELD_BY_KEY[key])).filter(Boolean)
           );
         };
-        const rows = [
+        const settingsRows = () => [
           h("div", { key: "generation", className: "mov-section" }, [
             h("div", { key: "title", className: "mov-section-title" }, t("sectionGeneration")),
             ...SECTIONS.map((section) => h("div", { key: section.key, className: "mov-parameter-group" }, [
               h("div", { key: "heading", className: "mov-parameter-heading" }, t(section.key)),
-              renderGrid(section)
+              renderGrid(section),
+              section.key === "sectionConnection" ? registerBox : null
             ]))
           ]),
           h("details", { key: "advanced", className: "mov-section mov-advanced" }, [
@@ -2032,9 +2103,16 @@
               h("span", { key: "hint", className: "mov-hint" }, t("sectionCombinedHint"))
             ]),
             h("div", { key: "body", className: "mov-advanced-body" }, [
-              renderGrid({ key: "advancedFields", fields: ["mergeMode", "watermark", "seamTrimSeconds", "pollIntervalMs", "maxWaitMs", "ffmpegBinary", "ffprobeBinary"] }),
-              h("p", { key: "toolsHint", className: "mov-hint", style: { margin: 0 } }, t("toolsHint")),
-              h("p", { key: "retained", className: "mov-hint", style: { margin: 0 } }, t("segmentsRetained"))
+              ...[
+                { key: "advancedPicture", fields: ["watermark"] },
+                { key: "advancedMerge", fields: ["mergeMode", "seamTrimSeconds"], hint: "segmentsRetained" },
+                { key: "advancedWait", fields: ["pollIntervalMs", "maxWaitMs"] },
+                { key: "advancedTools", fields: ["ffmpegBinary", "ffprobeBinary"], hint: "toolsHint" }
+              ].map((group) => h("div", { key: group.key, className: `mov-advanced-group${group.key === "advancedTools" ? " mov-advanced-tools" : ""}`, "data-group": group.key }, [
+                h("div", { key: "title", className: "mov-parameter-heading" }, t(group.key)),
+                renderGrid(group),
+                group.hint ? h("p", { key: "hint", className: "mov-hint", style: { margin: 0 } }, t(group.hint)) : null
+              ]))
             ])
           ])
         ];
@@ -2409,7 +2487,7 @@
         if (snapshot.status === "loading") notice = t("loading");
         else if (snapshot.value === void 0) notice = t("unavailable");
         else if (snapshot.writable === false) notice = t("readOnly");
-        const blobs = notice && !snapshot.value ? [] : [registerBox, footer, resetRow, ...serviceMode ? [quotaBox, usageBox] : [], versionBox];
+        const blobs = notice && !snapshot.value ? [] : [footer, ...serviceMode ? [quotaBox, usageBox] : [], versionBox, resetRow];
         return h("div", { className: "mov-page" }, [
           // hover / focus 这类效果内联样式写不出来，集中在这张样式表里（class 都带 mov- 前缀）。
           h("style", { key: "styles" }, PAGE_CSS),
@@ -2429,7 +2507,7 @@
             onLater: deferUpdate
           }) : null,
           notice ? h("p", { key: "notice", className: "mov-notice" }, notice) : null,
-          ...notice && !snapshot.value ? [] : rows,
+          ...notice && !snapshot.value ? [] : settingsRows(),
           ...blobs,
           supportOpen ? h("dialog", {
             key: "support-dialog",
