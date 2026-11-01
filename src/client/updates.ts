@@ -390,3 +390,11 @@ export function renderUpdateNotice({ h, t, available, latest, deferred, status, 
     ]),
   ]);
 }
+
+/** 已安装版本的发布时间，固定北京时间；不是检查时间或本地构建时间。 */
+export function formatReleaseTime(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) return '';
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return '';
+  return new Date(date.getTime() + 8 * 60 * 60 * 1000).toISOString().slice(0, 16).replace('T', ' ');
+}

@@ -393,6 +393,7 @@
       seamTrimSeconds: "\u63A5\u7F1D\u88C1\u526A\u79D2\u6570\uFF08\u5982 0.5,0\uFF09",
       modelHiddenCurrent: "\u5F53\u524D\u6A21\u578B\uFF08\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF09",
       releaseNotesTitle: "\u66F4\u65B0\u5185\u5BB9",
+      releaseUpdatedAt: "{time}",
       resetConfirm: "\u786E\u5B9A\u91CD\u7F6E\u63D2\u4EF6\u5417\uFF1F\u8FD9\u4F1A\u6E05\u9664\u672C\u63D2\u4EF6\u4FDD\u5B58\u7684\u914D\u7F6E\u3001API Key \u548C\u767B\u5F55\u72B6\u6001\uFF0C\u9700\u8981\u91CD\u65B0\u914D\u7F6E\u3002\u5DF2\u751F\u6210\u7684\u89C6\u9891\u4E0D\u4F1A\u5220\u9664\u3002",
       model: "\u89C6\u9891\u6A21\u578B",
       imageModel: "\u56FE\u7247\u6A21\u578B",
@@ -550,6 +551,7 @@
       seamTrimSeconds: "Seam head trims (e.g. 0.5,0)",
       modelHiddenCurrent: "Current model (selection unavailable)",
       releaseNotesTitle: "Release notes",
+      releaseUpdatedAt: "{time}",
       resetConfirm: "Reset this plugin? Saved settings, API keys and login state will be cleared. Generated videos will be kept.",
       model: "Video model",
       imageModel: "Image model",
@@ -761,7 +763,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v2";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.8.2".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.9.0".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const match = /(\d+)\.(\d+)\.(\d+)/.exec(String(text || ""));
@@ -1050,6 +1052,12 @@
         h("button", { key: "later", type: "button", className: "mov-btn mov-btn-sm", "data-action": "update-later", onClick: onLater }, t("versionLater"))
       ])
     ]);
+  }
+  function formatReleaseTime(value) {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) return "";
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return "";
+    return new Date(date.getTime() + 8 * 60 * 60 * 1e3).toISOString().slice(0, 16).replace("T", " ");
   }
 
   // src/client/account.ts
@@ -1410,7 +1418,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.8.2",
+    version: "3.9.0",
     description: "DeepSeek Harness video creation plugin with a Video Creation Assistant for concepts, script review and confirmed production; supports reference images, video continuation, segment previews, resumable generation, local merging, and MetaOnticVideo, MetaOntic AI or Volcano Engine access.",
     license: "MIT",
     type: "module",
@@ -1497,12 +1505,15 @@
       hyperframes: "0.8.223"
     },
     releaseNotes: {
-      version: "3.8.2",
+      version: "3.9.0",
+      publishedAt: "2026-11-01T07:59:09Z",
       items: [
-        "\u65B0\u589E\uFF1A\u63D0\u4F9B\u56FE\u6587 PDF \u4F7F\u7528\u8BF4\u660E\u4E66\uFF0C\u4E0E Markdown \u7EDF\u4E00\u547D\u540D\u4E3A\u201CMetaOnticVideo\u4F7F\u7528\u8BF4\u660E\u4E66\u201D\uFF0C\u5E76\u5C06 PDF \u7EB3\u5165\u63D2\u4EF6\u5305\u3002",
-        "\u4F18\u5316\uFF1A\u4F7F\u7528\u8BF4\u660E\u4E66\u9876\u90E8\u52A0\u5165\u63D2\u4EF6 Logo\uFF0C\u6B63\u6587\u4E0E\u914D\u56FE\u7EDF\u4E00\u4F7F\u7528 Deepseek-Harness \u540D\u79F0\uFF0C\u5C06\u201C\u5BBF\u4E3B\u201D\u7B49\u79F0\u547C\u6539\u4E3A\u8F6F\u4EF6\u540D\u79F0\u3002",
-        "\u4F18\u5316\uFF1A\u7CBE\u7B80\u4F7F\u7528\u8BF4\u660E\u4E66\uFF0C\u79FB\u9664\u5BF9\u767D\u5410\u5B57\u7AE0\u8282\u3001README \u5F15\u5BFC\u6587\u5B57\u53CA\u7248\u672C\u8868\u8FF0\uFF0C\u4FDD\u7559\u5B89\u88C5\u3001Key \u914D\u7F6E\u548C\u89C6\u9891\u5236\u4F5C\u64CD\u4F5C\u3002",
-        "\u4F18\u5316\uFF1A\u660E\u786E\u8BF4\u660E\u4E66\u4E0E\u914D\u56FE\u53EA\u9762\u5411\u4F7F\u7528\uFF0C\u4E0D\u5199\u7248\u672C\u66F4\u65B0\u6216\u53D1\u5E03\u6838\u5BF9\u5185\u5BB9\uFF1B\u66F4\u65B0\u8BB0\u5F55\u548C\u6838\u5BF9\u7ED3\u8BBA\u5355\u72EC\u7EF4\u62A4\uFF0C\u540C\u6B65\u6587\u4EF6\u5F15\u7528\u53CA\u6253\u5305\u914D\u7F6E\u3002"
+        "\u65B0\u589E\uFF1A\u6240\u6709\u63A5\u5165\u65B9\u5F0F\u5728\u811A\u672C\u5BA1\u6838\u524D\u9884\u4F30\u706B\u5C71\u5B98\u65B9\u4E0E\u63D2\u4EF6\u65B9\u6848\u8D39\u7528\uFF0C\u6309\u89C6\u9891\u65F6\u957F\u3001\u6E05\u6670\u5EA6\u548C\u5B9E\u9645\u5206\u6BB5\u8BA1\u7B97\uFF0C\u5E76\u5199\u5165\u811A\u672C\u672B\u5C3E\u3002",
+        "\u65B0\u589E\uFF1AMetaOnticVideo\u3001MetaOntic AI \u6E20\u9053\u5728\u89C6\u9891\u5B8C\u6210\u540E\u67E5\u8BE2\u5B9E\u9645\u7ED3\u7B97\u8D39\u7528\uFF0C\u652F\u6301\u5206\u6BB5\u5408\u8BA1\u53CA\u4EFB\u52A1\u72B6\u6001\u8865\u67E5\u3002",
+        "\u4F18\u5316\uFF1A\u533A\u5206\u5F85\u7ED3\u7B97\u3001\u90E8\u5206\u5B8C\u6210\u548C\u67E5\u8BE2\u5931\u8D25\uFF0C\u8D39\u7528\u67E5\u8BE2\u4E0D\u5F71\u54CD\u89C6\u9891\u4EA4\u4ED8\u6216\u6062\u590D\uFF0C\u4E0D\u89E6\u53D1\u91CD\u65B0\u751F\u6210\u3002",
+        "\u4F18\u5316\uFF1A\u7248\u672C\u5361\u7247\u5728\u201C\u66F4\u65B0\u5185\u5BB9\u201D\u540C\u4E00\u884C\u663E\u793A\u672C\u7248\u672C\u53D1\u5E03\u65F6\u95F4\uFF0C\u540C\u6B65\u4F7F\u7528\u8BF4\u660E\u4E66\u4E0E PDF\u3002",
+        "\u4F18\u5316\uFF1A\u4EF7\u683C\u53C2\u8003\u6587\u6863\u53CA\u5BA3\u4F20\u7D20\u6750\u4EC5\u7559\u672C\u5730\uFF0C\u4E0D\u7EB3\u5165\u4ED3\u5E93\u6216\u53D1\u5E03\u5305\u3002",
+        "\u4FEE\u590D\uFF1A\u7EDF\u4E00\u5404\u63A5\u5165\u65B9\u5F0F\u7684\u811A\u672C\u8D39\u7528\u5C55\u793A\u89C4\u5219\uFF0C\u6E05\u7406\u65E7\u7684\u514D\u4F30\u4EF7\u8BF4\u660E\uFF0C\u907F\u514D\u4EC5\u5728\u5BA1\u6279\u5F39\u7A97\u663E\u793A\u8D39\u7528\u3002"
       ]
     }
   };
@@ -2242,7 +2253,10 @@
             }, updateStatus === "working" ? t("versionChecking") : t("versionCheck"))
           ]),
           releaseNotes?.items?.length ? h("div", { key: "release-notes", "data-field": "releaseNotes" }, [
-            h("span", { key: "title", className: "mov-card-title" }, `${releaseNotes.version} \xB7 ${t("releaseNotesTitle")}`),
+            h("div", { key: "heading", style: { display: "flex", alignItems: "baseline", gap: 12 } }, [
+              h("span", { key: "title", className: "mov-card-title" }, `${releaseNotes.version} \xB7 ${t("releaseNotesTitle")}`),
+              formatReleaseTime(releaseNotes.publishedAt) ? h("span", { key: "published-at", "data-field": "releasePublishedAt", className: "mov-foot-note" }, t("releaseUpdatedAt", { time: formatReleaseTime(releaseNotes.publishedAt) })) : null
+            ]),
             h(
               "ul",
               { key: "items", style: { margin: "8px 0 0", paddingLeft: 18, fontSize: 12, lineHeight: 1.7, color: TOKENS.muted } },

@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.8.2",
+  "version": "3.9.0",
   "description": "DeepSeek Harness video creation plugin with a Video Creation Assistant for concepts, script review and confirmed production; supports reference images, video continuation, segment previews, resumable generation, local merging, and MetaOnticVideo, MetaOntic AI or Volcano Engine access.",
   "license": "MIT",
   "type": "module",
@@ -87,12 +87,15 @@
     "hyperframes": "0.8.223"
   },
   "releaseNotes": {
-    "version": "3.8.2",
+    "version": "3.9.0",
+    "publishedAt": "2026-11-01T07:59:09Z",
     "items": [
-      "新增：提供图文 PDF 使用说明书，与 Markdown 统一命名为“MetaOnticVideo使用说明书”，并将 PDF 纳入插件包。",
-      "优化：使用说明书顶部加入插件 Logo，正文与配图统一使用 Deepseek-Harness 名称，将“宿主”等称呼改为软件名称。",
-      "优化：精简使用说明书，移除对白吐字章节、README 引导文字及版本表述，保留安装、Key 配置和视频制作操作。",
-      "优化：明确说明书与配图只面向使用，不写版本更新或发布核对内容；更新记录和核对结论单独维护，同步文件引用及打包配置。"
+      "新增：所有接入方式在脚本审核前预估火山官方与插件方案费用，按视频时长、清晰度和实际分段计算，并写入脚本末尾。",
+      "新增：MetaOnticVideo、MetaOntic AI 渠道在视频完成后查询实际结算费用，支持分段合计及任务状态补查。",
+      "优化：区分待结算、部分完成和查询失败，费用查询不影响视频交付或恢复，不触发重新生成。",
+      "优化：版本卡片在“更新内容”同一行显示本版本发布时间，同步使用说明书与 PDF。",
+      "优化：价格参考文档及宣传素材仅留本地，不纳入仓库或发布包。",
+      "修复：统一各接入方式的脚本费用展示规则，清理旧的免估价说明，避免仅在审批弹窗显示费用。"
     ]
   }
 }

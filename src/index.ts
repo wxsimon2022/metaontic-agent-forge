@@ -1,4 +1,5 @@
 /** Harness 插件入口：注册工具、动态提示词与可选宿主服务。 */
+import { withActualCost } from './workflow/actual-cost.js';
 import { withVideoExecution } from './workflow/execution.js';
 import { withResumeLock } from './workflow/resume.js';
 import { jsonSafeTool } from './utils/json.js';
@@ -9,6 +10,7 @@ import { extendTool } from './tools/video-extend.js';
 import { taskTool } from './tools/video-status.js';
 import { setupTool } from './tools/video-setup.js';
 import { hyperframesTool } from './internal/hyperframes.js';
+import { estimateTool } from './tools/video-estimate.js';
 import { configTool } from './tools/video-config.js';
 import { buildPromptGuidance } from './prompts/guidance.js';
 import { GATED_TOOLS } from './config.js';
@@ -32,11 +34,12 @@ export function apply(ctx: DshContext, config: any = {}) {
   // 可选服务的宿主对象（会话工作目录等），拿到就放进来
   const deps: Record<string, any> = {};
   const disposers = [
+    ctx.tools.register(jsonSafeTool(estimateTool(config))),
     ctx.tools.register(jsonSafeTool(submissionTool(config))),
     ctx.tools.register(jsonSafeTool(prepareImageTool(config))),
-    ctx.tools.register(withVideoExecution(withResumeLock(jsonSafeTool(videoTool(config, deps, ctx)), 'video_generate', config))),
-    ctx.tools.register(withVideoExecution(withResumeLock(jsonSafeTool(extendTool(config, deps, ctx)), 'video_extend', config))),
-    ctx.tools.register(withVideoExecution(jsonSafeTool(taskTool(config)))),
+    ctx.tools.register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(videoTool(config, deps, ctx), config)), 'video_generate', config))),
+    ctx.tools.register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(extendTool(config, deps, ctx), config)), 'video_extend', config))),
+    ctx.tools.register(withVideoExecution(jsonSafeTool(withActualCost(taskTool(config), config)))),
     ctx.tools.register(jsonSafeTool(setupTool(config))),
   ];
   // 雪藏功能：默认不注册，不进入对外技能和提示词，仅供内部显式启用。

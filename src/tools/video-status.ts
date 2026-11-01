@@ -13,7 +13,7 @@ export function taskTool(liveConfig) {
       + '任务完成（status 为 succeeded）时返回视频下载链接（约 24 小时内有效）。'
       + 'video_generate / video_extend 返回 timeout 或某段 unknown（查询失败、任务已提交）时，'
       + '用它们给出的 taskId 在这里继续等——unknown 只表示「没查到」，任务很可能还在生成，'
-      + '不要因此重新提交同一段任务。',
+      + '不要因此重新提交同一段任务。A/B接入在任务成功后还会查询中转站最终结算；待结算或费用查询失败可用同一taskId补查，不重新生成。',
     parameters: {
       type: 'object',
       properties: {
