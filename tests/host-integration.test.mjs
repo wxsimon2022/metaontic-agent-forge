@@ -5,12 +5,21 @@ import os from 'node:os';
 import { test } from 'node:test';
 import * as plugin from '../index.js';
 
+// Harness only accepts scalar type strings; nullable unions must use oneOf.
+function assertScalarSchemaTypes(schema) {
+  if (!schema || typeof schema !== 'object') return;
+  if (Object.hasOwn(schema, 'type')) assert.equal(typeof schema.type, 'string', 'Harness rejects type arrays');
+  for (const child of Object.values(schema.properties || {})) assertScalarSchemaTypes(child);
+  if (schema.items) assertScalarSchemaTypes(schema.items);
+  for (const child of schema.oneOf || []) assertScalarSchemaTypes(child);
+}
+
 function harness(config, directory) {
   const tools = new Map();
   let prompt, gate;
   let disposed = 0;
   const ctx = {
-    tools: { register(tool) { tools.set(tool.name, tool); return () => { disposed++; }; } },
+    tools: { register(tool) { assertScalarSchemaTypes(tool.output?.schema); tools.set(tool.name, tool); return () => { disposed++; }; } },
     inject(names, install) {
       const services = {
         settings: {},

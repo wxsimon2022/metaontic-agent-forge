@@ -12,7 +12,7 @@ for (const from of modes) for (const to of modes) test(`atomic save ${from} -> $
   const disk = { connectionMode: from }; let calls = 0;
   await context.persistConnection({
     async mutate(ops) { calls++; const staged = { ...disk }; for (const op of ops) staged[op.path[0]] = op.value; Object.assign(disk, staged); return true; },
-    getSnapshot() { throw new Error('disposed controller snapshot must not be used'); },
+    getSnapshot() { if (calls) throw new Error('disposed controller snapshot must not be used'); return {status:'ready', writable:true, revision:1, value:{...disk}}; },
   }, [['connectionMode', to], [keyFor[to], 'new-key']], to);
   assert.equal(calls, 1); assert.equal(disk.connectionMode, to); assert.equal(disk[keyFor[to]], 'new-key');
   for (const mode of modes.filter(mode => mode !== to)) assert.equal(({ ...inherited, ...disk })[keyFor[mode]], '');
@@ -55,7 +55,8 @@ for (const variant of ['same-revision', 'changed-field', 'read-only', 'loading',
       return false;
     },
   };
-  await assert.rejects(context.persistConnection(form, [['connectionMode', 'metaontic']], 'metaontic'), /atomicRejected/);
+  const reason = { 'changed-field': /settingsConflict/, 'second-rejected': /settingsConflict/, 'read-only': /readOnly/, loading: /settingsUnavailable/ }[variant] || /atomicRejected/;
+  await assert.rejects(context.persistConnection(form, [['connectionMode', 'metaontic']], 'metaontic'), reason);
   assert.equal(calls, variant === 'second-rejected' ? 2 : 1);
 });
 test('accepted write never reads a disposed controller after success', async () => {
@@ -64,4 +65,30 @@ test('accepted write never reads a disposed controller after success', async () 
     getSnapshot() { if (disposed) throw new Error('disposed'); return { status: 'ready', revision: 1, value: {} }; },
     async mutate() { disposed = true; return true; },
   }, [{ op: 'set', path: ['ratio'], value: '9:16' }]);
+});
+
+test('recovery fences the retry revision against a second concurrent edit', async () => {
+  let revision = 1; const seen = [];
+  const form = {
+    getSnapshot: () => ({status: 'ready', writable: true, revision, value: {model: 'old'}}),
+    async mutate(ops, expected) { seen.push(expected); revision++; return false; },
+  };
+  await assert.rejects(context.persistBatch(form, [{op:'set',path:['model'],value:'new'}]), /settingsConflict/);
+  assert.deepEqual(seen, [1, 2]);
+});
+test('transport failure is not retried or leaked through diagnostics', async () => {
+  const warnings = []; const local = vm.createContext({console: {warn: (...args) => warnings.push(args)}});
+  vm.runInContext(source + '\nObject.assign(globalThis, createSettingsState({}));', local);
+  let calls = 0;
+  await assert.rejects(local.persistBatch({
+    getSnapshot: () => ({status:'ready',writable:true,revision:1,value:{apiKey:'secret-key'}}),
+    async mutate() { calls++; throw new Error('secret-key https://private.example'); },
+  }, [{op:'set',path:['apiKey'],value:'new-secret'}]), /settingsTransport/);
+  assert.equal(calls,1); assert.equal(warnings.length,1);
+  assert.ok(!JSON.stringify(warnings).includes('secret')); assert.ok(!JSON.stringify(warnings).includes('private'));
+});
+test('unready and read-only forms do not attempt writes', async () => {
+  for (const state of [{status:'loading',writable:true},{status:'ready',writable:false}]) {
+    await assert.rejects(context.persistBatch({ getSnapshot: () => state, async mutate() { assert.fail('must not write'); } }, []), /settingsUnavailable|readOnly/);
+  }
 });

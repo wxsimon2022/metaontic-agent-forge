@@ -26,13 +26,41 @@ export function createSettingsState({ React }: any) {
           return { revision: snapshot.revision, fields: JSON.stringify(fields) };
         } catch { return null; }
       }
-      const before = checkpoint();
-      if (await form.mutate(ops)) return;
-      const after = checkpoint();
-      if (before && after && before.revision !== after.revision && before.fields === after.fields) {
-        if (await form.mutate(ops)) return;
+      // 只记录固定分类及修订号；不记录操作、字段值或宿主原始错误。
+      function fail(code, before, after) {
+        globalThis.console?.warn?.('[MetaOnticVideo] settings-save', {
+          code, beforeRevision: before?.revision ?? null, afterRevision: after?.revision ?? null,
+        });
+        throw new Error(code);
       }
-      throw new Error('atomicRejected');
+      function readiness() {
+        let snapshot;
+        try { snapshot = form.getSnapshot?.(); } catch { return 'settingsUnavailable'; }
+        if (!snapshot) return null;
+        if (snapshot.writable === false) return 'readOnly';
+        if (snapshot.status && snapshot.status !== 'ready') return 'settingsUnavailable';
+        return null;
+      }
+      const initialProblem = readiness();
+      if (initialProblem) fail(initialProblem, null, null);
+      const before = checkpoint();
+      let accepted;
+      try { accepted = await form.mutate(ops, before?.revision); }
+      catch { fail('settingsTransport', before, null); }
+      if (accepted) return;
+      const after = checkpoint();
+      const problem = readiness();
+      if (problem) fail(problem, before, after);
+      if (before && after && before.revision !== after.revision) {
+        if (before.fields !== after.fields) fail('settingsConflict', before, after);
+        // 固定恢复时的 revision，防止排队期间又发生修改后覆盖其他页面。
+        try { accepted = await form.mutate(ops, after.revision); }
+        catch { fail('settingsTransport', after, null); }
+        if (accepted) return;
+        const latest = checkpoint();
+        fail(readiness() || (latest && latest.revision !== after.revision ? 'settingsConflict' : 'atomicRejected'), after, latest);
+      }
+      fail('atomicRejected', before, after);
     }
 
     function validateSettings(values) {

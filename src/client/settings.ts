@@ -2,7 +2,7 @@ import { createAccountActions } from './account.js';
 import { createUpdateActions, renderUpdateNotice, formatReleaseTime } from './updates.js';
 /** 浏览器端 settings：由入口注入宿主 React 与共享依赖。 */
 import packageInfo from '../../package.json';
-export function createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, fetchLatestCommit, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS }: any) {
+export function createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS }: any) {
 function makePage({ form, t, manager }) {
       return function ConfigPage(props) {
         const snapshot = useSnapshot(form);
@@ -59,15 +59,22 @@ function makePage({ form, t, manager }) {
         const [updateStatus, setUpdateStatus] = React.useState('idle');
         const [updateMessage, setUpdateMessage] = React.useState('');
         const [updateLatest, setUpdateLatest] = React.useState('');
+        const [updateChannel, setUpdateChannel] = React.useState(() => {
+          try {
+            const saved = window.localStorage.getItem('metaontic-video.update-channel');
+            if (saved === 'stable' || saved === 'prerelease') return saved;
+          } catch {}
+          return (packageInfo.releaseNotes as any)?.prerelease || PLUGIN_VERSION.includes('-') ? 'prerelease' : 'stable';
+        });
+        const updateRequest = React.useRef(0);
+        const channelCacheKey = `${UPDATE_CACHE_KEY}.${updateChannel}`;
         // 更新说明固定使用本机包内内容，不受远端版本和检查缓存影响。
         const releaseNotes = packageInfo.releaseNotes;
         const [updateAt, setUpdateAt] = React.useState('');
-        // 上次看到的默认分支提交号：在线更新拿它当 spec 后缀用（取不到再联网取一次）
-        const updateCommit = React.useRef('');
         // 一键在线更新：第一下把按钮转成「确认更新」，第二下才真的重装本插件
         const [updateConfirm, setUpdateConfirm] = React.useState(false);
         const [updateDeferred, setUpdateDeferred] = React.useState(() => {
-          try { return window.localStorage.getItem(`${UPDATE_CACHE_KEY}.deferred`) || ''; }
+          try { return window.localStorage.getItem(`${channelCacheKey}.deferred`) || ''; }
           catch { return ''; }
         });
 
@@ -106,13 +113,13 @@ function makePage({ form, t, manager }) {
         });
 
         const { readUpdateCache, rememberUpdateCheck, forgetUpdateCheck, checkForUpdate, runOnlineUpdate, deferUpdate } = createUpdateActions({
-          get UPDATE_CACHE_KEY() { return UPDATE_CACHE_KEY; },
+          get UPDATE_CACHE_KEY() { return channelCacheKey; },
+          get updateChannel() { return updateChannel; },
+          get updateRequest() { return updateRequest; },
           get UPDATE_MAX_AGE_MS() { return UPDATE_MAX_AGE_MS; },
           get setUpdateStatus() { return setUpdateStatus; },
           get setUpdateMessage() { return setUpdateMessage; },
           get fetchLatestVersion() { return fetchLatestVersion; },
-          get fetchLatestCommit() { return fetchLatestCommit; },
-          get updateCommit() { return updateCommit; },
           get setUpdateLatest() { return setUpdateLatest; },
           get setUpdateAt() { return setUpdateAt; },
           get t() { return t; },
@@ -168,20 +175,21 @@ function makePage({ form, t, manager }) {
         }, [serviceMode, Boolean(snapshot.secrets?.apiKey || value.apiKey), value.deviceId, props?.view]);
 
         // 进入完整设置页先显示缓存，同时后台检查；摘要视图不触发检查。
-        const updateTried = React.useRef(false);
+        const updateTried = React.useRef('');
         React.useEffect(() => {
-          if (props?.view === 'summary') { updateTried.current = false; return; }
-          if (updateTried.current) return;
-          updateTried.current = true;
+          if (props?.view === 'summary') { updateTried.current = ''; return; }
+          if (updateTried.current === updateChannel) return;
+          updateTried.current = updateChannel;
+          setUpdateLatest(''); setUpdateConfirm(false); setUpdateAt(''); setUpdateStatus('idle'); setUpdateMessage('');
+          try { setUpdateDeferred(window.localStorage.getItem(`${channelCacheKey}.deferred`) || ''); } catch { setUpdateDeferred(''); }
           const cached = readUpdateCache();
           if (cached.latest) {
             setUpdateLatest(cached.latest);
             if (cached.at) setUpdateAt(new Date(cached.at).toLocaleTimeString());
-            if (cached.commit) updateCommit.current = cached.commit;
             setUpdateStatus('ok');
           }
           checkForUpdate(true).catch(() => {});
-        }, [props?.view]);
+        }, [props?.view, updateChannel]);
 
         if (props && props.view === 'summary') {
           const configured = Boolean(value.model) || Boolean(snapshot.secrets?.apiKey);
@@ -224,7 +232,7 @@ function makePage({ form, t, manager }) {
 
         function settingsError(error) {
           const message = error?.message || String(error);
-          return ['unknownConnection', 'atomicUnsupported', 'atomicRejected', 'invalidWait', 'invalidSeam'].includes(message) ? t(message) : message;
+          return ['unknownConnection', 'atomicUnsupported', 'atomicRejected', 'settingsUnavailable', 'settingsConflict', 'settingsTransport', 'readOnly', 'invalidWait', 'invalidSeam'].includes(message) ? t(message) : message;
         }
 
         async function save() {
@@ -249,7 +257,7 @@ function makePage({ form, t, manager }) {
               setRegisterMessage('');
               setQuota(null);
             }
-            setDraft({});
+            setDraft((current) => Object.fromEntries(Object.entries(current).filter(([key, next]) => !Object.prototype.hasOwnProperty.call(draft, key) || !same(draft[key], next))));
             flashStatus('saved');
           } catch (error) {
             setSaveError(settingsError(error));
@@ -674,10 +682,12 @@ function makePage({ form, t, manager }) {
           usageMessage ? h('span', { key: 'message', className: 'mov-hint' }, usageMessage) : null,
         ]) : null;
 
-        // 版本卡片：当前版本是构建时注入的常量，最新版本来自 Gitee 默认分支的 package.json。
+        // 版本卡片：当前版本是构建时注入的常量，最新版本来自所选渠道已发布的 Release。
         // 有新版本时给出升级命令——用 git 源装的插件不会出现在「已安装」里的更新按钮上。
         const updateAvailable = Boolean(updateLatest) && Boolean(PLUGIN_VERSION)
-          && isNewerVersion(updateLatest, PLUGIN_VERSION);
+          && updateLatest !== PLUGIN_VERSION
+          && (isNewerVersion(updateLatest, PLUGIN_VERSION)
+            || updateChannel !== ((packageInfo.releaseNotes as any)?.prerelease || PLUGIN_VERSION.includes('-') ? 'prerelease' : 'stable'));
         const updateText = updateStatus === 'working'
           ? t('versionChecking')
           : (updateStatus === 'failed'
@@ -717,6 +727,19 @@ function makePage({ form, t, manager }) {
               disabled: updateStatus === 'working' || updateStatus === 'installing',
               onClick: () => { checkForUpdate(false).catch(() => {}); },
             }, updateStatus === 'working' ? t('versionChecking') : t('versionCheck')),
+          ]),
+          h('div', {key:'channel', className:'mov-cmd-row'}, [
+            h('label', {key:'label', htmlFor:'mov-update-channel', className:'mov-label'}, t('versionChannel')),
+            h('select', {key:'select', id:'mov-update-channel', className:'mov-input',
+              value:updateChannel, disabled:updateStatus === 'installing',
+              onChange:event => {
+                const channel = event.target.value;
+                if (!['stable','prerelease'].includes(channel)) return;
+                updateRequest.current++; setUpdateLatest(''); setUpdateConfirm(false); setUpdateChannel(channel);
+                try { window.localStorage.setItem('metaontic-video.update-channel', channel); } catch {}
+              },
+            }, [h('option',{key:'stable',value:'stable'},t('versionStable')), h('option',{key:'pre',value:'prerelease'},t('versionPrerelease'))]),
+            h('span',{key:'hint',className:'mov-hint'},t('versionChannelHint')),
           ]),
           releaseNotes?.items?.length ? h('div', { key: 'release-notes', 'data-field': 'releaseNotes' }, [
             h('div', { key: 'heading', style: { display: 'flex', alignItems: 'baseline', gap: 12 } }, [

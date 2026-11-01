@@ -85,10 +85,10 @@ export function actualCostText(cost, partialVideo = false) {
 
 export const ACTUAL_COST_SCHEMA = { type: 'object', properties: {
   status: { type: 'string', enum: ['pending', 'partial', 'settled'] }, source: { type: 'string' },
-  quota: { type: 'number' }, amount: { type: ['number', 'null'] }, currency: { type: ['string', 'null'] },
-  reason: { type: 'string' }, conversion: { type: ['object', 'null'] },
+  quota: { type: 'number' }, amount: { oneOf: [{ type: 'number' }, { type: 'null' }] }, currency: { oneOf: [{ type: 'string' }, { type: 'null' }] },
+  reason: { type: 'string' }, conversion: { oneOf: [{ type: 'object' }, { type: 'null' }] },
   tasks: { type: 'array', items: { type: 'object', properties: {
-    taskId: { type: 'string' }, status: { type: 'string' }, quota: { type: ['number', 'null'] }, amount: { type: ['number', 'null'] },
+    taskId: { type: 'string' }, status: { type: 'string' }, quota: { oneOf: [{ type: 'number' }, { type: 'null' }] }, amount: { oneOf: [{ type: 'number' }, { type: 'null' }] },
   } } },
 } };
 

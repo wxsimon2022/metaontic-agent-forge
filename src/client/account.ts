@@ -211,7 +211,9 @@ async function applyRegistration(result, fallbackBase, device) {
         return false;
     context.connectionBusy.current = true;
     try {
-        await context.persistConnection(context.form, writes, 'service');
+        const pending = context.persistConnection(context.form, writes, 'service');
+        context.connectionBusy.pending = pending;
+        await pending;
         clearLoggedOut();
         for (const [key] of writes)
             context.clear(key);
@@ -222,6 +224,7 @@ async function applyRegistration(result, fallbackBase, device) {
     }
     finally {
         context.connectionBusy.current = false;
+        context.connectionBusy.pending = null;
     }
     loadQuota().catch(() => { });
     loadUsage().catch(() => { });

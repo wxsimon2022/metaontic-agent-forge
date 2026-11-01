@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 
 export async function publishGitee({ token, tag, archive, notes, prerelease = false, request = fetch }) {
   if (!token) throw new Error('Missing GITEE_TOKEN. Add it to GitHub Actions repository secrets.');
-  if (!/^v\d+\.\d+\.\d+$/.test(tag)) throw new Error('A version tag is required.');
+  if (!/^v\d+\.\d+\.\d+(?:-beta\.[1-9]\d*)?$/.test(tag)) throw new Error('A version tag is required.');
   const base = 'https://gitee.com/api/v5/repos/hackloop/metaontic-video';
   async function api(path, { method = 'GET', data, file, allow404 = false } = {}) {
     const url = new URL(base + path);
@@ -26,9 +26,9 @@ export async function publishGitee({ token, tag, archive, notes, prerelease = fa
   if (!release) release = await api('/releases', { method: 'POST', data: {
     tag_name: tag, name: `MetaOnticVideo ${tag}`, body: notes, target_commitish: 'master', prerelease: String(prerelease),
   } });
-  if (release?.id && release.body !== notes) {
-    release = await api(`/releases/${release.id}`, { method: 'PATCH', data: { tag_name: tag, name: `MetaOnticVideo ${tag}`, body: notes } });
-    if (release.body !== notes) throw new Error('Gitee release notes verification failed.');
+  if (release?.id && (release.body !== notes || release.prerelease !== prerelease)) {
+    release = await api(`/releases/${release.id}`, { method: 'PATCH', data: { tag_name: tag, name: `MetaOnticVideo ${tag}`, body: notes, prerelease: String(prerelease) } });
+    if (release.body !== notes || release.prerelease !== prerelease) throw new Error('Gitee release notes or channel verification failed.');
   }
   if (!release?.id) throw new Error('Gitee did not return a release ID.');
   const path = `/releases/${release.id}/attach_files`;

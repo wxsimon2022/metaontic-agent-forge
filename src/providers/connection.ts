@@ -98,7 +98,7 @@ export function assertConfigured(config, apiKey) {
   }
   if (!apiKey) {
     throw new Error(
-      '未配置 API Key：打开「插件 → 已安装插件 → MetaOnticVideo → 查看」，点「登录」领一把——'
+      '未配置 API Key（重置后需重新登录，无需重装或重启）：打开「插件 → 已安装插件 → MetaOnticVideo → 查看」，点「登录」领一把——'
       + '服务端会把 Key、上游地址和模型直接写进配置，不用手填。',
     );
   }

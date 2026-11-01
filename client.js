@@ -525,9 +525,17 @@
       seamTrimSecondsHint: "\u5206\u522B\u88C1\u526A\u7B2C 2\u30013\u2026\u6BB5\u5F00\u5934\uFF0C\u4F8B\u5982 0.5,0\u3002\u7559\u7A7A\u4F7F\u7528\u6A21\u578B\u9ED8\u8BA4\u503C\uFF0C\u586B 0 \u5173\u95ED\uFF1B\u6BCF\u9879\u4E3A 0\u20133 \u79D2\u3002",
       waitSecondsHint: "\u81F3\u5C11 1 \u79D2\uFF0C\u652F\u6301\u5C0F\u6570\u3002\u6700\u957F\u7B49\u5F85\u65F6\u95F4\u4E0D\u5F97\u5C0F\u4E8E\u67E5\u8BE2\u95F4\u9694\u3002",
       versionHistory: "\u5386\u53F2\u66F4\u65B0",
+      versionChannel: "\u66F4\u65B0\u6E20\u9053",
+      versionStable: "\u6B63\u5F0F\u7248",
+      versionPrerelease: "\u9884\u53D1\u5E03\u7248",
+      versionChannelHint: "\u9009\u62E9\u540E\u68C0\u67E5\u5BF9\u5E94\u7248\u672C\uFF0C\u70B9\u51FB\u66F4\u65B0\u5E76\u786E\u8BA4\u540E\u624D\u5B89\u88C5\uFF1B\u5207\u56DE\u6B63\u5F0F\u7248\u53EF\u80FD\u964D\u4F4E\u7248\u672C\u53F7\uFF0C\u9884\u53D1\u5E03\u7248\u53EF\u80FD\u4E0D\u7A33\u5B9A\u3002",
+      versionCheckFirst: "\u8BF7\u5148\u68C0\u67E5\u6240\u9009\u6E20\u9053\u7684\u7248\u672C\uFF0C\u518D\u786E\u8BA4\u5B89\u88C5\u3002",
       unknownConnection: "\u672A\u77E5\u63A5\u5165\u65B9\u5F0F\uFF0C\u8BF7\u91CD\u65B0\u9009\u62E9\u3002",
       atomicUnsupported: "\u5F53\u524D Harness \u4E0D\u652F\u6301\u6279\u91CF\u4FDD\u5B58\uFF0C\u8BF7\u66F4\u65B0 Harness \u540E\u91CD\u8BD5\u3002",
-      atomicRejected: "\u8BBE\u7F6E\u672A\u4FDD\u5B58\uFF0C\u8BF7\u91CD\u65B0\u6253\u5F00\u8BBE\u7F6E\u9875\u540E\u91CD\u8BD5\uFF1B\u82E5\u4ECD\u5931\u8D25\uFF0C\u8BF7\u91CD\u542F Harness\u3002",
+      atomicRejected: "\u8F6F\u4EF6\u672A\u63A5\u53D7\u672C\u6B21\u4FDD\u5B58\uFF0C\u8F93\u5165\u5DF2\u4FDD\u7559\u3002\u8BF7\u91CD\u65B0\u6253\u5F00\u8BBE\u7F6E\u9875\u6838\u5BF9\u540E\u91CD\u8BD5\u3002",
+      settingsUnavailable: "\u8BBE\u7F6E\u9875\u6B63\u5728\u52A0\u8F7D\u6216\u5DF2\u66F4\u65B0\uFF0C\u8F93\u5165\u5DF2\u4FDD\u7559\u3002\u8BF7\u91CD\u65B0\u6253\u5F00\u8BBE\u7F6E\u9875\u540E\u91CD\u8BD5\u3002",
+      settingsConflict: "\u914D\u7F6E\u540C\u65F6\u88AB\u5176\u4ED6\u64CD\u4F5C\u4FEE\u6539\uFF0C\u8F93\u5165\u5DF2\u4FDD\u7559\u3002\u8BF7\u6838\u5BF9\u6700\u65B0\u8BBE\u7F6E\u540E\u91CD\u8BD5\u3002",
+      settingsTransport: "\u4FDD\u5B58\u8FDE\u63A5\u4E2D\u65AD\uFF0C\u7ED3\u679C\u5C1A\u672A\u786E\u8BA4\u3002\u8F93\u5165\u5DF2\u4FDD\u7559\uFF0C\u8BF7\u91CD\u65B0\u6253\u5F00\u8BBE\u7F6E\u9875\u6838\u5BF9\u540E\u518D\u4FDD\u5B58\u3002",
       invalidWait: "\u7B49\u5F85\u65F6\u95F4\u987B\u4E3A\u81F3\u5C11 1 \u79D2\u7684\u6709\u6548\u6570\u503C\uFF0C\u4E14\u6700\u957F\u7B49\u5F85\u65F6\u95F4\u4E0D\u5F97\u5C0F\u4E8E\u67E5\u8BE2\u95F4\u9694\u3002",
       invalidSeam: "\u63A5\u7F1D\u88C1\u526A\u987B\u4E3A\u9017\u53F7\u5206\u9694\u7684 0\u20133 \u79D2\u6570\u503C\uFF0C\u4F8B\u5982 0.5,0\u3002",
       resetDone: "\u5DF2\u6E05\u9664\u672C\u673A\u914D\u7F6E\uFF0C\u6062\u590D\u9ED8\u8BA4\u8BBE\u7F6E\u3002",
@@ -668,9 +676,17 @@
       seamTrimSecondsHint: "Trim the start of segments 2, 3, etc., e.g. 0.5,0. Leave blank for model defaults; use 0 to disable. Each value: 0\u20133 seconds.",
       waitSecondsHint: "At least 1 second; decimals allowed. Maximum wait must be at least the check interval.",
       versionHistory: "Update history",
+      versionChannel: "Update channel",
+      versionStable: "Stable",
+      versionPrerelease: "Prerelease",
+      versionChannelHint: "Checking never installs. Confirm installation to switch; returning to stable may downgrade. Prereleases may be unstable.",
+      versionCheckFirst: "Check the selected channel before confirming installation.",
       unknownConnection: "Unknown connection method. Select one again.",
       atomicUnsupported: "This version of Harness does not support batch saving. Update Harness and try again.",
-      atomicRejected: "Settings were not saved. Reopen this page and try again; restart Harness if the problem continues.",
+      atomicRejected: "The application refused the save. Input is retained. Reopen settings, review and retry.",
+      settingsUnavailable: "Settings are loading or were replaced. Input is retained. Reopen settings and retry.",
+      settingsConflict: "Another operation changed these settings. Input is retained. Review the latest settings and retry.",
+      settingsTransport: "The save connection was interrupted; the result is unconfirmed. Input is retained. Reopen settings and check before saving again.",
       invalidWait: "Enter valid times of at least 1 second. Maximum wait must be at least the check interval.",
       invalidSeam: "Enter comma-separated trim values from 0 to 3 seconds, e.g. 0.5,0.",
       resetDone: "Local settings cleared and defaults restored.",
@@ -705,13 +721,51 @@
           return null;
         }
       }
-      const before = checkpoint();
-      if (await form.mutate(ops)) return;
-      const after = checkpoint();
-      if (before && after && before.revision !== after.revision && before.fields === after.fields) {
-        if (await form.mutate(ops)) return;
+      function fail(code, before2, after2) {
+        globalThis.console?.warn?.("[MetaOnticVideo] settings-save", {
+          code,
+          beforeRevision: before2?.revision ?? null,
+          afterRevision: after2?.revision ?? null
+        });
+        throw new Error(code);
       }
-      throw new Error("atomicRejected");
+      function readiness() {
+        let snapshot;
+        try {
+          snapshot = form.getSnapshot?.();
+        } catch {
+          return "settingsUnavailable";
+        }
+        if (!snapshot) return null;
+        if (snapshot.writable === false) return "readOnly";
+        if (snapshot.status && snapshot.status !== "ready") return "settingsUnavailable";
+        return null;
+      }
+      const initialProblem = readiness();
+      if (initialProblem) fail(initialProblem, null, null);
+      const before = checkpoint();
+      let accepted;
+      try {
+        accepted = await form.mutate(ops, before?.revision);
+      } catch {
+        fail("settingsTransport", before, null);
+      }
+      if (accepted) return;
+      const after = checkpoint();
+      const problem = readiness();
+      if (problem) fail(problem, before, after);
+      if (before && after && before.revision !== after.revision) {
+        if (before.fields !== after.fields) fail("settingsConflict", before, after);
+        try {
+          accepted = await form.mutate(ops, after.revision);
+        } catch {
+          fail("settingsTransport", after, null);
+        }
+        if (accepted) return;
+        const latest = checkpoint();
+        fail(readiness() || (latest && latest.revision !== after.revision ? "settingsConflict" : "atomicRejected"), after, latest);
+      }
+      fail("atomicRejected", before, after);
     }
     function validateSettings(values) {
       const interval = Number(values.pollIntervalMs ?? 5e3);
@@ -749,31 +803,29 @@
 
   // src/client/updates.ts
   function createUpdates({ h }) {
-    const UPDATE_PROJECT = "hackloop/metaontic-video";
-    const UPDATE_FILE_API = `https://gitee.com/api/v5/repos/${UPDATE_PROJECT}/contents/package.json`;
     const PLUGIN_PACKAGE = "metaontic-video";
     const UPDATE_SPEC = "git+https://gitee.com/hackloop/metaontic-video.git";
-    const UPDATE_TAGS_API = "https://data.jsdelivr.com/v1/packages/gh/wxsimon2022/metaontic-video";
-    const UPDATE_MIRROR_FILES = [
-      "https://fastly.jsdelivr.net/gh/wxsimon2022/metaontic-video@master/package.json",
-      "https://gcore.jsdelivr.net/gh/wxsimon2022/metaontic-video@master/package.json"
-    ];
-    const UPDATE_BRANCH = "master";
-    const UPDATE_COMMIT_API = `https://gitee.com/api/v5/repos/${UPDATE_PROJECT}/commits?sha=${UPDATE_BRANCH}&per_page=1`;
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v2";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.9.0".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.10.0-beta.1".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
-        const match = /(\d+)\.(\d+)\.(\d+)/.exec(String(text || ""));
-        return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null;
+        const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
+        return m ? { core: m.slice(1, 4).map(Number), pre: m[4]?.split(".") || [] } : null;
       };
-      const next = parse(remote);
-      const current = parse(local);
+      const next = parse(remote), current = parse(local);
       if (!next || !current) return false;
-      for (let index = 0; index < 3; index += 1) {
-        if (next[index] !== current[index]) return next[index] > current[index];
+      for (let i = 0; i < 3; i++) if (next.core[i] !== current.core[i]) return next.core[i] > current.core[i];
+      if (!next.pre.length || !current.pre.length) return !next.pre.length && Boolean(current.pre.length);
+      for (let i = 0; i < Math.max(next.pre.length, current.pre.length); i++) {
+        const a = next.pre[i], b = current.pre[i];
+        if (a === b) continue;
+        if (a === void 0 || b === void 0) return b === void 0;
+        const an = /^\d+$/.test(a), bn = /^\d+$/.test(b);
+        if (an && bn) return Number(a) > Number(b);
+        if (an !== bn) return !an;
+        return a > b;
       }
       return false;
     }
@@ -788,13 +840,6 @@
           h("path", { key: "clapper", d: "M10 21h4M12 2V1" })
         ])
       );
-    }
-    function decodeBase64Text(raw) {
-      if (typeof atob !== "function") return "";
-      const binary = atob(String(raw || "").replace(/\s+/g, ""));
-      const bytes = new Uint8Array(binary.length);
-      for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-      return typeof TextDecoder === "function" ? new TextDecoder().decode(bytes) : binary;
     }
     async function fetchUpdateSource(url, ms = 12e3) {
       const controller = typeof AbortController === "function" ? new AbortController() : null;
@@ -811,58 +856,39 @@
         if (timer) window.clearTimeout(timer);
       }
     }
-    function versionFromFile(body) {
-      const version = String((body || {}).version || "").trim().replace(/^v/i, "");
-      if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error("invalid version");
-      return version;
-    }
-    function versionFromTags(body) {
-      const versions = Array.isArray(body?.versions) ? body.versions : [];
-      let best = "";
-      for (const entry of versions) {
-        const version = String(entry && entry.version || "").trim().replace(/^v/i, "");
-        if (!/^\d+\.\d+\.\d+$/.test(version)) continue;
-        if (!best || isNewerVersion(version, best)) best = version;
-      }
-      if (!best) throw new Error("no tags");
-      return best;
-    }
-    async function fetchLatestVersion() {
-      const github = "https://api.github.com/repos/wxsimon2022/metaontic-video/contents/package.json?ref=master";
-      const requests = [UPDATE_FILE_API, github].map(async (url) => {
-        const body = await (await fetchUpdateSource(url, 6e3)).json();
-        return versionFromFile(JSON.parse(decodeBase64Text(body.content)));
-      });
-      requests.push((async () => versionFromTags(await (await fetchUpdateSource(UPDATE_TAGS_API, 6e3)).json()))());
-      for (const url of UPDATE_MIRROR_FILES) {
-        requests.push((async () => versionFromFile(await (await fetchUpdateSource(url, 6e3)).json()))());
-      }
-      return new Promise((resolve, reject) => {
-        let remaining = requests.length;
+    async function fetchLatestVersion(channel = "stable") {
+      const urls = [
+        "https://gitee.com/api/v5/repos/hackloop/metaontic-video/releases?per_page=100",
+        channel === "prerelease" ? "https://api.github.com/repos/wxsimon2022/metaontic-video/releases?per_page=100" : "https://api.github.com/repos/wxsimon2022/metaontic-video/releases/latest"
+      ];
+      const requests = urls.map(async (url) => {
+        const data = await (await fetchUpdateSource(url, 6e3)).json();
+        const body = Array.isArray(data) ? data : data?.tag_name ? [data] : null;
+        if (!body) throw new Error("invalid releases");
         let best = "";
-        const errors = [];
-        for (const request of requests) {
-          request.then((version) => {
-            if (!best || isNewerVersion(version, best)) best = version;
-            if (isNewerVersion(version, PLUGIN_VERSION)) resolve(version);
-          }, (error) => {
-            errors.push(error?.message || String(error));
-          }).finally(() => {
-            if (--remaining === 0) {
-              if (best) resolve(best);
-              else reject(new Error(errors.join("\uFF1B")));
-            }
-          });
+        for (const release of body) {
+          const version = String(release.tag_name || "").replace(/^v/, "");
+          if (release.draft || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(version)) continue;
+          if (channel !== "prerelease" && (release.prerelease || version.includes("-"))) continue;
+          if (!best || isNewerVersion(version, best)) best = version;
         }
+        if (!best) throw new Error("no releases in channel");
+        return best;
+      });
+      return new Promise((resolve, reject) => {
+        let remaining = requests.length, best = "";
+        const errors = [];
+        for (const request of requests) request.then((version) => {
+          if (!best || isNewerVersion(version, best)) best = version;
+          if (isNewerVersion(version, PLUGIN_VERSION)) resolve(version);
+        }, (error) => {
+          errors.push(error?.message || String(error));
+        }).finally(() => {
+          if (--remaining === 0) best ? resolve(best) : reject(new Error(errors.join("\uFF1B")));
+        });
       });
     }
-    async function fetchLatestCommit() {
-      const body = await (await fetchUpdateSource(UPDATE_COMMIT_API)).json();
-      const sha = String((Array.isArray(body) ? body[0]?.sha : "") || "").trim();
-      if (!/^[0-9a-f]{40}$/i.test(sha)) throw new Error("no commit");
-      return sha;
-    }
-    return { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, fetchLatestCommit, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell };
+    return { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell };
   }
   function createUpdateActions(context) {
     function readUpdateCache() {
@@ -883,7 +909,7 @@
         return { latest: "", commit: "", at: 0, fresh: false };
       }
     }
-    function rememberUpdateCheck(latest, commit) {
+    function rememberUpdateCheck(latest, commit = "") {
       try {
         window.localStorage.setItem(context.UPDATE_CACHE_KEY, JSON.stringify({ at: Date.now(), latest, commit: commit || "" }));
       } catch {
@@ -905,19 +931,19 @@
         context.setUpdateStatus("working");
         context.setUpdateMessage("");
       }
+      const channel = context.updateChannel || "stable";
+      const request = context.updateRequest ? ++context.updateRequest.current : 0;
       try {
-        const latest = await context.fetchLatestVersion();
-        context.fetchLatestCommit().then((commit) => {
-          context.updateCommit.current = commit;
-        }).catch(() => {
-        });
+        const latest = await context.fetchLatestVersion(channel);
+        if (context.updateRequest && request !== context.updateRequest.current) return "";
         context.setUpdateConfirm?.(false);
         context.setUpdateLatest(latest);
         context.setUpdateAt((/* @__PURE__ */ new Date()).toLocaleTimeString());
         context.setUpdateStatus("ok");
-        rememberUpdateCheck(latest, context.updateCommit.current);
+        rememberUpdateCheck(latest);
         return latest;
       } catch (error) {
+        if (context.updateRequest && request !== context.updateRequest.current) return "";
         if (silent)
           return "";
         context.setUpdateStatus("failed");
@@ -945,35 +971,23 @@
           return { ok: false, error: { message: error?.message || String(error) } };
         }
       };
-      const remove = async () => {
-        if (typeof pluginManager.removeBundle !== "function")
-          return null;
-        try {
-          return await pluginManager.removeBundle(context.PLUGIN_PACKAGE);
-        } catch (error) {
-          return { ok: false, error: { message: error?.message || String(error) } };
-        }
-      };
       const failureText = (result) => String(result?.error?.message ?? result?.value?.error?.diagnostic ?? result?.value?.error?.code ?? "unknown");
       const worthRetrying = (text) => /429|queue overflowed|timed out|timeout|ETIMEDOUT|ECONNRESET|ECONNREFUSED|EAI_AGAIN|socket hang up|unable to access|network|fetch/i.test(text);
-      let commit = context.updateCommit.current || "";
-      if (commit)
-        context.updateCommit.current = commit;
-      const candidates = [];
-      if (context.updateLatest)
-        candidates.push(`${context.UPDATE_SPEC}#v${context.updateLatest}`);
-      if (commit)
-        candidates.push(`${context.UPDATE_SPEC}#${commit}`);
-      candidates.push(context.UPDATE_SPEC);
+      if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(context.updateLatest || "") || context.updateChannel === "stable" && context.updateLatest.includes("-")) {
+        context.setUpdateStatus("failed");
+        context.setUpdateMessage(context.t("versionCheckFirst"));
+        return;
+      }
+      const candidates = [
+        `${context.UPDATE_SPEC}#v${context.updateLatest}`,
+        `git+https://github.com/wxsimon2022/metaontic-video.git#v${context.updateLatest}`
+      ];
       const specUnresolvable = (text) => /Could not resolve|No matching version|ERR_PNPM_NO_MATCHING_VERSION/i.test(text);
-      let removed = false;
       const trySpec = async (spec) => {
         for (let round = 1; round <= context.UPDATE_ATTEMPTS; round += 1) {
           let result = await install(spec);
           if (result?.ok === true && result.value?.error?.code === "already-installed") {
-            removed = true;
-            await remove();
-            result = await install(spec);
+            return { failure: failureText(result), next: false };
           }
           if (result?.ok === true && result.value?.application !== "failed") {
             return { outcome: result.value || {} };
@@ -1005,7 +1019,6 @@
         context.setUpdateStatus("failed");
         context.setUpdateMessage([
           context.t("versionUpdateFailed", { message: failure }),
-          removed ? context.t("versionUpdateRemoved") : "",
           worthRetrying(failure) || /429|queue overflowed/i.test(failure) ? context.t("versionUpdateRateLimited") : ""
         ].filter(Boolean).join(" "));
         return;
@@ -1225,7 +1238,9 @@
         return false;
       context.connectionBusy.current = true;
       try {
-        await context.persistConnection(context.form, writes, "service");
+        const pending = context.persistConnection(context.form, writes, "service");
+        context.connectionBusy.pending = pending;
+        await pending;
         clearLoggedOut();
         for (const [key] of writes)
           context.clear(key);
@@ -1234,6 +1249,7 @@
         throw new Error(context.settingsError(error));
       } finally {
         context.connectionBusy.current = false;
+        context.connectionBusy.pending = null;
       }
       loadQuota().catch(() => {
       });
@@ -1418,7 +1434,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.9.0",
+    version: "3.10.0-beta.1",
     description: "DeepSeek Harness video creation plugin with a Video Creation Assistant for concepts, script review and confirmed production; supports reference images, video continuation, segment previews, resumable generation, local merging, and MetaOnticVideo, MetaOntic AI or Volcano Engine access.",
     license: "MIT",
     type: "module",
@@ -1505,21 +1521,23 @@
       hyperframes: "0.8.223"
     },
     releaseNotes: {
-      version: "3.9.0",
-      publishedAt: "2026-11-01T07:59:09Z",
+      version: "3.10.0-beta.1",
+      prerelease: true,
+      publishedAt: "2026-11-01T11:02:04Z",
       items: [
-        "\u65B0\u589E\uFF1A\u6240\u6709\u63A5\u5165\u65B9\u5F0F\u5728\u811A\u672C\u5BA1\u6838\u524D\u9884\u4F30\u706B\u5C71\u5B98\u65B9\u4E0E\u63D2\u4EF6\u65B9\u6848\u8D39\u7528\uFF0C\u6309\u89C6\u9891\u65F6\u957F\u3001\u6E05\u6670\u5EA6\u548C\u5B9E\u9645\u5206\u6BB5\u8BA1\u7B97\uFF0C\u5E76\u5199\u5165\u811A\u672C\u672B\u5C3E\u3002",
-        "\u65B0\u589E\uFF1AMetaOnticVideo\u3001MetaOntic AI \u6E20\u9053\u5728\u89C6\u9891\u5B8C\u6210\u540E\u67E5\u8BE2\u5B9E\u9645\u7ED3\u7B97\u8D39\u7528\uFF0C\u652F\u6301\u5206\u6BB5\u5408\u8BA1\u53CA\u4EFB\u52A1\u72B6\u6001\u8865\u67E5\u3002",
-        "\u4F18\u5316\uFF1A\u533A\u5206\u5F85\u7ED3\u7B97\u3001\u90E8\u5206\u5B8C\u6210\u548C\u67E5\u8BE2\u5931\u8D25\uFF0C\u8D39\u7528\u67E5\u8BE2\u4E0D\u5F71\u54CD\u89C6\u9891\u4EA4\u4ED8\u6216\u6062\u590D\uFF0C\u4E0D\u89E6\u53D1\u91CD\u65B0\u751F\u6210\u3002",
-        "\u4F18\u5316\uFF1A\u7248\u672C\u5361\u7247\u5728\u201C\u66F4\u65B0\u5185\u5BB9\u201D\u540C\u4E00\u884C\u663E\u793A\u672C\u7248\u672C\u53D1\u5E03\u65F6\u95F4\uFF0C\u540C\u6B65\u4F7F\u7528\u8BF4\u660E\u4E66\u4E0E PDF\u3002",
-        "\u4F18\u5316\uFF1A\u4EF7\u683C\u53C2\u8003\u6587\u6863\u53CA\u5BA3\u4F20\u7D20\u6750\u4EC5\u7559\u672C\u5730\uFF0C\u4E0D\u7EB3\u5165\u4ED3\u5E93\u6216\u53D1\u5E03\u5305\u3002",
-        "\u4FEE\u590D\uFF1A\u7EDF\u4E00\u5404\u63A5\u5165\u65B9\u5F0F\u7684\u811A\u672C\u8D39\u7528\u5C55\u793A\u89C4\u5219\uFF0C\u6E05\u7406\u65E7\u7684\u514D\u4F30\u4EF7\u8BF4\u660E\uFF0C\u907F\u514D\u4EC5\u5728\u5BA1\u6279\u5F39\u7A97\u663E\u793A\u8D39\u7528\u3002"
+        "\u65B0\u589E\uFF1A\u63D2\u4EF6\u7248\u672C\u5361\u7247\u652F\u6301\u5207\u6362\u6B63\u5F0F\u7248\u4E0E\u9884\u53D1\u5E03\u7248\u6E20\u9053\uFF0C\u786E\u8BA4\u540E\u5B89\u88C5\u5BF9\u5E94\u53D1\u5E03\u6807\u7B7E\uFF0C\u5E76\u652F\u6301\u5207\u56DE\u6B63\u5F0F\u7248\u3002",
+        "\u65B0\u589E\uFF1A\u53D1\u5E03\u9ED8\u8BA4\u91C7\u7528 beta \u9884\u53D1\u5E03\u7248\u672C\uFF0C\u589E\u52A0\u7248\u672C\u53F7\u4E0E\u9884\u53D1\u5E03\u6807\u8BB0\u6821\u9A8C\uFF0C\u53CC\u4ED3\u540C\u6B65\u53D1\u5E03\u6E20\u9053\u3002",
+        "\u4F18\u5316\uFF1A\u914D\u7F6E\u4FDD\u5B58\u7B49\u5F85\u8BBE\u5907\u540C\u6B65\u53CA\u81EA\u52A8\u53D6\u56DE Key \u5B8C\u6210\uFF0C\u51B2\u7A81\u65F6\u7ED1\u5B9A\u4FEE\u8BA2\u53F7\u5B89\u5168\u91CD\u8BD5\uFF0C\u4FDD\u7559\u4FDD\u5B58\u671F\u95F4\u7EE7\u7EED\u7F16\u8F91\u7684\u8F93\u5165\u3002",
+        "\u4F18\u5316\uFF1A\u4FDD\u5B58\u5931\u8D25\u533A\u5206\u914D\u7F6E\u51B2\u7A81\u3001\u53EA\u8BFB\u3001\u9875\u9762\u5931\u6548\u53CA\u8FDE\u63A5\u4E2D\u65AD\uFF0C\u589E\u52A0\u4E0D\u542B\u5BC6\u94A5\u4E0E\u5B57\u6BB5\u503C\u7684\u8BCA\u65AD\u4FE1\u606F\u3002",
+        "\u4F18\u5316\uFF1A\u66F4\u65B0\u7F13\u5B58\u6309\u6E20\u9053\u9694\u79BB\uFF0C\u5207\u6362\u540E\u5FFD\u7565\u65E7\u67E5\u8BE2\u7ED3\u679C\uFF0C\u5B89\u88C5\u4E0D\u56DE\u9000\u9ED8\u8BA4\u5206\u652F\u3001\u4E0D\u5148\u5378\u8F7D\u63D2\u4EF6\uFF1B\u540C\u6B65\u4F7F\u7528\u8BF4\u660E\u4E66\u4E0E PDF\u3002",
+        "\u4FEE\u590D\uFF1A\u5B9E\u9645\u8D39\u7528\u53EF\u7A7A\u5B57\u6BB5\u6539\u7528\u5BBF\u4E3B\u652F\u6301\u7684 Schema\uFF0C\u89E3\u51B3\u201C\u7EC4\u4EF6\u542F\u52A8\u5931\u8D25\u201D\u5BFC\u81F4\u63D2\u4EF6\u65E0\u6CD5\u52A0\u8F7D\u3002",
+        "\u4FEE\u590D\uFF1A\u91CD\u7F6E\u540E\u5148\u6838\u5BF9\u914D\u7F6E\u5E76\u5F15\u5BFC\u767B\u5F55\u6216\u586B\u5199 Key\uFF0C\u4FDD\u7559\u811A\u672C\u4E0E\u4EFB\u52A1\u8FDB\u5EA6\uFF0C\u907F\u514D\u8BEF\u5EFA\u8BAE\u91CD\u88C5\u6216\u91CD\u542F\u3002"
       ]
     }
   };
 
   // src/client/settings.ts
-  function createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, fetchLatestCommit, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS }) {
+  function createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS }) {
     function makePage({ form, t, manager }) {
       return function ConfigPage(props) {
         const snapshot = useSnapshot(form);
@@ -1573,13 +1591,22 @@
         const [updateStatus, setUpdateStatus] = React.useState("idle");
         const [updateMessage, setUpdateMessage] = React.useState("");
         const [updateLatest, setUpdateLatest] = React.useState("");
+        const [updateChannel, setUpdateChannel] = React.useState(() => {
+          try {
+            const saved = window.localStorage.getItem("metaontic-video.update-channel");
+            if (saved === "stable" || saved === "prerelease") return saved;
+          } catch {
+          }
+          return package_default.releaseNotes?.prerelease || PLUGIN_VERSION.includes("-") ? "prerelease" : "stable";
+        });
+        const updateRequest = React.useRef(0);
+        const channelCacheKey = `${UPDATE_CACHE_KEY}.${updateChannel}`;
         const releaseNotes = package_default.releaseNotes;
         const [updateAt, setUpdateAt] = React.useState("");
-        const updateCommit = React.useRef("");
         const [updateConfirm, setUpdateConfirm] = React.useState(false);
         const [updateDeferred, setUpdateDeferred] = React.useState(() => {
           try {
-            return window.localStorage.getItem(`${UPDATE_CACHE_KEY}.deferred`) || "";
+            return window.localStorage.getItem(`${channelCacheKey}.deferred`) || "";
           } catch {
             return "";
           }
@@ -1681,7 +1708,13 @@
         });
         const { readUpdateCache, rememberUpdateCheck, forgetUpdateCheck, checkForUpdate, runOnlineUpdate, deferUpdate } = createUpdateActions({
           get UPDATE_CACHE_KEY() {
-            return UPDATE_CACHE_KEY;
+            return channelCacheKey;
+          },
+          get updateChannel() {
+            return updateChannel;
+          },
+          get updateRequest() {
+            return updateRequest;
           },
           get UPDATE_MAX_AGE_MS() {
             return UPDATE_MAX_AGE_MS;
@@ -1694,12 +1727,6 @@
           },
           get fetchLatestVersion() {
             return fetchLatestVersion;
-          },
-          get fetchLatestCommit() {
-            return fetchLatestCommit;
-          },
-          get updateCommit() {
-            return updateCommit;
           },
           get setUpdateLatest() {
             return setUpdateLatest;
@@ -1774,24 +1801,33 @@
             window.document?.removeEventListener("visibilitychange", refresh);
           };
         }, [serviceMode, Boolean(snapshot.secrets?.apiKey || value.apiKey), value.deviceId, props?.view]);
-        const updateTried = React.useRef(false);
+        const updateTried = React.useRef("");
         React.useEffect(() => {
           if (props?.view === "summary") {
-            updateTried.current = false;
+            updateTried.current = "";
             return;
           }
-          if (updateTried.current) return;
-          updateTried.current = true;
+          if (updateTried.current === updateChannel) return;
+          updateTried.current = updateChannel;
+          setUpdateLatest("");
+          setUpdateConfirm(false);
+          setUpdateAt("");
+          setUpdateStatus("idle");
+          setUpdateMessage("");
+          try {
+            setUpdateDeferred(window.localStorage.getItem(`${channelCacheKey}.deferred`) || "");
+          } catch {
+            setUpdateDeferred("");
+          }
           const cached = readUpdateCache();
           if (cached.latest) {
             setUpdateLatest(cached.latest);
             if (cached.at) setUpdateAt(new Date(cached.at).toLocaleTimeString());
-            if (cached.commit) updateCommit.current = cached.commit;
             setUpdateStatus("ok");
           }
           checkForUpdate(true).catch(() => {
           });
-        }, [props?.view]);
+        }, [props?.view, updateChannel]);
         if (props && props.view === "summary") {
           const configured = Boolean(value.model) || Boolean(snapshot.secrets?.apiKey);
           const text = configured ? t("summary", { provider: t(selectedMode), model: value.model || "-" }) : t("summaryEmpty");
@@ -1824,7 +1860,7 @@
         }
         function settingsError(error) {
           const message = error?.message || String(error);
-          return ["unknownConnection", "atomicUnsupported", "atomicRejected", "invalidWait", "invalidSeam"].includes(message) ? t(message) : message;
+          return ["unknownConnection", "atomicUnsupported", "atomicRejected", "settingsUnavailable", "settingsConflict", "settingsTransport", "readOnly", "invalidWait", "invalidSeam"].includes(message) ? t(message) : message;
         }
         async function save() {
           if (saveInFlight.current) return;
@@ -1849,7 +1885,7 @@
               setRegisterMessage("");
               setQuota(null);
             }
-            setDraft({});
+            setDraft((current) => Object.fromEntries(Object.entries(current).filter(([key, next]) => !Object.prototype.hasOwnProperty.call(draft, key) || !same(draft[key], next))));
             flashStatus("saved");
           } catch (error) {
             setSaveError(settingsError(error));
@@ -2221,7 +2257,7 @@
           usageAt ? h("span", { key: "updated-at", className: "mov-foot-note" }, t("quotaUpdatedAt", { time: usageAt })) : null,
           usageMessage ? h("span", { key: "message", className: "mov-hint" }, usageMessage) : null
         ]) : null;
-        const updateAvailable = Boolean(updateLatest) && Boolean(PLUGIN_VERSION) && isNewerVersion(updateLatest, PLUGIN_VERSION);
+        const updateAvailable = Boolean(updateLatest) && Boolean(PLUGIN_VERSION) && updateLatest !== PLUGIN_VERSION && (isNewerVersion(updateLatest, PLUGIN_VERSION) || updateChannel !== (package_default.releaseNotes?.prerelease || PLUGIN_VERSION.includes("-") ? "prerelease" : "stable"));
         const updateText = updateStatus === "working" ? t("versionChecking") : updateStatus === "failed" ? updateMessage : updateStatus === "installing" ? t("versionUpdating") : updateStatus === "restart" || updateStatus === "applied" ? updateMessage : updateStatus === "ok" ? updateAvailable ? t("versionNew", { version: updateLatest }) : t("versionLatest") : "";
         const updateTone = updateStatus === "failed" ? TOKENS.error : updateStatus === "restart" || updateStatus === "applied" || updateAvailable ? TOKENS.success : TOKENS.muted;
         const versionBox = h("div", {
@@ -2251,6 +2287,29 @@
                 });
               }
             }, updateStatus === "working" ? t("versionChecking") : t("versionCheck"))
+          ]),
+          h("div", { key: "channel", className: "mov-cmd-row" }, [
+            h("label", { key: "label", htmlFor: "mov-update-channel", className: "mov-label" }, t("versionChannel")),
+            h("select", {
+              key: "select",
+              id: "mov-update-channel",
+              className: "mov-input",
+              value: updateChannel,
+              disabled: updateStatus === "installing",
+              onChange: (event) => {
+                const channel = event.target.value;
+                if (!["stable", "prerelease"].includes(channel)) return;
+                updateRequest.current++;
+                setUpdateLatest("");
+                setUpdateConfirm(false);
+                setUpdateChannel(channel);
+                try {
+                  window.localStorage.setItem("metaontic-video.update-channel", channel);
+                } catch {
+                }
+              }
+            }, [h("option", { key: "stable", value: "stable" }, t("versionStable")), h("option", { key: "pre", value: "prerelease" }, t("versionPrerelease"))]),
+            h("span", { key: "hint", className: "mov-hint" }, t("versionChannelHint"))
           ]),
           releaseNotes?.items?.length ? h("div", { key: "release-notes", "data-field": "releaseNotes" }, [
             h("div", { key: "heading", style: { display: "flex", alignItems: "baseline", gap: 12 } }, [
@@ -2438,8 +2497,8 @@
       const { PLUGIN_OWNED_KEYS, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE } = createClientConfig();
       const { zh, en } = createDictionaries();
       const { useSnapshot, same, validateSettings, persistConnection, persistBatch } = createSettingsState({ React });
-      const { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, fetchLatestCommit, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell } = createUpdates({ h });
-      const { makePage } = createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, fetchLatestCommit, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS });
+      const { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell } = createUpdates({ h });
+      const { makePage } = createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS });
       return {
         inject: ["slots", "locale", "configForms", "uiSession"],
         apply(ctx) {

@@ -101,12 +101,12 @@ for (const available of ['gitee', 'github']) test(`${available} alone can signal
     PLUGIN_VERSION: '3.3.0', UPDATE_FILE_API: 'gitee', UPDATE_TAGS_API: 'tags', UPDATE_MIRROR_FILES: ['mirror'],
     decodeBase64Text: value => value,
     fetchUpdateSource: async url => {
-      if (String(url).includes(available)) return { json: async () => ({ content: '{"version":"3.3.1"}' }) };
+      if (String(url).includes(available)) return { json: async () => [{tag_name:'v3.3.1',prerelease:false}] };
       if (url === 'tags') throw new Error('unavailable');
       return new Promise(() => {});
     },
   });
-  for (const name of ['isNewerVersion', 'versionFromFile', 'versionFromTags', 'fetchLatestVersion']) vm.runInContext(extract(name), ctx);
+  for (const name of ['isNewerVersion', 'fetchLatestVersion']) vm.runInContext(extract(name), ctx);
   assert.equal(await Promise.race([ctx.fetchLatestVersion(), new Promise((_, reject) => setTimeout(() => reject(new Error('blocked by another source')), 100))]), '3.3.1');
 });
 test('all update sources failing rejects cleanly; an older successful source still works', async () => {
@@ -115,11 +115,11 @@ test('all update sources failing rejects cleanly; an older successful source sti
     PLUGIN_VERSION: '3.3.0', UPDATE_FILE_API: 'gitee', UPDATE_TAGS_API: 'tags', UPDATE_MIRROR_FILES: [],
     decodeBase64Text: value => value,
     fetchUpdateSource: async url => {
-      if (!failed && url === 'gitee') return { json: async () => ({ content: '{"version":"3.2.2"}' }) };
+      if (!failed && String(url).includes('gitee')) return { json: async () => [{tag_name:'v3.2.2'}] };
       throw new Error('offline');
     },
   });
-  for (const name of ['isNewerVersion', 'versionFromFile', 'versionFromTags', 'fetchLatestVersion']) vm.runInContext(extract(name), ctx);
+  for (const name of ['isNewerVersion', 'fetchLatestVersion']) vm.runInContext(extract(name), ctx);
   await assert.rejects(ctx.fetchLatestVersion(), /offline/);
   failed = false; assert.equal(await ctx.fetchLatestVersion(), '3.2.2');
 });
@@ -165,4 +165,29 @@ test('first Save waits for background device synchronization instead of silently
   assert.equal(h.state.metaonticApiKey, 'video-key'); assert.equal(h.state.apiKey, '');
   assert.equal(h.ctx.saveInFlight.current, false);
   assert.ok(h.events.some(e => Array.isArray(e) && e[0] === 'flash' && e[1] === 'saved'));
+});
+
+test('registration exposes its pending write so Save can wait instead of dropping a click', async () => {
+  const h = setup(); let release;
+  h.ctx.form.mutate = () => new Promise(resolve => { release = resolve; });
+  const registration = h.ctx.applyRegistration({api_key:'new'});
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.ctx.connectionBusy.current, true);
+  assert.equal(typeof h.ctx.connectionBusy.pending?.then, 'function');
+  release(true); await registration;
+  assert.equal(h.ctx.connectionBusy.current, false); assert.equal(h.ctx.connectionBusy.pending, null);
+});
+
+test('save retains edits made while the write is in flight', async () => {
+  const h = setup(); let release; let currentDraft = { model: 'submitted' };
+  h.ctx.saveInFlight = {current:false}; h.ctx.draft = {...currentDraft};
+  h.ctx.same = (a,b) => a === b;
+  h.ctx.form.getSnapshot = () => ({value:{...h.state}});
+  h.ctx.form.mutate = () => new Promise(resolve => { release = resolve; });
+  h.ctx.setDraft = update => { currentDraft = typeof update === 'function' ? update(currentDraft) : update; };
+  vm.runInContext(extract('save'), h.ctx);
+  const saving = h.ctx.save();
+  currentDraft = {model:'edited-again',ratio:'16:9'};
+  release(true); await saving;
+  assert.deepEqual(JSON.parse(JSON.stringify(currentDraft)), {model:'edited-again',ratio:'16:9'});
 });

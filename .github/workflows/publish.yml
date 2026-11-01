@@ -19,6 +19,7 @@ jobs:
           node-version: 22
       - name: Validate release tag
         run: |
+          node scripts/validate-release.mjs
           VERSION=$(node -p "require('./package.json').version")
           test "$GITHUB_REF_NAME" = "v$VERSION" || { echo 'Run this workflow on the matching version tag.'; exit 1; }
       - name: Install build tooling
