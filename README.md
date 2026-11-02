@@ -325,6 +325,24 @@ Harness 默认启用 HMR 配置重载，但不监听本地插件源码。对于�
 
 `base` 使用本机插件目录绝对路径，仅配置在本机 profile，不写入插件发布配置。已有 HMR 配置时合并调整，保留其他项目的监听需求。配置由运行中的宿主加载；之后修改 TypeScript 并执行 `npm run build`，宿主入口热替换，客户端通过宿主 Client HMR 更新。构建失败先修复，不通过重启解决语法错误。`package.json` 的依赖或加载入口变化可能仍需按宿主提示重新安装或重启；插件规则变化在现有对话的下一轮请求生效，旧确认窗口需重新发起。正在生成视频时先等任务返回，再构建或更新，避免热替换中断当前调用；已有任务按任务 ID 查询或续做，勿重复提交。
 
+## v3.13.3 更新内容
+
+### 新增
+
+- 一键发布脚本，运行 npm run release -- X.Y.Z 即可完成整轮发布；也可双击 Windows 的 release.cmd 或 Mac 的 release.command 按提示输入版本号。
+- 一键发布支持 --dry-run 只检查计划，不写文件、不改版本、不提交、不联网；支持 --resume 在同一版本下续跑未完成的发布，不覆盖已有标签。
+
+### 优化
+
+- 一键发布会先显示待发布范围与更新说明，再更新版本号与锁文件、同步 README 与 CHANGELOG 及包内更新说明，然后构建、测试、打包、提交、打附注标签、推送双仓、等待双平台安装检查与附件上传，最后输出发布页、tgz 安装地址和 Windows ZIP 下载地址。
+- 构建改用跨平台脚本 scripts/build.mjs，去掉此前依赖命令替换的写法，Windows 与 macOS 都能直接构建插件、客户端与语言文件。
+- Windows 安装资料包内的图文教程重写为六步操作（解压 ZIP → 找到 .tgz → 复制完整路径 → 粘贴到「添加插件」→ 填 Key 保存 → 开始创作），并给出安装成功的判断标志与可折叠的常见问题；网页版与文本版内容一致。
+- 使用说明书补充 Windows 本地安装要点，明确新安装填写 .tgz 文件路径、package 目录只用于查看资料或恢复旧安装，从界面粘贴路径时需删除两端的英文双引号。
+
+### 修复
+
+- Windows 安装资料包内的「先读我」文本改用 CRLF 行尾，用记事本打开不再整段挤在一行。
+
 ## v3.13.2 更新内容
 
 ### 修复
@@ -594,3 +612,35 @@ Key 共用规则：MetaOnticVideo 接入固定共用登录下发的 Key，模型
 开发与发布需遵守[Windows/macOS兼容规范](./docs/engineering/platform-compatibility.md)。上传正式版前必须通过双平台成品安装检查；自动检查不替代桌面GUI实机验证。
 
 更新前会核对实际安装来源。本地目录链接安装会停止直接在线替换；来源未知或元信息异常也停止，不清目录或配置。tgz成品与仓库安装继续支持在线更新。旧目录已空需先恢复完整内容，不能靠重复点击更新修复；此前已失效或被错误迁移的加载路径仍需单独核对。
+
+### 一键发布脚本（Windows / Mac）
+
+首次在开发环境安装 Node.js、Git、GitHub CLI、Python 3，并执行 `gh auth login`；两个仓库的推送权限及 GitHub Actions 的 `GITEE_TOKEN` 需先配置好。它们仅用于开发发布，插件用户不需要安装。
+
+发布前把 [说明模板](./docs/engineering/release-plan.example.json) 复制为根目录 `release-plan.json`，填写本次**全部尚未发布**的更新条目及具体指南核对结果，删除占位文字。同步使用说明书、配图和 PDF。此本地计划文件不会提交到仓库。
+
+只检查计划、不修改文件或发布：
+
+```text
+npm run release -- 3.13.3 --dry-run
+```
+
+也可双击根目录 `release.cmd`（Windows），或双击 `release.command`（Mac；也可运行 `bash release.command`），按提示输入版本号。它们会执行正式发布，不是预览；需要先准备好 `release-plan.json`。
+
+一键正式发布（示例版本号需改为实际目标）：
+
+```text
+npm run release -- 3.13.3
+```
+
+脚本显示待发布范围与说明，更新版本、锁文件和发布元数据，构建、测试、打包、创建提交及附注标签，先推送 Gitee 再推送 GitHub，等待双平台安装/升级检查及正式附件上传，最后输出发布页、`.tgz` 安装地址和 Windows ZIP 下载地址。使用说明书不写入版本记录。失败立即停止，不强推或覆盖旧标签。
+
+发布文件已提交但上传中断时，保留同一版本续跑：
+
+```text
+npm run release -- 3.13.3 --resume
+```
+
+也可指定 `--notes /你的实际路径/说明.json`、`--branch master`、`--github https://github.com/wxsimon2022/metaontic-video.git`、`--gitee https://gitee.com/hackloop/metaontic-video.git`。默认使用当前双仓 SSH 443 地址；Gitee 目标与当前 CI 镜像配置绑定，修改项目归属前需同步 CI，不会静默发布到其他仓库。
+
+脚本依赖事先写好的完整说明，不能自动判断业务变化或代替指南审核。GitHub 已上传但 Gitee 超时时，会明确报告未全部完成，使用 `--resume` 重试，不要重新递增版本。

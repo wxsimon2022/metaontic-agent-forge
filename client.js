@@ -866,7 +866,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.13.2".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.13.3".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1503,7 +1503,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.13.2",
+    version: "3.13.3",
     description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
     license: "MIT",
     type: "module",
@@ -1590,22 +1590,26 @@
     },
     scripts: {
       typecheck: "tsc -p tsconfig.json",
-      "build:locale": "esbuild scripts/build-locale.ts --format=esm --platform=node --packages=external --outfile=node_modules/.cache/build-locale.mjs --log-level=warning && node node_modules/.cache/build-locale.mjs",
-      "build:host": `esbuild src/index.ts --bundle --format=esm --platform=node --target=node20 --define:__PLUGIN_VERSION__=$(node -p 'JSON.stringify(require("./package.json").version)') --outfile=index.js`,
-      "build:client": `esbuild src/client.ts --bundle --format=iife --platform=browser --target=es2022 --define:__PLUGIN_VERSION__=$(node -p 'JSON.stringify(require("./package.json").version)') --outfile=client.js`,
-      build: "npm run typecheck && npm run build:locale && npm run build:host && npm run build:client",
-      preview: "node scripts/preview.mjs"
+      "build:locale": "node scripts/build.mjs locale",
+      "build:host": "node scripts/build.mjs host",
+      "build:client": "node scripts/build.mjs client",
+      build: "npm run typecheck && node scripts/build.mjs",
+      preview: "node scripts/preview.mjs",
+      release: "node scripts/release.mjs"
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.13.2",
+      version: "3.13.3",
       prerelease: false,
-      publishedAt: "2026-11-02T06:46:19Z",
+      publishedAt: "2026-11-02T07:20:12.845Z",
       items: [
-        "\u4FEE\u590D\uFF1A\u7ACB\u5373\u66F4\u65B0\u524D\u8BFB\u53D6\u771F\u5B9E\u5B89\u88C5\u6765\u6E90\uFF0C\u672C\u5730\u76EE\u5F55\u94FE\u63A5\u5B89\u88C5\u505C\u6B62\u76F4\u63A5\u66FF\u6362\uFF0C\u907F\u514D\u89E6\u53D1\u5916\u90E8\u76EE\u5F55\u5F02\u5E38\uFF1B\u4E0D\u5378\u8F7D\u3001\u4E0D\u6E05\u76EE\u5F55\u3001\u4E0D\u91CD\u7F6EKey\u3002",
-        "\u4FEE\u590D\uFF1A\u5B89\u88C5\u6765\u6E90\u65E0\u6CD5\u6838\u5B9E\u3001\u67E5\u8BE2\u5931\u8D25\u6216\u5143\u4FE1\u606F\u5F02\u5E38\u65F6\u505C\u6B62\u66F4\u65B0\uFF0C\u4E0D\u7EE7\u7EED\u8C03\u7528\u5B89\u88C5\u5668\u3002",
-        "\u4F18\u5316\uFF1Atgz\u6210\u54C1\u53CA\u4ED3\u5E93\u5B89\u88C5\u4FDD\u7559\u5728\u7EBF\u66F4\u65B0\u5165\u53E3\uFF1B\u8865\u5145\u672C\u5730\u76EE\u5F55\u7528\u6237\u7684\u6062\u590D\u4E0E\u8FC1\u79FB\u9650\u5236\u8BF4\u660E\u3002",
-        "\u4F18\u5316\uFF1A\u53CC\u5E73\u53F0\u53D1\u5E03\u68C0\u67E5\u589E\u52A0\u771F\u5B9E\u6210\u54C1\u5305\u5347\u7EA7\uFF0C\u9A8C\u8BC1\u8BED\u8A00\u8D44\u6E90\u3001\u539F\u5B89\u88C5\u6587\u4EF6\u3001\u914D\u7F6E\u4E0E\u4EFB\u52A1\u8BB0\u5F55\uFF1B\u589E\u52A0\u76EE\u5F55\u94FE\u63A5\u4E0E\u5F02\u5E38\u6765\u6E90\u56DE\u5F52\u6D4B\u8BD5\u3002"
+        "\u65B0\u589E\uFF1A\u4E00\u952E\u53D1\u5E03\u811A\u672C\uFF0C\u8FD0\u884C npm run release -- X.Y.Z \u5373\u53EF\u5B8C\u6210\u6574\u8F6E\u53D1\u5E03\uFF1B\u4E5F\u53EF\u53CC\u51FB Windows \u7684 release.cmd \u6216 Mac \u7684 release.command \u6309\u63D0\u793A\u8F93\u5165\u7248\u672C\u53F7\u3002",
+        "\u4F18\u5316\uFF1A\u4E00\u952E\u53D1\u5E03\u4F1A\u5148\u663E\u793A\u5F85\u53D1\u5E03\u8303\u56F4\u4E0E\u66F4\u65B0\u8BF4\u660E\uFF0C\u518D\u66F4\u65B0\u7248\u672C\u53F7\u4E0E\u9501\u6587\u4EF6\u3001\u540C\u6B65 README \u4E0E CHANGELOG \u53CA\u5305\u5185\u66F4\u65B0\u8BF4\u660E\uFF0C\u7136\u540E\u6784\u5EFA\u3001\u6D4B\u8BD5\u3001\u6253\u5305\u3001\u63D0\u4EA4\u3001\u6253\u9644\u6CE8\u6807\u7B7E\u3001\u63A8\u9001\u53CC\u4ED3\u3001\u7B49\u5F85\u53CC\u5E73\u53F0\u5B89\u88C5\u68C0\u67E5\u4E0E\u9644\u4EF6\u4E0A\u4F20\uFF0C\u6700\u540E\u8F93\u51FA\u53D1\u5E03\u9875\u3001tgz \u5B89\u88C5\u5730\u5740\u548C Windows ZIP \u4E0B\u8F7D\u5730\u5740\u3002",
+        "\u65B0\u589E\uFF1A\u4E00\u952E\u53D1\u5E03\u652F\u6301 --dry-run \u53EA\u68C0\u67E5\u8BA1\u5212\uFF0C\u4E0D\u5199\u6587\u4EF6\u3001\u4E0D\u6539\u7248\u672C\u3001\u4E0D\u63D0\u4EA4\u3001\u4E0D\u8054\u7F51\uFF1B\u652F\u6301 --resume \u5728\u540C\u4E00\u7248\u672C\u4E0B\u7EED\u8DD1\u672A\u5B8C\u6210\u7684\u53D1\u5E03\uFF0C\u4E0D\u8986\u76D6\u5DF2\u6709\u6807\u7B7E\u3002",
+        "\u4F18\u5316\uFF1A\u6784\u5EFA\u6539\u7528\u8DE8\u5E73\u53F0\u811A\u672C scripts/build.mjs\uFF0C\u53BB\u6389\u6B64\u524D\u4F9D\u8D56\u547D\u4EE4\u66FF\u6362\u7684\u5199\u6CD5\uFF0CWindows \u4E0E macOS \u90FD\u80FD\u76F4\u63A5\u6784\u5EFA\u63D2\u4EF6\u3001\u5BA2\u6237\u7AEF\u4E0E\u8BED\u8A00\u6587\u4EF6\u3002",
+        "\u4F18\u5316\uFF1AWindows \u5B89\u88C5\u8D44\u6599\u5305\u5185\u7684\u56FE\u6587\u6559\u7A0B\u91CD\u5199\u4E3A\u516D\u6B65\u64CD\u4F5C\uFF08\u89E3\u538B ZIP \u2192 \u627E\u5230 .tgz \u2192 \u590D\u5236\u5B8C\u6574\u8DEF\u5F84 \u2192 \u7C98\u8D34\u5230\u300C\u6DFB\u52A0\u63D2\u4EF6\u300D\u2192 \u586B Key \u4FDD\u5B58 \u2192 \u5F00\u59CB\u521B\u4F5C\uFF09\uFF0C\u5E76\u7ED9\u51FA\u5B89\u88C5\u6210\u529F\u7684\u5224\u65AD\u6807\u5FD7\u4E0E\u53EF\u6298\u53E0\u7684\u5E38\u89C1\u95EE\u9898\uFF1B\u7F51\u9875\u7248\u4E0E\u6587\u672C\u7248\u5185\u5BB9\u4E00\u81F4\u3002",
+        "\u4F18\u5316\uFF1A\u4F7F\u7528\u8BF4\u660E\u4E66\u8865\u5145 Windows \u672C\u5730\u5B89\u88C5\u8981\u70B9\uFF0C\u660E\u786E\u65B0\u5B89\u88C5\u586B\u5199 .tgz \u6587\u4EF6\u8DEF\u5F84\u3001package \u76EE\u5F55\u53EA\u7528\u4E8E\u67E5\u770B\u8D44\u6599\u6216\u6062\u590D\u65E7\u5B89\u88C5\uFF0C\u4ECE\u754C\u9762\u7C98\u8D34\u8DEF\u5F84\u65F6\u9700\u5220\u9664\u4E24\u7AEF\u7684\u82F1\u6587\u53CC\u5F15\u53F7\u3002",
+        "\u4FEE\u590D\uFF1AWindows \u5B89\u88C5\u8D44\u6599\u5305\u5185\u7684\u300C\u5148\u8BFB\u6211\u300D\u6587\u672C\u6539\u7528 CRLF \u884C\u5C3E\uFF0C\u7528\u8BB0\u4E8B\u672C\u6253\u5F00\u4E0D\u518D\u6574\u6BB5\u6324\u5728\u4E00\u884C\u3002"
       ]
     }
   };

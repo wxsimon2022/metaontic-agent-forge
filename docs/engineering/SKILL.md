@@ -122,3 +122,5 @@ Windows解压目录安装在更新时出现空目录/locale缺失：先核对成
 双平台兼容为默认开发/发版要求，按platform-compatibility.md执行；CI的Windows/macOS成品安装检查必须先于Release上传，覆盖中文空格路径、locale、技能、说明书、入口与安装源移动。桌面GUI/更新实机未覆盖须明确记录，不用自动烟测代替。
 
 更新安全：runOnlineUpdate先用pluginManager.listBundles读取本插件installed/source（兼容原数组和ok/value回包），本地目录/link一律禁止直接替换；来源未知、接口缺失、元信息异常失败关闭。用户已复现Windows点击立即更新清空外部目录，之前成品首次安装验收遗漏本地链接迁移；不能再以恢复目录代替修复更新动作。记录来源与实际解析路径可能在异常迁移后不同，来源检查不能宣称自动修复既有损坏。双平台烟测需真实旧成品升级并断言原安装文件、配置、任务保留。
+
+一键发布使用scripts/release.mjs（npm run release -- X.Y.Z），先准备本地release-plan.json完整条目及指南核对；--dry-run不改文件/版本/标签，不触发发布。脚本从实际最新正式版核对范围，禁止覆盖标签；双仓不全成功时报告失败，同版本--resume续跑。跨平台构建使用scripts/build.mjs的esbuild API，禁止POSIX命令替换使Windows构建失败。编写或测试发布脚本本身不等于获准执行真实发布。

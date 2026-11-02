@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.13.2",
+  "version": "3.13.3",
   "description": "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
   "license": "MIT",
   "type": "module",
@@ -87,22 +87,26 @@
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
-    "build:locale": "esbuild scripts/build-locale.ts --format=esm --platform=node --packages=external --outfile=node_modules/.cache/build-locale.mjs --log-level=warning && node node_modules/.cache/build-locale.mjs",
-    "build:host": "esbuild src/index.ts --bundle --format=esm --platform=node --target=node20 --define:__PLUGIN_VERSION__=$(node -p 'JSON.stringify(require(\"./package.json\").version)') --outfile=index.js",
-    "build:client": "esbuild src/client.ts --bundle --format=iife --platform=browser --target=es2022 --define:__PLUGIN_VERSION__=$(node -p 'JSON.stringify(require(\"./package.json\").version)') --outfile=client.js",
-    "build": "npm run typecheck && npm run build:locale && npm run build:host && npm run build:client",
-    "preview": "node scripts/preview.mjs"
+    "build:locale": "node scripts/build.mjs locale",
+    "build:host": "node scripts/build.mjs host",
+    "build:client": "node scripts/build.mjs client",
+    "build": "npm run typecheck && node scripts/build.mjs",
+    "preview": "node scripts/preview.mjs",
+    "release": "node scripts/release.mjs"
   },
   "dependencies": {},
   "releaseNotes": {
-    "version": "3.13.2",
+    "version": "3.13.3",
     "prerelease": false,
-    "publishedAt": "2026-11-02T06:46:19Z",
+    "publishedAt": "2026-11-02T07:20:12.845Z",
     "items": [
-      "修复：立即更新前读取真实安装来源，本地目录链接安装停止直接替换，避免触发外部目录异常；不卸载、不清目录、不重置Key。",
-      "修复：安装来源无法核实、查询失败或元信息异常时停止更新，不继续调用安装器。",
-      "优化：tgz成品及仓库安装保留在线更新入口；补充本地目录用户的恢复与迁移限制说明。",
-      "优化：双平台发布检查增加真实成品包升级，验证语言资源、原安装文件、配置与任务记录；增加目录链接与异常来源回归测试。"
+      "新增：一键发布脚本，运行 npm run release -- X.Y.Z 即可完成整轮发布；也可双击 Windows 的 release.cmd 或 Mac 的 release.command 按提示输入版本号。",
+      "优化：一键发布会先显示待发布范围与更新说明，再更新版本号与锁文件、同步 README 与 CHANGELOG 及包内更新说明，然后构建、测试、打包、提交、打附注标签、推送双仓、等待双平台安装检查与附件上传，最后输出发布页、tgz 安装地址和 Windows ZIP 下载地址。",
+      "新增：一键发布支持 --dry-run 只检查计划，不写文件、不改版本、不提交、不联网；支持 --resume 在同一版本下续跑未完成的发布，不覆盖已有标签。",
+      "优化：构建改用跨平台脚本 scripts/build.mjs，去掉此前依赖命令替换的写法，Windows 与 macOS 都能直接构建插件、客户端与语言文件。",
+      "优化：Windows 安装资料包内的图文教程重写为六步操作（解压 ZIP → 找到 .tgz → 复制完整路径 → 粘贴到「添加插件」→ 填 Key 保存 → 开始创作），并给出安装成功的判断标志与可折叠的常见问题；网页版与文本版内容一致。",
+      "优化：使用说明书补充 Windows 本地安装要点，明确新安装填写 .tgz 文件路径、package 目录只用于查看资料或恢复旧安装，从界面粘贴路径时需删除两端的英文双引号。",
+      "修复：Windows 安装资料包内的「先读我」文本改用 CRLF 行尾，用记事本打开不再整段挤在一行。"
     ]
   }
 }
