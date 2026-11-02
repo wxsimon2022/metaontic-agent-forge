@@ -1595,7 +1595,8 @@
       "build:client": "node scripts/build.mjs client",
       build: "npm run typecheck && node scripts/build.mjs",
       preview: "node scripts/preview.mjs",
-      release: "node scripts/release.mjs"
+      release: "node scripts/release.mjs",
+      "pack:test": "node scripts/pack-test.mjs"
     },
     dependencies: {},
     releaseNotes: {
