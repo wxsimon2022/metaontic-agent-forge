@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.13.5",
+  "version": "3.13.6",
   "description": "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
   "license": "MIT",
   "type": "module",
@@ -96,13 +96,12 @@
   },
   "dependencies": {},
   "releaseNotes": {
-    "version": "3.13.5",
+    "version": "3.13.6",
     "prerelease": false,
-    "publishedAt": "2026-11-02T08:12:08.079Z",
+    "publishedAt": "2026-11-02T08:27:25.697Z",
     "items": [
-      "新增：Windows 安装说明新增“直接粘贴成品下载地址”的安装方式，压缩包教程里写出本版本真实的 Gitee 与 GitHub .tgz 附件地址，复制粘贴即可安装，不必先把文件下载到本机。",
-      "优化：安装路径示例按真实解压结果修正（常见为两层同名文件夹），并建议右键 .tgz 选择“复制文件地址”获取完整路径，避免手打后填成文件夹路径。",
-      "修复：安装指引中的下载入口统一为发布页地址，并说明 Gitee 的 releases/latest 会直接下载源码包、Source code 不是插件成品，避免把源码包当成安装文件。"
+      "优化：使用说明书精简为面向使用的基础流程，移除角色参考图风格清单等细节条目；角色图的选择、单独计费、展示审核与真人限制转换流程仍在正文保留。",
+      "优化：Windows 安装说明补充可直接复制粘贴的成品地址，写明 Gitee 与 GitHub 两个来源，并说明发布新版本后如何替换地址中的版本号。"
     ]
   }
 }

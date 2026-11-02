@@ -866,7 +866,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.13.5".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.13.6".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1503,7 +1503,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.13.5",
+    version: "3.13.6",
     description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
     license: "MIT",
     type: "module",
@@ -1599,13 +1599,12 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.13.5",
+      version: "3.13.6",
       prerelease: false,
-      publishedAt: "2026-11-02T08:12:08.079Z",
+      publishedAt: "2026-11-02T08:27:25.697Z",
       items: [
-        "\u65B0\u589E\uFF1AWindows \u5B89\u88C5\u8BF4\u660E\u65B0\u589E\u201C\u76F4\u63A5\u7C98\u8D34\u6210\u54C1\u4E0B\u8F7D\u5730\u5740\u201D\u7684\u5B89\u88C5\u65B9\u5F0F\uFF0C\u538B\u7F29\u5305\u6559\u7A0B\u91CC\u5199\u51FA\u672C\u7248\u672C\u771F\u5B9E\u7684 Gitee \u4E0E GitHub .tgz \u9644\u4EF6\u5730\u5740\uFF0C\u590D\u5236\u7C98\u8D34\u5373\u53EF\u5B89\u88C5\uFF0C\u4E0D\u5FC5\u5148\u628A\u6587\u4EF6\u4E0B\u8F7D\u5230\u672C\u673A\u3002",
-        "\u4F18\u5316\uFF1A\u5B89\u88C5\u8DEF\u5F84\u793A\u4F8B\u6309\u771F\u5B9E\u89E3\u538B\u7ED3\u679C\u4FEE\u6B63\uFF08\u5E38\u89C1\u4E3A\u4E24\u5C42\u540C\u540D\u6587\u4EF6\u5939\uFF09\uFF0C\u5E76\u5EFA\u8BAE\u53F3\u952E .tgz \u9009\u62E9\u201C\u590D\u5236\u6587\u4EF6\u5730\u5740\u201D\u83B7\u53D6\u5B8C\u6574\u8DEF\u5F84\uFF0C\u907F\u514D\u624B\u6253\u540E\u586B\u6210\u6587\u4EF6\u5939\u8DEF\u5F84\u3002",
-        "\u4FEE\u590D\uFF1A\u5B89\u88C5\u6307\u5F15\u4E2D\u7684\u4E0B\u8F7D\u5165\u53E3\u7EDF\u4E00\u4E3A\u53D1\u5E03\u9875\u5730\u5740\uFF0C\u5E76\u8BF4\u660E Gitee \u7684 releases/latest \u4F1A\u76F4\u63A5\u4E0B\u8F7D\u6E90\u7801\u5305\u3001Source code \u4E0D\u662F\u63D2\u4EF6\u6210\u54C1\uFF0C\u907F\u514D\u628A\u6E90\u7801\u5305\u5F53\u6210\u5B89\u88C5\u6587\u4EF6\u3002"
+        "\u4F18\u5316\uFF1A\u4F7F\u7528\u8BF4\u660E\u4E66\u7CBE\u7B80\u4E3A\u9762\u5411\u4F7F\u7528\u7684\u57FA\u7840\u6D41\u7A0B\uFF0C\u79FB\u9664\u89D2\u8272\u53C2\u8003\u56FE\u98CE\u683C\u6E05\u5355\u7B49\u7EC6\u8282\u6761\u76EE\uFF1B\u89D2\u8272\u56FE\u7684\u9009\u62E9\u3001\u5355\u72EC\u8BA1\u8D39\u3001\u5C55\u793A\u5BA1\u6838\u4E0E\u771F\u4EBA\u9650\u5236\u8F6C\u6362\u6D41\u7A0B\u4ECD\u5728\u6B63\u6587\u4FDD\u7559\u3002",
+        "\u4F18\u5316\uFF1AWindows \u5B89\u88C5\u8BF4\u660E\u8865\u5145\u53EF\u76F4\u63A5\u590D\u5236\u7C98\u8D34\u7684\u6210\u54C1\u5730\u5740\uFF0C\u5199\u660E Gitee \u4E0E GitHub \u4E24\u4E2A\u6765\u6E90\uFF0C\u5E76\u8BF4\u660E\u53D1\u5E03\u65B0\u7248\u672C\u540E\u5982\u4F55\u66FF\u6362\u5730\u5740\u4E2D\u7684\u7248\u672C\u53F7\u3002"
       ]
     }
   };

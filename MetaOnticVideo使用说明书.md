@@ -72,7 +72,13 @@ github:wxsimon2022/metaontic-video
 
 若拿到的旧 ZIP 只有 `package` 目录，请从正式发布页另外下载 `.tgz` 成品，填写其完整本地路径安装；不要把 ZIP 或发布页地址填进安装框。
 
-**也可以不下载到本地：** 打开发布页，在附件中右键复制 `.tgz` 的下载链接并粘贴到安装框，效果与填写本地文件路径相同。链接形如 `https://gitee.com/hackloop/metaontic-video/releases/download/v数字版本号/metaontic-video-数字版本号.tgz`，把「数字版本号」处替换为页面上的实际版本即可。国内网络可优先使用 Gitee 附件。
+**也可以不下载到本地，直接粘贴成品地址：** 复制下面这条 Gitee 成品地址，粘贴到 DeepSeek Harness「插件 → 添加插件」即可安装，效果与填写本地文件路径相同，无需安装 Git。国内网络优先使用 Gitee。
+
+```text
+https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.6/metaontic-video-3.13.6.tgz
+```
+
+GitHub 同版本地址为 `https://github.com/wxsimon2022/metaontic-video/releases/download/v3.13.6/metaontic-video-3.13.6.tgz`。发布新版本后，把地址中的两处版本号换成发布页上的实际版本；也可以打开发布页，在附件中右键复制 `.tgz` 的下载链接。
 
 - GitHub 正式版下载页：`https://github.com/wxsimon2022/metaontic-video/releases/latest`
 - Gitee 发布页：`https://gitee.com/hackloop/metaontic-video/releases`
@@ -292,17 +298,6 @@ Windows 与 Mac 的更新入口相同。`.tgz` 成品安装或仓库安装可使
 | 更新失败 | 保留现有插件、Key 及已生成文件，记录目标版本与完整错误，检查附件可访问性；不要先卸载或重置。 |
 
 排查时可以提供系统类型、插件版本、安装来源和完整错误文字；不要发送 API Key、登录验证码或包含密钥的配置文件。
-
-### 角色参考图的风格选择
-
-确认生成角色图后，风格建议按以下顺序展示：
-
-1. **真人写实**：摄影质感、自然皮肤纹理、真实人物比例。
-2. **二维动画**：二维手绘、动画角色。
-3. **卡通**：Q 版或其他卡通造型。
-4. **插画**：绘本、水彩、厚涂等绘画风格。
-
-真人写实放在第一位，仍需明确选择，不会自动生成。图片单独计费，生成后先展示审核，认可后才用于视频。写实图片能否生成及用于视频取决于所用渠道与模型；遇到上游拒绝会停止，不自动换风格或重复调用。若视频返回真人限制，只有你同意后才转换为非真人风格并审核，再按原流程重试。
 
 ### 本地目录安装点击更新后目录变空
 
