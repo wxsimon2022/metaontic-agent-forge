@@ -30,6 +30,8 @@ jobs:
         run: |
           mkdir -p dist
           npm pack --pack-destination dist
+          VERSION=$(node -p "require('./package.json').version")
+          python3 scripts/package-windows.py "dist/metaontic-video-$VERSION.tgz" "dist/MetaOnticVideo-Windows-$VERSION.zip"
           git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
           git for-each-ref --format='%(contents)' "refs/tags/$GITHUB_REF_NAME" > dist/release-notes.txt
       - name: Upload release package
@@ -41,13 +43,15 @@ jobs:
             RELEASE_FLAGS+=(--prerelease)
           fi
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" dist/*.tgz --clobber
+            gh release upload "$GITHUB_REF_NAME" dist/*.tgz dist/*.zip dist/*.sha256 --clobber
           else
-            gh release create "$GITHUB_REF_NAME" dist/*.tgz --verify-tag --title "MetaOnticVideo $GITHUB_REF_NAME" --notes-file dist/release-notes.txt "${RELEASE_FLAGS[@]}"
+            gh release create "$GITHUB_REF_NAME" dist/*.tgz dist/*.zip dist/*.sha256 --verify-tag --title "MetaOnticVideo $GITHUB_REF_NAME" --notes-file dist/release-notes.txt "${RELEASE_FLAGS[@]}"
           fi
       - name: Upload Gitee release package
         env:
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
         run: |
           export GITEE_PRERELEASE=$(node -p "Boolean(require('./package.json').releaseNotes.prerelease)")
-          node scripts/publish-gitee.mjs "$GITHUB_REF_NAME" dist/*.tgz dist/release-notes.txt
+          for ARCHIVE in dist/*.tgz dist/*.zip dist/*.sha256; do
+            node scripts/publish-gitee.mjs "$GITHUB_REF_NAME" "$ARCHIVE" dist/release-notes.txt
+          done

@@ -26,17 +26,7 @@ The project planner supports up to 120 seconds and 10 segments. Longer videos re
 
 ## Quick start
 
-1. Install the plugin in **DeepSeek Harness → Plugins → Add plugin**:
-
-   ```text
-   github:wxsimon2022/metaontic-video
-   ```
-
-   Gitee source:
-
-   ```text
-   git+https://gitee.com/hackloop/metaontic-video.git
-   ```
+1. Open [the latest GitHub release](https://github.com/wxsimon2022/metaontic-video/releases/latest) or [Gitee Releases](https://gitee.com/hackloop/metaontic-video/releases). Copy the download link for the `metaontic-video-<version>.tgz` asset and paste it into **DeepSeek Harness → Plugins → Add plugin**. Use the packaged asset rather than a Git repository or Source code archive. Alternatively, download and extract the asset, then install its local `package` directory. On Windows, `ERR_PNPM_GIT_RESOLVE_FAILED` indicates a Git source failed to resolve; switch to the packaged asset without changing global Git settings or disabling supply-chain checks.
 
 2. Open the plugin settings, select **MetaOntic AI**, register at [ai.bileego.com](https://ai.bileego.com/), obtain an API key and save it in the plugin. A shared key must support both selected video and image models; separate keys are also supported.
 3. Start a **new conversation** and select **视频创作助手 (Video Creation Assistant)**.
@@ -73,3 +63,5 @@ If generation stops or a status query fails, check the original task ID or resum
 [MIT](./LICENSE)
 
 Release packages bundle the required host schema library and do not require external runtime npm dependencies. If a previous local-development setup still points to a deleted source directory, correct that local loading path before installing a release package.
+
+Windows users can also download the `MetaOnticVideo-Windows-<version>.zip` release asset, extract it and install its `package` directory. The ZIP includes an illustrated Chinese installation tutorial and the full PDF guide. Do not paste the ZIP or release page URL into the installer.

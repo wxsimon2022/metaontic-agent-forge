@@ -99,18 +99,19 @@ Seedance 2.0 系列单次生成上限为 15 秒。MetaOnticVideo 将全片拆为
 
 需要 DeepSeek Harness 桌面端。插件运行环境要求 Node.js 20+，桌面端提供运行环境。
 
-在「插件 → 添加插件」中使用以下地址之一：
+Windows 与 macOS 均推荐安装正式版 `.tgz` 成品包，避免依赖 Git 拉取：
+
+1. 打开 [GitHub 最新正式版](https://github.com/wxsimon2022/metaontic-video/releases/latest) 或 [Gitee 发布页](https://gitee.com/hackloop/metaontic-video/releases)。
+2. 复制附件 `metaontic-video-<版本>.tgz` 的下载链接，在「插件 → 添加插件」中粘贴安装；不要使用 Source code 或仓库地址。
+3. 也可下载后解压，通过本地目录安装其中的 `package` 文件夹。
+
+终端安装同样使用实际 `.tgz` 附件链接：
 
 ```text
-github:wxsimon2022/metaontic-video
-git+https://gitee.com/hackloop/metaontic-video.git
+dsh plugin --profile desktop add "复制的.tgz附件下载链接"
 ```
 
-也可在终端安装：
-
-```bash
-dsh plugin --profile desktop add "git+https://gitee.com/hackloop/metaontic-video.git"
-```
+若 Windows 报 `ERR_PNPM_GIT_RESOLVE_FAILED`，改用上述成品包来源；无需修改全局 Git 配置或关闭供应链检查。详细步骤见[使用说明书](./MetaOnticVideo使用说明书.md#1-如何安装插件)。
 
 从本地源码安装：
 
@@ -120,7 +121,7 @@ npm run build
 dsh plugin --profile desktop add /你的路径/metaontic-video
 ```
 
-本地安装链接源码目录；启用下述本地热加载后，执行 `npm run build` 即可更新工具与界面，无需反复重启。Gitee 安装地址必须带 `git+` 前缀。
+本地安装链接源码目录；启用下述本地热加载后，执行 `npm run build` 即可更新工具与界面，无需反复重启。源码安装仅用于开发，普通用户使用正式版成品包。
 
 ## 选择接入方式
 
@@ -324,6 +325,22 @@ Harness 默认启用 HMR 配置重载，但不监听本地插件源码。对于�
 
 `base` 使用本机插件目录绝对路径，仅配置在本机 profile，不写入插件发布配置。已有 HMR 配置时合并调整，保留其他项目的监听需求。配置由运行中的宿主加载；之后修改 TypeScript 并执行 `npm run build`，宿主入口热替换，客户端通过宿主 Client HMR 更新。构建失败先修复，不通过重启解决语法错误。`package.json` 的依赖或加载入口变化可能仍需按宿主提示重新安装或重启；插件规则变化在现有对话的下一轮请求生效，旧确认窗口需重新发起。正在生成视频时先等任务返回，再构建或更新，避免热替换中断当前调用；已有任务按任务 ID 查询或续做，勿重复提交。
 
+## v3.13.0 更新内容
+
+### 新增
+
+- 角色参考图支持真人写实，风格建议第一位；按用户明确选择生成，保留独立费用确认和图片审核，上游拒绝不自动重画。
+- 提供Windows安装资料ZIP，包含插件成品、中文图文安装教程与完整使用说明书，免Git拉取即可本地安装。
+
+### 修复
+
+- 纯文生视频提交前强制询问角色图方案；未回答、取消、交互不可用或记录失败时停止提交，选择先出图时不直接提交视频。
+
+### 优化
+
+- 同一会话及脚本规格保留明确选择，已有参考图与断点恢复不重复询问，不修改或重提已有任务。
+- 完善Windows、Mac安装、Key配置、在线更新及错误排查教程，同步说明书、PDF及内置规则。
+
 ## v3.12.1 更新内容
 
 ### 修复
@@ -425,7 +442,7 @@ git show --no-patch "v<版本>"
 
 ### 插件包下载
 
-版本包在 [GitHub Releases](https://github.com/wxsimon2022/metaontic-video/releases) 或 [Gitee Releases](https://gitee.com/hackloop/metaontic-video/releases) 下载，文件名为 `metaontic-video-<版本>.tgz`。不再向 npm 注册表发布，无需配置 `NPM_TOKEN` 或 Trusted Publishing。
+版本包在 [GitHub Releases](https://github.com/wxsimon2022/metaontic-video/releases) 或 [Gitee Releases](https://gitee.com/hackloop/metaontic-video/releases) 下载，通用插件包为 `metaontic-video-<版本>.tgz`；Windows安装资料包为 `MetaOnticVideo-Windows-<版本>.zip`，附带图文教程、完整PDF及SHA-256校验文件。ZIP解压后选择其中package目录安装，ZIP本身不要粘贴到插件安装框。不再向 npm 注册表发布，无需配置 `NPM_TOKEN` 或 Trusted Publishing。
 
 `v*` 标签触发完整构建与测试，通过后使用 GitHub 自动令牌上传插件包，并使用仓库 Actions Secret `GITEE_TOKEN` 创建 Gitee Release 和上传同一插件包。该密钥应具有 `hackloop/metaontic-video` 的发布权限；缺失或上传失败时工作流明确报错，不将单仓成功报告为双仓成功。手动运行工作流时须选择与包版本匹配的标签。
 
@@ -434,7 +451,7 @@ git show --no-patch "v<版本>"
 ```bash
 mkdir metaontic-video-plugin
 tar -xzf metaontic-video-<版本>.tgz -C metaontic-video-plugin
-dsh plugin --profile desktop add ./metaontic-video-plugin/package
+dsh plugin --profile desktop add "/你的绝对路径/metaontic-video-plugin/package"
 ```
 
 ### 推送后的更新总结规范
@@ -544,3 +561,5 @@ Key 共用规则：MetaOnticVideo 接入固定共用登录下发的 Key，模型
 插件宿主入口已打包所需Schema库及运行依赖，成品包无需额外安装运行时npm依赖。曾配置本地开发HMR时，须将加载目标恢复到当前已安装插件目录；安装新包不会自动删除用户自行配置的本地加载覆盖。第三方许可见[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)。
 
 角色图选择由提交前代码执行：新建无图视频必须取得明确选择；选择直接文生后继续原视频费用审批，选择先出角色图则暂停该次视频提交，先完成出图与审核。跳过、取消、交互失败或记录失败不默认同意。相同会话和脚本规格保留明确选择；已有参考图或断点恢复不重新询问，不重提已有任务。
+
+角色参考图风格建议依次为真人写实、二维动画、卡通、插画；文生角色图可显式设置characterType=realistic生成真人写实。默认沿用非真人类型，真人限制转换仍只用非真人风格；所有出图均需费用同意及结果审核，上游拒绝不自动重画。

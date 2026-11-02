@@ -10,27 +10,104 @@ MetaOnticVideo 是 DeepSeek Harness 的 AI 视频创作插件。使用 Seedance 
 
 ![插件安装步骤](./docs/guide/install.svg)
 
-打开 Deepseek-Harness 桌面端，进入「插件 → 添加插件」，粘贴以下任一地址，按提示安装：
+### 1.1 安装前准备
+
+本教程同时适用于 **Windows 与 Mac（macOS）**。MetaOnticVideo 是 DeepSeek Harness 插件，需要先安装 DeepSeek Harness 桌面端，不能作为独立软件打开。
+
+1. 从 DeepSeek Harness 的官方发布渠道获取对应系统的桌面安装程序，按安装向导完成安装；Mac 请按电脑芯片选择官方提供的对应安装包。
+2. 打开 DeepSeek Harness，确认能正常进入桌面主界面并看到「插件」入口。
+3. 准备可联网的环境及 API Key；Key 的申请与填写见第 2、3 节。
+
+安装插件成品包不需要自行安装 Git、Node.js 或 Python。多段视频本地合并所需的 FFmpeg 可在开始使用后按需配置。
+
+| 项目 | Windows | Mac（macOS） |
+|---|---|---|
+| 推荐安装方式 | 正式版 `.tgz` 附件链接或 Windows ZIP | 仓库地址安装；成品包作为备用 |
+| 本地安装备选 | Windows ZIP 解压后的 `package`，或 `.tgz` 解压后的 `package` | `.tgz` 解压后的 `package` |
+| 本地目录示例 | `C:\MetaOnticVideo\package` | `/Users/你的用户名/Applications/MetaOnticVideo/package` |
+| 在线更新入口 | 插件详情 → 检查更新 | 插件详情 → 检查更新 |
+
+### Mac 推荐：仓库地址安装
+
+在 DeepSeek Harness「插件 → 添加插件」中粘贴下面任意一个地址，按提示安装并启用：
 
 ```text
 git+https://gitee.com/hackloop/metaontic-video.git
 ```
 
-或使用 GitHub 地址：
+或使用 GitHub：
 
 ```text
-git+https://github.com/wxsimon2022/metaontic-video.git
+github:wxsimon2022/metaontic-video
 ```
 
-安装后进入「插件 → 已安装插件 → MetaOnticVideo → 查看」，打开设置页。
+仓库安装需要 Git 能访问对应站点。若拉取失败，可使用下面的成品包或本地目录方式。
 
-也可以在 [GitHub Releases](https://github.com/wxsimon2022/metaontic-video/releases) 或 [Gitee Releases](https://gitee.com/hackloop/metaontic-video/releases) 下载插件的 `.tgz` 安装包，解压后安装其中的 `package` 目录。终端安装示例：
+### 1.2 在线安装：Windows 与 Mac 通用
+
+1. 打开 [GitHub 正式版下载页](https://github.com/wxsimon2022/metaontic-video/releases/latest)，也可打开 [Gitee 发布页](https://gitee.com/hackloop/metaontic-video/releases)。
+2. 在附件中找到 `metaontic-video-数字版本号.tgz`，右键复制该附件的下载链接。不要选择 Source code，也不要复制仓库地址或发布页地址。
+3. 打开 DeepSeek Harness，进入「插件 → 添加插件」，粘贴刚才复制的 `.tgz` 下载链接，按提示安装。
+4. 安装后按软件提示启用插件，进入「插件 → 已安装插件 → MetaOnticVideo → 查看」，打开设置页。
+5. 继续按第 2、3 节申请 Key、填写并保存，再按第 4 节开始创作。
+
+此方式使用已构建成品，不通过 Git 拉取源码。只有 DeepSeek Harness 明确提示需要重启时才重启软件。
+
+### 1.3 Windows 本地安装
+
+可在正式发布页的附件中下载 `MetaOnticVideo-Windows-数字版本号.zip`。适合希望随包查看教程，或在线安装不方便的用户。本地安装仍需先安装 DeepSeek Harness，生成图片与视频仍需要联网。
+
+**使用 Windows ZIP 资料包：**
+
+1. 右键安装 ZIP，选择「全部解压」，放到固定目录。不要在 ZIP 预览窗口内安装。
+2. 打开解压后的目录，先读 `Windows安装教程.html` 或 `先读我-Windows安装教程.txt`。
+3. 找到真正包含 `package.json`、`index.js` 的 **`package` 文件夹**。ZIP 外层可能还有一层目录，以实际解压结果为准。
+4. 在 DeepSeek Harness「插件 → 添加插件」中选择该本地目录；若入口是地址输入框，填入 `package` 的完整路径，例如 `C:\MetaOnticVideo\package`。
+5. 按提示安装、启用，进入设置页配置 Key。
+
+**只有 `.tgz` 文件时：** 用支持 `.tgz` 的解压工具解压；若第一次得到 `.tar`，再解压一次。找到 `package` 文件夹后，按上述第 3–5 步安装。
+
+不要选择 ZIP、外层目录或单个 `index.js` 文件。本地目录安装后保留该目录，不要随意删除或移动。
+
+### 1.4 Mac 本地安装
+
+1. 从正式发布页下载 `.tgz` 附件。
+2. 在 Finder 中双击解压；若得到 `.tar`，再双击解压。找到包含 `package.json`、`index.js` 的 `package` 文件夹。
+3. 将安装目录放到固定位置，例如用户目录下的 `Applications/MetaOnticVideo`，避免留在会定期清理的临时目录。
+4. 打开 DeepSeek Harness「插件 → 添加插件」，选择 `package` 文件夹；若使用地址输入框，填入其完整绝对路径。
+5. 按提示安装、启用，进入设置页配置 Key。保留安装目录，不要随意删除或移动。
+
+### 1.5 可选：终端安装
+
+优先使用桌面端界面。以下命令仅适用于本机已经可以运行 `dsh` 的情况；提示找不到命令时，回到界面安装即可。
+
+在线安装：将占位内容替换为实际 `.tgz` 附件下载链接，保留引号。
+
+```text
+dsh plugin --profile desktop add "复制的.tgz附件下载链接"
+```
+
+Windows PowerShell 本地安装：
+
+```powershell
+dsh plugin --profile desktop add "C:\MetaOnticVideo\package"
+```
+
+Mac 终端本地安装：
 
 ```bash
-dsh plugin --profile desktop add /你的路径/package
+dsh plugin --profile desktop add "/Users/你的用户名/Applications/MetaOnticVideo/package"
 ```
 
-安装后按 Deepseek-Harness 的提示启用插件；只有 Deepseek-Harness 提示需要重启时才重启软件。
+以上本地路径只是示例，必须替换成自己电脑上 `package` 文件夹的实际位置。
+
+### 1.6 安装是否成功
+
+- 已安装插件列表中出现 MetaOnticVideo，状态为已启用。
+- 点击「查看」可以打开插件设置，未提示组件启动失败。
+- 配置 Key 并保存后，新建会话可以选择「视频创作助手」。
+
+安装报错先按第 5 节处理，不要为排查安装问题直接提交付费生成任务。
 
 ## 2. Key 去哪里申请
 
@@ -139,6 +216,15 @@ Key 只填写在插件密钥输入框内，不要放进脚本或发到聊天中�
 
 ### 更新插件
 
+Windows 与 Mac 的更新入口相同，本地目录安装后也可以从此入口更新：
+
+1. 等正在执行的视频任务完成。
+2. 打开「插件 → 已安装插件 → MetaOnticVideo → 查看」，找到底部版本卡片，点击「检查更新」。
+3. 发现更高的正式版本后，点击更新并再次确认，等待安装结果。
+4. 按界面提示完成；只有明确提示需要重启时才重启，不需要先卸载。
+
+在线更新需要能访问发布页及附件下载地址，使用对应版本 `.tgz` 成品包，不依赖 Git 拉取。下载失败时先保留现有插件和配置，核对网络后再处理，不要通过重置来解决下载问题。
+
 插件详情底部的版本卡片提供“检查更新”。发现更高的正式版本后，点击更新并再次确认才安装。请等正在生成的视频结束后再更新，配置及已生成文件会保留，不需要先卸载。当前不提供版本选择或降级；在线安装使用对应版本成品包，当前版本不需要授权 esbuild 等构建工具的安装脚本。
 
 ## 5. 结果保存与常见问题
@@ -174,6 +260,32 @@ Key 只填写在插件密钥输入框内，不要放进脚本或发到聊天中�
 
 续拍时，插件会持续带上最初已审核的角色参考图，帮助保持人物外形。未单独指定角色图时沿用最初参考图或首帧；暂停后继续也保留同一套图。若图片已按你的确认转换为非真人风格，后续沿用获审并成功使用的转换图，不重复处理。纯文字起步且没有图片时不会自动生成角色图；需要固定形象时，请在制作前提供并审核角色图。
 
-纯文生视频需要固定人物外形时，助手会先询问是否生成角色参考图，并说明图片单独计费。选择直接文生视频就不生成图片；选择生成时先确认角色与非真人风格，出图后先展示给你审核，满意后才用于视频首段与后续续拍。角色图费用与视频费用分开，生成角色图不代表同意开始制作视频。超时先查询已有图片任务，不重复出图；重画需再次确认费用。
+纯文生视频需要固定人物外形时，助手会先询问是否生成角色参考图，并说明图片单独计费。选择直接文生视频就不生成图片；选择生成时先确认角色与画面风格，出图后先展示给你审核，满意后才用于视频首段与后续续拍。角色图费用与视频费用分开，生成角色图不代表同意开始制作视频。超时先查询已有图片任务，不重复出图；重画需再次确认费用。
 
 提交新的纯文生视频时，插件会强制显示角色图选择。选择“直接文生视频”后再确认视频费用；选择“先生成角色图”则先出图、审核后再制作。未回答、关闭或取消不会自动开始；相同任务的明确选择会保留，已有参考图或续拍恢复不重复询问。
+
+### 安装与更新故障排查（Windows / Mac）
+
+| 现象 | 处理方法 |
+|---|---|
+| `ERR_PNPM_GIT_RESOLVE_FAILED` | 检查是否仍使用 Git 仓库地址。改用正式版 `.tgz` 附件链接或本地 `package` 目录。无需全局 Git 地址重写或配置 SSH。 |
+| `Lockfile passes supply-chain policies` 后又报错 | 这句表示供应链检查通过，实际失败原因在后面的错误。保留完整错误信息。 |
+| 找不到本地插件或 `package.json` | 确认已经解压，并选择包含 `package.json`、`index.js` 的 `package` 目录。 |
+| 附件下载失败或超时 | 核对网络，换同一版本的另一个官方发布源；也可通过浏览器下载后本地安装。不要使用 Source code 代替成品包。 |
+| 提示找不到 `dsh` | 使用 DeepSeek Harness 桌面端的插件安装入口。 |
+| 组件启动失败、`ERR_MODULE_NOT_FOUND` 或 Schema 错误 | 保留完整错误及插件版本，确认安装的是成品包；曾配置本地开发加载路径时需核对是否仍覆盖正式安装目录。不要先清除 Key 或任务记录。 |
+| `ERR_PNPM_IGNORED_BUILDS` / esbuild 脚本提示 | 核对是否误用了源码或旧 Git 安装来源，改用成品包；不要关闭供应链检查或直接批准未知构建脚本。 |
+| 更新失败 | 保留现有插件、Key 及已生成文件，记录目标版本与完整错误，检查附件可访问性；不要先卸载或重置。 |
+
+排查时可以提供系统类型、插件版本、安装来源和完整错误文字；不要发送 API Key、登录验证码或包含密钥的配置文件。
+
+### 角色参考图的风格选择
+
+确认生成角色图后，风格建议按以下顺序展示：
+
+1. **真人写实**：摄影质感、自然皮肤纹理、真实人物比例。
+2. **二维动画**：二维手绘、动画角色。
+3. **卡通**：Q 版或其他卡通造型。
+4. **插画**：绘本、水彩、厚涂等绘画风格。
+
+真人写实放在第一位，仍需明确选择，不会自动生成。图片单独计费，生成后先展示审核，认可后才用于视频。写实图片能否生成及用于视频取决于所用渠道与模型；遇到上游拒绝会停止，不自动换风格或重复调用。若视频返回真人限制，只有你同意后才转换为非真人风格并审核，再按原流程重试。

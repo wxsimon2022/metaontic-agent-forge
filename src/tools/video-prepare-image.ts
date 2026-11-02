@@ -14,12 +14,13 @@ export function prepareImageTool(liveConfig, progress = {}) {
     parameters: {
       type: 'object',
       properties: {
-        operation: { type: 'string', enum: ['convert_reference', 'create_character'], description: '默认convert_reference转换已有图；create_character根据已确认的人物设定与非真人风格文生角色图，不需要image。' },
+        operation: { type: 'string', enum: ['convert_reference', 'create_character'], description: '默认convert_reference转换已有图；create_character根据已确认的人物设定与风格文生角色图，不需要image。' },
         prompt: { type: 'string', description: 'create_character必填：已审核的人物/主体外形、服饰与稳定特征，不填视频动作剧情或对白。' },
         taskId: { type: 'string', description: '查询已提交图片任务并取件，不重新提交或扣取新的生成费用；填写时无需 image/style。' },
         seed: { type: 'integer', description: '可选随机种子。用户要求重新出图时使用不同 seed 并确认费用；相同参数的重复调用会复用已提交任务。' },
         image: { type: 'string', description: 'convert_reference使用的原图公网URL、base64、本机路径或latest；create_character不填。' },
-        style: { type: 'string', description: '已与用户确定的非真人风格，例如二维动画、卡通或插画。' },
+        characterType: { type: 'string', enum: ['realistic', 'stylized'], description: '仅create_character：realistic真人写实（风格选项第一位），stylized非真人动画/插画。须用户明确选择；未指定沿用stylized。convert_reference只允许stylized。' },
+        style: { type: 'string', description: '已与用户确定的画面风格。按真人写实、二维动画、卡通、插画顺序展示建议；真人写实同时设置characterType=realistic，转换操作必须非真人。' },
       },
       required: [],
     },
@@ -43,7 +44,10 @@ export function prepareImageTool(liveConfig, progress = {}) {
       const operation = args?.operation || 'convert_reference';
       if (!['convert_reference', 'create_character'].includes(operation)) throw new Error('不支持的图片操作。');
       const style = String(args?.style || '').trim();
-      if (!style) throw new Error('请先确定非真人画面风格。');
+      if (!style) throw new Error('请先确定画面风格。');
+      const characterType = args?.characterType ?? 'stylized';
+      if (!['realistic', 'stylized'].includes(characterType)) throw new Error('不支持的角色风格类型。');
+      if (operation === 'convert_reference' && characterType !== 'stylized') throw new Error('真人限制转换必须使用非真人风格，不能转换为真人写实。');
       if (args?.seed !== undefined && !Number.isSafeInteger(args.seed)) throw new Error('seed 必须是安全整数。');
       let input;
       let prompt;
@@ -51,7 +55,10 @@ export function prepareImageTool(liveConfig, progress = {}) {
         const character = String(args?.prompt || '').trim();
         if (!character) throw new Error('请先确认角色外形设定，再生成角色参考图。');
         if (args?.image) throw new Error('文生角色图不需要原图；已有图片请使用转换操作。');
-        prompt = `生成一张角色参考图。角色设定：${character}。已确认风格：${style}。采用明显的非真人插画或动画造型，清晰呈现角色的脸部、发型、服装及体型特征；画面仅一位对应角色，背景简洁，不画人物多视图拼图、分身或额外人物，不添加文字、字幕、Logo或水印。不要输出摄影或看起来仍是真人的照片。`;
+        const appearance = characterType === 'realistic'
+          ? '采用真人写实摄影风格，自然的皮肤纹理、真实的人体比例与柔和光影，不使用卡通、插画或动画造型。'
+          : '采用明显的非真人插画或动画造型，不要输出摄影或看起来仍是真人的照片。';
+        prompt = `生成一张角色参考图。角色设定：${character}。已确认风格：${style}。${appearance}清晰呈现角色的脸部、发型、服装及体型特征；画面仅一位对应角色，背景简洁，不画人物多视图拼图、分身或额外人物，不添加文字、字幕、Logo或水印。`;
       } else {
         input = await resolveImageInput(args?.image, '真人参考图');
         prompt = `将参考照片中的真人转换为明显的非真人艺术角色，风格：${style}。保留服装、发型、姿态、构图和场景关系，使用清晰的绘画或动画材质与造型，不要输出摄影、写实皮肤或看起来仍是真人照片的画面。不添加文字。`;

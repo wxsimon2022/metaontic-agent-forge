@@ -402,3 +402,27 @@ test('actual video preflight asks the character choice before payment and never 
  const decision=await api.preflightGate(h.ctx,h.config,{...h.exec,agent:{session:{id:'real-gate-test'}},name:'video_generate',arguments:{prompt:'新角色',duration:15,merge:false,resolution:'480p'}});
  assert.equal(decision.kind,'deny');assert.match(decision.reason,/video_prepare_image/);assert.equal(asked,1);assert.equal(h.videos,0);assert.equal(h.images,0);
 }));
+
+test('realistic character image uses photography prompt and truthful paid approval',()=>fixture(async h=>{
+ const args={operation:'create_character',prompt:'短发青年，蓝色衬衫',style:'真人写实',characterType:'realistic'};
+ const gate=await api.preflightGate(h.ctx,h.config,{...h.exec,name:'video_prepare_image',arguments:args});
+ assert.equal(gate.kind,'ask');assert.match(gate.displayReason.zh,/真人写实/);assert.match(gate.displayReason.zh,/单独计费/);
+ const result=await api.prepareImageTool(h.config).execute(args,h.exec);
+ const post=h.calls.find(x=>x.url.endsWith('/tasks/doubao'));
+ assert.match(post.body.prompt,/真人写实摄影/);assert.doesNotMatch(post.body.prompt,/不要输出摄影|采用明显的非真人/);
+ assert.equal(result.reviewRequired,true);assert.equal(h.images,1);assert.equal(h.videos,0);
+ await api.prepareImageTool(h.config).execute({taskId:result.taskId},h.exec);assert.equal(h.images,1);
+}));
+test('default character remains stylized and realistic option is listed first',()=>fixture(async h=>{
+ const tool=api.prepareImageTool(h.config);
+ assert.deepEqual(tool.parameters.properties.characterType.enum,['realistic','stylized']);
+ await tool.execute({operation:'create_character',prompt:'青年',style:'二维动画'},h.exec);
+ assert.match(h.calls.find(x=>x.url.endsWith('/tasks/doubao')).body.prompt,/明显的非真人/);
+}));
+test('realistic type cannot bypass non-realistic reference conversion',()=>fixture(async h=>{
+ const args={operation:'convert_reference',image:'https://example.com/ref.png',style:'真人写实',characterType:'realistic'};
+ const gate=await api.preflightGate(h.ctx,h.config,{...h.exec,name:'video_prepare_image',arguments:args});
+ assert.equal(gate.kind,'deny');
+ await assert.rejects(()=>api.prepareImageTool(h.config).execute(args,h.exec),/必须使用非真人/);
+ assert.equal(h.images,0);assert.equal(h.videos,0);
+}));
