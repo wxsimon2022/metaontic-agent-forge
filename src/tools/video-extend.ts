@@ -1,3 +1,4 @@
+import { initialCharacterReferences, approvedCharacterReferences } from '../workflow/character-references.js';
 /** tools/video-extend：从宿主入口拆出的独立职责模块。 */
 import { modelMaxSeconds } from '../workflow/planning.js';
 import { SEGMENT_OUTPUT_SCHEMA, renderResult } from './results.js';
@@ -38,6 +39,7 @@ export function extendTool(liveConfig, deps, ctx) {
     parameters: {
       type: 'object',
       properties: {
+        characterReferenceImages: { type: 'array', items: { type: 'string' }, description: '已审核的最初角色参考图，按固定顺序用于每段续拍；未提供时沿用首段参考图或首帧。支持URL、本地图片或data URI。断点固定此套图，不自动重画或替换。真人转换仍需单独同意及结果审核。' },
         prompt: {
           type: 'string',
           description: '本段要续拍的剧情内容与人物设定；不要在提示词里重复已发生的情节。',
@@ -276,9 +278,10 @@ export function extendTool(liveConfig, deps, ctx) {
         : await allocateStamp(outDir, fileStamp());
       let pendingTask = resume?.pendingTask || null;
       const operationState = resume?.operationState || {};
+      let characterReferences = await initialCharacterReferences(config, args, resume, exec?.signal);
       const checkpoint = async () => saveProgress(segmentsDir, {
         config, toolName: TOOL_NAME, stamp, prompt, fullPlan, cursor, referenceUrl,
-        options: { ...pickResumeOptions(args), direction, wording, startAt: cursor }, segments, pendingTask, operationState,
+        options: { ...pickResumeOptions(args), direction, wording, startAt: cursor }, segments, pendingTask, operationState, characterReferences,
       });
       if (resume?.deliveryPending) await checkpoint();
       let interrupted = false;
@@ -292,6 +295,7 @@ export function extendTool(liveConfig, deps, ctx) {
           {
             ...lastOptions,
             ...args,
+            characterReferences,
             prompt,
             duration: step.seconds,
             startAt: cursor,
@@ -312,6 +316,10 @@ export function extendTool(liveConfig, deps, ctx) {
             await checkpoint();
           },
         });
+        if (final.status === 'succeeded') {
+          characterReferences = approvedCharacterReferences(characterReferences, operationState[position]);
+          await checkpoint();
+        }
         if (final.submissionId) submissionId = final.submissionId;
         if (final.convertedReferences) convertedReferences = final.convertedReferences;
         pendingTask = ['unknown', 'timeout'].includes(final.status)

@@ -192,7 +192,7 @@ test('C video submission, polling and status use only Volcano key',()=>fixture(a
  assert.equal((await api.runTask(h.config,h.body,undefined,{})).status,'succeeded');
  await h.tools.get('video_status').execute({taskId:'video-1'},h.exec);
  assert.ok(h.calls.every(c=>c.key==='Bearer volcano-only'&&c.url.startsWith('https://ark.cn-beijing.volces.com/')));
- await assert.rejects(()=>api.prepareImageTool(h.config).execute({taskId:'image-1'},{}),/A、B/);
+ await assert.rejects(()=>api.prepareImageTool(h.config).execute({taskId:'image-1'},{}),/火山直连暂不提供/);
 }));
 test('B independent image key snapshot survives settings edits during submission',()=>fixture(async h=>{
  h.config.imageUseVideoKey=false;h.config.imageApiKey='original-image';const original=globalThis.fetch;
@@ -308,4 +308,90 @@ for(const resolution of ['480p','720p']) test(`script and approval continuation 
  assert.deepEqual(gate.segments.map(s=>s.inputSeconds),[0,15]);
  assert.deepEqual(gate.segments.map(s=>s.tokens),script.plugin.segments.map(s=>s.tokens));
  assert.ok(Math.abs(gate.usd*7.3-script.plugin.cny)<0.0001);
+}));
+
+for(const mode of ['service','metaontic','volcengine']) test(`${mode}: initial character images persist through all four 60s segments and resume`,()=>fixture(async h=>{
+ h.flags.videoReject=false;h.config.connectionMode=mode;h.config.volcengineApiKey='c';
+ const tool=h.tools.get('video_generate');
+ const images=['https://example.com/face.png','https://example.com/body.png'];
+ let result=await tool.execute({prompt:'同一主角',duration:60,resolution:'480p',referenceImages:images,segmentPrompts:['one','two','three','four'],merge:false},h.exec);
+ for(let i=0;i<3;i++){
+  assert.equal(result.paused,true);
+  const record=await h.read(result.resumeDir);
+  assert.deepEqual(record.characterReferences.map(item=>item.image_url.url),images);
+  result=await tool.execute({resume:result.resumeDir},h.exec);
+ }
+ assert.equal(result.status,'succeeded');assert.equal(h.videos,4);
+ const posts=h.calls.filter(c=>c.body?.content);
+ for(const post of posts){
+  assert.deepEqual(post.body.content.filter(x=>x.type==='image_url').map(x=>x.image_url.url),images);
+ }
+ for(const post of posts.slice(1)){
+  assert.ok(post.body.content.some(x=>x.role==='reference_video'));
+  assert.ok(post.body.content.filter(x=>x.type==='image_url').every(x=>x.role==='reference_image'));
+  assert.match(post.body.content[0].text,/固定主体外观/);
+ }
+ assert.equal(h.images,0);
+}));
+
+test('video_extend carries explicitly selected character images through resume',()=>fixture(async h=>{
+ h.flags.videoReject=false;
+ const tool=h.tools.get('video_extend');
+ const images=['https://example.com/face.png'];
+ let result=await tool.execute({prompt:'角色继续说话',videoUrl:'https://example.com/input.mp4',duration:5,segments:2,characterReferenceImages:images,merge:false},h.exec);
+ assert.equal(result.paused,true);result=await tool.execute({resume:result.resumeDir},h.exec);
+ assert.equal(result.status,'succeeded');
+ for(const call of h.calls.filter(c=>c.body?.content))assert.deepEqual(call.body.content.filter(x=>x.type==='image_url').map(x=>x.image_url.url),images);
+ assert.equal(h.images,0);
+}));
+
+test('first-frame source becomes reference_image in continuation, without first_frame/video mixing',()=>fixture(async h=>{
+ h.flags.videoReject=false;
+ const tool=h.tools.get('video_generate');
+ const first=await tool.execute({prompt:'主角',duration:20,segmentPrompts:['one','two'],firstFrameUrl:'https://example.com/face.png',merge:false},h.exec);
+ await tool.execute({resume:first.resumeDir},h.exec);
+ const posts=h.calls.filter(c=>c.body?.content);
+ assert.equal(posts[0].body.content.find(x=>x.type==='image_url').role,'first_frame');
+ assert.equal(posts[1].body.content.find(x=>x.type==='image_url').role,'reference_image');
+}));
+
+test('approved converted character image is reused by subsequent segments without another image call',()=>fixture(async h=>{
+ const tool=h.tools.get('video_generate');
+ const initial=await tool.execute({prompt:'角色',duration:20,segmentPrompts:['one','two'],referenceImages:['https://example.com/real.png'],merge:false},h.exec);
+ assert.equal(initial.status,'review_required');assert.equal(h.images,1);
+ const reviewed=await tool.execute({resume:initial.resumeDir,referenceImagesReviewed:true},h.exec);
+ assert.equal(reviewed.paused,true);
+ const saved=await h.read(reviewed.resumeDir);
+ assert.equal(saved.characterReferences[0].image_url.url,'https://example.com/cartoon-1.png');
+ const final=await tool.execute({resume:reviewed.resumeDir},h.exec);
+ assert.equal(final.status,'succeeded');assert.equal(h.images,1);
+ const last=h.calls.filter(c=>c.body?.content).at(-1).body;
+ assert.equal(last.content.find(x=>x.type==='image_url').image_url.url,'https://example.com/cartoon-1.png');
+}));
+
+for(const shared of [true,false]) test(`text character image creates no video and uses correct image key (shared=${shared})`,()=>fixture(async h=>{
+ h.config.imageUseVideoKey=shared;h.config.imageApiKey='image-only';
+ const before=await api.preflightGate(h.ctx,h.config,{...h.exec,name:'video_prepare_image',arguments:{operation:'create_character',prompt:'青年角色',style:'二维动画'}});
+ assert.equal(before.kind,'ask');assert.match(before.displayReason.zh,/单独计费/);
+ const image=await api.prepareImageTool(h.config).execute({operation:'create_character',prompt:'短发青年，蓝色衬衫',style:'二维动画'},h.exec);
+ assert.equal(image.reviewRequired,true);assert.equal(h.videos,0);
+ const post=h.calls.find(x=>x.url.endsWith('/tasks/doubao'));assert.equal(post.body.image,undefined);assert.match(post.body.prompt,/短发青年/);
+ assert.equal(post.key,shared?'Bearer b':'Bearer image-only');
+ await api.prepareImageTool(h.config).execute({taskId:image.taskId},h.exec);assert.equal(h.images,1);
+}));
+
+test('role image approval rejection and non-interactive mode do not auto-generate',()=>fixture(async h=>{
+ h.ctx.get=()=>({config:{policy:'never'}});
+ const decision=await api.preflightGate(h.ctx,h.config,{...h.exec,name:'video_prepare_image',arguments:{operation:'create_character',prompt:'人物',style:'动画'}});
+ assert.equal(decision.kind,'deny');assert.equal(h.images,0);assert.equal(h.videos,0);
+}));
+
+test('created and reviewed role image is used for initial video and continuation',()=>fixture(async h=>{
+ h.flags.videoReject=false;
+ const image=await api.prepareImageTool(h.config).execute({operation:'create_character',prompt:'青年角色',style:'动画'},h.exec);
+ const tool=h.tools.get('video_generate');const references=[image.imageUrl];
+ const first=await tool.execute({prompt:'角色自我介绍',duration:20,segmentPrompts:['one','two'],referenceImages:references,characterReferenceImages:references,merge:false},h.exec);
+ await tool.execute({resume:first.resumeDir},h.exec);
+ assert.equal(h.images,1);assert.equal(h.videos,2);
+ for(const post of h.calls.filter(x=>x.body?.content))assert.deepEqual(post.body.content.filter(x=>x.type==='image_url').map(x=>x.image_url.url),references);
 }));

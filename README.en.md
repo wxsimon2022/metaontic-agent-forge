@@ -21,6 +21,7 @@ The project planner supports up to 120 seconds and 10 segments. Longer videos re
 - **Local FFmpeg merging:** deliver the merged video first, followed by the original numbered segments.
 - **480P and 720P:** confirm resolution during script review; subsequent segments retain that choice.
 - **Provider options:** MetaOntic AI, a service-issued key, or direct Volcano Engine access. The current model selector offers Seedance 2.0 Mini and Fast.
+- **Optional character design:** for a text-only project, choose whether to generate a stylized character image with Seedream. Image calls are billed separately; review the result before using it for the initial video and all continuations. Declining keeps the text-only workflow.
 - **Reference image preparation:** supported relay connections can use Seedream to convert real-person references into a non-photorealistic style, with separate consent, billing and result review.
 
 ## Quick start
@@ -70,3 +71,5 @@ If generation stops or a status query fails, check the original task ID or resum
 ## License
 
 [MIT](./LICENSE)
+
+Release packages bundle the required host schema library and do not require external runtime npm dependencies. If a previous local-development setup still points to a deleted source directory, correct that local loading path before installing a release package.

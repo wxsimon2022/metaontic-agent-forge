@@ -866,7 +866,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.11.4".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.12.0".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1482,7 +1482,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.11.4",
+    version: "3.12.0",
     description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
     license: "MIT",
     type: "module",
@@ -1536,7 +1536,8 @@
       "CHANGELOG.md",
       "LICENSE",
       "docs/guide/*.svg",
-      "docs/guide/*.png"
+      "docs/guide/*.png",
+      "THIRD_PARTY_NOTICES.md"
     ],
     engines: {
       node: ">=20"
@@ -1563,28 +1564,29 @@
       react: "^19.3.1",
       "react-dom": "^19.3.1",
       typescript: "^5.9.3",
-      hyperframes: "0.8.223"
+      hyperframes: "0.8.223",
+      "@deepseek-ai/schemastery": "~3.18.5"
     },
     scripts: {
       typecheck: "tsc -p tsconfig.json",
       "build:locale": "esbuild scripts/build-locale.ts --format=esm --platform=node --packages=external --outfile=node_modules/.cache/build-locale.mjs --log-level=warning && node node_modules/.cache/build-locale.mjs",
-      "build:host": `esbuild src/index.ts --bundle --format=esm --platform=node --target=node20 --packages=external --define:__PLUGIN_VERSION__=$(node -p 'JSON.stringify(require("./package.json").version)') --outfile=index.js`,
+      "build:host": `esbuild src/index.ts --bundle --format=esm --platform=node --target=node20 --define:__PLUGIN_VERSION__=$(node -p 'JSON.stringify(require("./package.json").version)') --outfile=index.js`,
       "build:client": `esbuild src/client.ts --bundle --format=iife --platform=browser --target=es2022 --define:__PLUGIN_VERSION__=$(node -p 'JSON.stringify(require("./package.json").version)') --outfile=client.js`,
       build: "npm run typecheck && npm run build:locale && npm run build:host && npm run build:client",
       preview: "node scripts/preview.mjs"
     },
-    dependencies: {
-      "@deepseek-ai/schemastery": "~3.18.5"
-    },
+    dependencies: {},
     releaseNotes: {
-      version: "3.11.4",
+      version: "3.12.0",
       prerelease: false,
-      publishedAt: "2026-11-02T00:58:26Z",
+      publishedAt: "2026-11-02T01:24:31Z",
       items: [
-        "\u4F18\u5316\uFF1A\u4ED3\u5E93\u7B80\u4ECB\u3001\u4E3B\u9875\u4E0E\u641C\u7D22\u4E3B\u9898\u8865\u5168\uFF0C\u7A81\u51FADeepSeek Harness\u3001Seedance 2.0\u957F\u89C6\u9891\u3001\u6587\u751F\u89C6\u9891\u3001\u56FE\u751F\u89C6\u9891\u548C\u89C6\u9891\u7EED\u62CD\u7528\u9014\u3002",
-        "\u4F18\u5316\uFF1A\u91CD\u6574README\u9996\u5C4F\uFF0C\u7A81\u51FA\u8D85\u8FC715\u79D2\u89C6\u9891\u7684\u591A\u6BB5\u751F\u6210\u6D41\u7A0B\uFF0C\u96C6\u4E2D\u5B89\u88C5\u3001Key\u914D\u7F6E\u3001\u6B63\u5F0F\u7248\u4E0B\u8F7D\u3001\u5E38\u89C1\u95EE\u9898\u4E0E\u6587\u6863\u5BFC\u822A\u3002",
-        "\u4F18\u5316\uFF1A\u65B0\u589E\u82F1\u6587README\u5E76\u7EB3\u5165\u63D2\u4EF6\u5305\uFF0C\u5B8C\u5584\u4E2D\u82F1\u6587\u5165\u53E3\u3001\u5305\u7B80\u4ECB\u4E0E\u5173\u952E\u8BCD\uFF0C\u65B9\u4FBF\u4E0D\u540C\u8BED\u8A00\u7528\u6237\u53D1\u73B0\u4E0E\u4F7F\u7528\u3002",
-        "\u4FEE\u590D\uFF1A\u4FEE\u6B63README\u4E2D\u8FC7\u65F6\u7684\u8BBE\u7F6E\u5E03\u5C40\u3001\u91CD\u7F6E\u5165\u53E3\u548C\u4EA4\u4ED8\u987A\u5E8F\u8BF4\u660E\uFF0C\u8865\u9F50\u5DE5\u5177\u7D22\u5F15\uFF0C\u4E0E\u5F53\u524D\u63D2\u4EF6\u884C\u4E3A\u4FDD\u6301\u4E00\u81F4\u3002"
+        "\u65B0\u589E\uFF1A\u7EAF\u6587\u751F\u89C6\u9891\u5148\u8BE2\u95EE\u662F\u5426\u751F\u6210\u89D2\u8272\u53C2\u8003\u56FE\uFF0C\u660E\u786E\u56FE\u7247\u5355\u72EC\u8BA1\u8D39\uFF1B\u540C\u610F\u540E\u4F7F\u7528Seedream\u6309\u6587\u5B57\u751F\u6210\uFF0C\u5C55\u793A\u5BA1\u6838\u901A\u8FC7\u624D\u7528\u4E8E\u9996\u6BB5\u53CA\u7EED\u62CD\uFF0C\u62D2\u7EDD\u5219\u4FDD\u7559\u7EAF\u6587\u751F\u65B9\u6848\u3002",
+        "\u65B0\u589E\uFF1A\u7EED\u62CD\u6301\u7EED\u643A\u5E26\u6700\u521D\u89D2\u8272\u53C2\u8003\u56FE\uFF0C\u652F\u6301\u660E\u786E\u6307\u5B9A\u89D2\u8272\u56FE\u5E76\u9ED8\u8BA4\u6CBF\u7528\u9996\u6BB5\u53C2\u8003\u56FE\u6216\u9996\u5E27\uFF1B\u5F52\u4E00\u5316\u7ED3\u679C\u968F\u65AD\u70B9\u4FDD\u5B58\uFF0C\u540E\u7EED\u5206\u6BB5\u53CA\u6062\u590D\u7EE7\u7EED\u4F7F\u7528\u540C\u4E00\u5957\u56FE\u3002",
+        "\u4F18\u5316\uFF1A\u89D2\u8272\u56FE\u8F6C\u6362\u7ECF\u540C\u610F\u3001\u7ED3\u679C\u5BA1\u6838\u5E76\u6210\u529F\u91CD\u8BD5\u540E\uFF0C\u540E\u7EED\u7EED\u62CD\u590D\u7528\u83B7\u5BA1\u8F6C\u6362\u56FE\uFF0C\u4E0D\u91CD\u590D\u51FA\u56FE\uFF1B\u5DF2\u63D0\u4EA4\u4EFB\u52A1\u4FDD\u7559\u539F\u8BF7\u6C42\uFF0C\u907F\u514D\u6062\u590D\u65F6\u91CD\u590D\u63D0\u4EA4\u3002",
+        "\u4F18\u5316\uFF1A\u540C\u6B65\u4E2D\u82F1\u6587\u8BF4\u660E\u3001\u89D2\u8272\u56FE\u9009\u62E9\u4E0E\u5BA1\u6838\u6B65\u9AA4\u3001\u5B89\u88C5\u6392\u67E5\u53CA\u7B2C\u4E09\u65B9\u8BB8\u53EF\u58F0\u660E\u3002",
+        "\u4FEE\u590D\uFF1A\u5BBF\u4E3B\u5165\u53E3\u5185\u7F6Eschemastery\u53CA\u5176\u8FD0\u884C\u4F9D\u8D56\uFF0C\u6210\u54C1\u5305\u4E0D\u518D\u4F9D\u8D56\u5916\u90E8node_modules\uFF0C\u4FEE\u590D\u5378\u8F7D\u91CD\u88C5\u6216\u5728\u7EBF\u66F4\u65B0\u540E\u7F3A\u5C11Schema\u4F9D\u8D56\u5BFC\u81F4\u63D2\u4EF6\u542F\u52A8\u5931\u8D25\u7684\u95EE\u9898\u3002",
+        "\u4FEE\u590D\uFF1A\u56FE\u7247\u4ED8\u8D39\u786E\u8BA4\u5F02\u5E38\u65F6\u505C\u6B62\u51FA\u56FE\uFF1B\u706B\u5C71\u76F4\u8FDE\u660E\u786E\u63D0\u793A\u5F53\u524D\u56FE\u7247\u901A\u9053\u9650\u5236\uFF0C\u4E0D\u9519\u8BEF\u627F\u8BFA\u53EF\u751F\u6210\u89D2\u8272\u56FE\u3002"
       ]
     }
   };

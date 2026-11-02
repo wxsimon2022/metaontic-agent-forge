@@ -84,6 +84,7 @@ export function apply(ctx: DshContext, config: any = {}) {
         return await preflightGate(ctx, config, exec);
       } catch (error) {
         const message = error?.message || String(error);
+        if (exec.name === 'video_prepare_image') return { kind: 'deny', reason: '图片费用确认未能完成，请先恢复确认能力；未取得同意不生成图片。' };
         if (exec.name === 'video_setup') {
           const command = ffmpegInstallOptions().installs[0].command;
           return {

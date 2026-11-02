@@ -33,8 +33,882 @@ var init_connection_defaults = __esm({
   }
 });
 
+// node_modules/@deepseek-ai/cosmokit/lib/index.js
+function isNullable(value) {
+  return value === null || value === void 0;
+}
+function isPlainObject(data) {
+  return data && typeof data === "object" && !Array.isArray(data);
+}
+function filterKeys(object2, filter) {
+  return Object.fromEntries(Object.entries(object2).filter(([key, value]) => filter(key, value)));
+}
+function mapValues(object2, transform) {
+  return Object.fromEntries(Object.entries(object2).map(([key, value]) => [key, transform(value, key)]));
+}
+function pick(source, keys, forced) {
+  if (!keys) return { ...source };
+  const result = {};
+  for (const key of keys) if (forced || source[key] !== void 0) result[key] = source[key];
+  return result;
+}
+function snapshot(value, ancestors = /* @__PURE__ */ new Set()) {
+  if (typeof value === "function") throw new TypeError("volatile config cannot contain functions");
+  if (value === null || typeof value !== "object") return value;
+  if (ancestors.has(value)) throw new TypeError("volatile config cannot contain cycles");
+  ancestors.add(value);
+  try {
+    if (Array.isArray(value)) return Object.freeze(value.map((item) => snapshot(item, ancestors)));
+    if (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) throw new TypeError("volatile config objects must be plain objects or arrays");
+    return Object.freeze(Object.fromEntries(Object.entries(value).map(([key, item]) => [key, snapshot(item, ancestors)])));
+  } finally {
+    ancestors.delete(value);
+  }
+}
+function createVolatile(value) {
+  let current = snapshot(value);
+  return Object.freeze({
+    get: () => current,
+    [write]: (value2) => {
+      current = value2;
+    }
+  });
+}
+function isVolatile(value) {
+  return typeof value === "object" && value !== null && write in value;
+}
+function is(type, value) {
+  if (arguments.length === 1) return (value2) => is(type, value2);
+  return type in globalThis && value instanceof globalThis[type] || Object.prototype.toString.call(value).slice(8, -1) === type;
+}
+function isArrayBufferLike(value) {
+  return is("ArrayBuffer", value) || is("SharedArrayBuffer", value);
+}
+function isArrayBufferSource(value) {
+  return isArrayBufferLike(value) || ArrayBuffer.isView(value);
+}
+function clone(source, refs = /* @__PURE__ */ new Map()) {
+  if (!source || typeof source !== "object") return source;
+  if (is("Date", source)) return new Date(source.valueOf());
+  if (is("RegExp", source)) return new RegExp(source.source, source.flags);
+  if (isArrayBufferLike(source)) return source.slice(0);
+  if (ArrayBuffer.isView(source)) return source.buffer.slice(source.byteOffset, source.byteOffset + source.byteLength);
+  const cached = refs.get(source);
+  if (cached) return cached;
+  if (Array.isArray(source)) {
+    const result2 = [];
+    refs.set(source, result2);
+    source.forEach((value, index) => {
+      result2[index] = Reflect.apply(clone, null, [value, refs]);
+    });
+    return result2;
+  }
+  const result = Object.create(Object.getPrototypeOf(source));
+  refs.set(source, result);
+  for (const key of Reflect.ownKeys(source)) {
+    const descriptor = { ...Reflect.getOwnPropertyDescriptor(source, key) };
+    if ("value" in descriptor) descriptor.value = Reflect.apply(clone, null, [descriptor.value, refs]);
+    Reflect.defineProperty(result, key, descriptor);
+  }
+  return result;
+}
+function deepEqual(a, b, strict) {
+  const ancestors = /* @__PURE__ */ new Set();
+  function compare(a2, b2) {
+    if (a2 === b2) return true;
+    if (isVolatile(a2) || isVolatile(b2)) return isVolatile(a2) && isVolatile(b2);
+    if (!strict && isNullable(a2) && isNullable(b2)) return true;
+    if (typeof a2 !== typeof b2 || typeof a2 !== "object" || !a2 || !b2) return false;
+    if (ancestors.has(a2)) return false;
+    function check(test, then) {
+      return test(a2) ? test(b2) ? then(a2, b2) : false : test(b2) ? false : void 0;
+    }
+    ancestors.add(a2);
+    try {
+      return check(Array.isArray, (a3, b3) => {
+        if (a3.length !== b3.length) return false;
+        for (let index = 0; index < a3.length; index++) if (!compare(a3[index], b3[index])) return false;
+        return true;
+      }) ?? check(is("Date"), (a3, b3) => a3.valueOf() === b3.valueOf()) ?? check(is("URL"), (a3, b3) => a3.href === b3.href) ?? check(is("RegExp"), (a3, b3) => a3.source === b3.source && a3.flags === b3.flags) ?? check(isArrayBufferLike, (a3, b3) => {
+        if (a3.byteLength !== b3.byteLength) return false;
+        const viewA = new Uint8Array(a3);
+        const viewB = new Uint8Array(b3);
+        for (let i = 0; i < viewA.length; i++) if (viewA[i] !== viewB[i]) return false;
+        return true;
+      }) ?? ((!strict || [a2, b2].every((value) => Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null)) && Object.keys({
+        ...a2,
+        ...b2
+      }).every((key) => compare(a2[key], b2[key])));
+    } finally {
+      ancestors.delete(a2);
+    }
+  }
+  return compare(a, b);
+}
+var write, Binary, base64ToArrayBuffer, arrayBufferToBase64, hexToArrayBuffer, arrayBufferToHex, Time;
+var init_lib = __esm({
+  "node_modules/@deepseek-ai/cosmokit/lib/index.js"() {
+    write = /* @__PURE__ */ Symbol.for("cosmokit.volatile.write");
+    (function(Binary2) {
+      Binary2.is = isArrayBufferLike;
+      Binary2.isSource = isArrayBufferSource;
+      function fromSource(source) {
+        if (ArrayBuffer.isView(source)) return source.buffer.slice(source.byteOffset, source.byteOffset + source.byteLength);
+        else return source;
+      }
+      Binary2.fromSource = fromSource;
+      function toBase64(source) {
+        source = fromSource(source);
+        if (typeof Buffer !== "undefined") return Buffer.from(source).toString("base64");
+        let binary = "";
+        const bytes = new Uint8Array(source);
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        return btoa(binary);
+      }
+      Binary2.toBase64 = toBase64;
+      function fromBase64(source) {
+        if (typeof Buffer !== "undefined") return fromSource(Buffer.from(source, "base64"));
+        return Uint8Array.from(atob(source), (c) => c.charCodeAt(0));
+      }
+      Binary2.fromBase64 = fromBase64;
+      function toHex(source) {
+        source = fromSource(source);
+        if (typeof Buffer !== "undefined") return Buffer.from(source).toString("hex");
+        return Array.from(new Uint8Array(source), (byte) => byte.toString(16).padStart(2, "0")).join("");
+      }
+      Binary2.toHex = toHex;
+      function fromHex(source) {
+        if (typeof Buffer !== "undefined") return fromSource(Buffer.from(source, "hex"));
+        const hex = source.length % 2 === 0 ? source : source.slice(0, source.length - 1);
+        const buffer = [];
+        for (let i = 0; i < hex.length; i += 2) buffer.push(parseInt(`${hex[i]}${hex[i + 1]}`, 16));
+        return Uint8Array.from(buffer).buffer;
+      }
+      Binary2.fromHex = fromHex;
+    })(Binary || (Binary = {}));
+    base64ToArrayBuffer = Binary.fromBase64;
+    arrayBufferToBase64 = Binary.toBase64;
+    hexToArrayBuffer = Binary.fromHex;
+    arrayBufferToHex = Binary.toHex;
+    (function(Time2) {
+      Time2.millisecond = 1;
+      Time2.second = 1e3;
+      Time2.minute = Time2.second * 60;
+      Time2.hour = Time2.minute * 60;
+      Time2.day = Time2.hour * 24;
+      Time2.week = Time2.day * 7;
+      let timezoneOffset = (/* @__PURE__ */ new Date()).getTimezoneOffset();
+      function setTimezoneOffset(offset) {
+        timezoneOffset = offset;
+      }
+      Time2.setTimezoneOffset = setTimezoneOffset;
+      function getTimezoneOffset() {
+        return timezoneOffset;
+      }
+      Time2.getTimezoneOffset = getTimezoneOffset;
+      function getDateNumber(date2 = /* @__PURE__ */ new Date(), offset) {
+        if (typeof date2 === "number") date2 = new Date(date2);
+        if (offset === void 0) offset = timezoneOffset;
+        return Math.floor((date2.valueOf() / Time2.minute - offset) / 1440);
+      }
+      Time2.getDateNumber = getDateNumber;
+      function fromDateNumber(value, offset) {
+        const date2 = new Date(value * Time2.day);
+        if (offset === void 0) offset = timezoneOffset;
+        return new Date(+date2 + offset * Time2.minute);
+      }
+      Time2.fromDateNumber = fromDateNumber;
+      const numeric = /\d+(?:\.\d+)?/.source;
+      const timeRegExp = new RegExp(`^${[
+        "w(?:eek(?:s)?)?",
+        "d(?:ay(?:s)?)?",
+        "h(?:our(?:s)?)?",
+        "m(?:in(?:ute)?(?:s)?)?",
+        "s(?:ec(?:ond)?(?:s)?)?"
+      ].map((unit) => `(${numeric}${unit})?`).join("")}$`);
+      function parseTime(source) {
+        const capture = timeRegExp.exec(source);
+        if (!capture) return 0;
+        return (parseFloat(capture[1]) * Time2.week || 0) + (parseFloat(capture[2]) * Time2.day || 0) + (parseFloat(capture[3]) * Time2.hour || 0) + (parseFloat(capture[4]) * Time2.minute || 0) + (parseFloat(capture[5]) * Time2.second || 0);
+      }
+      Time2.parseTime = parseTime;
+      function parseDate(date2) {
+        const parsed = parseTime(date2);
+        if (parsed) date2 = Date.now() + parsed;
+        else if (/^\d{1,2}(:\d{1,2}){1,2}$/.test(date2)) date2 = `${(/* @__PURE__ */ new Date()).toLocaleDateString()}-${date2}`;
+        else if (/^\d{1,2}-\d{1,2}-\d{1,2}(:\d{1,2}){1,2}$/.test(date2)) date2 = `${(/* @__PURE__ */ new Date()).getFullYear()}-${date2}`;
+        return date2 ? new Date(date2) : /* @__PURE__ */ new Date();
+      }
+      Time2.parseDate = parseDate;
+      function format(ms) {
+        const abs = Math.abs(ms);
+        if (abs >= Time2.day - Time2.hour / 2) return Math.round(ms / Time2.day) + "d";
+        else if (abs >= Time2.hour - Time2.minute / 2) return Math.round(ms / Time2.hour) + "h";
+        else if (abs >= Time2.minute - Time2.second / 2) return Math.round(ms / Time2.minute) + "m";
+        else if (abs >= Time2.second) return Math.round(ms / Time2.second) + "s";
+        return ms + "ms";
+      }
+      Time2.format = format;
+      function toDigits(source, length = 2) {
+        return source.toString().padStart(length, "0");
+      }
+      Time2.toDigits = toDigits;
+      function template(template2, time = /* @__PURE__ */ new Date()) {
+        return template2.replace("yyyy", time.getFullYear().toString()).replace("yy", time.getFullYear().toString().slice(2)).replace("MM", toDigits(time.getMonth() + 1)).replace("dd", toDigits(time.getDate())).replace("hh", toDigits(time.getHours())).replace("mm", toDigits(time.getMinutes())).replace("ss", toDigits(time.getSeconds())).replace("SSS", toDigits(time.getMilliseconds(), 3));
+      }
+      Time2.template = template;
+    })(Time || (Time = {}));
+  }
+});
+
+// node_modules/@deepseek-ai/schemastery/lib/index.mjs
+function mergeDesc(original, messages) {
+  const result = typeof original === "string" ? { "": original } : { ...original };
+  for (const locale in messages) {
+    const value = messages[locale];
+    if (value?.$description || value?.$desc) result[locale] = value.$description || value.$desc;
+    else if (typeof value === "string") result[locale] = value;
+  }
+  return result;
+}
+function getInner(value) {
+  return value?.$value ?? value?.$inner;
+}
+function extractKeys(data) {
+  return filterKeys(data ?? {}, (key) => !key.startsWith("$"));
+}
+function validateVolatileSchema(schema, path11 = [], blocked2 = false, seen = /* @__PURE__ */ new Map()) {
+  const states = seen.get(schema) ?? /* @__PURE__ */ new Set();
+  if (states.has(blocked2)) return;
+  states.add(blocked2);
+  seen.set(schema, states);
+  if (schema.meta?.volatile && blocked2) throw new ValidationError("volatile fields require a fixed object path without an enclosing volatile field", { path: path11 });
+  const nested = blocked2 || !!schema.meta?.volatile;
+  if (schema.dict) for (const [key, child] of Object.entries(schema.dict)) validateVolatileSchema(child, [...path11, key], nested, seen);
+  if (schema.sKey) validateVolatileSchema(schema.sKey, [...path11, "<key>"], true, seen);
+  if (schema.inner && (schema.type !== "lazy" || schema.inner[kSchema])) validateVolatileSchema(schema.inner, [...path11, "*"], true, seen);
+  if (schema.list) for (let index = 0; index < schema.list.length; index++) validateVolatileSchema(schema.list[index], [...path11, String(index)], true, seen);
+}
+function checkWithinRange(data, meta, description, options, skipMin = false) {
+  const { max = Infinity, min = -Infinity } = meta;
+  if (data > max) throw new ValidationError(`expected ${description} <= ${max} but got ${data}`, options);
+  if (data < min && !skipMin) throw new ValidationError(`expected ${description} >= ${min} but got ${data}`, options);
+}
+function decimalShift(data, digits) {
+  const str = data.toString();
+  if (str.includes("e")) return data * Math.pow(10, digits);
+  const index = str.indexOf(".");
+  if (index === -1) return data * Math.pow(10, digits);
+  const frac = str.slice(index + 1);
+  const integer = str.slice(0, index);
+  if (frac.length <= digits) return +(integer + frac.padEnd(digits, "0"));
+  return +(integer + frac.slice(0, digits) + "." + frac.slice(digits));
+}
+function isMultipleOf(data, min, step) {
+  step = Math.abs(step);
+  if (!/^\d+\.\d+$/.test(step.toString())) return (data - min) % step === 0;
+  const index = step.toString().indexOf(".");
+  const digits = step.toString().slice(index + 1).length;
+  return Math.abs(decimalShift(data, digits) - decimalShift(min, digits)) % decimalShift(step, digits) === 0;
+}
+function property(data, key, schema, options) {
+  try {
+    const [value, adapted] = Schema.resolve(data[key], schema, {
+      ...options,
+      path: [...options.path || [], key]
+    });
+    if (adapted !== void 0) data[key] = adapted;
+    return value;
+  } catch (e) {
+    if (!options?.autofix) throw e;
+    delete data[key];
+    return schema.meta.volatile ? createVolatile(schema.meta.default) : schema.meta.default;
+  }
+}
+function merge(result, data) {
+  for (const key in data) {
+    if (key in result) continue;
+    result[key] = data[key];
+  }
+}
+function defineMethod(name, keys, format) {
+  formatters[name] = format;
+  Object.assign(Schema, { [name](...args) {
+    const schema = new Schema({ type: name });
+    keys.forEach((key, index) => {
+      switch (key) {
+        case "sKey":
+          schema.sKey = args[index] ?? Schema.string();
+          break;
+        case "inner":
+          schema.inner = Schema.from(args[index]);
+          break;
+        case "list":
+          schema.list = args[index].map(Schema.from);
+          break;
+        case "dict":
+          schema.dict = mapValues(args[index], Schema.from);
+          break;
+        case "bits":
+          schema.bits = {};
+          for (const key2 in args[index]) {
+            if (typeof args[index][key2] !== "number") continue;
+            schema.bits[key2] = args[index][key2];
+          }
+          break;
+        case "callback": {
+          const callback = schema.callback = args[index];
+          callback["toJSON"] ||= () => callback.toString();
+          break;
+        }
+        case "constructor": {
+          const constructor = schema.constructor = args[index];
+          if (typeof constructor === "function") constructor["toJSON"] ||= () => constructor["name"];
+          break;
+        }
+        default:
+          schema[key] = args[index];
+      }
+    });
+    if (name === "object" || name === "dict") schema.meta.default = {};
+    else if (name === "array" || name === "tuple") schema.meta.default = [];
+    else if (name === "bitset") schema.meta.default = 0;
+    return schema;
+  } });
+}
+var kSchema, kValidationError, ValidationError, Schema, resolvers, checkedVolatile, formatters;
+var init_lib2 = __esm({
+  "node_modules/@deepseek-ai/schemastery/lib/index.mjs"() {
+    init_lib();
+    kSchema = /* @__PURE__ */ Symbol.for("schemastery");
+    kValidationError = /* @__PURE__ */ Symbol.for("ValidationError");
+    globalThis.__schemastery_index__ ??= 0;
+    globalThis.__schemastery_refs__ = void 0;
+    ValidationError = class extends TypeError {
+      options;
+      name = "ValidationError";
+      constructor(message, options) {
+        let prefix = "$";
+        for (const segment of options.path || []) if (typeof segment === "string") prefix += "." + segment;
+        else if (typeof segment === "number") prefix += "[" + segment + "]";
+        else if (typeof segment === "symbol") prefix += `[Symbol(${segment.toString()})]`;
+        if (prefix.startsWith(".")) prefix = prefix.slice(1);
+        super((prefix === "$" ? "" : `${prefix} `) + message);
+        this.options = options;
+      }
+      static is(error) {
+        return !!error?.[kValidationError];
+      }
+    };
+    Object.defineProperty(ValidationError.prototype, kValidationError, { value: true });
+    Schema = function(options) {
+      const schema = function(data, options2 = {}) {
+        return Schema.resolve(data, schema, options2)[0];
+      };
+      if (options.refs) {
+        const refs = mapValues(options.refs, (options2) => new Schema(options2));
+        const getRef = (uid) => refs[uid];
+        for (const key in refs) {
+          const options2 = refs[key];
+          options2.sKey = getRef(options2.sKey);
+          options2.inner = getRef(options2.inner);
+          options2.list = options2.list && options2.list.map(getRef);
+          options2.dict = options2.dict && mapValues(options2.dict, getRef);
+        }
+        return refs[options.uid];
+      }
+      Object.assign(schema, options);
+      if (typeof schema.callback === "string") try {
+        schema.callback = new Function("return " + schema.callback)();
+      } catch {
+      }
+      Object.defineProperty(schema, "uid", { value: globalThis.__schemastery_index__++ });
+      Object.setPrototypeOf(schema, Schema.prototype);
+      schema.meta ||= {};
+      schema.toString = schema.toString.bind(schema);
+      return schema;
+    };
+    Schema.prototype = Object.create(Function.prototype);
+    Schema.prototype[kSchema] = true;
+    Object.defineProperty(Schema.prototype, "~standard", { get() {
+      return {
+        version: 1,
+        vendor: "schemastery",
+        validate: (value) => {
+          try {
+            return { value: Schema.resolve(value, this, {})[0] };
+          } catch (error) {
+            if (ValidationError.is(error)) return { issues: [{
+              message: error.message,
+              path: error.options.path
+            }] };
+            throw error;
+          }
+        }
+      };
+    } });
+    Schema.ValidationError = ValidationError;
+    Schema.prototype.toJSON = function toJSON() {
+      if (globalThis.__schemastery_refs__) {
+        globalThis.__schemastery_refs__[this.uid] ??= JSON.parse(JSON.stringify({ ...this }));
+        return this.uid;
+      }
+      globalThis.__schemastery_refs__ = { [this.uid]: { ...this } };
+      globalThis.__schemastery_refs__[this.uid] = JSON.parse(JSON.stringify({ ...this }));
+      const result = {
+        uid: this.uid,
+        refs: globalThis.__schemastery_refs__
+      };
+      globalThis.__schemastery_refs__ = void 0;
+      return result;
+    };
+    Schema.prototype.set = function set(key, value) {
+      this.dict[key] = value;
+      return this;
+    };
+    Schema.prototype.push = function push(value) {
+      this.list.push(value);
+      return this;
+    };
+    Schema.prototype.i18n = function i18n(messages) {
+      const schema = Schema(this);
+      const desc = mergeDesc(schema.meta.description, messages);
+      if (Object.keys(desc).length) schema.meta.description = desc;
+      if (schema.dict) schema.dict = mapValues(schema.dict, (inner, key) => {
+        return inner.i18n(mapValues(messages, (data) => getInner(data)?.[key] ?? data?.[key]));
+      });
+      if (schema.list) schema.list = schema.list.map((inner, index) => {
+        return inner.i18n(mapValues(messages, (data = {}) => {
+          if (Array.isArray(getInner(data))) return getInner(data)[index];
+          if (Array.isArray(data)) return data[index];
+          return extractKeys(data);
+        }));
+      });
+      if (schema.inner) schema.inner = schema.inner.i18n(mapValues(messages, (data) => {
+        if (getInner(data)) return getInner(data);
+        return extractKeys(data);
+      }));
+      if (schema.sKey) schema.sKey = schema.sKey.i18n(mapValues(messages, (data) => data?.$key));
+      return schema;
+    };
+    Schema.prototype.extra = function extra(key, value) {
+      const schema = Schema(this);
+      schema.meta = {
+        ...schema.meta,
+        [key]: value
+      };
+      return schema;
+    };
+    for (const key of [
+      "required",
+      "disabled",
+      "collapse",
+      "hidden",
+      "loose"
+    ]) Object.assign(Schema.prototype, { [key](value = true) {
+      const schema = Schema(this);
+      schema.meta = {
+        ...schema.meta,
+        [key]: value
+      };
+      return schema;
+    } });
+    Schema.prototype.deprecated = function deprecated() {
+      const schema = Schema(this);
+      schema.meta.badges ||= [];
+      schema.meta.badges.push({
+        text: "deprecated",
+        type: "danger"
+      });
+      return schema;
+    };
+    Schema.prototype.experimental = function experimental() {
+      const schema = Schema(this);
+      schema.meta.badges ||= [];
+      schema.meta.badges.push({
+        text: "experimental",
+        type: "warning"
+      });
+      return schema;
+    };
+    Schema.prototype.pattern = function pattern(regexp) {
+      const schema = Schema(this);
+      const pattern2 = pick(regexp, ["source", "flags"]);
+      schema.meta = {
+        ...schema.meta,
+        pattern: pattern2
+      };
+      return schema;
+    };
+    Schema.prototype.simplify = function simplify(value) {
+      if (isVolatile(value)) value = value.get();
+      if (deepEqual(value, this.meta.default, this.type === "dict")) return null;
+      if (isNullable(value)) return value;
+      if (this.type === "object" || this.type === "dict") {
+        const result = {};
+        for (const key in value) {
+          const item = (this.type === "object" ? this.dict[key] : this.inner)?.simplify(value[key]);
+          if (this.type === "dict" || !isNullable(item)) result[key] = item;
+        }
+        if (deepEqual(result, this.meta.default, this.type === "dict")) return null;
+        return result;
+      } else if (this.type === "array" || this.type === "tuple") {
+        const result = [];
+        value.forEach((value2, index) => {
+          const schema = this.type === "array" ? this.inner : this.list[index];
+          const item = schema ? schema.simplify(value2) : value2;
+          result.push(item);
+        });
+        return result;
+      } else if (this.type === "intersect") {
+        const result = {};
+        for (const item of this.list) Object.assign(result, item.simplify(value));
+        return result;
+      } else if (this.type === "union") for (const schema of this.list) try {
+        Schema.resolve(value, schema, {});
+        return schema.simplify(value);
+      } catch {
+      }
+      return value;
+    };
+    Schema.prototype.toString = function toString(inline) {
+      return formatters[this.type]?.(this, inline) ?? `Schema<${this.type}>`;
+    };
+    Schema.prototype.role = function role(role, extra2) {
+      const schema = Schema(this);
+      schema.meta = {
+        ...schema.meta,
+        role,
+        extra: extra2
+      };
+      return schema;
+    };
+    for (const key of [
+      "default",
+      "link",
+      "comment",
+      "description",
+      "max",
+      "min",
+      "step"
+    ]) Object.assign(Schema.prototype, { [key](value) {
+      const schema = Schema(this);
+      schema.meta = {
+        ...schema.meta,
+        [key]: value
+      };
+      return schema;
+    } });
+    Schema.prototype.volatile = function volatile() {
+      if (this.meta.volatile) throw new TypeError("volatile schema is already wrapped");
+      return this.extra("volatile", true);
+    };
+    resolvers = {};
+    checkedVolatile = /* @__PURE__ */ Symbol("checked-volatile-schema");
+    Schema.extend = function extend(type, resolve3) {
+      resolvers[type] = resolve3;
+    };
+    Schema.resolve = function resolve(data, schema, options = {}, strict = false) {
+      if (!schema) return [data];
+      if (!options[checkedVolatile]) {
+        validateVolatileSchema(schema, options.path);
+        options = {
+          ...options,
+          [checkedVolatile]: true
+        };
+      }
+      if (schema.meta?.volatile) {
+        const inner = Schema(schema);
+        inner.meta = {
+          ...schema.meta,
+          volatile: false
+        };
+        const [value, adapted] = Schema.resolve(data, inner, options, strict);
+        try {
+          return [createVolatile(value), adapted];
+        } catch (error) {
+          throw new ValidationError(error instanceof Error ? error.message : String(error), options);
+        }
+      }
+      if (options.ignore?.(data, schema)) return [data];
+      if (isNullable(data) && schema.type !== "lazy") {
+        if (schema.meta.required) throw new ValidationError(`missing required value`, options);
+        let current = schema;
+        let fallback = schema.meta.default;
+        while (current?.type === "intersect" && isNullable(fallback)) {
+          current = current.list[0];
+          fallback = current?.meta.default;
+        }
+        if (isNullable(fallback)) return [data];
+        data = clone(fallback);
+      }
+      const callback = resolvers[schema.type];
+      if (!callback) throw new ValidationError(`unsupported type "${schema.type}"`, options);
+      try {
+        return callback(data, schema, options, strict);
+      } catch (error) {
+        if (!schema.meta.loose) throw error;
+        return [schema.meta.default];
+      }
+    };
+    Schema.from = function from(source) {
+      if (isNullable(source)) return Schema.any();
+      else if ([
+        "string",
+        "number",
+        "boolean"
+      ].includes(typeof source)) return Schema.const(source).required();
+      else if (source[kSchema]) return source;
+      else if (typeof source === "function") switch (source) {
+        case String:
+          return Schema.string().required();
+        case Number:
+          return Schema.number().required();
+        case Boolean:
+          return Schema.boolean().required();
+        case Function:
+          return Schema.function().required();
+        default:
+          return Schema.is(source).required();
+      }
+      else throw new TypeError(`cannot infer schema from ${source}`);
+    };
+    Schema.lazy = function lazy(builder) {
+      const toJSON2 = () => {
+        if (!schema.inner[kSchema]) {
+          schema.inner = schema.builder();
+          schema.inner.meta = {
+            ...schema.meta,
+            ...schema.inner.meta
+          };
+        }
+        return schema.inner.toJSON();
+      };
+      const schema = new Schema({
+        type: "lazy",
+        builder,
+        inner: { toJSON: toJSON2 }
+      });
+      return schema;
+    };
+    Schema.natural = function natural() {
+      return Schema.number().step(1).min(0);
+    };
+    Schema.percent = function percent() {
+      return Schema.number().step(0.01).min(0).max(1).role("slider");
+    };
+    Schema.date = function date() {
+      return Schema.union([Schema.is(Date), Schema.transform(Schema.string().role("datetime"), (value, options) => {
+        const date2 = new Date(value);
+        if (isNaN(+date2)) throw new ValidationError(`invalid date "${value}"`, options);
+        return date2;
+      }, true)]);
+    };
+    Schema.regExp = function regExp(flag = "") {
+      return Schema.union([Schema.is(RegExp), Schema.transform(Schema.string().role("regexp", { flag }), (value, options) => {
+        try {
+          return new RegExp(value, flag);
+        } catch (e) {
+          throw new ValidationError(e.message, options);
+        }
+      }, true)]);
+    };
+    Schema.arrayBuffer = function arrayBuffer(encoding) {
+      return Schema.union([
+        Schema.is(ArrayBuffer),
+        Schema.is(SharedArrayBuffer),
+        Schema.transform(Schema.any(), (value, options) => {
+          if (Binary.isSource(value)) return Binary.fromSource(value);
+          throw new ValidationError(`expected ArrayBufferSource but got ${value}`, options);
+        }, true),
+        ...encoding ? [Schema.transform(Schema.string(), (value, options) => {
+          try {
+            return encoding === "base64" ? Binary.fromBase64(value) : Binary.fromHex(value);
+          } catch (e) {
+            throw new ValidationError(e.message, options);
+          }
+        }, true)] : []
+      ]);
+    };
+    Schema.extend("lazy", (data, schema, options, strict) => {
+      if (!schema.inner[kSchema]) {
+        schema.inner = schema.builder();
+        schema.inner.meta = {
+          ...schema.meta,
+          ...schema.inner.meta
+        };
+        validateVolatileSchema(schema.inner, options.path, true);
+      }
+      return Schema.resolve(data, schema.inner, options, strict);
+    });
+    Schema.extend("any", (data) => {
+      return [data];
+    });
+    Schema.extend("never", (data, _, options) => {
+      throw new ValidationError(`expected nullable but got ${data}`, options);
+    });
+    Schema.extend("const", (data, { value }, options) => {
+      if (deepEqual(data, value)) return [value];
+      throw new ValidationError(`expected ${value} but got ${data}`, options);
+    });
+    Schema.extend("string", (data, { meta }, options) => {
+      if (typeof data !== "string") throw new ValidationError(`expected string but got ${data}`, options);
+      if (meta.pattern) {
+        const regexp = new RegExp(meta.pattern.source, meta.pattern.flags);
+        if (!regexp.test(data)) throw new ValidationError(`expect string to match regexp ${regexp}`, options);
+      }
+      checkWithinRange(data.length, meta, "string length", options);
+      return [data];
+    });
+    Schema.extend("number", (data, { meta }, options) => {
+      if (typeof data !== "number") throw new ValidationError(`expected number but got ${data}`, options);
+      checkWithinRange(data, meta, "number", options);
+      const { step } = meta;
+      if (step && !isMultipleOf(data, meta.min ?? 0, step)) throw new ValidationError(`expected number multiple of ${step} but got ${data}`, options);
+      return [data];
+    });
+    Schema.extend("boolean", (data, _, options) => {
+      if (typeof data === "boolean") return [data];
+      throw new ValidationError(`expected boolean but got ${data}`, options);
+    });
+    Schema.extend("bitset", (data, { bits, meta }, options) => {
+      let value = 0, keys = [];
+      if (typeof data === "number") {
+        value = data;
+        for (const key in bits) if (data & bits[key]) keys.push(key);
+      } else if (Array.isArray(data)) {
+        keys = data;
+        for (const key of keys) {
+          if (typeof key !== "string") throw new ValidationError(`expected string but got ${key}`, options);
+          if (key in bits) value |= bits[key];
+        }
+      } else throw new ValidationError(`expected number or array but got ${data}`, options);
+      if (value === meta.default) return [value];
+      return [value, keys];
+    });
+    Schema.extend("function", (data, _, options) => {
+      if (typeof data === "function") return [data];
+      throw new ValidationError(`expected function but got ${data}`, options);
+    });
+    Schema.extend("is", (data, { constructor }, options) => {
+      if (typeof constructor === "function") {
+        if (data instanceof constructor) return [data];
+        throw new ValidationError(`expected ${constructor.name} but got ${data}`, options);
+      } else {
+        if (isNullable(data)) throw new ValidationError(`expected ${constructor} but got ${data}`, options);
+        let prototype = Object.getPrototypeOf(data);
+        while (prototype) {
+          if (prototype.constructor?.name === constructor) return [data];
+          prototype = Object.getPrototypeOf(prototype);
+        }
+        throw new ValidationError(`expected ${constructor} but got ${data}`, options);
+      }
+    });
+    Schema.extend("array", (data, { inner, meta }, options) => {
+      if (!Array.isArray(data)) throw new ValidationError(`expected array but got ${data}`, options);
+      checkWithinRange(data.length, meta, "array length", options, !isNullable(inner.meta.default));
+      return [data.map((_, index) => property(data, index, inner, options))];
+    });
+    Schema.extend("dict", (data, { inner, sKey }, options, strict) => {
+      if (!isPlainObject(data)) throw new ValidationError(`expected object but got ${data}`, options);
+      const result = {};
+      for (const key in data) {
+        let rKey;
+        try {
+          rKey = Schema.resolve(key, sKey, options)[0];
+        } catch (error) {
+          if (strict) continue;
+          throw error;
+        }
+        result[rKey] = property(data, key, inner, options);
+        data[rKey] = data[key];
+        if (key !== rKey) delete data[key];
+      }
+      return [result];
+    });
+    Schema.extend("tuple", (data, { list }, options, strict) => {
+      if (!Array.isArray(data)) throw new ValidationError(`expected array but got ${data}`, options);
+      const result = list.map((inner, index) => property(data, index, inner, options));
+      if (strict) return [result];
+      result.push(...data.slice(list.length));
+      return [result];
+    });
+    Schema.extend("object", (data, { dict }, options, strict) => {
+      if (!isPlainObject(data)) throw new ValidationError(`expected object but got ${data}`, options);
+      const result = {};
+      for (const key in dict) {
+        const value = property(data, key, dict[key], options);
+        if (!isNullable(value) || key in data) result[key] = value;
+      }
+      if (!strict) merge(result, data);
+      return [result];
+    });
+    Schema.extend("union", (data, { list, toString: toString2 }, options, strict) => {
+      const messages = [];
+      for (const inner of list) try {
+        return Schema.resolve(data, inner, options, strict);
+      } catch (error) {
+        messages.push(error);
+      }
+      throw new ValidationError(`expected ${toString2()} but got ${JSON.stringify(data)}`, options);
+    });
+    Schema.extend("intersect", (data, { list, toString: toString2 }, options, strict) => {
+      if (!list.length) return [data];
+      let result;
+      for (const inner of list) {
+        const value = Schema.resolve(data, inner, options, true)[0];
+        if (isNullable(value)) continue;
+        if (isNullable(result)) result = value;
+        else if (typeof result !== typeof value) throw new ValidationError(`expected ${toString2()} but got ${JSON.stringify(data)}`, options);
+        else if (typeof value === "object") merge(result ??= {}, value);
+        else if (result !== value) throw new ValidationError(`expected ${toString2()} but got ${JSON.stringify(data)}`, options);
+      }
+      if (!strict && isPlainObject(data)) merge(result, data);
+      return [result];
+    });
+    Schema.extend("transform", (data, { inner, callback, preserve }, options) => {
+      const [result, adapted = data] = Schema.resolve(data, inner, options, true);
+      if (preserve) return [callback(result)];
+      else return [callback(result), callback(adapted)];
+    });
+    formatters = {};
+    defineMethod("is", ["constructor"], ({ constructor }) => {
+      if (typeof constructor === "function") return constructor.name;
+      else return constructor;
+    });
+    defineMethod("any", [], () => "any");
+    defineMethod("never", [], () => "never");
+    defineMethod("const", ["value"], ({ value }) => typeof value === "string" ? JSON.stringify(value) : value);
+    defineMethod("string", [], () => "string");
+    defineMethod("number", [], () => "number");
+    defineMethod("boolean", [], () => "boolean");
+    defineMethod("bitset", ["bits"], () => "bitset");
+    defineMethod("function", [], () => "function");
+    defineMethod("array", ["inner"], ({ inner }) => `${inner.toString(true)}[]`);
+    defineMethod("dict", ["inner", "sKey"], ({ inner, sKey }) => `{ [key: ${sKey.toString()}]: ${inner.toString()} }`);
+    defineMethod("tuple", ["list"], ({ list }) => `[${list.map((inner) => inner.toString()).join(", ")}]`);
+    defineMethod("object", ["dict"], ({ dict }) => {
+      if (Object.keys(dict).length === 0) return "{}";
+      return `{ ${Object.entries(dict).map(([key, inner]) => {
+        return `${key}${inner.meta.required ? "" : "?"}: ${inner.toString()}`;
+      }).join(", ")} }`;
+    });
+    defineMethod("union", ["list"], ({ list }, inline) => {
+      const result = list.map(({ toString: format }) => format()).join(" | ");
+      return inline ? `(${result})` : result;
+    });
+    defineMethod("intersect", ["list"], ({ list }) => {
+      return `${list.map((inner) => inner.toString(true)).join(" & ")}`;
+    });
+    defineMethod("transform", [
+      "inner",
+      "callback",
+      "preserve"
+    ], ({ inner }, isInner) => inner.toString(isInner));
+  }
+});
+
 // src/config.ts
-import z from "@deepseek-ai/schemastery";
 function resolveResolution(config, args = {}) {
   const resolution = String(args?.resolution ?? FIXED_RESOLUTION).toLowerCase();
   if (!["480p", "720p"].includes(resolution)) throw new Error("\u89C6\u9891\u6E05\u6670\u5EA6\u4EC5\u652F\u6301 480P \u6216 720P\u3002");
@@ -56,52 +930,53 @@ var Config, DEFAULT_MODEL, MAX_SEGMENTS, MIN_SECONDS, MIN_SEGMENT_SECONDS, MAX_S
 var init_config = __esm({
   "src/config.ts"() {
     init_connection_defaults();
-    Config = z.object({
-      connectionMode: z.union(["service", "metaontic", "volcengine"]).default("service").description("\u63A5\u5165\u65B9\u5F0F\uFF1AA \u670D\u52A1\u7AEF\u9886 Key\uFF1BB MetaOntic AI\uFF1BC \u706B\u5C71\u5F15\u64CE\u76F4\u8FDE").volatile(),
-      metaonticApiKey: z.string().default("").description("MetaOntic AI API Key").volatile(),
-      volcengineApiKey: z.string().default("").description("C \u6A21\u5F0F\u706B\u5C71\u5F15\u64CE API Key").volatile(),
-      entryId: z.string().default("metaontic-video").description("\u672C\u63D2\u4EF6\u5728 profile patch \u91CC\u7684\u6761\u76EE id\uFF1B\u914D\u7F6E\u5DE5\u5177\u7528\u5B83\u628A\u6539\u52A8\u5199\u56DE").volatile(),
-      apiKey: z.string().default("").description(
+    init_lib2();
+    Config = Schema.object({
+      connectionMode: Schema.union(["service", "metaontic", "volcengine"]).default("service").description("\u63A5\u5165\u65B9\u5F0F\uFF1AA \u670D\u52A1\u7AEF\u9886 Key\uFF1BB MetaOntic AI\uFF1BC \u706B\u5C71\u5F15\u64CE\u76F4\u8FDE").volatile(),
+      metaonticApiKey: Schema.string().default("").description("MetaOntic AI API Key").volatile(),
+      volcengineApiKey: Schema.string().default("").description("C \u6A21\u5F0F\u706B\u5C71\u5F15\u64CE API Key").volatile(),
+      entryId: Schema.string().default("metaontic-video").description("\u672C\u63D2\u4EF6\u5728 profile patch \u91CC\u7684\u6761\u76EE id\uFF1B\u914D\u7F6E\u5DE5\u5177\u7528\u5B83\u628A\u6539\u52A8\u5199\u56DE").volatile(),
+      apiKey: Schema.string().default("").description(
         "API Key\uFF1A\u53EA\u5728\u8BBE\u7F6E\u9875\u70B9\u300C\u767B\u5F55\u300D\u65F6\u7531\u670D\u52A1\u7AEF\u4E0B\u53D1\u5E76\u76F4\u63A5\u5199\u8FDB\u914D\u7F6E\uFF0C\u4E0D\u652F\u6301\u624B\u586B\u3001\u4E5F\u4E0D\u8BFB\u73AF\u5883\u53D8\u91CF\uFF1B\u624B\u6539\u8FD9\u91CC\u7684\u503C\u4F1A\u88AB\u62D2\u7EDD\u8C03\u7528"
       ).volatile(),
-      keyOrigin: z.string().default("").description("\u5BC6\u94A5\u6765\u6E90\u6807\u8BB0\uFF1A\u8BBE\u7F6E\u9875\u300C\u767B\u5F55\u300D\u6210\u529F\u540E\u5199\u5165 'register'\uFF0C\u63D2\u4EF6\u53EA\u8BA4\u670D\u52A1\u7AEF\u4E0B\u53D1\u7684 Key").volatile(),
-      baseUrl: z.string().default("").description(
+      keyOrigin: Schema.string().default("").description("\u5BC6\u94A5\u6765\u6E90\u6807\u8BB0\uFF1A\u8BBE\u7F6E\u9875\u300C\u767B\u5F55\u300D\u6210\u529F\u540E\u5199\u5165 'register'\uFF0C\u63D2\u4EF6\u53EA\u8BA4\u670D\u52A1\u7AEF\u4E0B\u53D1\u7684 Key").volatile(),
+      baseUrl: Schema.string().default("").description(
         "\u57FA\u7840\u5730\u5740\uFF08\u4E2D\u8F6C\u7AD9\u7AD9\u5740\uFF09\uFF1B\u7559\u7A7A\u65F6\u8BFB\u73AF\u5883\u53D8\u91CF NEWAPI_VIDEO_BASE_URL / NEWAPI_BASE_URL\uFF0C\u518D\u4F7F\u7528 https://ai.bileego.com\u3002\u793A\u4F8B https://ai.bileego.com\uFF08\u4E0D\u8981\u5E26 /v1\uFF0C\u4E5F\u4E0D\u8981\u91CD\u590D /api/v3\uFF09"
       ).volatile(),
-      submitPath: z.string().default("").description("\u521B\u5EFA\u4EFB\u52A1\u8DEF\u5F84\uFF1B\u7559\u7A7A\u7528\u4E2D\u8F6C\u7AD9\u9ED8\u8BA4\u503C /doubao/api/v3/contents/generations/tasks").volatile(),
-      queryPath: z.string().default("").description("\u67E5\u8BE2\u4EFB\u52A1\u8DEF\u5F84\uFF0C{task_id} \u4F1A\u88AB\u4EFB\u52A1 ID \u66FF\u6362\uFF1B\u7559\u7A7A\u7528\u4E2D\u8F6C\u7AD9\u9ED8\u8BA4\u503C").volatile(),
-      imageUseVideoKey: z.boolean().default(true).description("\u56FE\u7247\u6A21\u578B\u4E0E\u89C6\u9891\u6A21\u578B\u5171\u7528 Key").volatile(),
-      imageApiKey: z.string().default("").description("\u4E0D\u5171\u7528\u65F6\u586B\u5199\u7684\u56FE\u7247\u6A21\u578B API Key").volatile(),
-      imageModel: z.union(["doubao-seedream-5-0-260128", "doubao-seedream-5-0-pro-260628"]).default("doubao-seedream-5-0-260128").description("A/B \u771F\u4EBA\u53C2\u8003\u56FE\u975E\u771F\u4EBA\u5316\u4F7F\u7528\u7684\u56FE\u7247\u6A21\u578B").volatile(),
-      model: z.string().default("").description("\u89C6\u9891\u751F\u6210\u7528\u7684\u6A21\u578B ID\uFF08seedance 2.0 / 2.5 \u7CFB\u5217\uFF09\uFF1B\u7559\u7A7A\u8BFB NEWAPI_VIDEO_MODEL \u6216\u5185\u7F6E\u9ED8\u8BA4\u503C").volatile(),
-      registerEmail: z.string().default("").description("\u9886 Key \u7528\u7684\u90AE\u7BB1\uFF08\u8D26\u53F7\uFF09\uFF1A\u4E2D\u8F6C\u7AD9\u91CC\u7684\u5BC6\u94A5\u540D\u7531\u670D\u52A1\u7AEF\u751F\u6210\u552F\u4E00\u4E32\uFF0C\u4E0E\u8FD9\u4E2A\u90AE\u7BB1\u7ED1\u5B9A").volatile(),
-      registerToken: z.string().default("metaontic-video-register-v1").description("\u6CE8\u518C\u8BF7\u6C42\u5934 X-Register-Token \u7684\u503C\uFF0C\u8981\u4E0E\u670D\u52A1\u7AEF REGISTER_CLIENT_TOKEN \u4E00\u81F4\uFF1B\u9875\u9762\u4E0D\u663E\u793A").volatile(),
-      registerApi: z.string().default("").description("\u63D2\u4EF6\u670D\u52A1\u5730\u5740\uFF08\u9886 Key / \u67E5\u989D\u5EA6 / \u4F7F\u7528\u8BB0\u5F55\uFF09\uFF1B\u7559\u7A7A\u7528\u5185\u7F6E\u7684\u89C6\u9891\u670D\u52A1\u57DF\u540D").volatile(),
-      deviceId: z.string().default("").description("\u672C\u673A\u8BBE\u5907\u6807\u8BC6\uFF1A\u8BBE\u7F6E\u9875\u70B9\u300C\u767B\u5F55\u300D\u65F6\u5199\u5165\uFF0C\u7528\u6765\u67E5\u8FD9\u628A Key \u7684\u5269\u4F59\u989D\u5EA6").volatile(),
-      deviceSecret: z.string().default("").description("\u672C\u673A\u8BBE\u5907\u5BC6\u94A5\uFF1A\u4E0E\u8BBE\u5907\u6807\u8BC6\u4E00\u8D77\u7ED1\u5B9A\u5F52\u5C5E\uFF1B\u9875\u9762\u4E0D\u663E\u793A").volatile(),
-      estimateGroupRatio: z.number().min(0).max(10).default(0.8).description("\u9884\u4F30\u8D39\u7528\u7528\u7684\u5206\u7EC4\u6298\u6263\uFF08\u4E2D\u8F6C\u7AD9 group_ratio\uFF1Avideosvip=0.8\u3001default=1\uFF09").volatile(),
-      duration: z.number().step(1).min(4).max(30).default(15).description("\u517C\u5BB9\u65E7\u914D\u7F6E\uFF1B\u5206\u6BB5\u9ED8\u8BA4\u6309\u6A21\u578B\u4E0A\u9650\u6620\u5C04\uFF1A2.0 \u4E3A 15 \u79D2\u30012.5 \u4E3A 30 \u79D2\u3002\u9700\u7F29\u77ED\u5206\u6BB5\u65F6\u5728\u5DE5\u5177\u8C03\u7528\u4E2D\u6307\u5B9A\u3002").volatile(),
-      singleMaxSeconds: z.number().step(1).min(4).max(30).default(15).description("\u517C\u5BB9\u65E7\u914D\u7F6E\uFF1B\u5355\u6B21\u76F4\u51FA\u4E0A\u9650\u7531\u6A21\u578B\u51B3\u5B9A\uFF1A2.0 \u4E3A 15 \u79D2\u30012.5 \u4E3A 30 \u79D2\u3002").volatile(),
-      seamTrimSeconds: z.string().default("").description("2.0 \u9ED8\u8BA4\u6BCF\u63A5\u7F1D\u88C1\u524D\u6BB5\u5C3E6\u5E27\u3001\u540E\u6BB5\u59341\u5E27\uFF1B\u586B0\u5173\u95ED\u3002\u8986\u76D6\u4E3A\u624B\u52A8\u88C1\u526A\uFF1A\u9017\u53F7\u5206\u9694\u79D2\u6570\uFF0C\u5BF9\u5E94\u7B2C2\u30013\u2026\u6BB5\u5F00\u5934\uFF0C0\u20133\u79D2\uFF1B2.5\u7559\u7A7A\u4E0D\u88C1\u3002\u5148\u9884\u89C8\u786E\u8BA4\uFF0C\u907F\u514D\u5207\u65AD\u5BF9\u767D\u3002").volatile(),
-      mergeMode: z.union(["seamless", "copy", "reencode"]).default("copy").description(
+      submitPath: Schema.string().default("").description("\u521B\u5EFA\u4EFB\u52A1\u8DEF\u5F84\uFF1B\u7559\u7A7A\u7528\u4E2D\u8F6C\u7AD9\u9ED8\u8BA4\u503C /doubao/api/v3/contents/generations/tasks").volatile(),
+      queryPath: Schema.string().default("").description("\u67E5\u8BE2\u4EFB\u52A1\u8DEF\u5F84\uFF0C{task_id} \u4F1A\u88AB\u4EFB\u52A1 ID \u66FF\u6362\uFF1B\u7559\u7A7A\u7528\u4E2D\u8F6C\u7AD9\u9ED8\u8BA4\u503C").volatile(),
+      imageUseVideoKey: Schema.boolean().default(true).description("\u56FE\u7247\u6A21\u578B\u4E0E\u89C6\u9891\u6A21\u578B\u5171\u7528 Key").volatile(),
+      imageApiKey: Schema.string().default("").description("\u4E0D\u5171\u7528\u65F6\u586B\u5199\u7684\u56FE\u7247\u6A21\u578B API Key").volatile(),
+      imageModel: Schema.union(["doubao-seedream-5-0-260128", "doubao-seedream-5-0-pro-260628"]).default("doubao-seedream-5-0-260128").description("A/B \u771F\u4EBA\u53C2\u8003\u56FE\u975E\u771F\u4EBA\u5316\u4F7F\u7528\u7684\u56FE\u7247\u6A21\u578B").volatile(),
+      model: Schema.string().default("").description("\u89C6\u9891\u751F\u6210\u7528\u7684\u6A21\u578B ID\uFF08seedance 2.0 / 2.5 \u7CFB\u5217\uFF09\uFF1B\u7559\u7A7A\u8BFB NEWAPI_VIDEO_MODEL \u6216\u5185\u7F6E\u9ED8\u8BA4\u503C").volatile(),
+      registerEmail: Schema.string().default("").description("\u9886 Key \u7528\u7684\u90AE\u7BB1\uFF08\u8D26\u53F7\uFF09\uFF1A\u4E2D\u8F6C\u7AD9\u91CC\u7684\u5BC6\u94A5\u540D\u7531\u670D\u52A1\u7AEF\u751F\u6210\u552F\u4E00\u4E32\uFF0C\u4E0E\u8FD9\u4E2A\u90AE\u7BB1\u7ED1\u5B9A").volatile(),
+      registerToken: Schema.string().default("metaontic-video-register-v1").description("\u6CE8\u518C\u8BF7\u6C42\u5934 X-Register-Token \u7684\u503C\uFF0C\u8981\u4E0E\u670D\u52A1\u7AEF REGISTER_CLIENT_TOKEN \u4E00\u81F4\uFF1B\u9875\u9762\u4E0D\u663E\u793A").volatile(),
+      registerApi: Schema.string().default("").description("\u63D2\u4EF6\u670D\u52A1\u5730\u5740\uFF08\u9886 Key / \u67E5\u989D\u5EA6 / \u4F7F\u7528\u8BB0\u5F55\uFF09\uFF1B\u7559\u7A7A\u7528\u5185\u7F6E\u7684\u89C6\u9891\u670D\u52A1\u57DF\u540D").volatile(),
+      deviceId: Schema.string().default("").description("\u672C\u673A\u8BBE\u5907\u6807\u8BC6\uFF1A\u8BBE\u7F6E\u9875\u70B9\u300C\u767B\u5F55\u300D\u65F6\u5199\u5165\uFF0C\u7528\u6765\u67E5\u8FD9\u628A Key \u7684\u5269\u4F59\u989D\u5EA6").volatile(),
+      deviceSecret: Schema.string().default("").description("\u672C\u673A\u8BBE\u5907\u5BC6\u94A5\uFF1A\u4E0E\u8BBE\u5907\u6807\u8BC6\u4E00\u8D77\u7ED1\u5B9A\u5F52\u5C5E\uFF1B\u9875\u9762\u4E0D\u663E\u793A").volatile(),
+      estimateGroupRatio: Schema.number().min(0).max(10).default(0.8).description("\u9884\u4F30\u8D39\u7528\u7528\u7684\u5206\u7EC4\u6298\u6263\uFF08\u4E2D\u8F6C\u7AD9 group_ratio\uFF1Avideosvip=0.8\u3001default=1\uFF09").volatile(),
+      duration: Schema.number().step(1).min(4).max(30).default(15).description("\u517C\u5BB9\u65E7\u914D\u7F6E\uFF1B\u5206\u6BB5\u9ED8\u8BA4\u6309\u6A21\u578B\u4E0A\u9650\u6620\u5C04\uFF1A2.0 \u4E3A 15 \u79D2\u30012.5 \u4E3A 30 \u79D2\u3002\u9700\u7F29\u77ED\u5206\u6BB5\u65F6\u5728\u5DE5\u5177\u8C03\u7528\u4E2D\u6307\u5B9A\u3002").volatile(),
+      singleMaxSeconds: Schema.number().step(1).min(4).max(30).default(15).description("\u517C\u5BB9\u65E7\u914D\u7F6E\uFF1B\u5355\u6B21\u76F4\u51FA\u4E0A\u9650\u7531\u6A21\u578B\u51B3\u5B9A\uFF1A2.0 \u4E3A 15 \u79D2\u30012.5 \u4E3A 30 \u79D2\u3002").volatile(),
+      seamTrimSeconds: Schema.string().default("").description("2.0 \u9ED8\u8BA4\u6BCF\u63A5\u7F1D\u88C1\u524D\u6BB5\u5C3E6\u5E27\u3001\u540E\u6BB5\u59341\u5E27\uFF1B\u586B0\u5173\u95ED\u3002\u8986\u76D6\u4E3A\u624B\u52A8\u88C1\u526A\uFF1A\u9017\u53F7\u5206\u9694\u79D2\u6570\uFF0C\u5BF9\u5E94\u7B2C2\u30013\u2026\u6BB5\u5F00\u5934\uFF0C0\u20133\u79D2\uFF1B2.5\u7559\u7A7A\u4E0D\u88C1\u3002\u5148\u9884\u89C8\u786E\u8BA4\uFF0C\u907F\u514D\u5207\u65AD\u5BF9\u767D\u3002").volatile(),
+      mergeMode: Schema.union(["seamless", "copy", "reencode"]).default("copy").description(
         "\u5408\u5E76\u65B9\u5F0F\uFF1Acopy=\u76F4\u63A5\u62FC\u63A5\uFF08\u9ED8\u8BA4\uFF0C\u65E0\u753B\u9762\u53E0\u5316\uFF09\uFF1Breencode=\u7EDF\u4E00\u91CD\u7F16\u7801\u540E\u76F4\u63A5\u62FC\u63A5\uFF1Bseamless\u4E3A\u65E7\u914D\u7F6E\u517C\u5BB9\u503C\uFF0C\u6309\u76F4\u63A5\u62FC\u63A5\u5904\u7406\u3002"
       ).volatile(),
-      bgmFadeSeconds: z.number().min(0).max(3).default(0.8).description("\u65E7\u914D\u7F6E\u517C\u5BB9\u5B57\u6BB5\uFF0C\u5F53\u524D\u76F4\u63A5\u62FC\u63A5\u4E0D\u4F7F\u7528\u97F3\u9891\u4EA4\u53C9\u6DE1\u5316\uFF0C\u4FEE\u6539\u6B64\u503C\u4E0D\u751F\u6548\u3002").volatile(),
-      outputDir: z.string().default("").description("\u6210\u7247\u8F93\u51FA\u76EE\u5F55\uFF1B\u7559\u7A7A\u7528\u4F1A\u8BDD\u5DE5\u4F5C\u76EE\u5F55\u4E0B\u7684 metaontic-video/").volatile(),
-      keepSegments: z.boolean().default(true).description("\u65E7\u914D\u7F6E\u517C\u5BB9\u5B57\u6BB5\uFF1B\u539F\u59CB\u5206\u6BB5\u59CB\u7EC8\u4FDD\u7559\uFF0C\u6B64\u503C\u4E0D\u518D\u63A7\u5236\u5220\u9664\u3002").volatile(),
-      resumeLockStaleMinutes: z.number().min(0).default(60).description(
+      bgmFadeSeconds: Schema.number().min(0).max(3).default(0.8).description("\u65E7\u914D\u7F6E\u517C\u5BB9\u5B57\u6BB5\uFF0C\u5F53\u524D\u76F4\u63A5\u62FC\u63A5\u4E0D\u4F7F\u7528\u97F3\u9891\u4EA4\u53C9\u6DE1\u5316\uFF0C\u4FEE\u6539\u6B64\u503C\u4E0D\u751F\u6548\u3002").volatile(),
+      outputDir: Schema.string().default("").description("\u6210\u7247\u8F93\u51FA\u76EE\u5F55\uFF1B\u7559\u7A7A\u7528\u4F1A\u8BDD\u5DE5\u4F5C\u76EE\u5F55\u4E0B\u7684 metaontic-video/").volatile(),
+      keepSegments: Schema.boolean().default(true).description("\u65E7\u914D\u7F6E\u517C\u5BB9\u5B57\u6BB5\uFF1B\u539F\u59CB\u5206\u6BB5\u59CB\u7EC8\u4FDD\u7559\uFF0C\u6B64\u503C\u4E0D\u518D\u63A7\u5236\u5220\u9664\u3002").volatile(),
+      resumeLockStaleMinutes: Schema.number().min(0).default(60).description(
         "\u6682\u505C\u76EE\u5F55\u7684\u300C\u7EED\u505A\u9501\u300D\u8D85\u8FC7\u591A\u5C11\u5206\u949F\u7B97\u8FC7\u671F\u6B8B\u7559\uFF08\u9ED8\u8BA4 60\uFF0C0=\u6C38\u4E0D\u8FC7\u671F\uFF09\u3002\u540C\u4E00\u4EFD\u6682\u505C\u8FDB\u5EA6\u540C\u65F6\u53EA\u80FD\u6709\u4E00\u6B21 resume \u5728\u8DD1\uFF0C\u5426\u5219\u5269\u4E0B\u7684\u6BB5\u4F1A\u88AB\u63D0\u4EA4\u4E24\u904D\u3001\u91CD\u590D\u6263\u8D39\uFF1B\u4E0A\u4E00\u6B21\u88AB\u5F3A\u6740 / \u5BBF\u4E3B\u653E\u5F03\u8C03\u7528\u65F6\u9501\u6587\u4EF6\u4F1A\u7559\u4E0B\uFF0C\u8D85\u8FC7\u8FD9\u4E2A\u65F6\u95F4\u624D\u5141\u8BB8\u540E\u6765\u8005\u62A2\u8FC7\u6765\u3002"
       ).volatile(),
-      ffmpegBinary: z.string().default("ffmpeg").description("ffmpeg \u53EF\u6267\u884C\u6587\u4EF6\uFF1BPATH \u91CC\u6CA1\u6709\u65F6\u586B\u7EDD\u5BF9\u8DEF\u5F84").volatile(),
-      ffprobeBinary: z.string().default("ffprobe").description("ffprobe \u53EF\u6267\u884C\u6587\u4EF6\uFF1BPATH \u91CC\u6CA1\u6709\u65F6\u586B\u7EDD\u5BF9\u8DEF\u5F84").volatile(),
-      mode: z.union(["continuous", "closeup"]).default("continuous").description("\u65E7\u914D\u7F6E\u517C\u5BB9\u5B57\u6BB5\uFF0C\u65B0\u4EFB\u52A1\u4E0D\u518D\u8BFB\u53D6\uFF1B\u7EED\u62CD\u65B9\u5F0F\u7531\u5DF2\u5BA1\u6838\u811A\u672C\u7684\u5DE5\u5177\u53C2\u6570\u4E0E\u8FC7\u6E21\u63CF\u8FF0\u51B3\u5B9A").volatile(),
-      ratio: z.union(["16:9", "9:16", "4:3", "3:4", "1:1", "adaptive"]).default("adaptive").description("\u753B\u9762\u6BD4\u4F8B\uFF1Bseedance 2.5 \u5EF6\u957F\u65F6\u56FA\u5B9A\u6539\u7528 adaptive").volatile(),
-      generateAudio: z.boolean().default(true).description("\u662F\u5426\u751F\u6210\u97F3\u9891").volatile(),
-      watermark: z.boolean().default(false).description("\u662F\u5426\u6DFB\u52A0\u6C34\u5370\uFF1B\u90E8\u5206\u4E2D\u8F6C\u7AD9\u53EA\u63A5\u53D7 true").volatile(),
-      extraParams: z.string().default("").description("JSON \u5BF9\u8C61\u5B57\u7B26\u4E32\uFF0C\u5408\u5E76\u8FDB\u8BF7\u6C42\u4F53\uFF0C\u7528\u4E8E\u4E2D\u8F6C\u7AD9\u7684\u7279\u6709\u5B57\u6BB5").volatile(),
-      pollIntervalMs: z.natural().min(1e3).default(5e3).description("\u8F6E\u8BE2\u4EFB\u52A1\u72B6\u6001\u7684\u95F4\u9694\uFF08\u6BEB\u79D2\uFF09").volatile(),
-      maxWaitMs: z.natural().min(1e3).default(6e5).description("\u5355\u6B21\u8C03\u7528\u6700\u957F\u7B49\u5F85\u65F6\u95F4\uFF08\u6BEB\u79D2\uFF09").volatile(),
-      pollErrorRetries: z.natural().min(1).max(60).default(5).description(
+      ffmpegBinary: Schema.string().default("ffmpeg").description("ffmpeg \u53EF\u6267\u884C\u6587\u4EF6\uFF1BPATH \u91CC\u6CA1\u6709\u65F6\u586B\u7EDD\u5BF9\u8DEF\u5F84").volatile(),
+      ffprobeBinary: Schema.string().default("ffprobe").description("ffprobe \u53EF\u6267\u884C\u6587\u4EF6\uFF1BPATH \u91CC\u6CA1\u6709\u65F6\u586B\u7EDD\u5BF9\u8DEF\u5F84").volatile(),
+      mode: Schema.union(["continuous", "closeup"]).default("continuous").description("\u65E7\u914D\u7F6E\u517C\u5BB9\u5B57\u6BB5\uFF0C\u65B0\u4EFB\u52A1\u4E0D\u518D\u8BFB\u53D6\uFF1B\u7EED\u62CD\u65B9\u5F0F\u7531\u5DF2\u5BA1\u6838\u811A\u672C\u7684\u5DE5\u5177\u53C2\u6570\u4E0E\u8FC7\u6E21\u63CF\u8FF0\u51B3\u5B9A").volatile(),
+      ratio: Schema.union(["16:9", "9:16", "4:3", "3:4", "1:1", "adaptive"]).default("adaptive").description("\u753B\u9762\u6BD4\u4F8B\uFF1Bseedance 2.5 \u5EF6\u957F\u65F6\u56FA\u5B9A\u6539\u7528 adaptive").volatile(),
+      generateAudio: Schema.boolean().default(true).description("\u662F\u5426\u751F\u6210\u97F3\u9891").volatile(),
+      watermark: Schema.boolean().default(false).description("\u662F\u5426\u6DFB\u52A0\u6C34\u5370\uFF1B\u90E8\u5206\u4E2D\u8F6C\u7AD9\u53EA\u63A5\u53D7 true").volatile(),
+      extraParams: Schema.string().default("").description("JSON \u5BF9\u8C61\u5B57\u7B26\u4E32\uFF0C\u5408\u5E76\u8FDB\u8BF7\u6C42\u4F53\uFF0C\u7528\u4E8E\u4E2D\u8F6C\u7AD9\u7684\u7279\u6709\u5B57\u6BB5").volatile(),
+      pollIntervalMs: Schema.natural().min(1e3).default(5e3).description("\u8F6E\u8BE2\u4EFB\u52A1\u72B6\u6001\u7684\u95F4\u9694\uFF08\u6BEB\u79D2\uFF09").volatile(),
+      maxWaitMs: Schema.natural().min(1e3).default(6e5).description("\u5355\u6B21\u8C03\u7528\u6700\u957F\u7B49\u5F85\u65F6\u95F4\uFF08\u6BEB\u79D2\uFF09").volatile(),
+      pollErrorRetries: Schema.natural().min(1).max(60).default(5).description(
         "\u8F6E\u8BE2\u671F\u95F4\u300C\u67E5\u8BE2\u5931\u8D25\u300D\u7684\u5BB9\u5FCD\u6B21\u6570\uFF1A\u7F51\u7EDC\u6296\u52A8\u3001\u4E2D\u8F6C\u7AD9\u9650\u6D41\u3001Key \u4E2D\u9014\u88AB\u5224\u65E0\u6548\u90FD\u4F1A\u8BA9\u67E5\u8BE2\u62A5\u9519\uFF0C\u4F46\u4EFB\u52A1\u5728\u4E0A\u6E38\u7167\u5E38\u751F\u6210\u2014\u2014\u8FDE\u7EED\u5931\u8D25\u5230\u8FD9\u4E2A\u6B21\u6570\u624D\u653E\u5F03\u7B49\u5F85\u3002\u653E\u5F03\u65F6\u4EFB\u52A1 ID \u4ECD\u4FDD\u7559\uFF0C\u53EF\u7528 video_status \u4E8B\u540E\u8865\u67E5\uFF0C\u4E0D\u4F1A\u628A\u300C\u67E5\u4E0D\u5230\u300D\u5F53\u6210\u300C\u6CA1\u751F\u6210\u300D\u3002\u8BBE\u7F6E\u9875\u4E0D\u663E\u793A\u8FD9\u4E00\u9879\uFF1A\u9ED8\u8BA4\u503C 5 \u591F\u7528\u3002"
       ).volatile()
     });
@@ -170,7 +1045,7 @@ var init_config = __esm({
     FORWARD_TRANSITION = "\u5411\u524D\u5EF6\u957F\u65F6\uFF0C\u672C\u6BB5\u6700\u540E\u4E00\u5E27\u5FC5\u987B\u7D27\u63A5\u89C6\u98911\u7B2C\u4E00\u5E27\uFF0C\u4FDD\u6301\u540C\u4E00\u6784\u56FE\u3001\u4EBA\u7269\u5927\u5C0F\u3001\u5DE6\u53F3\u4F4D\u7F6E\u3001\u5934\u90E8\u671D\u5411\u3001\u89C6\u7EBF\u3001\u624B\u90E8\u4F4D\u7F6E\u548C\u52A8\u4F5C\u9636\u6BB5\u3002\u52A8\u4F5C\u671D\u5411\u89C6\u98911\u7684\u5F00\u573A\u52A8\u4F5C\u53D1\u5C55\uFF0C\u4E0D\u91CD\u590D\u524D\u6BB5\u52A8\u4F5C\u3001\u4E0D\u5B9A\u683C\u7B49\u5F85\u3001\u4E0D\u4ECE\u753B\u9762\u53E6\u4E00\u4FA7\u91CD\u65B0\u5165\u573A\uFF1B\u4E0D\u64C5\u81EA\u5207\u955C\u6216\u91CD\u65B0\u5C45\u4E2D\u3002";
     CLOSEUP_TRANSITION = "\u955C\u5934\u8854\u63A5\u5EFA\u8BAE\uFF08\u4EC5\u5728\u672C\u6BB5\u672A\u660E\u786E\u6307\u5B9A\u8FD0\u955C\u6216\u5207\u955C\u5B89\u6392\u65F6\u91C7\u7528\uFF09\uFF1A\u5728\u5B8C\u6574\u53F0\u8BCD\u7ED3\u675F\u5904\u81EA\u7136\u5207\u5230\u4E0B\u4E00\u4F4D\u8BF4\u8BDD\u4EBA\u7684\u8FD1\u666F\u6216\u542C\u8BDD\u4EBA\u7684\u53CD\u5E94\u8FD1\u666F\uFF0C\u518D\u7EE7\u7EED\u672C\u6BB5\u5267\u60C5\u3002\u4FDD\u6301\u8F74\u7EBF\u3001\u89C6\u7EBF\u65B9\u5411\u3001\u5DE6\u53F3\u4EBA\u7269\u5173\u7CFB\u3001\u670D\u88C5\u548C\u97F3\u8272\uFF0C\u4E0D\u4EA4\u6362\u89D2\u8272\uFF1B\u53EA\u6539\u53D8\u666F\u522B\uFF0C\u4E0D\u65B0\u589E\u573A\u666F\u3002";
     CONTENT_REJECTION_HINT = "\u53C2\u8003\u89C6\u9891\u88AB\u4E0A\u6E38\u5185\u5BB9\u5BA1\u6838\u62D2\u7EDD\uFF0C\u5EF6\u957F\u5DF2\u505C\u6B62\u3002Seedance \u542B\u4EBA\u8138\u7EED\u62CD\u9700\u4F7F\u7528\u540C\u4E00\u4E0A\u6E38\u8D26\u53F7\u7684\u53D7\u4FE1\u539F\u59CB\u89C6\u9891\u6216\u6388\u6743\u7D20\u6750\uFF1B\u8BF7\u786E\u8BA4\u4E2D\u8F6C\u7AD9\u900F\u4F20\u4E86\u539F\u59CB video_url \u4E0E reference_video\uFF0C\u4E14\u524D\u540E\u8BF7\u6C42\u4F7F\u7528\u540C\u4E00\u4E0A\u6E38\u8D26\u53F7\u3002\u4E0D\u4F1A\u81EA\u52A8\u53BB\u6389\u53C2\u8003\u89C6\u9891\u751F\u6210\uFF0C\u4EE5\u514D\u4EBA\u7269\u4E0D\u4E00\u81F4\u3002";
-    PLUGIN_VERSION = true ? "3.11.4".trim().replace(/^v/i, "") : "";
+    PLUGIN_VERSION = true ? "3.12.0".trim().replace(/^v/i, "") : "";
   }
 });
 
@@ -284,21 +1159,21 @@ function resolveRegisterApi(config) {
   return (String(ref(config, "registerApi", "")).trim() || DEFAULT_REGISTER_API).replace(/\/+$/, "");
 }
 function snapshotConfig(config) {
-  const snapshot = {};
-  for (const key of Object.keys(config || {})) snapshot[key] = ref(config, key, void 0);
-  snapshot.connectionMode = isVolcengine(config) ? "volcengine" : isMetaontic(config) ? "metaontic" : "service";
-  snapshot.baseUrl = resolveBaseUrl(config);
-  snapshot.model = resolveModel(config);
-  snapshot.submitPath = resolveSubmitPath(config);
-  snapshot.queryPath = isVolcengine(config) ? "/api/v3/contents/generations/tasks/{task_id}" : String(ref(config, "queryPath", "")).trim() || relayPreset().queryPath;
-  return Object.freeze(snapshot);
+  const snapshot2 = {};
+  for (const key of Object.keys(config || {})) snapshot2[key] = ref(config, key, void 0);
+  snapshot2.connectionMode = isVolcengine(config) ? "volcengine" : isMetaontic(config) ? "metaontic" : "service";
+  snapshot2.baseUrl = resolveBaseUrl(config);
+  snapshot2.model = resolveModel(config);
+  snapshot2.submitPath = resolveSubmitPath(config);
+  snapshot2.queryPath = isVolcengine(config) ? "/api/v3/contents/generations/tasks/{task_id}" : String(ref(config, "queryPath", "")).trim() || relayPreset().queryPath;
+  return Object.freeze(snapshot2);
 }
 function imageConfig(config) {
-  const snapshot = snapshotConfig(config);
-  if (!isMetaontic(snapshot) || ref(snapshot, "imageUseVideoKey", true) !== false) return snapshot;
-  const key = String(ref(snapshot, "imageApiKey", "")).trim();
+  const snapshot2 = snapshotConfig(config);
+  if (!isMetaontic(snapshot2) || ref(snapshot2, "imageUseVideoKey", true) !== false) return snapshot2;
+  const key = String(ref(snapshot2, "imageApiKey", "")).trim();
   if (!key) throw new Error("\u5DF2\u5173\u95ED\u56FE\u7247\u4E0E\u89C6\u9891\u5171\u7528 Key\uFF0C\u8BF7\u5355\u72EC\u586B\u5199\u56FE\u7247\u6A21\u578B API Key\u3002");
-  return Object.freeze({ ...snapshot, [isMetaontic(snapshot) ? "metaonticApiKey" : "apiKey"]: key });
+  return Object.freeze({ ...snapshot2, [isMetaontic(snapshot2) ? "metaonticApiKey" : "apiKey"]: key });
 }
 var init_connection = __esm({
   "src/providers/connection.ts"() {
@@ -404,7 +1279,7 @@ function resolveBinary(config, key, fallback) {
   return String(ref(config, key, "")).trim() || fallback;
 }
 async function runProcess(binary, args, { signal, timeoutMs = 18e5, shell = false } = {}) {
-  return new Promise((resolve2, reject) => {
+  return new Promise((resolve3, reject) => {
     let child;
     try {
       child = spawn(binary, args, { stdio: ["ignore", "pipe", "pipe"], ...shell ? { shell: true } : {} });
@@ -426,7 +1301,7 @@ async function runProcess(binary, args, { signal, timeoutMs = 18e5, shell = fals
       done = true;
       cleanup();
       if (error) reject(error);
-      else resolve2(value);
+      else resolve3(value);
     }
     function onAbort() {
       child.kill("SIGKILL");
@@ -594,9 +1469,9 @@ function uniqueSuffix(prefix = "tmp") {
   tempSequence = (tempSequence + 1) % 1e9;
   return `${prefix}-${process.pid}-${tempSequence}-${Math.random().toString(36).slice(2, 8)}`;
 }
-function fileStamp(date = /* @__PURE__ */ new Date()) {
+function fileStamp(date2 = /* @__PURE__ */ new Date()) {
   const pad = (value) => String(value).padStart(2, "0");
-  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+  return `${date2.getFullYear()}${pad(date2.getMonth() + 1)}${pad(date2.getDate())}-${pad(date2.getHours())}${pad(date2.getMinutes())}${pad(date2.getSeconds())}`;
 }
 async function allocateStamp(outDir, base) {
   const parent = path.join(outDir, "segments");
@@ -880,8 +1755,8 @@ import { mkdir as mkdir3, appendFile } from "node:fs/promises";
 var requestLogContext = new AsyncLocalStorage();
 function requestLogPath() {
   const now = /* @__PURE__ */ new Date();
-  const date = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
-  return path3.join(dshHome(), "logs", "metaontic-video", date, "requests.jsonl");
+  const date2 = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  return path3.join(dshHome(), "logs", "metaontic-video", date2, "requests.jsonl");
 }
 async function appendRequestLog(record) {
   try {
@@ -1507,6 +2382,7 @@ function pickResumeOptions(args) {
     "firstFrameUrl",
     "lastFrameUrl",
     "referenceImages",
+    "characterReferenceImages",
     "resolution",
     "seed",
     "user",
@@ -1564,7 +2440,7 @@ function assertResumeConnection(data, config, args) {
   }
   throw new Error("\u5F53\u524D\u6A21\u578B\u6216\u63A5\u5165\u6E20\u9053\u4E0E\u539F\u8FDB\u5EA6\u4E0D\u4E00\u81F4\u3002\u8BF7\u6062\u590D\u539F\u914D\u7F6E\uFF1B\u5982\u9700\u66F4\u6362\uFF0C\u5148\u5411\u7528\u6237\u8BF4\u660E\u53D8\u5316\u5E76\u786E\u8BA4\uFF0C\u518D\u4F20 resumeWithCurrentConfig:true\u3002");
 }
-async function saveProgress(dir, { config, toolName, stamp, prompt, fullPlan, cursor, referenceUrl, options, segments, pendingTask, operationState = {} }) {
+async function saveProgress(dir, { config, toolName, stamp, prompt, fullPlan, cursor, referenceUrl, options, segments, pendingTask, operationState = {}, characterReferences = void 0 }) {
   const completed = segments.filter((step) => step.status === "succeeded" && step.videoUrl);
   const record = pauseRecordAt({
     stamp,
@@ -1582,7 +2458,8 @@ async function saveProgress(dir, { config, toolName, stamp, prompt, fullPlan, cu
     deliveryPending: !pendingTask && completed.length > 0,
     state: pendingTask ? "pending" : completed.length >= fullPlan.length ? "completed" : "paused",
     pendingTask: pendingTask || null,
-    operationState
+    operationState,
+    ...characterReferences !== void 0 ? { characterReferences } : {}
   });
   await writePauseFile(dir, record);
 }
@@ -1803,14 +2680,14 @@ async function relayRequestCore(config, path11, { method = "GET", body, signal }
   return data;
 }
 function sleep(ms, signal) {
-  return new Promise((resolve2, reject) => {
+  return new Promise((resolve3, reject) => {
     if (signal?.aborted) {
       reject(abortError());
       return;
     }
     const timer = setTimeout(() => {
       signal?.removeEventListener("abort", onAbort);
-      resolve2();
+      resolve3();
     }, ms);
     function onAbort() {
       clearTimeout(timer);
@@ -2032,14 +2909,14 @@ function submissionTool(liveConfig) {
 }
 
 // src/tools/results.ts
-import { resolve } from "node:path";
+import { resolve as resolve2 } from "node:path";
 function previewInstruction(value) {
   const latest = (value?.segments || []).filter((segment) => segment.status === "succeeded").at(-1);
   const target = latest?.localPath || value?.videoPath || latest?.videoUrl || value?.videoUrl;
   return `\u3010\u4E0B\u4E00\u6B65\uFF1A\u5148\u5C55\u793A\u89C6\u9891\uFF0C\u7B49\u5F85\u7528\u6237\u9884\u89C8\u3011\u8BF7\u7ACB\u5373\u4F7F\u7528\u5F53\u524D\u5BBF\u4E3B\u7684 present/\u6587\u4EF6\u5C55\u793A\u5DE5\u5177\u5C55\u793A\u672C\u6B21\u5B8C\u6210\u7684\u5206\u6BB5\uFF1A${target || "\u89C1\u672C\u6B21\u5206\u6BB5\u7ED3\u679C"}\u3002\u6B63\u6587\u9644\u4E0A ${artifactLink("\u89C2\u770B\u672C\u6BB5\u89C6\u9891", latest?.localPath || value?.previewPath || value?.videoPath, latest?.videoUrl || value?.videoUrl)}\u3002\u4E0D\u80FD\u53EA\u8BF4\u201C\u751F\u6210\u6210\u529F\u201D\u6216\u53EA\u5217\u4EFB\u52A1ID\u3002\u5C55\u793A\u540E\u8BE2\u95EE\u201C\u5148\u770B\u8FD9\u6BB5\uFF0C\u6548\u679C\u53EF\u4EE5\u5417\uFF1F\u786E\u8BA4\u540E\u518D\u7EE7\u7EED\u4E0B\u4E00\u6BB5\u3002\u201D\u5E76\u7ED3\u675F\u672C\u8F6E\u7B49\u5F85\u56DE\u590D\u3002\u7528\u6237\u9996\u6B21\u6388\u6743\u5236\u4F5C\u4E0D\u7B49\u4E8E\u5DF2\u770B\u8FC7\u672C\u6BB5\uFF0C\u4E0D\u5F97\u81EA\u52A8resume\u6216\u8C03\u7528\u5176\u4ED6\u751F\u6210\u5DE5\u5177\u7ED5\u8FC7\u9884\u89C8\uFF1B\u5C55\u793A\u5DE5\u5177\u4E0D\u53EF\u7528\u65F6\u7ED9\u51FA\u53EF\u70B9\u51FB\u89C6\u9891\u8DEF\u5F84\u6216\u64AD\u653E\u94FE\u63A5\uFF0C\u4ECD\u987B\u7B49\u5F85\u660E\u786E\u786E\u8BA4\u3002`;
 }
 function artifactLink(label, localPath, videoUrl) {
-  const target = localPath ? resolve(localPath) : videoUrl;
+  const target = localPath ? resolve2(localPath) : videoUrl;
   if (!target) return "";
   return `[${label}](<${String(target).replace(/</g, "%3C").replace(/>/g, "%3E")}>)`;
 }
@@ -2332,7 +3209,7 @@ async function generateSeedreamImageCore(liveConfig, body, signal, existingTaskI
   }
 }
 async function generateSeedreamImage(...args) {
-  return timedStage("image_conversion", () => generateSeedreamImageCore(...args));
+  return timedStage(args[3] ? "image_task_query" : args[1]?.image ? "image_conversion" : "character_image_generation", () => generateSeedreamImageCore(...args));
 }
 
 // src/tools/video-prepare-image.ts
@@ -2340,13 +3217,15 @@ var IMAGE_MODELS = ["doubao-seedream-5-0-260128", "doubao-seedream-5-0-pro-26062
 function prepareImageTool(liveConfig, progress = {}) {
   return {
     name: "video_prepare_image",
-    description: "A/B \u6A21\u5F0F\uFF1A\u7528 Seedream \u628A\u771F\u4EBA\u53C2\u8003\u56FE\u8F6C\u4E3A\u660E\u663E\u7684\u975E\u771F\u4EBA\u63D2\u753B\u6216\u52A8\u753B\u89D2\u8272\u3002\u987B\u5148\u8BF4\u660E\u56FE\u7247\u8C03\u7528\u5355\u72EC\u8BA1\u8D39\u5E76\u786E\u8BA4\u98CE\u683C\uFF1B\u8FD4\u56DE imageUrl\uFF0C\u53EF\u4EA4\u7ED9 video_generate/video_extend \u7684\u53C2\u8003\u56FE\u6216\u9996\u5C3E\u5E27\u3002\u4E0D\u80FD\u8BC6\u522B\u56FE\u7247\u662F\u5426\u771F\u4EBA\uFF0C\u7531\u52A9\u624B\u770B\u56FE\u6216\u6839\u636E\u7528\u6237\u8BF4\u660E\u5224\u65AD\uFF1B\u5931\u8D25\u7981\u6B62\u6539\u7528\u539F\u771F\u4EBA\u56FE\u751F\u6210\u89C6\u9891\u3002",
+    description: "A/B \u6A21\u5F0F\uFF1ASeedream\u652F\u6301operation=create_character\u6309\u6587\u5B57\u751F\u6210\u89D2\u8272\u53C2\u8003\u56FE\uFF08\u4E0D\u9700\u8981\u539F\u56FE\uFF09\uFF0C\u6216\u9ED8\u8BA4convert_reference\u628A\u771F\u4EBA\u53C2\u8003\u56FE\u8F6C\u4E3A\u975E\u771F\u4EBA\u89D2\u8272\u3002\u7EAF\u6587\u751F\u89C6\u9891\u5148\u8BE2\u95EE\u662F\u5426\u51FA\u89D2\u8272\u56FE\uFF0C\u660E\u786E\u56FE\u7247\u5355\u72EC\u8BA1\u8D39\uFF1B\u540C\u610F\u540E\u751F\u6210\uFF0C\u9010\u5F20\u5C55\u793A\u5E76\u5BA1\u6838\u540E\u624D\u80FD\u7528\u4E8E\u89C6\u9891\u3002\u987B\u5148\u8BF4\u660E\u56FE\u7247\u8C03\u7528\u5355\u72EC\u8BA1\u8D39\u5E76\u786E\u8BA4\u98CE\u683C\uFF1B\u8FD4\u56DE imageUrl\uFF0C\u53EF\u4EA4\u7ED9 video_generate/video_extend \u7684\u53C2\u8003\u56FE\u6216\u9996\u5C3E\u5E27\u3002\u4E0D\u80FD\u8BC6\u522B\u56FE\u7247\u662F\u5426\u771F\u4EBA\uFF0C\u7531\u52A9\u624B\u770B\u56FE\u6216\u6839\u636E\u7528\u6237\u8BF4\u660E\u5224\u65AD\uFF1B\u5931\u8D25\u7981\u6B62\u6539\u7528\u539F\u771F\u4EBA\u56FE\u751F\u6210\u89C6\u9891\u3002",
     parameters: {
       type: "object",
       properties: {
+        operation: { type: "string", enum: ["convert_reference", "create_character"], description: "\u9ED8\u8BA4convert_reference\u8F6C\u6362\u5DF2\u6709\u56FE\uFF1Bcreate_character\u6839\u636E\u5DF2\u786E\u8BA4\u7684\u4EBA\u7269\u8BBE\u5B9A\u4E0E\u975E\u771F\u4EBA\u98CE\u683C\u6587\u751F\u89D2\u8272\u56FE\uFF0C\u4E0D\u9700\u8981image\u3002" },
+        prompt: { type: "string", description: "create_character\u5FC5\u586B\uFF1A\u5DF2\u5BA1\u6838\u7684\u4EBA\u7269/\u4E3B\u4F53\u5916\u5F62\u3001\u670D\u9970\u4E0E\u7A33\u5B9A\u7279\u5F81\uFF0C\u4E0D\u586B\u89C6\u9891\u52A8\u4F5C\u5267\u60C5\u6216\u5BF9\u767D\u3002" },
         taskId: { type: "string", description: "\u67E5\u8BE2\u5DF2\u63D0\u4EA4\u56FE\u7247\u4EFB\u52A1\u5E76\u53D6\u4EF6\uFF0C\u4E0D\u91CD\u65B0\u63D0\u4EA4\u6216\u6263\u53D6\u65B0\u7684\u751F\u6210\u8D39\u7528\uFF1B\u586B\u5199\u65F6\u65E0\u9700 image/style\u3002" },
         seed: { type: "integer", description: "\u53EF\u9009\u968F\u673A\u79CD\u5B50\u3002\u7528\u6237\u8981\u6C42\u91CD\u65B0\u51FA\u56FE\u65F6\u4F7F\u7528\u4E0D\u540C seed \u5E76\u786E\u8BA4\u8D39\u7528\uFF1B\u76F8\u540C\u53C2\u6570\u7684\u91CD\u590D\u8C03\u7528\u4F1A\u590D\u7528\u5DF2\u63D0\u4EA4\u4EFB\u52A1\u3002" },
-        image: { type: "string", description: "\u539F\u56FE\u516C\u7F51 URL\u3001base64\u3001\u672C\u673A\u8DEF\u5F84\u6216 latest\u3002" },
+        image: { type: "string", description: "convert_reference\u4F7F\u7528\u7684\u539F\u56FE\u516C\u7F51URL\u3001base64\u3001\u672C\u673A\u8DEF\u5F84\u6216latest\uFF1Bcreate_character\u4E0D\u586B\u3002" },
         style: { type: "string", description: "\u5DF2\u4E0E\u7528\u6237\u786E\u5B9A\u7684\u975E\u771F\u4EBA\u98CE\u683C\uFF0C\u4F8B\u5982\u4E8C\u7EF4\u52A8\u753B\u3001\u5361\u901A\u6216\u63D2\u753B\u3002" }
       },
       required: []
@@ -2354,7 +3233,7 @@ function prepareImageTool(liveConfig, progress = {}) {
     output: {
       schema: { type: "object", properties: { taskId: { type: "string" }, imageUrl: { type: "string" }, model: { type: "string" }, reviewRequired: { type: "boolean" } } },
       render(_args, value) {
-        return [{ type: "text", text: `\u975E\u771F\u4EBA\u53C2\u8003\u56FE\uFF1A${artifactLink("\u6253\u5F00\u53C2\u8003\u56FE", "", value.imageUrl)}
+        return [{ type: "text", text: `\u89D2\u8272\u53C2\u8003\u56FE\uFF1A${artifactLink("\u6253\u5F00\u53C2\u8003\u56FE", "", value.imageUrl)}
 \u56FE\u7247\u6A21\u578B\uFF1A${value.model}
 \u8BF7\u5728\u6B63\u6587\u5185\u5D4C\u56FE\u7247\u5E76\u4FDD\u7559\u53EF\u70B9\u51FB\u539F\u56FE\u94FE\u63A5\uFF0C\u518D\u6838\u5BF9\u98CE\u683C\u4E0E\u89D2\u8272\uFF1B\u6709present\u5361\u7247\u4E5F\u4E0D\u80FD\u7701\u7565\u94FE\u63A5\u3002\u660E\u786E\u786E\u8BA4\u540E\u518D\u7528\u4E8E\u89C6\u9891\uFF0C\u4E0D\u81EA\u52A8\u91CD\u753B\u3002` }];
       }
@@ -2365,7 +3244,7 @@ function prepareImageTool(liveConfig, progress = {}) {
     },
     async execute(args, exec) {
       const config = imageConfig(liveConfig);
-      if (isVolcengine(config)) throw new Error("\u771F\u4EBA\u53C2\u8003\u56FE\u9884\u5904\u7406\u76EE\u524D\u652F\u6301 A\u3001B \u63A5\u5165\u65B9\u5F0F\u3002");
+      if (isVolcengine(config)) throw new Error("\u89D2\u8272\u56FE\u751F\u6210\u4E0E\u53C2\u8003\u56FE\u5904\u7406\u76EE\u524D\u652F\u6301\u670D\u52A1\u7AEF\u6216MetaOntic AI\u63A5\u5165\uFF1B\u706B\u5C71\u76F4\u8FDE\u6682\u4E0D\u63D0\u4F9B\u6B64\u56FE\u7247\u901A\u9053\uFF0C\u53EF\u4F7F\u7528\u5DF2\u51C6\u5907\u597D\u7684\u89D2\u8272\u53C2\u8003\u56FE\u3002");
       assertConfigured(config, resolveApiKey(config));
       const model = String(ref(config, "imageModel", IMAGE_MODELS[0]));
       if (!IMAGE_MODELS.includes(model)) throw new Error("\u8BF7\u9009\u62E9\u53D7\u652F\u6301\u7684 Seedream \u56FE\u7247\u6A21\u578B\u3002");
@@ -2374,23 +3253,66 @@ function prepareImageTool(liveConfig, progress = {}) {
         const result2 = await generateSeedreamImage(config, void 0, exec?.signal, String(args.taskId).trim(), progress);
         return { ...result2, model, reviewRequired: true };
       }
+      const operation = args?.operation || "convert_reference";
+      if (!["convert_reference", "create_character"].includes(operation)) throw new Error("\u4E0D\u652F\u6301\u7684\u56FE\u7247\u64CD\u4F5C\u3002");
       const style = String(args?.style || "").trim();
       if (!style) throw new Error("\u8BF7\u5148\u786E\u5B9A\u975E\u771F\u4EBA\u753B\u9762\u98CE\u683C\u3002");
       if (args?.seed !== void 0 && !Number.isSafeInteger(args.seed)) throw new Error("seed \u5FC5\u987B\u662F\u5B89\u5168\u6574\u6570\u3002");
-      const image = await resolveImageInput(args?.image, "\u771F\u4EBA\u53C2\u8003\u56FE");
+      let input;
+      let prompt;
+      if (operation === "create_character") {
+        const character = String(args?.prompt || "").trim();
+        if (!character) throw new Error("\u8BF7\u5148\u786E\u8BA4\u89D2\u8272\u5916\u5F62\u8BBE\u5B9A\uFF0C\u518D\u751F\u6210\u89D2\u8272\u53C2\u8003\u56FE\u3002");
+        if (args?.image) throw new Error("\u6587\u751F\u89D2\u8272\u56FE\u4E0D\u9700\u8981\u539F\u56FE\uFF1B\u5DF2\u6709\u56FE\u7247\u8BF7\u4F7F\u7528\u8F6C\u6362\u64CD\u4F5C\u3002");
+        prompt = `\u751F\u6210\u4E00\u5F20\u89D2\u8272\u53C2\u8003\u56FE\u3002\u89D2\u8272\u8BBE\u5B9A\uFF1A${character}\u3002\u5DF2\u786E\u8BA4\u98CE\u683C\uFF1A${style}\u3002\u91C7\u7528\u660E\u663E\u7684\u975E\u771F\u4EBA\u63D2\u753B\u6216\u52A8\u753B\u9020\u578B\uFF0C\u6E05\u6670\u5448\u73B0\u89D2\u8272\u7684\u8138\u90E8\u3001\u53D1\u578B\u3001\u670D\u88C5\u53CA\u4F53\u578B\u7279\u5F81\uFF1B\u753B\u9762\u4EC5\u4E00\u4F4D\u5BF9\u5E94\u89D2\u8272\uFF0C\u80CC\u666F\u7B80\u6D01\uFF0C\u4E0D\u753B\u4EBA\u7269\u591A\u89C6\u56FE\u62FC\u56FE\u3001\u5206\u8EAB\u6216\u989D\u5916\u4EBA\u7269\uFF0C\u4E0D\u6DFB\u52A0\u6587\u5B57\u3001\u5B57\u5E55\u3001Logo\u6216\u6C34\u5370\u3002\u4E0D\u8981\u8F93\u51FA\u6444\u5F71\u6216\u770B\u8D77\u6765\u4ECD\u662F\u771F\u4EBA\u7684\u7167\u7247\u3002`;
+      } else {
+        input = await resolveImageInput(args?.image, "\u771F\u4EBA\u53C2\u8003\u56FE");
+        prompt = `\u5C06\u53C2\u8003\u7167\u7247\u4E2D\u7684\u771F\u4EBA\u8F6C\u6362\u4E3A\u660E\u663E\u7684\u975E\u771F\u4EBA\u827A\u672F\u89D2\u8272\uFF0C\u98CE\u683C\uFF1A${style}\u3002\u4FDD\u7559\u670D\u88C5\u3001\u53D1\u578B\u3001\u59FF\u6001\u3001\u6784\u56FE\u548C\u573A\u666F\u5173\u7CFB\uFF0C\u4F7F\u7528\u6E05\u6670\u7684\u7ED8\u753B\u6216\u52A8\u753B\u6750\u8D28\u4E0E\u9020\u578B\uFF0C\u4E0D\u8981\u8F93\u51FA\u6444\u5F71\u3001\u5199\u5B9E\u76AE\u80A4\u6216\u770B\u8D77\u6765\u4ECD\u662F\u771F\u4EBA\u7167\u7247\u7684\u753B\u9762\u3002\u4E0D\u6DFB\u52A0\u6587\u5B57\u3002`;
+      }
       const result = await generateSeedreamImage(config, {
         ...args?.seed !== void 0 ? { seed: args.seed } : {},
         model,
-        image: [image.url],
+        ...input ? { image: [input.url] } : {},
         size: "2048x2048",
         n: 1,
         response_format: "url",
         watermark: false,
-        prompt: `\u5C06\u53C2\u8003\u7167\u7247\u4E2D\u7684\u771F\u4EBA\u8F6C\u6362\u4E3A\u660E\u663E\u7684\u975E\u771F\u4EBA\u827A\u672F\u89D2\u8272\uFF0C\u98CE\u683C\uFF1A${style}\u3002\u4FDD\u7559\u670D\u88C5\u3001\u53D1\u578B\u3001\u59FF\u6001\u3001\u6784\u56FE\u548C\u573A\u666F\u5173\u7CFB\uFF0C\u4F7F\u7528\u6E05\u6670\u7684\u7ED8\u753B\u6216\u52A8\u753B\u6750\u8D28\u4E0E\u9020\u578B\uFF0C\u4E0D\u8981\u8F93\u51FA\u6444\u5F71\u3001\u5199\u5B9E\u76AE\u80A4\u6216\u770B\u8D77\u6765\u4ECD\u662F\u771F\u4EBA\u7167\u7247\u7684\u753B\u9762\u3002\u4E0D\u6DFB\u52A0\u6587\u5B57\u3002`
+        prompt
       }, exec?.signal, void 0, progress);
       return { ...result, model, reviewRequired: true };
     }
   };
+}
+
+// src/workflow/character-references.ts
+init_connection();
+init_config();
+async function initialCharacterReferences(config, args, saved, signal) {
+  if (Array.isArray(saved?.characterReferences)) {
+    validateImageRoles({ referenceImages: saved.characterReferences.map((item) => item?.image_url?.url) }, resolveModel(config));
+    return saved.characterReferences.map((item) => ({ ...item, image_url: { ...item.image_url } }));
+  }
+  const referenceImages = Array.isArray(args.referenceImages) ? args.referenceImages : args.referenceImages ? [args.referenceImages] : [];
+  const source = args.characterReferenceImages ?? (referenceImages.length ? referenceImages : args.firstFrameUrl ? [args.firstFrameUrl] : []);
+  const { refs } = validateImageRoles({ referenceImages: source }, resolveModel(config));
+  const canvas = canvasSize(args.ratio || ref(config, "ratio", "adaptive"));
+  const fit = canvas ? { size: canvas, config, signal } : null;
+  const images = [];
+  for (const value of refs) {
+    const resolved = isVolcengine(config) && /^asset:\/\//.test(value) ? { url: value } : await resolveImageInput(value, "\u6700\u521D\u89D2\u8272\u53C2\u8003\u56FE", fit);
+    images.push({ type: "image_url", image_url: { url: resolved.url }, role: "reference_image" });
+  }
+  return images;
+}
+function approvedCharacterReferences(images, state) {
+  if (!state?.retryUsed || state.retryResult?.status !== "succeeded" || !state.convertedBody) return images;
+  const original = state.originalBody?.content || [];
+  const converted = state.convertedBody.content || [];
+  return images.map((image) => {
+    const index = original.findIndex((item) => item.type === "image_url" && item.image_url?.url === image.image_url?.url);
+    const replacement = converted[index];
+    return index >= 0 && replacement?.type === "image_url" ? { ...image, image_url: { url: replacement.image_url.url } } : image;
+  });
 }
 
 // src/tools/video-generate.ts
@@ -2706,8 +3628,10 @@ async function preflightGate(ctx, config, exec) {
     return { kind: "ask", reason: exec.arguments?.taskId ? "\u786E\u8BA4\u5C06\u9632\u91CD\u8BB0\u5F55\u5173\u8054\u5230\u6E20\u9053\u4FA7\u6838\u5BF9\u51FA\u7684\u539F\u4EFB\u52A1 ID\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u3002" : "\u8BF7\u786E\u8BA4\u5DF2\u7ECF\u5728\u6E20\u9053\u4FA7\u6838\u5BF9\uFF1A\u539F\u8BF7\u6C42\u6CA1\u6709\u521B\u5EFA\u4EFB\u52A1\u3002\u89E3\u9501\u540E\u518D\u751F\u6210\u4F1A\u4EA7\u751F\u65B0\u8D39\u7528\uFF1B\u82E5\u539F\u4EFB\u52A1\u5B9E\u9645\u5B58\u5728\uFF0C\u53EF\u80FD\u91CD\u590D\u6263\u8D39\u3002" };
   }
   if (exec.name === "video_prepare_image") {
+    const creating = exec.arguments?.operation === "create_character";
     if (String(exec.arguments?.taskId || "").trim()) return { kind: "allow" };
     if (approvalPolicy(ctx, exec) === "never") return { kind: "deny", reason: "\u5F53\u524D\u6743\u9650\u6A21\u5F0F\u65E0\u6CD5\u8FDB\u884C\u56FE\u7247\u8C03\u7528\u786E\u8BA4\u3002" };
+    if (creating) return { kind: "ask", reason: "\u8C03\u7528Seedream\u6309\u6587\u5B57\u751F\u6210\u89D2\u8272\u53C2\u8003\u56FE\uFF0C\u56FE\u7247\u5355\u72EC\u8BA1\u8D39\u3002\u5B8C\u6210\u540E\u5148\u5C55\u793A\u5E76\u6838\u5BF9\u89D2\u8272\u548C\u98CE\u683C\uFF0C\u786E\u8BA4\u540E\u624D\u7528\u4E8E\u89C6\u9891\uFF1B\u89C6\u9891\u751F\u6210\u53E6\u884C\u786E\u8BA4\u548C\u8BA1\u8D39\u3002", displayReason: { zh: "\u5148\u751F\u6210\u4E00\u5F20\u975E\u771F\u4EBA\u89D2\u8272\u53C2\u8003\u56FE\uFF0C\u56FE\u7247\u8C03\u7528\u5355\u72EC\u8BA1\u8D39\u3002\u751F\u6210\u540E\u5148\u770B\u56FE\u786E\u8BA4\uFF0C\u518D\u7528\u4E8E\u89C6\u9891\uFF1B\u73B0\u5728\u4E0D\u4F1A\u751F\u6210\u89C6\u9891\u3002\u662F\u5426\u540C\u610F\uFF1F", en: "Generate one stylized character reference image, billed separately. Review it before any separately confirmed video generation." } };
     return { kind: "ask", reason: "\u8C03\u7528 Seedream \u5C06\u771F\u4EBA\u53C2\u8003\u56FE\u8F6C\u4E3A\u975E\u771F\u4EBA\u98CE\u683C\uFF1B\u56FE\u7247\u751F\u6210\u5355\u72EC\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39\uFF0C\u89C6\u9891\u8D39\u7528\u53E6\u8BA1\u3002", displayReason: { zh: "\u5C06\u8C03\u7528 Seedream \u5904\u7406\u53C2\u8003\u56FE\uFF0C\u56FE\u7247\u8C03\u7528\u5355\u72EC\u8BA1\u8D39\uFF0C\u89C6\u9891\u8D39\u7528\u53E6\u8BA1\u3002\u786E\u8BA4\u540E\u5F00\u59CB\u5904\u7406\u3002", en: "Use Seedream to stylize the reference. Image calls are billed separately from video. Confirm to proceed." } };
   }
   const rawArgs = exec.arguments && typeof exec.arguments === "object" ? exec.arguments : {};
@@ -2896,8 +3820,13 @@ function buildRequestBody(config, args, referenceVideoUrl) {
   const wording = args.wording === "after" ? "after" : "extend";
   const content = [
     { type: "text", text: buildExtensionPrompt({ prompt, seconds, startAt, mode, direction, wording, transitionDescription: args.transitionDescription }) },
-    { type: "video_url", video_url: { url: referenceVideoUrl }, role: "reference_video" }
+    { type: "video_url", video_url: { url: referenceVideoUrl }, role: "reference_video" },
+    ...(args.characterReferences || []).map((item) => ({ type: "image_url", image_url: { url: item.image_url.url }, role: "reference_image" }))
   ];
+  if (args.characterReferences?.length) {
+    content[0].text = `\u56FA\u5B9A\u4E3B\u4F53\u5916\u89C2\u4EE5\u56FE\u72471\u81F3\u56FE\u7247${args.characterReferences.length}\u4E2D\u7684\u6700\u521D\u89D2\u8272\u8BBE\u5B9A\u4E3A\u51C6\uFF0C\u4FDD\u6301\u5BF9\u5E94\u4E3B\u4F53\u7684\u9762\u90E8\u3001\u53D1\u578B\u3001\u670D\u9970\u4E0E\u4F53\u578B\uFF1B\u56FE\u7247\u4EC5\u7EA6\u675F\u4E3B\u4F53\u5916\u89C2\uFF0C\u4E0D\u91CD\u6F14\u56FE\u7247\u4E2D\u7684\u52A8\u4F5C\u6216\u5F3A\u5236\u6062\u590D\u5176\u80CC\u666F\u3002\u89C6\u98911\u8D1F\u8D23\u672C\u6BB5\u52A8\u4F5C\u3001\u673A\u4F4D\u4E0E\u58F0\u97F3\u8854\u63A5\u3002
+${content[0].text}`;
+  }
   const body = { ...parseExtraParams(config) };
   body.model = model;
   body.content = content;
@@ -2928,14 +3857,14 @@ async function buildGenerationBody(config, args, seconds, options = {}) {
   ];
   const images = [];
   const notes = [];
-  const addImage = async (value, role, label) => {
+  const addImage = async (value, role2, label) => {
     const resolved = isVolcengine(config) && /^asset:\/\//.test(String(value)) ? { url: String(value), source: "asset" } : await resolveImageInput(value, label, fit);
     content.push({
       type: "image_url",
       image_url: { url: resolved.url },
-      role
+      role: role2
     });
-    images.push({ role, ...resolved });
+    images.push({ role: role2, ...resolved });
   };
   const firstFrame = String(args.firstFrameUrl ?? "").trim();
   if (firstFrame) await addImage(firstFrame, "first_frame", "\u9996\u5E27\u56FE");
@@ -3449,6 +4378,7 @@ function videoTool(liveConfig, deps, ctx) {
     parameters: {
       type: "object",
       properties: {
+        characterReferenceImages: { type: "array", items: { type: "string" }, description: "\u5DF2\u5BA1\u6838\u7684\u6700\u521D\u89D2\u8272\u53C2\u8003\u56FE\uFF0C\u6309\u56FA\u5B9A\u987A\u5E8F\u7528\u4E8E\u6BCF\u6BB5\u7EED\u62CD\uFF1B\u672A\u63D0\u4F9B\u65F6\u6CBF\u7528\u9996\u6BB5\u53C2\u8003\u56FE\u6216\u9996\u5E27\u3002\u652F\u6301URL\u3001\u672C\u5730\u56FE\u7247\u6216data URI\u3002\u65AD\u70B9\u56FA\u5B9A\u6B64\u5957\u56FE\uFF0C\u4E0D\u81EA\u52A8\u91CD\u753B\u6216\u66FF\u6362\u3002\u771F\u4EBA\u8F6C\u6362\u4ECD\u9700\u5355\u72EC\u540C\u610F\u53CA\u7ED3\u679C\u5BA1\u6838\u3002" },
         prompt: {
           type: "string",
           description: "\u7CBE\u7B80\u7684\u672C\u6BB5\u5185\u5BB9\u6216\u5168\u7247\u521B\u610F\u6982\u8981\uFF0C\u4E0D\u4F20\u5B8C\u6574\u5267\u672C\u3002\u8D85\u8FC7\u6A21\u578B\u4E0A\u9650\u65F6\u5FC5\u987B\u53E6\u4F20segmentPrompts\uFF0C\u6BCF\u6BB5\u5206\u522B\u5199\u65B0\u52A8\u4F5C\u4E0E\u5BF9\u767D\u3002"
@@ -3645,6 +4575,7 @@ function videoTool(liveConfig, deps, ctx) {
       const { stamp, segmentsDir } = resume ? { stamp: String(resume.stamp || fileStamp()), segmentsDir: resumeDir } : await allocateStamp(outDir, fileStamp());
       let pendingTask = resume?.pendingTask || null;
       const operationState = resume?.operationState || {};
+      let characterReferences = await initialCharacterReferences(config2, args, resume, exec?.signal);
       const checkpoint = async () => saveProgress(segmentsDir, {
         config: config2,
         toolName: TOOL_NAME,
@@ -3656,7 +4587,8 @@ function videoTool(liveConfig, deps, ctx) {
         options: pickResumeOptions(args),
         segments,
         pendingTask,
-        operationState
+        operationState,
+        characterReferences
       });
       if (resume?.deliveryPending) await checkpoint();
       let interrupted = false;
@@ -3668,6 +4600,7 @@ function videoTool(liveConfig, deps, ctx) {
           const stepArgs = {
             ...resumeOptions,
             ...args,
+            characterReferences,
             prompt: focusedPrompt,
             duration: step.seconds,
             // 这条流程是「先直出再向后续拍」，分段的拼接顺序固定为向后延长。
@@ -3680,7 +4613,12 @@ function videoTool(liveConfig, deps, ctx) {
             body = operationState[position].originalBody;
             seconds = step.seconds;
           } else if (step.kind === "generate") {
-            const generated = await buildGenerationBody(config2, stepArgs, step.seconds, {
+            const initialArgs = { ...stepArgs };
+            if (characterReferences.length) {
+              if (!stepArgs.firstFrameUrl && (!stepArgs.referenceImages || args.characterReferenceImages === void 0)) initialArgs.referenceImages = characterReferences.map((item) => item.image_url.url);
+              else if (stepArgs.firstFrameUrl && args.characterReferenceImages === void 0) initialArgs.firstFrameUrl = characterReferences[0].image_url.url;
+            }
+            const generated = await buildGenerationBody(config2, initialArgs, step.seconds, {
               signal: exec?.signal
             });
             body = generated.body;
@@ -3703,6 +4641,10 @@ function videoTool(liveConfig, deps, ctx) {
               await checkpoint();
             }
           });
+          if (final.status === "succeeded") {
+            characterReferences = approvedCharacterReferences(characterReferences, operationState[position]);
+            await checkpoint();
+          }
           if (final.submissionId) submissionId = final.submissionId;
           if (final.convertedReferences) convertedReferences = final.convertedReferences;
           pendingTask = ["unknown", "timeout"].includes(final.status) ? { taskId: final.taskId, index: position + 1, kind: step.kind, seconds } : null;
@@ -3879,6 +4821,7 @@ function extendTool(liveConfig, deps, ctx) {
     parameters: {
       type: "object",
       properties: {
+        characterReferenceImages: { type: "array", items: { type: "string" }, description: "\u5DF2\u5BA1\u6838\u7684\u6700\u521D\u89D2\u8272\u53C2\u8003\u56FE\uFF0C\u6309\u56FA\u5B9A\u987A\u5E8F\u7528\u4E8E\u6BCF\u6BB5\u7EED\u62CD\uFF1B\u672A\u63D0\u4F9B\u65F6\u6CBF\u7528\u9996\u6BB5\u53C2\u8003\u56FE\u6216\u9996\u5E27\u3002\u652F\u6301URL\u3001\u672C\u5730\u56FE\u7247\u6216data URI\u3002\u65AD\u70B9\u56FA\u5B9A\u6B64\u5957\u56FE\uFF0C\u4E0D\u81EA\u52A8\u91CD\u753B\u6216\u66FF\u6362\u3002\u771F\u4EBA\u8F6C\u6362\u4ECD\u9700\u5355\u72EC\u540C\u610F\u53CA\u7ED3\u679C\u5BA1\u6838\u3002" },
         prompt: {
           type: "string",
           description: "\u672C\u6BB5\u8981\u7EED\u62CD\u7684\u5267\u60C5\u5185\u5BB9\u4E0E\u4EBA\u7269\u8BBE\u5B9A\uFF1B\u4E0D\u8981\u5728\u63D0\u793A\u8BCD\u91CC\u91CD\u590D\u5DF2\u53D1\u751F\u7684\u60C5\u8282\u3002"
@@ -4079,6 +5022,7 @@ function extendTool(liveConfig, deps, ctx) {
       const { stamp, segmentsDir } = resume ? { stamp: String(resume.stamp || fileStamp()), segmentsDir: resumeDir } : await allocateStamp(outDir, fileStamp());
       let pendingTask = resume?.pendingTask || null;
       const operationState = resume?.operationState || {};
+      let characterReferences = await initialCharacterReferences(config2, args, resume, exec?.signal);
       const checkpoint = async () => saveProgress(segmentsDir, {
         config: config2,
         toolName: TOOL_NAME,
@@ -4090,7 +5034,8 @@ function extendTool(liveConfig, deps, ctx) {
         options: { ...pickResumeOptions(args), direction, wording, startAt: cursor },
         segments,
         pendingTask,
-        operationState
+        operationState,
+        characterReferences
       });
       if (resume?.deliveryPending) await checkpoint();
       let interrupted = false;
@@ -4103,6 +5048,7 @@ function extendTool(liveConfig, deps, ctx) {
             {
               ...lastOptions,
               ...args,
+              characterReferences,
               prompt,
               duration: step.seconds,
               startAt: cursor,
@@ -4124,6 +5070,10 @@ function extendTool(liveConfig, deps, ctx) {
               await checkpoint();
             }
           });
+          if (final.status === "succeeded") {
+            characterReferences = approvedCharacterReferences(characterReferences, operationState[position]);
+            await checkpoint();
+          }
           if (final.submissionId) submissionId = final.submissionId;
           if (final.convertedReferences) convertedReferences = final.convertedReferences;
           pendingTask = ["unknown", "timeout"].includes(final.status) ? { taskId: final.taskId, index: position + 1, kind: step.kind, seconds } : null;
@@ -4548,7 +5498,7 @@ import path10 from "node:path";
 import { createRequire as createRequire2 } from "node:module";
 import { stat as stat5, mkdir as mkdir8 } from "node:fs/promises";
 function runHyperframes(cli, args, cwd, config, signal) {
-  return new Promise((resolve2, reject) => {
+  return new Promise((resolve3, reject) => {
     if (signal?.aborted) return reject(new Error("Hyperframes \u5DF2\u53D6\u6D88\u3002"));
     let output = "";
     const child = spawn2(process.execPath, [cli, ...args], {
@@ -4595,7 +5545,7 @@ function runHyperframes(cli, args, cwd, config, signal) {
     child.once("close", (code) => {
       cleanup();
       if (stopped) reject(stopped);
-      else resolve2({ code: code ?? 1, output });
+      else resolve3({ code: code ?? 1, output });
     });
   });
 }
@@ -5004,6 +5954,8 @@ function buildPromptGuidance(config) {
     "\xB7 \u5B98\u65B9\u63D0\u793A\u8BCD\u7EC6\u5219\uFF1A\u5148\u5B9A\u4E49\u4EBA\u7269\u3001\u9053\u5177\u3001\u573A\u666F\u7B49\u4E3B\u4F53\uFF0C\u4F7F\u75282\u20133\u4E2A\u7A33\u5B9A\u53EF\u8BC6\u522B\u7279\u5F81\u4E0E\u7D20\u6750\u7F16\u53F7\u5EFA\u7ACB\u7ED1\u5B9A\uFF0C\u540E\u6587\u56FA\u5B9A\u4F7F\u7528\u540C\u4E00\u6807\u7B7E\u3002\u6BCF\u4E2A\u751F\u6210\u6BB5\u5185\u90E8\u6309\u955C\u59341/\u955C\u59342/\u955C\u59343\u7684\u4E8B\u4EF6\u987A\u5E8F\u5199\u8C01\u3001\u5728\u54EA\u3001\u505A\u4EC0\u4E48\u3001\u955C\u5934\u600E\u4E48\u52A8\u53CA\u58F0\u97F3\uFF0C\u4E0D\u5F3A\u884C\u51D1\u6EE1\u4E09\u4E2A\u955C\u5934\uFF1B\u5206\u955C\u7F16\u53F7\u4E0D\u589E\u52A0\u4ED8\u8D39\u751F\u6210\u6B21\u6570\uFF0C2.0\u4E0D\u5F3A\u5236\u9010\u955C\u79D2\u70B9\u3002\u52A8\u4F5C\u5199\u5177\u4F53\u90E8\u4F4D\u3001\u5E45\u5EA6\u3001\u901F\u5EA6\u3001\u529B\u5EA6\u548C\u60EF\u6027\u627F\u63A5\uFF0C\u7528\u53EF\u89C1\u8868\u60C5/\u59FF\u6001\u8868\u73B0\u60C5\u7EEA\uFF1B\u4E00\u822C\u4F18\u5148\u4F4E\u7F13\u8FDE\u7EED\u5C0F\u52A8\u4F5C\uFF0C\u52A8\u4F5C\u620F\u4E0E\u7528\u6237\u660E\u786E\u5267\u60C5\u4F18\u5148\uFF0C\u4E0D\u64C5\u81EA\u6539\u5199\u3002\u5C06\u666F\u522B\uFF08\u8FDC\u666F/\u5168\u666F/\u4E2D\u666F/\u8FD1\u666F/\u7279\u5199\uFF09\u3001\u89C6\u89D2\uFF08\u4FEF\u62CD/\u4EF0\u62CD/\u822A\u62CD/\u5FAE\u8DDD\u7B49\uFF09\u3001\u8FD0\u955C\uFF08\u63A8/\u62C9/\u6447/\u79FB/\u73AF\u7ED5/\u8DDF\u968F/\u5347\u964D/\u53D8\u7126\uFF09\u5206\u522B\u5199\u6E05\uFF0C\u4E00\u4E2A\u955C\u5934\u5C3D\u91CF\u53EA\u5B89\u6392\u4E00\u79CD\u8FD0\u955C\uFF0C\u907F\u514D\u4E92\u76F8\u77DB\u76FE\u3002\u753B\u8D28\u63CF\u8FF0\u5199\u7EB9\u7406\u3001\u8272\u5F69\u548C\u5149\u5F71\u8D28\u611F\uFF0C\u4E0D\u80FD\u4EE3\u66FF\u7528\u6237\u786E\u8BA4\u7684480P/720P\u53C2\u6570\uFF1B\u89C6\u89C9\u98CE\u683C\u4E0E\u7528\u6237\u65B9\u6848\u4E00\u81F4\uFF0C\u9010\u6BB5\u4FDD\u6301\u7EDF\u4E00\u3002\u7EA6\u675F\u8BCD\u6309\u9700\u6C42\u660E\u786E\u65E0\u5B57\u5E55\u3001\u65E0\u65B0\u589ELogo\u6216\u6C34\u5370\u3001\u4E3B\u4F53\u7A33\u5B9A\u4E0D\u53D8\u5F62\u4E0E\u65E0\u95EA\u70C1\uFF0C\u4F46\u4E0D\u5F97\u8986\u76D6\u7528\u6237\u660E\u786E\u8981\u6C42\u7684\u5B57\u5E55\u3001\u54C1\u724C\u6807\u8BC6\u6216\u6C34\u5370\u3002",
     "\xB7 \u811A\u672C\u4E0E\u9010\u6BB5\u63D0\u793A\u8BCD\u91C7\u7528\u5B98\u65B9\u8FDB\u9636\u516C\u5F0F\uFF1A\u7CBE\u51C6\u4E3B\u4F53\u3001\u52A8\u4F5C\u7EC6\u8282\u3001\u573A\u666F\u73AF\u5883\u3001\u5149\u5F71\u8272\u8C03\u3001\u955C\u5934\u8FD0\u955C\u3001\u89C6\u89C9\u98CE\u683C\u3001\u753B\u8D28\u3001\u7EA6\u675F\u6761\u4EF6\u3002\u6BCF\u4E2A\u7EED\u62CD\u6BB5\u5728\u811A\u672C\u5206\u6BB5\u8868\u4E2D\u53E6\u5199\u660E\u786E\u7684\u8FC7\u6E21\u753B\u9762\u63CF\u8FF0\uFF1A\u4E0A\u4E00\u6BB5\u63A5\u7F1D\u72B6\u6001\u2192\u672C\u6BB5\u8D77\u59CB\u52A8\u4F5C\u4E0E\u955C\u5934\u2192\u58F0\u97F3\u4EA4\u63A5\uFF1B\u540C\u666F\u522B\u8FDE\u7EED\u6216\u5207\u4E2D\u666F/\u8FD1\u666F\u7531\u5267\u60C5\u51B3\u5B9A\uFF0C\u4E0D\u56E0\u5206\u6BB5\u81EA\u52A8\u6362\u573A\u666F\u3002\u8BE5\u63CF\u8FF0\u4E0E\u5B8C\u6574\u811A\u672C\u3001\u793A\u610F\u56FE\u4E00\u540C\u5C55\u793A\u5BA1\u6838\uFF0C\u4FEE\u6539\u540E\u91CD\u65B0\u5BA1\u6838\u3002\u6267\u884C\u65F6\u5C06\u8BE5\u6BB5\u5DF2\u5BA1\u6838\u63CF\u8FF0\u5199\u5165 segmentPrompts \u5BF9\u5E94\u6761\u76EE\u7684\u5355\u884C\u3010\u8FC7\u6E21\u753B\u9762\u3011\uFF0C\u6216 video_extend.transitionDescription\uFF1B\u76F4\u63A5\u7528\u201C\u89C6\u98911\u201D\u6307\u4EE3\u7D20\u6750\u5E76\u4F7F\u7528\u5411\u524D/\u5411\u540E\u5EF6\u957F\u89C6\u98911\uFF0C\u4E0D\u5199\u53C2\u8003\u89C6\u98911\u3002\u8F68\u9053\u8865\u5168\u591A\u4E2A\u65E2\u6709\u89C6\u9891\u7684\u5B98\u65B9\u53E5\u5F0F\u4EC5\u4F5C\u8BBE\u8BA1\u53C2\u8003\uFF0C\u4E0D\u5047\u79F0\u5F53\u524D\u5DE5\u5177\u5DF2\u652F\u6301\u591A\u89C6\u9891\u8F93\u5165\uFF0C\u4E5F\u4E0D\u4E3A\u8F6C\u573A\u64C5\u81EA\u589E\u52A0\u4ED8\u8D39\u4EFB\u52A1\u3002\u4FDD\u7559\u4EBA\u7269/\u58F0\u97F3/\u98CE\u683C\u8FDE\u7EED\u6027\uFF0C\u4E0D\u4FDD\u8BC1\u5B8C\u5168\u6D88\u9664\u63A5\u7F1D\u8DF3\u53D8\u3002",
     "\xB7 \u7EED\u62CD\u4F30\u4EF7\u53E3\u5F84\uFF1A\u4F30\u4EF7\u6309\u771F\u5B9E\u8F93\u5165\u533A\u5206\u6863\u4F4D\uFF1A\u9996\u6BB5\u751F\u6210\u65E0\u89C6\u9891\u8F93\u5165\uFF08\u53C2\u8003\u56FE/\u9996\u5C3E\u5E27\u4ECD\u4E3A\u65E0\u89C6\u9891\u8F93\u5165\uFF09\uFF0C\u6BCF\u4E2A\u7EED\u62CD\u6BB5\u6709\u89C6\u9891\u8F93\u5165\uFF0C\u7528\u4E0A\u4E00\u6BB5\u5B8C\u6574\u89C6\u9891\u65F6\u957F\u52A0\u672C\u6BB5\u8F93\u51FA\u65F6\u957F\u8BA1token\uFF0C\u5207\u6362\u5230\u542B\u89C6\u9891\u8F93\u5165\u5355\u4EF7\uFF1B\u4E0D\u628A\u7D2F\u8BA1\u6210\u7247\u65F6\u957F\u5F53\u4E0A\u4E00\u6BB5\u8F93\u5165\u3002\u811A\u672C\u8D39\u7528\u9884\u4F30\u9010\u6BB5\u5217\u6863\u4F4D\u3001\u8F93\u5165/\u8F93\u51FA\u65F6\u957F\u3001\u5355\u4EF7\u4E0E\u91D1\u989D\u518D\u5408\u8BA1\uFF1B\u5236\u4F5C\u786E\u8BA4\u548C\u6062\u590D\u9884\u68C0\u540C\u53E3\u5F84\uFF0C\u5916\u90E8\u89C6\u9891\u65F6\u957F\u4E0D\u660E\u5C31\u660E\u786E\u65E0\u6CD5\u53EF\u9760\u4F30\u4EF7\uFF0C\u4E0D\u6309\u7EAF\u751F\u6210\u8D39\u7528\u515C\u5E95\uFF0C\u4E0D\u8C03\u7528\u4ED8\u8D39\u4EFB\u52A1\u8BD5\u7B97\u3002",
+    "\xB7 \u7EAF\u6587\u751F\u89D2\u8272\u56FE\uFF1A\u7EAF\u6587\u751F\u89C6\u9891\u89D2\u8272\u56FE\u9009\u62E9\uFF1A\u6709\u9700\u8981\u56FA\u5B9A\u5916\u5F62\u7684\u4EBA\u7269/\u4E3B\u4F53\u4E14\u672A\u63D0\u4F9B\u56FE\u7247\u65F6\uFF0C\u5728\u51C6\u5907\u4EBA\u7269\u4E0E\u98CE\u683C\u540E\u3001\u6700\u7EC8\u811A\u672C\u5BA1\u6838\u4E0E\u89C6\u9891\u5236\u4F5C\u524D\uFF0C\u5FC5\u987B\u7528\u63D0\u95EE\u5DE5\u5177\u8BE2\u95EE\u201C\u662F\u5426\u5148\u751F\u6210\u89D2\u8272\u53C2\u8003\u56FE\uFF1F\u56FE\u7247\u8C03\u7528\u5355\u72EC\u8BA1\u8D39\uFF0C\u751F\u6210\u540E\u5148\u770B\u56FE\u786E\u8BA4\u3002\u201D\u4E24\u4E2A\u9009\u9879\u4E3A\u201C\u5148\u751F\u6210\u89D2\u8272\u56FE\uFF08\u5355\u72EC\u8BA1\u8D39\uFF09/\u76F4\u63A5\u6587\u751F\u89C6\u9891\u201D\u3002\u672C\u6B21\u5DF2\u660E\u786E\u540C\u610F\u6216\u62D2\u7EDD\u5219\u8BB0\u5F55\u5230\u9879\u76EE\uFF0C\u4E0D\u91CD\u590D\u95EE\uFF1B\u672A\u7B54/\u53D6\u6D88/pending\u4E0D\u8868\u793A\u540C\u610F\uFF0C\u4E0D\u8C03\u7528\u56FE\u7247\u6216\u89C6\u9891\u3002\u7528\u6237\u62D2\u7EDD\u65F6\u4FDD\u7559\u7EAF\u6587\u751F\u65B9\u6848\uFF0C\u4E0D\u81EA\u52A8\u52A0\u56FE\uFF1B\u6CA1\u6709\u56FA\u5B9A\u4E3B\u4F53\u7684\u7A7A\u955C\u4E0D\u5F3A\u52A0\u89D2\u8272\u3002\u7528\u6237\u540C\u610F\u540E\u5148\u660E\u786E\u5916\u5F62\u4E0E\u975E\u771F\u4EBA\u98CE\u683C\uFF08\u5F71\u54CD\u539F\u5B9A\u5199\u5B9E\u98CE\u683C\u65F6\u987B\u8BF4\u660E\u5E76\u786E\u8BA4\uFF09\uFF0C\u8C03\u7528video_prepare_image(operation:create_character,prompt:\u89D2\u8272\u8BBE\u5B9A,style:\u5DF2\u786E\u8BA4\u98CE\u683C)\uFF0C\u9ED8\u8BA4\u4E00\u6B21\u4E00\u5F20\uFF0C\u4E0D\u9700\u8981\u539F\u56FE\u3002\u8BB0\u5F55taskId/imageUrl\uFF1B\u8D85\u65F6\u67E5\u8BE2\u539FtaskId\uFF0C\u4E0D\u91CD\u53D1\uFF1B\u5931\u8D25\u6216\u4E0D\u6EE1\u610F\u5148\u505C\u6B62\uFF0C\u91CD\u753B\u5148\u786E\u8BA4\u65B0\u589E\u8D39\u7528\u3002\u7ED3\u679C\u5728\u6B63\u6587\u5185\u5D4C\u5E76\u7ED9\u539F\u56FE\u94FE\u63A5\uFF0C\u5355\u72EC\u8BE2\u95EE\u201C\u8FD9\u5F20\u89D2\u8272\u56FE\u53EF\u4EE5\u7528\u4E8E\u63A5\u4E0B\u6765\u7684\u89C6\u9891\u5417\uFF1F\u201D\uFF0C\u5F85\u660E\u786E\u8BA4\u53EF\u540E\uFF0C\u5C06imageUrl\u540C\u65F6\u5199\u5165video_generate.referenceImages\u548CcharacterReferenceImages\u3002\u518D\u5C55\u793A\u542B\u89D2\u8272\u56FE\u3001\u811A\u672C\u3001\u5206\u955C\u4E0E\u8D39\u7528\u9884\u4F30\u7684\u672C\u7248\u6750\u6599\u5E76\u5BA1\u6838\uFF0C\u6700\u540E\u5355\u72EC\u786E\u8BA4\u89C6\u9891\u5236\u4F5C\u3002\u811A\u672C\u672B\u5C3E\u6CE8\u660E\u89D2\u8272\u56FE\u5355\u72EC\u8BA1\u8D39\u4E14\u4E0D\u5305\u542B\u5728\u89C6\u9891\u4F30\u4EF7\u4E2D\uFF1B\u9879\u76EE\u8BB0\u5F55\u89D2\u8272\u56FE\u9009\u62E9\u3001\u4EFB\u52A1\u53CA\u5BA1\u6838\u72B6\u6001\uFF0C\u6062\u590D\u540E\u4E0D\u91CD\u590D\u51FA\u56FE\u6216\u91CD\u590D\u95EE\u5DF2\u786E\u8BA4\u9009\u62E9\u3002\u706B\u5C71\u76F4\u8FDE\u65E0\u6B64\u56FE\u7247\u901A\u9053\u65F6\u5148\u8BF4\u660E\u9650\u5236\uFF0C\u53EF\u8BA9\u7528\u6237\u63D0\u4F9B\u89D2\u8272\u56FE\uFF0C\u4E0D\u8C0E\u79F0\u53EF\u4EE3\u753B\u3002",
+    "\xB7 \u521D\u59CB\u89D2\u8272\u53C2\u8003\uFF1A\u6700\u521D\u89D2\u8272\u56FE\u6301\u7EED\u53C2\u8003\uFF1A\u6BCF\u6BB5\u7EED\u62CD\u643A\u5E26\u4E0A\u4E00\u6BB5\u89C6\u9891\u4E0E\u540C\u4E00\u5957\u6700\u521D\u5DF2\u5BA1\u6838\u89D2\u8272\u56FE\uFF1BcharacterReferenceImages\u53EF\u660E\u786E\u6307\u5B9A\uFF0C\u672A\u6307\u5B9A\u65F6\u6CBF\u7528\u9996\u6BB5referenceImages\u6216\u9996\u5E27\uFF0C\u9996\u5E27\u5728\u7EED\u62CD\u4E2D\u6539\u4F5Creference_image\u800C\u4E0D\u662Ffirst_frame\u3002\u89D2\u8272\u56FE\u5F52\u4E00\u5316\u540E\u968F\u65AD\u70B9\u4FDD\u5B58\uFF0C\u4E0D\u4F7F\u7528\u540E\u7EED\u6BB5\u843D\u622A\u56FE\u66FF\u4EE3\u521D\u59CB\u89D2\u8272\uFF0C\u4E0D\u81EA\u52A8\u91CD\u753B\uFF1B\u65E0\u521D\u59CB\u56FE\u7247\u65F6\u4ECD\u4E3A\u7EAF\u89C6\u9891\u7EED\u62CD\uFF0C\u4E0D\u865A\u6784\u89D2\u8272\u53C2\u8003\u56FE\u3002\u771F\u4EBA\u9650\u5236\u987B\u5148\u83B7\u8F6C\u6362\u540C\u610F\u3001\u5C55\u793A\u5BA1\u6838\uFF0C\u518D\u5355\u6B21\u89C6\u9891\u91CD\u8BD5\uFF1B\u6210\u529F\u540E\u590D\u7528\u5DF2\u5BA1\u6838\u8F6C\u6362\u56FE\u3002\u539F\u5DF2\u63D0\u4EA4\u4EFB\u52A1\u4FDD\u7559originalBody\uFF0C\u4E0D\u56E0\u52A0\u56FE\u800C\u91CD\u65B0\u63D0\u4EA4\u3002",
     "\xB7 \u6D41\u7A0B\u8017\u65F6\u65E5\u5FD7\uFF1A\u9636\u6BB5\u8BA1\u65F6\uFF1A\u7F16\u5199\u811A\u672C\u524D\u7528video_stage(stage:script_design,action:start)\uFF0C\u5B8C\u6574\u811A\u672C\u4FDD\u5B58\u540Efinish\u539FspanId\uFF1B\u793A\u610F\u56FE\u7ED8\u5236\u7528storyboard_design\uFF0C\u5C55\u793A\u811A\u672C\u7528script_present\u3002\u5BA1\u6838/\u5236\u4F5C/\u53C2\u8003\u56FE/\u5206\u6BB5\u9884\u89C8\u7B49\u5F85\u5206\u522B\u7528script_review_wait\u3001production_confirm_wait\u3001reference_review_wait\u3001segment_review_wait\uFF0C\u5C55\u793A\u6210\u679C\u7528result_present\u3002\u7528\u6237\u56DE\u590D\u540E\u7ED3\u675F\u5BF9\u5E94\u7B49\u5F85\u6807\u8BB0\uFF1B\u4E0D\u5F97\u628A\u7B49\u5F85\u6DF7\u5165\u811A\u672C\u8BBE\u8BA1\u65F6\u95F4\uFF0C\u4E0D\u4E3A\u8BA1\u65F6\u91CD\u590D\u751F\u6210\u5185\u5BB9\u3002\u6807\u8BB0\u4EC5\u8BB0\u5F55\u8FB9\u754C\u5899\u949F\u8017\u65F6\uFF0C\u4E0D\u7B49\u4E8E\u6A21\u578B\u7EAF\u63A8\u7406\u65F6\u95F4\uFF1B\u6807\u8BB0\u4E0D\u53EF\u7528\u4ECD\u6B63\u5E38\u63A8\u8FDB\uFF0C\u4E0D\u731C\u8017\u65F6\u3002",
     "\xB7 \u5168\u90E8\u6587\u4EF6\u4EA4\u4ED8\uFF1A\u6240\u6709\u7528\u6237\u4EA4\u4ED8\u7684\u6587\u4EF6\uFF08\u811A\u672C\u3001\u5206\u955C\u793A\u610F\u56FE\u3001\u8F6C\u6362\u56FE\u7247\u3001\u5355\u6BB5/\u7EED\u62CD\u9884\u89C8\u3001\u5408\u5E76\u6210\u7247\u3001\u6062\u590D\u540E\u6210\u679C\u3001\u5BFC\u51FAPDF\u7B49\uFF09\u90FD\u987B\u5728\u7528\u6237\u53EF\u89C1\u6B63\u6587\u7ED9\u51FA\u9010\u9879\u53EF\u70B9\u51FBMarkdown\u94FE\u63A5\uFF0C\u4E0D\u80FD\u53EA\u7ED9\u76EE\u5F55\u3001\u53CD\u5F15\u53F7\u6216\u666E\u901A\u6587\u672C\u8DEF\u5F84\uFF1B\u672C\u5730\u8DEF\u5F84\u5148\u786E\u8BA4\u6587\u4EF6\u5B58\u5728\u5E76\u8F6C\u7EDD\u5BF9\u8DEF\u5F84\uFF0C\u7528\u5C16\u62EC\u53F7\u5305\u88F9\u3002\u56FE\u7247\u53E6\u987B\u5185\u5D4C\uFF0C\u811A\u672C\u53E6\u987B\u5B8C\u6574\u5C55\u793A\u6B63\u6587\uFF1Bpresent\u767B\u8BB0\u6210\u529F\u4ECD\u4FDD\u7559\u94FE\u63A5\uFF0C\u4E0D\u58F0\u79F0\u5361\u7247\u5DF2\u64AD\u653E\u3002\u53EA\u94FE\u63A5\u771F\u5B9E\u8FD4\u56DE\u6216\u5DF2\u6838\u5B9E\u6587\u4EF6\uFF0C\u4E0D\u7F16\u9020\u8DEF\u5F84\uFF0C\u4E0D\u4E3A\u8865\u94FE\u63A5\u91CD\u65B0\u4ED8\u8D39\u751F\u6210\u3002\u6062\u590D\u76EE\u5F55\u3001\u4EFB\u52A1ID\u3001\u914D\u7F6E\u6587\u4EF6\u7B49\u5185\u90E8\u53C2\u6570\u7EE7\u7EED\u6309\u539F\u53C2\u6570\u4F7F\u7528\uFF0C\u4E0D\u5F53\u4F5C\u53EF\u64AD\u653E\u6210\u679C\u3002",
     "\xB7 \u89C6\u9891\u6587\u4EF6\u94FE\u63A5\uFF1A\u89C6\u9891\u4EA4\u4ED8\u6B63\u6587\u5FC5\u987B\u9010\u9879\u9644Markdown\u53EF\u70B9\u51FB\u94FE\u63A5\uFF0C\u4F8B\u5982[\u89C2\u770B\u7B2C\u4E00\u6BB5](<\u7EDD\u5BF9\u6587\u4EF6\u8DEF\u5F84>)\uFF0C\u8DEF\u5F84\u542B\u7A7A\u683C\u4E5F\u7528\u5C16\u62EC\u53F7\u5305\u88F9\uFF1B\u6709present\u4ECD\u987B\u7ED9\u6B63\u6587\u94FE\u63A5\uFF0C\u666E\u901A\u6587\u672C\u6216\u53CD\u5F15\u53F7\u8DEF\u5F84\u4E0D\u7B97\u94FE\u63A5\uFF0C\u672A\u7ECF\u9A8C\u8BC1\u4E0D\u5F97\u8BF4\u4E0A\u65B9\u5361\u7247\u53EF\u76F4\u63A5\u64AD\u653E\u3002\u7F3A\u6587\u4EF6\u5148\u67E5\u539F\u4EFB\u52A1\u548C\u4EA4\u4ED8\u8DEF\u5F84\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u3002",
@@ -5020,7 +5972,7 @@ function buildPromptGuidance(config) {
     "\xB7 \u5148\u8BC4\u4F30\u7528\u6237\u65B9\u6848\u5B8C\u6574\u5EA6\uFF1A\u4E3B\u9898/\u76EE\u6807\u3001\u4E3B\u4F53\u3001\u4E3B\u8981\u5185\u5BB9\u4E0E\u53D1\u5C55\u3001\u7ED3\u5C3E\u6216\u5C55\u793A\u7ED3\u679C\u53CA\u660E\u786E\u7EA6\u675F\u662F\u5426\u8DB3\u4EE5\u5199\u811A\u672C\uFF1B\u98CE\u666F\u4E0E\u5C55\u793A\u4E0D\u5F3A\u6C42\u51B2\u7A81\uFF0C\u7F3A\u65F6\u957F\u6216\u753B\u5E45\u53EF\u7528\u9ED8\u8BA4\u503C\uFF0C\u4E0D\u56E0\u6B64\u5224\u4E3A\u4E0D\u5B8C\u5584\u3002\u4E0D\u5B8C\u5584\u4E14\u5C1A\u672A\u6388\u6743\u65F6\uFF0C\u7B80\u77ED\u6307\u51FA\u5173\u952E\u7F3A\u53E3\uFF0C\u5148\u95EE\u201C\u8981\u4E0D\u8981\u6211\u5E2E\u4F60\u5B8C\u5584\u65B9\u6848\uFF1F\u201D\uFF0C\u63D0\u4F9B\u201C\u5E2E\u6211\u5B8C\u5584 / \u4FDD\u7559\u539F\u65B9\u6848\u201D\uFF0C\u7B49\u5F85\u660E\u786E\u7B54\u590D\uFF0C\u4E0D\u64C5\u81EA\u6269\u5199\u5267\u60C5\u3002\u5DF2\u6709\u201C\u4F60\u53D1\u6325\u201D\u201C\u5E2E\u6211\u5B8C\u5584\u201D\u7B49\u6388\u6743\u5219\u4E0D\u91CD\u590D\u8BE2\u95EE\u662F\u5426\u5B8C\u5584\uFF0C\u4F46\u5B8C\u5584\u524D\u5FC5\u987B\u786E\u8BA4\u521B\u610F\u65B9\u5411\uFF1A\u65B9\u5411\u4E0D\u660E\u786E\u65F6\u5148\u95EE\u4E00\u4E2A\u7B80\u77ED\u95EE\u9898\uFF0C\u63D0\u4F9B2\u20133\u4E2A\u7B80\u6D01\u3001\u4E92\u65A5\u7684\u5355\u9009\u65B9\u5411\u5E76\u5141\u8BB8\u81EA\u7531\u8F93\u5165\uFF0C\u7B49\u5F85\u7528\u6237\u7B54\u590D\u540E\u518D\u5B8C\u5584\uFF0C\u4E0D\u5F97\u81EA\u884C\u9009\u65B9\u5411\u6216\u968F\u610F\u8865\u5199\u5267\u60C5\u3002\u7528\u6237\u5DF2\u660E\u786E\u521B\u610F\u65B9\u5411\u65F6\u6309\u8BE5\u65B9\u5411\u5B8C\u5584\uFF0C\u4E0D\u91CD\u590D\u8BE2\u95EE\uFF0C\u4E0D\u64C5\u81EA\u6269\u5927\u8303\u56F4\u3002\u5B8C\u6574\u65B9\u6848\u4FDD\u7559\u4E3B\u9898\u3001\u89D2\u8272\u5173\u7CFB\u3001\u60C5\u8282\u987A\u5E8F\u3001\u7ED3\u5C3E\u3001\u5173\u952E\u5BF9\u767D\u3001\u98CE\u683C\u548C\u9650\u5236\uFF0C\u53EA\u6DA6\u8272\u63AA\u8F9E\u3001\u6574\u7406\u683C\u5F0F\u548C\u8F6C\u6210\u5206\u955C\uFF0C\u4E0D\u64C5\u81EA\u589E\u5220\u89D2\u8272/\u4E8B\u4EF6/\u53CD\u8F6C\u3002\u5185\u5BB9\u53D6\u820D\u3001\u65F6\u957F\u538B\u7F29\u6216\u5267\u60C5\u7ED3\u5C3E\u8C03\u6574\u987B\u5148\u5F81\u5F97\u540C\u610F\u3002\u7528\u6237\u9009\u62E9\u4FDD\u7559\u65F6\u5FE0\u4E8E\u539F\u610F\u6574\u7406\uFF0C\u4EC5\u6F84\u6E05\u65E0\u6CD5\u6267\u884C\u7684\u5FC5\u8981\u4FE1\u606F\u3002\u662F\u5426\u5B8C\u5584\u4E0D\u4EE3\u66FF\u811A\u672C\u5BA1\u6838\u6216\u5236\u4F5C\u6388\u6743\uFF1B\u5B8C\u6574\u65B9\u6848\u4E0D\u589E\u52A0\u5B8C\u5584\u8BE2\u95EE\u3002\u9ED8\u8BA415\u79D2\u30019:16\uFF0C\u89C6\u9891\u6E05\u6670\u5EA6\u4EC5\u652F\u6301480P\u3001720P\u3002\u6574\u7406\u811A\u672C\u65F6\u5FC5\u987B\u8BA9\u7528\u6237\u660E\u786E\u9009\u62E9\u6216\u786E\u8BA4\u6E05\u6670\u5EA6\uFF1B\u672A\u6307\u5B9A\u65F6\u901A\u8FC7\u63D0\u95EE\u5DE5\u5177\u63D0\u4F9B\u201C480P / 720P\u201D\u4E24\u4E2A\u5355\u9009\u9879\uFF0C\u4E0D\u5F97\u4EE5\u9ED8\u8BA4\u503C\u4EE3\u66FF\u7528\u6237\u786E\u8BA4\uFF0C\u672A\u7B54\u3001\u53D6\u6D88\u6216pending\u4E0D\u5F97\u81EA\u884C\u4F7F\u7528\u9ED8\u8BA4\u503C\u8FDB\u5165\u5236\u4F5C\u3002\u7528\u6237\u5728\u672C\u6B21\u9700\u6C42\u5DF2\u660E\u786E\u6307\u5B9A\u65F6\u76F4\u63A5\u8BB0\u5F55\uFF0C\u4E0D\u91CD\u590D\u8BE2\u95EE\u3002\u628A\u786E\u8BA4\u503C\u5199\u5165script.md\u7684\u201C\u89C6\u9891\u6E05\u6670\u5EA6\u201D\uFF0C\u811A\u672C\u89C4\u683C\u548C\u5236\u4F5C\u786E\u8BA4\u90FD\u5C55\u793A\u8BE5\u503C\uFF0C\u8C03\u7528video_generate/video_extend\u65F6\u663E\u5F0F\u4F20resolution=480p\u6216720p\uFF1B\u6539\u7A3F\u672A\u6D89\u53CA\u6E05\u6670\u5EA6\u65F6\u4FDD\u7559\u5DF2\u786E\u8BA4\u9009\u62E9\uFF0C\u6539\u53D8\u6E05\u6670\u5EA6\u987B\u91CD\u65B0\u786E\u8BA4\uFF0C\u6062\u590D\u5DF2\u63D0\u4EA4\u4EFB\u52A1\u6CBF\u7528\u539F\u503C\uFF1B\u6309\u539F\u65B9\u6848\u786E\u5B9A\u98CE\u683C\u4E0E\u58F0\u97F3\uFF0C\u65E0\u5FC5\u8981\u4E0D\u52A0\u5BF9\u767D\uFF0C\u5B57\u5E55\u672A\u6307\u5B9A\u4E0D\u52A0\u3002\u6574\u7406\u540E\u5148\u5B8C\u6574\u5C55\u793A\u6545\u4E8B\u3001\u89C4\u683C/\u98CE\u683C/\u58F0\u97F3\u3001\u4EBA\u7269\u6216\u4E3B\u4F53\u548C\u65F6\u95F4/\u753B\u9762/\u5B8C\u6574\u5BF9\u767D\u8868\uFF0C\u518D\u5BA1\u6838\uFF1B\u6BCF\u6B21\u6539\u7A3F\u4FDD\u7559\u6EE1\u610F\u90E8\u5206\uFF0C\u4E0D\u8BA9\u7528\u6237\u6539\u6A21\u578B\u63D0\u793A\u8BCD\u3002\u63A5\u5165\u65B9\u5F0F\u4EC5\u7528\u4E8E\u8FDE\u63A5\u4E0E\u8D39\u7528\u5224\u65AD\uFF0C\u4E0D\u5F53\u4F5C\u521B\u4F5C\u80FD\u529B\u5199\u8FDB\u5BA3\u4F20\u89C6\u9891\uFF0C\u9664\u975E\u7528\u6237\u660E\u786E\u8981\u63A5\u5165\u6559\u7A0B\u3002",
     "\xB7 **\u751F\u6210\u4E00\u6761\u65B0\u89C6\u9891\u5FC5\u987B\u5148\u8FC7\u4E24\u9053\u786E\u8BA4\uFF0C\u7F3A\u4E00\u4E0D\u53EF**\uFF1A\u2460 \u5148\u628A**\u89C6\u9891\u811A\u672C**\u5199\u51FA\u6765\u4EA4\u7ED9\u7528\u6237**\u5BA1\u6838**\uFF08\u811A\u672C\u8981\u542B\uFF1A\u753B\u9762\u98CE\u683C\u3001\u4EBA\u7269\u5F62\u8C61\u3001\u5206\u955C\u2014\u2014\u9010\u955C\u7684\u955C\u5934 / \u65F6\u95F4 / \u753B\u9762\u3001\u5BF9\u767D\u2014\u2014\u6709\u5BF9\u8BDD\u5C31\u9010\u53E5\u5199\u6E05\u8C01\u5728\u51E0\u79D2\u8BF4\u4EC0\u4E48\uFF09\uFF1B\u2461 \u811A\u672C\u5BA1\u6838\u901A\u8FC7\u540E\uFF0C**\u518D\u5355\u72EC\u95EE\u4E00\u6B21\u8981\u4E0D\u8981\u5F00\u59CB\u505A**\uFF08\u6240\u6709\u63A5\u5165\u65B9\u5F0F\u5747\u590D\u8FF0\u5F53\u524D\u811A\u672C\u7684\u53CC\u65B9\u6848\u57FA\u7840\u4F30\u4EF7\u5E76\u8BF4\u660E\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39\uFF1B\u4EC5\u670D\u52A1\u7AEF\u6A21\u5F0F\u6838\u5BF9\u989D\u5EA6\uFF09\uFF0C\u7528\u6237\u70B9\u5934\u4E86\u624D\u8C03\u7528 video_generate\u3002\u811A\u672C\u4E00\u6539\uFF0C\u4E24\u9053\u786E\u8BA4\u5168\u90E8\u4F5C\u5E9F\uFF0C\u8981\u91CD\u65B0\u8D70\u3002\u7528\u6237\u8BF4\u300C\u76F4\u63A5\u751F\u6210\u300D\u4E5F\u8981\u5148\u8D70\u8FD9\u4E24\u6B65\uFF0C\u4E0D\u8981\u8DF3\u8FC7\u3002\u7ED9\u5DF2\u6709\u89C6\u9891\u63A5\u957F\uFF08video_extend\uFF09\u4E0D\u9700\u8981\u811A\u672C\uFF0C\u4F46\u540C\u6837\u8981\u5148\u786E\u8BA4\u518D\u8C03\u7528\u3002",
     "\xB7 \u4EC5A/B\u63A5\u5165\uFF1Avideo_generate\u3001video_extend\u53CAvideo_status\u5B8C\u6210\u540E\u82E5\u8FD4\u56DEactualCost\uFF0C\u4EA4\u4ED8\u89C6\u9891\u65F6\u4E00\u5E76\u5C55\u793A\u4E2D\u8F6C\u7AD9\u771F\u5B9E\u6D88\u8017\uFF08\u9010\u4EFB\u52A1\u548C\u5408\u8BA1\uFF09\uFF1Bpaused\u53EA\u79F0\u5DF2\u751F\u6210\u90E8\u5206\uFF0Cpartial\u53EA\u79F0\u5DF2\u7ED3\u7B97\u5C0F\u8BA1\uFF0Cpending\u8BF4\u660E\u5F85\u7ED3\u7B97/\u5F85\u67E5\u8BE2\u3002\u5B9E\u9645\u91D1\u989D\u53D6\u4E2D\u8F6C\u6700\u7EC8\u7ED3\u7B97\u800C\u975E\u4F30\u4EF7\u3001\u9884\u6263\u6216\u4F59\u989D\u5DEE\uFF1B\u6CA1\u6709\u91D1\u989D\u4E0D\u8981\u62A50\u3002\u53EF\u7528\u539FtaskId\u8C03\u7528video_status\u8865\u67E5\u8D39\u7528\uFF0C\u4E0D\u56E0\u8D39\u7528\u7F3A\u5931\u91CD\u65B0\u751F\u6210\u3001\u91CD\u8BD5\u4ED8\u8D39\u4EFB\u52A1\u6216\u5EF6\u8FDF\u4EA4\u4ED8\u3002\u53EA\u7EDF\u8BA1\u89C6\u9891\u8D39\u7528\uFF0C\u56FE\u7247\u4E0E\u989D\u5916\u91CD\u505A\u53E6\u8BA1\uFF1BC\u706B\u5C71\u76F4\u8FDE\u4E0D\u63D0\u4F9B\u6B64\u4E2D\u8F6C\u8D26\u5355\u67E5\u8BE2\u3002",
-    "\xB7 \u6BCF\u6B21\u65B0\u811A\u672C\u53CA\u6539\u7A3F\u5BA1\u6838\u524D\uFF0C\u65E0\u8BBA\u5355\u6BB5\u8FD8\u662F\u591A\u6BB5\uFF0C\u90FD\u5148\u8BFB\u53D6video-director\u7684references/segment-storyboard.md\u5E76\u5B9E\u9645\u5C55\u793A\u5F53\u524D\u7248\u955C\u5934\u53C2\u8003\u793A\u610F\u56FE\uFF1B\u4E00\u955C\u5230\u5E95\u4E5F\u5C55\u793A\u5173\u952E\u6784\u56FE\u4E0E\u52A8\u4F5C\u3002\u9700\u8981\u62C6\u5206\u751F\u6210\u65F6\u53E6\u5C55\u793A\u5206\u6BB5\u8868\uFF08\u6BB5\u53F7\u3001\u5168\u7247\u65F6\u95F4\u3001\u751F\u6210\u65F6\u957F\u3001\u751F\u6210/\u7EED\u62CD\u3001\u4E3B\u8981\u753B\u9762\u4E0E\u65B0\u5BF9\u767D\u3001\u8D77\u6B62\u72B6\u6001\u53CA\u4EA4\u63A5\uFF09\u3002\u6309\u5F53\u524D\u6A21\u578B\u548C\u5B9E\u9645\u5206\u6BB5\u89C4\u5219\u6838\u5BF9\uFF0C\u4E0D\u8C03\u7528\u751F\u6210\u5DE5\u5177\u8BD5\u7B97\uFF0C\u4E0D\u6309\u5206\u955C\u6570\u589E\u52A0\u4ED8\u8D39\u8C03\u7528\u3002\u7528\u672C\u5730SVG/PNG\u753B\u672C\u7248\u6784\u56FE\u4E0E\u52A8\u4F5C\u793A\u610F\u56FE\uFF0CHTML\u53EF\u4F5C\u9644\u52A0\u9884\u89C8\uFF1Bpresent\u767B\u8BB0\u540E\uFF0C\u5728\u6B63\u6587\u5185\u5D4C\u5F53\u524D\u7248\u56FE\u7247\u5E76\u7ED9\u6253\u5F00\u539F\u56FE\u94FE\u63A5\uFF0C\u660E\u786E\u6807\u6CE8\u201C\u793A\u610F\uFF0C\u975E\u5B9E\u9645\u751F\u6210\u753B\u9762\u201D\uFF0C\u5148\u53D1\u56FE\u7247\u6B63\u6587\u518D\u5F39\u811A\u672C\u5BA1\u6838\u7A97\u3002\u6539\u7A3F\u540C\u6B65\u66F4\u65B0\u56FE\u8868\uFF0C\u4E0D\u589E\u52A0\u7B2C\u4E09\u9053\u786E\u8BA4\uFF1B\u793A\u610F\u56FE\u4E0D\u80FD\u4EE3\u66FF\u771F\u5B9E\u9010\u6BB5\u9884\u89C8\u3002\u9ED8\u8BA4\u4E0D\u8C03\u7528\u4ED8\u8D39\u51FA\u56FE\u6A21\u578B\uFF0C\u7528\u6237\u9700\u8981AI\u6548\u679C\u56FE\u65F6\u5148\u786E\u8BA4\u53EF\u7528\u5DE5\u5177\u548C\u8D39\u7528\uFF0C\u4E0D\u5047\u79F0\u63D2\u4EF6\u5DF2\u6709\u6587\u751F\u56FE\u80FD\u529B\u3002",
+    "\xB7 \u6BCF\u6B21\u65B0\u811A\u672C\u53CA\u6539\u7A3F\u5BA1\u6838\u524D\uFF0C\u65E0\u8BBA\u5355\u6BB5\u8FD8\u662F\u591A\u6BB5\uFF0C\u90FD\u5148\u8BFB\u53D6video-director\u7684references/segment-storyboard.md\u5E76\u5B9E\u9645\u5C55\u793A\u5F53\u524D\u7248\u955C\u5934\u53C2\u8003\u793A\u610F\u56FE\uFF1B\u4E00\u955C\u5230\u5E95\u4E5F\u5C55\u793A\u5173\u952E\u6784\u56FE\u4E0E\u52A8\u4F5C\u3002\u9700\u8981\u62C6\u5206\u751F\u6210\u65F6\u53E6\u5C55\u793A\u5206\u6BB5\u8868\uFF08\u6BB5\u53F7\u3001\u5168\u7247\u65F6\u95F4\u3001\u751F\u6210\u65F6\u957F\u3001\u751F\u6210/\u7EED\u62CD\u3001\u4E3B\u8981\u753B\u9762\u4E0E\u65B0\u5BF9\u767D\u3001\u8D77\u6B62\u72B6\u6001\u53CA\u4EA4\u63A5\uFF09\u3002\u6309\u5F53\u524D\u6A21\u578B\u548C\u5B9E\u9645\u5206\u6BB5\u89C4\u5219\u6838\u5BF9\uFF0C\u4E0D\u8C03\u7528\u751F\u6210\u5DE5\u5177\u8BD5\u7B97\uFF0C\u4E0D\u6309\u5206\u955C\u6570\u589E\u52A0\u4ED8\u8D39\u8C03\u7528\u3002\u7528\u672C\u5730SVG/PNG\u753B\u672C\u7248\u6784\u56FE\u4E0E\u52A8\u4F5C\u793A\u610F\u56FE\uFF0CHTML\u53EF\u4F5C\u9644\u52A0\u9884\u89C8\uFF1Bpresent\u767B\u8BB0\u540E\uFF0C\u5728\u6B63\u6587\u5185\u5D4C\u5F53\u524D\u7248\u56FE\u7247\u5E76\u7ED9\u6253\u5F00\u539F\u56FE\u94FE\u63A5\uFF0C\u660E\u786E\u6807\u6CE8\u201C\u793A\u610F\uFF0C\u975E\u5B9E\u9645\u751F\u6210\u753B\u9762\u201D\uFF0C\u5148\u53D1\u56FE\u7247\u6B63\u6587\u518D\u5F39\u811A\u672C\u5BA1\u6838\u7A97\u3002\u6539\u7A3F\u540C\u6B65\u66F4\u65B0\u56FE\u8868\uFF0C\u4E0D\u589E\u52A0\u7B2C\u4E09\u9053\u786E\u8BA4\uFF1B\u793A\u610F\u56FE\u4E0D\u80FD\u4EE3\u66FF\u771F\u5B9E\u9010\u6BB5\u9884\u89C8\u3002\u9ED8\u8BA4\u4E0D\u8C03\u7528\u4ED8\u8D39\u51FA\u56FE\u6A21\u578B\uFF0C\u89D2\u8272\u53C2\u8003\u56FE\u53EF\u5728\u53D6\u5F97\u540C\u610F\u540E\u7528video_prepare_image\u7684create_character\u751F\u6210\uFF0C\u56FE\u7247\u5355\u72EC\u8BA1\u8D39\uFF1B\u5206\u955C\u793A\u610F\u56FE\u4ECD\u4F7F\u7528\u672C\u5730\u7ED8\u5236\uFF0C\u4E0D\u80FD\u6DF7\u4E3A\u540C\u4E00\u6D41\u7A0B\u3002",
     "\xB7 \u4E0D\u8BBA\u63A5\u5165\u65B9\u5F0F\u662FMetaOnticVideo\u3001MetaOntic AI\u8FD8\u662F\u706B\u5C71\u76F4\u8FDE\uFF0C\u5747\u5FC5\u987B\u9884\u4F30\u8D39\u7528\uFF0C\u4E0D\u5F97\u8DF3\u8FC7\u3002\u6BCF\u6B21\u811A\u672C\u5BA1\u6838\u524D\u5148\u8C03\u7528\u53EA\u8BFBvideo_estimate\uFF08\u76EE\u6807\u603B\u65F6\u957F\u3001\u7528\u6237\u5DF2\u786E\u8BA4resolution\u3001\u753B\u5E45\u548C\u771F\u5B9EsegmentSeconds\uFF09\uFF0C\u5C06\u8FD4\u56DE\u7684\u706B\u5C71\u5B98\u65B9\u65B9\u6848\u4E0EMetaOnticVideo\u63D2\u4EF6\u65B9\u6848\u4E24\u9879\u4EBA\u6C11\u5E01\u57FA\u7840\u4F30\u4EF7\u3001\u5404\u81EA\u6A21\u578B/\u5206\u6BB5/\u500D\u7387/\u65E5\u671F\u5199\u5165script.md\u6700\u540E\u7684\u201C\u8D39\u7528\u9884\u4F30\u201D\u4E00\u8282\uFF0C\u653E\u5728\u5B8C\u6574\u5267\u60C5\u3001\u5206\u955C\u3001\u5BF9\u767D\u3001\u7ED3\u5C3E\u53CA\u5206\u6BB5\u65B9\u6848\u4E4B\u540E\uFF1B\u6B63\u6587\u5C55\u793A\u811A\u672C\u65F6\u4E5F\u6309\u76F8\u540C\u987A\u5E8F\u5728\u672B\u5C3E\u5B8C\u6574\u5C55\u793A\u8FD9\u4E24\u9879\u91D1\u989D\u4E0E\u8BA1\u8D39\u524D\u63D0\uFF0C\u518D\u5F39\u5BA1\u6838\u7A97\u53E3\u3002\u4E0D\u5F97\u53EA\u5199\u5728\u5DE5\u5177\u7ED3\u679C\u3001\u6587\u4EF6\u5916\u7684\u8865\u5145\u6D88\u606F\u6216\u5236\u4F5C\u786E\u8BA4\u91CC\u3002\u8D85\u8FC715\u79D2\u7684\u5B98\u65B9\u53C2\u7167\u91C7\u75282.5\uFF0C\u8D85\u8FC730\u79D2\u4E5F\u5FC5\u987B\u5982\u5B9E\u5217\u4E3A\u5206\u6BB5\uFF1B\u63D2\u4EF6\u6309\u5F53\u524D\u5B9E\u9645\u6A21\u578B\u4E0E\u5206\u6BB5\u65B9\u6848\uFF0C\u7EED\u62CD\u5305\u542B\u4E0A\u4E00\u6BB5\u5B8C\u6574\u89C6\u9891\u8F93\u5165\u3002\u624B\u586BKey\u672A\u6838\u5B9E\u5206\u7EC4\u4E0D\u5F97\u5047\u8BBE0.8\u6298\u6263\uFF1B\u4E0D\u628A\u53C2\u8003\u56FE\u7247\u5F53\u53C2\u8003\u89C6\u9891\u8BA1\u4EF7\u3002\u5FC5\u987B\u6807\u660E\u6700\u4F4E\u7528\u91CF\u8865\u8DB3\u672A\u8BA1\u5165\u3001\u56FE\u7247\u8F6C\u6362/\u91CD\u505A/\u72EC\u7ACB\u914D\u97F3\u53E6\u8BA1\u3001\u5B9E\u9645\u4EE5\u8D26\u5355\u4E3A\u51C6\u53CA\u6A21\u578B\u6548\u679C\u4E0D\u540C\u3002\u53C2\u6570\u6539\u53D8\u91CD\u7B97\uFF0C\u8BD5\u7B97\u4E0D\u8C03\u7528\u751F\u6210\u5DE5\u5177\u3001\u4E0D\u8981\u6C42\u767B\u5F55\u6216\u989D\u5916\u5BA1\u6279\u3001\u4E0D\u66FF\u4EE3\u4E24\u9053\u786E\u8BA4\uFF1B\u5DE5\u5177\u62D2\u7EDD\u6216\u7F3A\u5C11\u53EF\u9760\u4EF7\u76EE\u65F6\u8BF4\u660E\u65E0\u6CD5\u53EF\u9760\u4F30\u7B97\u5E76\u6838\u5BF9\u4F9D\u636E\uFF0C\u7981\u6B62\u731C\u4EF7\u6216\u663E\u793A0\u5143\u3002\u5F53\u524D\u6BCF\u6B21\u751F\u6210\u5BA1\u6279\u53EF\u80FD\u53EA\u4F30\u672C\u6B21\u4E00\u6BB5\uFF0C\u4E0D\u80FD\u5192\u5145\u5168\u7247\u9884\u7B97\u3002",
     "\xB7 \u811A\u672C\u5C55\u793A\u662F\u5BA1\u6838\u7684\u5F3A\u5236\u524D\u7F6E\uFF1A\u9996\u6B21\u548C\u6BCF\u6B21\u6539\u7A3F\u5148\u4FDD\u5B58\u672C\u7248\u5B8C\u6574script.md\uFF08\u72B6\u6001\u4E3A\u8349\u7A3F\u3001\u6CE8\u660E\u7248\u672C\uFF09\uFF0C\u518D\u5728\u7528\u6237\u53EF\u89C1\u6B63\u6587\u5C55\u793A\u6545\u4E8B\u3001\u89C4\u683C/\u98CE\u683C\u3001\u4EBA\u7269\u6216\u4E3B\u4F53\u3001\u5206\u955C\u65F6\u95F4\u8868\u3001\u5B8C\u6574\u5BF9\u767D/\u58F0\u97F3\u4E0E\u7ED3\u5C3E\uFF1B\u53EA\u5199\u6587\u4EF6\u3001\u7ED9\u8DEF\u5F84\u3001\u6458\u8981\u3001\u4FEE\u6539\u70B9\u6216\u793A\u610F\u56FE\u4E0D\u7B97\u5C55\u793A\u3002\u6709present/\u6587\u4EF6\u5C55\u793A\u5DE5\u5177\u65F6\u53E6\u884C\u5C55\u793A\u672C\u7248script.md\uFF0C\u7B49\u5F85\u8C03\u7528\u5B8C\u6210\u540E\u624D\u8C03\u7528\u5BA1\u6838\u63D0\u95EE\u5DE5\u5177\uFF0C\u7981\u6B62\u5E76\u884C\u6216\u540C\u4E00\u5DE5\u5177\u6279\u6B21\u540C\u65F6\u53D1\u51FA\u3002\u5C55\u793A\u5931\u8D25\u3001\u4E0D\u652F\u6301Markdown\u6216\u5DE5\u5177\u7F3A\u5931\u65F6\uFF0C\u5148\u5728\u6B63\u6587\u5B8C\u6574\u8D34\u51FA\u811A\u672C\uFF0C\u518D\u63D0\u95EE\u3002\u5BA1\u6838\u7A97\u53E3\u53EA\u7528\u4E8E\u7B80\u77ED\u786E\u8BA4\uFF0C\u7981\u6B62\u628A\u5B8C\u6574\u811A\u672C\u653E\u5165question\u3001header\u3001\u9009\u9879\u6216\u9009\u9879\u63CF\u8FF0\uFF1B\u811A\u672C\u4E0E\u793A\u610F\u56FE\u5148\u5728\u7A97\u53E3\u5916\u5B8C\u6574\u5C55\u793A\uFF0C\u7B49\u5F85\u5B8C\u6210\u518D\u63D0\u95EE\u3002\u5DF2\u5F39\u7A97\u5374\u6F0F\u5C55\u793A\u65F6\uFF0C\u5148\u8865\u5B8C\u6574\u811A\u672C\u5E76\u91CD\u65B0\u5BA1\u6838\uFF0C\u4E0D\u6CBF\u7528\u8BE5\u6B21\u7B54\u590D\uFF0C\u4E0D\u8FDB\u5165\u5236\u4F5C\u786E\u8BA4\u6216\u751F\u6210\u3002",
     "\xB7 \u811A\u672Cscript.md\u7684\u5143\u4FE1\u606F\u7EDF\u4E00\u7528\u4E2D\u6587\uFF1A\u7248\u672C\uFF08\u7B2C1\u7248\u3001\u7B2C2\u7248\uFF09\u3001\u72B6\u6001\uFF08\u8349\u7A3F/\u5DF2\u5BA1\u6838/\u5DF2\u786E\u8BA4\u5236\u4F5C\uFF09\u3001\u5BA1\u6838\u65F6\u95F4\u3001\u5BA1\u6838\u4EBA\u3001\u5236\u4F5C\u786E\u8BA4\u65F6\u95F4\u3001\u5236\u4F5C\u786E\u8BA4\u4EBA\uFF1B\u786E\u8BA4\u4EBA\u586B\u201C\u7528\u6237\u201D\uFF0C\u672A\u786E\u8BA4\u7684\u65F6\u95F4\u548C\u4EBA\u5458\u7559\u7A7A\u3002\u6539\u7A3F\u9000\u56DE\u8349\u7A3F\uFF0C\u6E05\u7A7A\u5BA1\u6838\u4E0E\u5236\u4F5C\u786E\u8BA4\u7684\u65F6\u95F4\u53CA\u4EBA\u5458\u3002\u8BFB\u53D6\u65E7\u811A\u672C\u65F6\u8BC6\u522B\u539F\u82F1\u6587\u5143\u4FE1\u606F\u5E76\u5728\u4E0B\u6B21\u4FDD\u5B58\u65F6\u8F6C\u6362\u4E3A\u4E2D\u6587\uFF0C\u4E0D\u6539\u53D8\u65E2\u6709\u786E\u8BA4\u4E8B\u5B9E\u3002\u6B64\u7EA6\u5B9A\u4EC5\u7528\u4E8E\u7528\u6237\u53EF\u89C1\u811A\u672C\uFF0C\u4E0D\u4FEE\u6539\u5DE5\u5177\u6216\u63A5\u53E3\u7684JSON\u5B57\u6BB5\u3002",
@@ -5092,6 +6044,7 @@ function apply(ctx, config = {}) {
         return await preflightGate(ctx, config, exec);
       } catch (error) {
         const message = error?.message || String(error);
+        if (exec.name === "video_prepare_image") return { kind: "deny", reason: "\u56FE\u7247\u8D39\u7528\u786E\u8BA4\u672A\u80FD\u5B8C\u6210\uFF0C\u8BF7\u5148\u6062\u590D\u786E\u8BA4\u80FD\u529B\uFF1B\u672A\u53D6\u5F97\u540C\u610F\u4E0D\u751F\u6210\u56FE\u7247\u3002" };
         if (exec.name === "video_setup") {
           const command = ffmpegInstallOptions().installs[0].command;
           return {

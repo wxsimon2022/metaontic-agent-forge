@@ -52,5 +52,5 @@ async function generateSeedreamImageCore(liveConfig, body, signal, existingTaskI
 }
 
 export async function generateSeedreamImage(...args: Parameters<typeof generateSeedreamImageCore>) {
-  return timedStage('image_conversion', () => generateSeedreamImageCore(...args));
+  return timedStage(args[3] ? 'image_task_query' : args[1]?.image ? 'image_conversion' : 'character_image_generation', () => generateSeedreamImageCore(...args));
 }

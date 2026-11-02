@@ -1,3 +1,4 @@
+import { initialCharacterReferences, approvedCharacterReferences } from '../workflow/character-references.js';
 /** tools/video-generate：从宿主入口拆出的独立职责模块。 */
 import { MAX_TOTAL_SECONDS, MAX_SEGMENTS, CONTENT_REJECTION_HINT, resolveResolution } from '../config.js';
 import { modelMaxSeconds, resolveTargetPlan, resolveSegmentPrompts } from '../workflow/planning.js';
@@ -55,6 +56,7 @@ export function videoTool(liveConfig, deps, ctx) {
     parameters: {
       type: 'object',
       properties: {
+        characterReferenceImages: { type: 'array', items: { type: 'string' }, description: '已审核的最初角色参考图，按固定顺序用于每段续拍；未提供时沿用首段参考图或首帧。支持URL、本地图片或data URI。断点固定此套图，不自动重画或替换。真人转换仍需单独同意及结果审核。' },
         prompt: {
           type: 'string',
           description: '精简的本段内容或全片创意概要，不传完整剧本。超过模型上限时必须另传segmentPrompts，每段分别写新动作与对白。',
@@ -289,9 +291,10 @@ export function videoTool(liveConfig, deps, ctx) {
         : await allocateStamp(outDir, fileStamp());
       let pendingTask = resume?.pendingTask || null;
       const operationState = resume?.operationState || {};
+      let characterReferences = await initialCharacterReferences(config, args, resume, exec?.signal);
       const checkpoint = async () => saveProgress(segmentsDir, {
         config, toolName: TOOL_NAME, stamp, prompt, fullPlan, cursor, referenceUrl,
-        options: pickResumeOptions(args), segments, pendingTask, operationState,
+        options: pickResumeOptions(args), segments, pendingTask, operationState, characterReferences,
       });
       if (resume?.deliveryPending) await checkpoint();
       let interrupted = false;
@@ -306,6 +309,7 @@ export function videoTool(liveConfig, deps, ctx) {
         const stepArgs = {
           ...resumeOptions,
           ...args,
+          characterReferences,
           prompt: focusedPrompt,
           duration: step.seconds,
           // 这条流程是「先直出再向后续拍」，分段的拼接顺序固定为向后延长。
@@ -318,7 +322,12 @@ export function videoTool(liveConfig, deps, ctx) {
           body = operationState[position].originalBody;
           seconds = step.seconds;
         } else if (step.kind === 'generate') {
-          const generated = await buildGenerationBody(config, stepArgs, step.seconds, {
+          const initialArgs = { ...stepArgs };
+          if (characterReferences.length) {
+            if (!stepArgs.firstFrameUrl && (!stepArgs.referenceImages || args.characterReferenceImages === undefined)) initialArgs.referenceImages = characterReferences.map(item => item.image_url.url);
+            else if (stepArgs.firstFrameUrl && args.characterReferenceImages === undefined) initialArgs.firstFrameUrl = characterReferences[0].image_url.url;
+          }
+          const generated = await buildGenerationBody(config, initialArgs, step.seconds, {
             signal: exec?.signal,
           });
           body = generated.body;
@@ -341,6 +350,10 @@ export function videoTool(liveConfig, deps, ctx) {
             await checkpoint();
           },
         });
+        if (final.status === 'succeeded') {
+          characterReferences = approvedCharacterReferences(characterReferences, operationState[position]);
+          await checkpoint();
+        }
         if (final.submissionId) submissionId = final.submissionId;
         if (final.convertedReferences) convertedReferences = final.convertedReferences;
         pendingTask = ['unknown', 'timeout'].includes(final.status)

@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.11.4",
+  "version": "3.12.0",
   "description": "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
   "license": "MIT",
   "type": "module",
@@ -54,7 +54,8 @@
     "CHANGELOG.md",
     "LICENSE",
     "docs/guide/*.svg",
-    "docs/guide/*.png"
+    "docs/guide/*.png",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "engines": {
     "node": ">=20"
@@ -81,28 +82,29 @@
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "typescript": "^5.9.3",
-    "hyperframes": "0.8.223"
+    "hyperframes": "0.8.223",
+    "@deepseek-ai/schemastery": "~3.18.5"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "build:locale": "esbuild scripts/build-locale.ts --format=esm --platform=node --packages=external --outfile=node_modules/.cache/build-locale.mjs --log-level=warning && node node_modules/.cache/build-locale.mjs",
-    "build:host": "esbuild src/index.ts --bundle --format=esm --platform=node --target=node20 --packages=external --define:__PLUGIN_VERSION__=$(node -p 'JSON.stringify(require(\"./package.json\").version)') --outfile=index.js",
+    "build:host": "esbuild src/index.ts --bundle --format=esm --platform=node --target=node20 --define:__PLUGIN_VERSION__=$(node -p 'JSON.stringify(require(\"./package.json\").version)') --outfile=index.js",
     "build:client": "esbuild src/client.ts --bundle --format=iife --platform=browser --target=es2022 --define:__PLUGIN_VERSION__=$(node -p 'JSON.stringify(require(\"./package.json\").version)') --outfile=client.js",
     "build": "npm run typecheck && npm run build:locale && npm run build:host && npm run build:client",
     "preview": "node scripts/preview.mjs"
   },
-  "dependencies": {
-    "@deepseek-ai/schemastery": "~3.18.5"
-  },
+  "dependencies": {},
   "releaseNotes": {
-    "version": "3.11.4",
+    "version": "3.12.0",
     "prerelease": false,
-    "publishedAt": "2026-11-02T00:58:26Z",
+    "publishedAt": "2026-11-02T01:24:31Z",
     "items": [
-      "优化：仓库简介、主页与搜索主题补全，突出DeepSeek Harness、Seedance 2.0长视频、文生视频、图生视频和视频续拍用途。",
-      "优化：重整README首屏，突出超过15秒视频的多段生成流程，集中安装、Key配置、正式版下载、常见问题与文档导航。",
-      "优化：新增英文README并纳入插件包，完善中英文入口、包简介与关键词，方便不同语言用户发现与使用。",
-      "修复：修正README中过时的设置布局、重置入口和交付顺序说明，补齐工具索引，与当前插件行为保持一致。"
+      "新增：纯文生视频先询问是否生成角色参考图，明确图片单独计费；同意后使用Seedream按文字生成，展示审核通过才用于首段及续拍，拒绝则保留纯文生方案。",
+      "新增：续拍持续携带最初角色参考图，支持明确指定角色图并默认沿用首段参考图或首帧；归一化结果随断点保存，后续分段及恢复继续使用同一套图。",
+      "优化：角色图转换经同意、结果审核并成功重试后，后续续拍复用获审转换图，不重复出图；已提交任务保留原请求，避免恢复时重复提交。",
+      "优化：同步中英文说明、角色图选择与审核步骤、安装排查及第三方许可声明。",
+      "修复：宿主入口内置schemastery及其运行依赖，成品包不再依赖外部node_modules，修复卸载重装或在线更新后缺少Schema依赖导致插件启动失败的问题。",
+      "修复：图片付费确认异常时停止出图；火山直连明确提示当前图片通道限制，不错误承诺可生成角色图。"
     ]
   }
 }

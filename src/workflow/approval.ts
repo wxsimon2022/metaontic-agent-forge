@@ -291,8 +291,10 @@ export async function preflightGate(ctx, config, exec) {
     return { kind: 'ask', reason: exec.arguments?.taskId ? '确认将防重记录关联到渠道侧核对出的原任务 ID，不重新生成。' : '请确认已经在渠道侧核对：原请求没有创建任务。解锁后再生成会产生新费用；若原任务实际存在，可能重复扣费。' };
   }
   if (exec.name === 'video_prepare_image') {
+    const creating = exec.arguments?.operation === 'create_character';
     if (String(exec.arguments?.taskId || '').trim()) return { kind: 'allow' }; // 只查询和取件，不创建新的付费任务。
     if (approvalPolicy(ctx, exec) === 'never') return { kind: 'deny', reason: '当前权限模式无法进行图片调用确认。' };
+    if (creating) return { kind: 'ask', reason: '调用Seedream按文字生成角色参考图，图片单独计费。完成后先展示并核对角色和风格，确认后才用于视频；视频生成另行确认和计费。', displayReason: { zh: '先生成一张非真人角色参考图，图片调用单独计费。生成后先看图确认，再用于视频；现在不会生成视频。是否同意？', en: 'Generate one stylized character reference image, billed separately. Review it before any separately confirmed video generation.' } };
     return { kind: 'ask', reason: '调用 Seedream 将真人参考图转为非真人风格；图片生成单独按实际调用计费，视频费用另计。', displayReason: { zh: '将调用 Seedream 处理参考图，图片调用单独计费，视频费用另计。确认后开始处理。', en: 'Use Seedream to stylize the reference. Image calls are billed separately from video. Confirm to proceed.' } };
   }
 

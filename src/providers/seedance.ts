@@ -42,7 +42,11 @@ export function buildRequestBody(config, args, referenceVideoUrl) {
   const content = [
     { type: 'text', text: buildExtensionPrompt({ prompt, seconds, startAt, mode, direction, wording, transitionDescription: args.transitionDescription }) },
     { type: 'video_url', video_url: { url: referenceVideoUrl }, role: 'reference_video' },
+    ...(args.characterReferences || []).map(item => ({ type: 'image_url', image_url: { url: item.image_url.url }, role: 'reference_image' })),
   ];
+  if (args.characterReferences?.length) {
+    content[0].text = `固定主体外观以图片1至图片${args.characterReferences.length}中的最初角色设定为准，保持对应主体的面部、发型、服饰与体型；图片仅约束主体外观，不重演图片中的动作或强制恢复其背景。视频1负责本段动作、机位与声音衔接。\n${content[0].text}`;
+  }
 
   const body = { ...parseExtraParams(config) };
   body.model = model;

@@ -231,7 +231,7 @@ export function pickResumeOptions(args) {
     'mode', 'ratio', 'generateAudio', 'watermark', 'segmentPrompts', 'transitionDescription', 'merge',
     // 这几个是 video_extend 的口径（延长方向、提示词写法、整片时间轴位置）
     'direction', 'wording', 'startAt', 'inputVideoSeconds',
-    'firstFrameUrl', 'lastFrameUrl', 'referenceImages', 'resolution', 'seed', 'user', 'returnLastFrame',
+    'firstFrameUrl', 'lastFrameUrl', 'referenceImages', 'characterReferenceImages', 'resolution', 'seed', 'user', 'returnLastFrame',
   ];
   const options = {};
   for (const key of keys) {
@@ -293,13 +293,14 @@ export function assertResumeConnection(data, config, args) {
 }
 
 /** Persist before delivery, including pending task IDs and the final completed cursor. */
-export async function saveProgress(dir, { config, toolName, stamp, prompt, fullPlan, cursor, referenceUrl, options, segments, pendingTask, operationState = {} }) {
+export async function saveProgress(dir, { config, toolName, stamp, prompt, fullPlan, cursor, referenceUrl, options, segments, pendingTask, operationState = {}, characterReferences = undefined }) {
   const completed = segments.filter(step => step.status === 'succeeded' && step.videoUrl);
   const record = pauseRecordAt({ stamp, prompt, fullPlan, done: completed.length, cursor,
     lastVideoUrl: referenceUrl, options, segments: completed });
   Object.assign(record, { toolName, connection: progressConnection(config),
     deliveryPending: !pendingTask && completed.length > 0,
     state: pendingTask ? 'pending' : completed.length >= fullPlan.length ? 'completed' : 'paused',
-    pendingTask: pendingTask || null, operationState });
+    pendingTask: pendingTask || null, operationState,
+    ...(characterReferences !== undefined ? { characterReferences } : {}) });
   await writePauseFile(dir, record);
 }
