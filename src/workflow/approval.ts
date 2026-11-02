@@ -1,3 +1,4 @@
+import { characterChoiceGate } from './character-choice.js';
 /** workflow/approval：从宿主入口拆出的独立职责模块。 */
 import { isManualKey, connectionLabel, resolveRegisterApi, assertConfigured, resolveApiKey, resolveModel } from '../providers/connection.js';
 import { estimateSteps, formatMoney, estimatePlan, estimateUsage } from './costs.js';
@@ -323,6 +324,8 @@ export async function preflightGate(ctx, config, exec) {
   }
 
   const args = exec.arguments && typeof exec.arguments === 'object' ? exec.arguments : {};
+  const characterChoice = await characterChoiceGate(ctx, config, exec, args);
+  if (characterChoice) return characterChoice;
 
   // 长视频要在本机合并，缺 ffmpeg 就先停下来：把这次调用退回去，
   // 让模型在对话框里问用户「要不要授权我装 ffmpeg」，而不是闷头生成再丢一堆分段。

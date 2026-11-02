@@ -56,6 +56,7 @@ export function videoTool(liveConfig, deps, ctx) {
     parameters: {
       type: 'object',
       properties: {
+        resetCharacterChoice: { type: 'boolean', description: '仅在用户明确改变已确认的角色图方案时设true，重新弹出选择；不会直接改为纯文生，也不能绕过确认。' },
         characterReferenceImages: { type: 'array', items: { type: 'string' }, description: '已审核的最初角色参考图，按固定顺序用于每段续拍；未提供时沿用首段参考图或首帧。支持URL、本地图片或data URI。断点固定此套图，不自动重画或替换。真人转换仍需单独同意及结果审核。' },
         prompt: {
           type: 'string',

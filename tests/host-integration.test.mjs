@@ -43,7 +43,7 @@ test('published host preserves schema, tool registration, live configuration and
   assert.match(host.prompt(), /直出上限 15 秒/);
   config.model = 'seedance-2-5';
   assert.match(host.prompt(), /直出上限 30 秒/);
-  const decision = await host.gate({ name: 'video_generate', arguments: { duration: 5 } });
+  const decision = await host.gate({ name: 'video_generate', arguments: { duration: 5, referenceImages: ['https://media.invalid/approved.png'] } });
   assert.equal(decision.kind, 'ask');
   assert.match(decision.displayReason.zh, /实际用量计费/);
   host.dispose();

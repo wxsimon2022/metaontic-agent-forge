@@ -277,17 +277,17 @@ function getInner(value) {
 function extractKeys(data) {
   return filterKeys(data ?? {}, (key) => !key.startsWith("$"));
 }
-function validateVolatileSchema(schema, path11 = [], blocked2 = false, seen = /* @__PURE__ */ new Map()) {
+function validateVolatileSchema(schema, path12 = [], blocked2 = false, seen = /* @__PURE__ */ new Map()) {
   const states = seen.get(schema) ?? /* @__PURE__ */ new Set();
   if (states.has(blocked2)) return;
   states.add(blocked2);
   seen.set(schema, states);
-  if (schema.meta?.volatile && blocked2) throw new ValidationError("volatile fields require a fixed object path without an enclosing volatile field", { path: path11 });
+  if (schema.meta?.volatile && blocked2) throw new ValidationError("volatile fields require a fixed object path without an enclosing volatile field", { path: path12 });
   const nested = blocked2 || !!schema.meta?.volatile;
-  if (schema.dict) for (const [key, child] of Object.entries(schema.dict)) validateVolatileSchema(child, [...path11, key], nested, seen);
-  if (schema.sKey) validateVolatileSchema(schema.sKey, [...path11, "<key>"], true, seen);
-  if (schema.inner && (schema.type !== "lazy" || schema.inner[kSchema])) validateVolatileSchema(schema.inner, [...path11, "*"], true, seen);
-  if (schema.list) for (let index = 0; index < schema.list.length; index++) validateVolatileSchema(schema.list[index], [...path11, String(index)], true, seen);
+  if (schema.dict) for (const [key, child] of Object.entries(schema.dict)) validateVolatileSchema(child, [...path12, key], nested, seen);
+  if (schema.sKey) validateVolatileSchema(schema.sKey, [...path12, "<key>"], true, seen);
+  if (schema.inner && (schema.type !== "lazy" || schema.inner[kSchema])) validateVolatileSchema(schema.inner, [...path12, "*"], true, seen);
+  if (schema.list) for (let index = 0; index < schema.list.length; index++) validateVolatileSchema(schema.list[index], [...path12, String(index)], true, seen);
 }
 function checkWithinRange(data, meta, description, options, skipMin = false) {
   const { max = Infinity, min = -Infinity } = meta;
@@ -1045,7 +1045,7 @@ var init_config = __esm({
     FORWARD_TRANSITION = "\u5411\u524D\u5EF6\u957F\u65F6\uFF0C\u672C\u6BB5\u6700\u540E\u4E00\u5E27\u5FC5\u987B\u7D27\u63A5\u89C6\u98911\u7B2C\u4E00\u5E27\uFF0C\u4FDD\u6301\u540C\u4E00\u6784\u56FE\u3001\u4EBA\u7269\u5927\u5C0F\u3001\u5DE6\u53F3\u4F4D\u7F6E\u3001\u5934\u90E8\u671D\u5411\u3001\u89C6\u7EBF\u3001\u624B\u90E8\u4F4D\u7F6E\u548C\u52A8\u4F5C\u9636\u6BB5\u3002\u52A8\u4F5C\u671D\u5411\u89C6\u98911\u7684\u5F00\u573A\u52A8\u4F5C\u53D1\u5C55\uFF0C\u4E0D\u91CD\u590D\u524D\u6BB5\u52A8\u4F5C\u3001\u4E0D\u5B9A\u683C\u7B49\u5F85\u3001\u4E0D\u4ECE\u753B\u9762\u53E6\u4E00\u4FA7\u91CD\u65B0\u5165\u573A\uFF1B\u4E0D\u64C5\u81EA\u5207\u955C\u6216\u91CD\u65B0\u5C45\u4E2D\u3002";
     CLOSEUP_TRANSITION = "\u955C\u5934\u8854\u63A5\u5EFA\u8BAE\uFF08\u4EC5\u5728\u672C\u6BB5\u672A\u660E\u786E\u6307\u5B9A\u8FD0\u955C\u6216\u5207\u955C\u5B89\u6392\u65F6\u91C7\u7528\uFF09\uFF1A\u5728\u5B8C\u6574\u53F0\u8BCD\u7ED3\u675F\u5904\u81EA\u7136\u5207\u5230\u4E0B\u4E00\u4F4D\u8BF4\u8BDD\u4EBA\u7684\u8FD1\u666F\u6216\u542C\u8BDD\u4EBA\u7684\u53CD\u5E94\u8FD1\u666F\uFF0C\u518D\u7EE7\u7EED\u672C\u6BB5\u5267\u60C5\u3002\u4FDD\u6301\u8F74\u7EBF\u3001\u89C6\u7EBF\u65B9\u5411\u3001\u5DE6\u53F3\u4EBA\u7269\u5173\u7CFB\u3001\u670D\u88C5\u548C\u97F3\u8272\uFF0C\u4E0D\u4EA4\u6362\u89D2\u8272\uFF1B\u53EA\u6539\u53D8\u666F\u522B\uFF0C\u4E0D\u65B0\u589E\u573A\u666F\u3002";
     CONTENT_REJECTION_HINT = "\u53C2\u8003\u89C6\u9891\u88AB\u4E0A\u6E38\u5185\u5BB9\u5BA1\u6838\u62D2\u7EDD\uFF0C\u5EF6\u957F\u5DF2\u505C\u6B62\u3002Seedance \u542B\u4EBA\u8138\u7EED\u62CD\u9700\u4F7F\u7528\u540C\u4E00\u4E0A\u6E38\u8D26\u53F7\u7684\u53D7\u4FE1\u539F\u59CB\u89C6\u9891\u6216\u6388\u6743\u7D20\u6750\uFF1B\u8BF7\u786E\u8BA4\u4E2D\u8F6C\u7AD9\u900F\u4F20\u4E86\u539F\u59CB video_url \u4E0E reference_video\uFF0C\u4E14\u524D\u540E\u8BF7\u6C42\u4F7F\u7528\u540C\u4E00\u4E0A\u6E38\u8D26\u53F7\u3002\u4E0D\u4F1A\u81EA\u52A8\u53BB\u6389\u53C2\u8003\u89C6\u9891\u751F\u6210\uFF0C\u4EE5\u514D\u4EBA\u7269\u4E0D\u4E00\u81F4\u3002";
-    PLUGIN_VERSION = true ? "3.12.0".trim().replace(/^v/i, "") : "";
+    PLUGIN_VERSION = true ? "3.12.1".trim().replace(/^v/i, "") : "";
   }
 });
 
@@ -1105,8 +1105,8 @@ function resolveSubmitPath(config) {
 }
 function resolveQueryPath(config, taskId) {
   if (isVolcengine(config)) return `/api/v3/contents/generations/tasks/${encodeURIComponent(taskId)}`;
-  const path11 = String(ref(config, "queryPath", "")).trim() || relayPreset().queryPath;
-  return path11.replace("{task_id}", encodeURIComponent(taskId));
+  const path12 = String(ref(config, "queryPath", "")).trim() || relayPreset().queryPath;
+  return path12.replace("{task_id}", encodeURIComponent(taskId));
 }
 function resolveModel(config) {
   const preset = relayPreset();
@@ -1943,8 +1943,8 @@ async function fetchActualCost(config, taskIds, signal) {
   const base = resolveBaseUrl(config).replace(/\/v1\/?$/, "");
   if (!key || !base) return pending("\u8D39\u7528\u5F85\u67E5\u8BE2\uFF1A\u539F\u8C03\u7528\u8FDE\u63A5\u4E0D\u53EF\u7528\u3002");
   const requestSignal = signal ? AbortSignal.any([signal, AbortSignal.timeout(8e3)]) : AbortSignal.timeout(8e3);
-  async function get(path11, authenticated) {
-    const response = await fetch(`${base}${path11}`, {
+  async function get(path12, authenticated) {
+    const response = await fetch(`${base}${path12}`, {
       method: "GET",
       redirect: "error",
       signal: requestSignal,
@@ -2530,14 +2530,14 @@ function findKey(payload, keys, depth = Infinity) {
   }
   return void 0;
 }
-function collectUrls(payload, path11 = [], found = []) {
+function collectUrls(payload, path12 = [], found = []) {
   if (typeof payload === "string") {
-    if (/^https?:\/\//i.test(payload)) found.push([path11, payload]);
+    if (/^https?:\/\//i.test(payload)) found.push([path12, payload]);
   } else if (Array.isArray(payload)) {
-    for (const item of payload) collectUrls(item, path11, found);
+    for (const item of payload) collectUrls(item, path12, found);
   } else if (payload && typeof payload === "object") {
     for (const [key, value] of Object.entries(payload)) {
-      collectUrls(value, [...path11, key], found);
+      collectUrls(value, [...path12, key], found);
     }
   }
   return found;
@@ -2555,22 +2555,22 @@ function extractTaskId(payload) {
 }
 function extractVideoUrl(payload) {
   const candidates = collectUrls(payload).filter(
-    ([path11, url]) => !looksLikeImageUrl(url) && !path11.some(isImageKey)
+    ([path12, url]) => !looksLikeImageUrl(url) && !path12.some(isImageKey)
   );
   if (!candidates.length) return void 0;
   for (const wanted of VIDEO_URL_KEYS) {
-    for (const [path11, url] of candidates) {
-      if (path11.length && String(path11.at(-1)).toLowerCase() === wanted) return url;
+    for (const [path12, url] of candidates) {
+      if (path12.length && String(path12.at(-1)).toLowerCase() === wanted) return url;
     }
   }
-  for (const [path11, url] of candidates) {
-    if (path11.length && GENERIC_URL_KEYS.has(String(path11.at(-1)).toLowerCase())) return url;
+  for (const [path12, url] of candidates) {
+    if (path12.length && GENERIC_URL_KEYS.has(String(path12.at(-1)).toLowerCase())) return url;
   }
   return candidates[0][1];
 }
 function extractImageUrl(payload) {
   const found = collectUrls(payload).find(
-    ([path11, url]) => looksLikeImageUrl(url) || path11.some(isImageKey)
+    ([path12, url]) => looksLikeImageUrl(url) || path12.some(isImageKey)
   );
   return found?.[1];
 }
@@ -2627,8 +2627,8 @@ async function relayRequest(config, requestPath, options = {}) {
     throw error;
   }
 }
-async function relayRequestCore(config, path11, { method = "GET", body, signal } = {}, trace = {}) {
-  const url = `${resolveBaseUrl(config)}${path11}`;
+async function relayRequestCore(config, path12, { method = "GET", body, signal } = {}, trace = {}) {
+  const url = `${resolveBaseUrl(config)}${path12}`;
   const timeout = AbortSignal.timeout(RELAY_TIMEOUT_MS);
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
   const serialized = body === void 0 ? void 0 : JSON.stringify(body);
@@ -3387,7 +3387,91 @@ init_connection();
 init_config();
 
 // src/workflow/real-person.ts
+import { createHash as createHash3 } from "node:crypto";
+
+// src/workflow/character-choice.ts
 import { createHash as createHash2 } from "node:crypto";
+import { mkdir as mkdir6, readFile as readFile4, writeFile as writeFile3, rename as rename4, rm as rm4 } from "node:fs/promises";
+import path8 from "node:path";
+init_connection();
+var waiting = /* @__PURE__ */ new Map();
+var localIds = /* @__PURE__ */ new WeakMap();
+var nextId = 0;
+var IMAGE = "\u5148\u751F\u6210\u89D2\u8272\u56FE\uFF08\u5355\u72EC\u8BA1\u8D39\uFF09";
+var TEXT = "\u76F4\u63A5\u6587\u751F\u89C6\u9891";
+function hasImages(args) {
+  return [args?.firstFrameUrl, ...Array.isArray(args?.referenceImages) ? args.referenceImages : [args?.referenceImages], ...Array.isArray(args?.characterReferenceImages) ? args.characterReferenceImages : []].some((value) => typeof value === "string" && Boolean(value.trim()));
+}
+async function characterChoiceGate(ctx, config, exec, args) {
+  if (exec.name !== "video_generate" || String(args?.resume || "").trim() || hasImages(args)) return null;
+  const session = exec.agent?.session;
+  const deny = (reason) => ({ kind: "deny", reason });
+  if (!session || typeof session !== "object") return deny("\u63D0\u4EA4\u5DF2\u505C\u6B62\uFF1A\u7EAF\u6587\u751F\u89C6\u9891\u987B\u5148\u8BE2\u95EE\u662F\u5426\u751F\u6210\u89D2\u8272\u53C2\u8003\u56FE\uFF0C\u5F53\u524D\u7F3A\u5C11\u53EF\u4EA4\u4E92\u4F1A\u8BDD\u3002");
+  const stableId = typeof session.id === "string" ? session.id : typeof session.header?.id === "string" ? session.header.id : null;
+  if (!localIds.has(session)) localIds.set(session, `live-${++nextId}`);
+  const key = createHash2("sha256").update(JSON.stringify([stableId || localIds.get(session), args?.prompt || "", args?.duration, args?.resolution, args?.ratio])).digest("hex");
+  const file = path8.join(dshHome(), "metaontic-video", "character-choices", key + ".json");
+  try {
+    async function choose() {
+      if (stableId && args?.resetCharacterChoice !== true) {
+        try {
+          const saved = JSON.parse(await readFile4(file, "utf8"));
+          if (saved.version === 1 && ["text_only", "generate_first"].includes(saved.choice)) return saved.choice;
+        } catch (error) {
+          if (error?.code !== "ENOENT") return null;
+        }
+      }
+      const service = ctx.get?.("userQuestions") || exec.agent?.ctx?.get?.("userQuestions");
+      if (typeof service?.ask !== "function") return null;
+      const first = isVolcengine(config) ? "\u4F7F\u7528\u6211\u63D0\u4F9B\u7684\u89D2\u8272\u56FE" : IMAGE;
+      const result = await timedStage("character_choice_wait", () => service.ask({
+        agent: exec.agent,
+        signal: exec.signal,
+        ...exec.callId ? { wait: { callId: exec.callId } } : {},
+        questions: [{
+          id: "metaontic_character_reference",
+          header: "\u89D2\u8272\u53C2\u8003\u56FE",
+          question: isVolcengine(config) ? "\u662F\u5426\u5148\u51C6\u5907\u89D2\u8272\u53C2\u8003\u56FE\uFF1F\u5F53\u524D\u706B\u5C71\u76F4\u8FDE\u4E0D\u63D0\u4F9B\u4EE3\u751F\u6210\u56FE\u7247\u901A\u9053\uFF0C\u53EF\u4F7F\u7528\u4F60\u63D0\u4F9B\u7684\u89D2\u8272\u56FE\uFF0C\u6216\u76F4\u63A5\u6587\u751F\u89C6\u9891\u3002" : "\u662F\u5426\u5148\u751F\u6210\u89D2\u8272\u53C2\u8003\u56FE\uFF1F\u56FE\u7247\u8C03\u7528\u5355\u72EC\u8BA1\u8D39\uFF0C\u751F\u6210\u540E\u5148\u770B\u56FE\u786E\u8BA4\uFF0C\u518D\u7528\u4E8E\u89C6\u9891\u548C\u540E\u7EED\u7EED\u62CD\u3002",
+          multiSelect: false,
+          options: [{ label: first, description: isVolcengine(config) ? "\u63D0\u4F9B\u89D2\u8272\u56FE\u5E76\u786E\u8BA4\u540E\u518D\u751F\u6210\u89C6\u9891\u3002" : "\u5148\u751F\u6210\u5E76\u5BA1\u6838\u89D2\u8272\u56FE\uFF0C\u56FE\u7247\u8D39\u7528\u4E0E\u89C6\u9891\u5206\u5F00\u3002" }, { label: TEXT, description: "\u4E0D\u751F\u6210\u89D2\u8272\u56FE\uFF0C\u6309\u7EAF\u6587\u751F\u65B9\u6848\u5236\u4F5C\u89C6\u9891\u3002" }]
+        }]
+      }));
+      if (exec.signal?.aborted) return null;
+      const answer = result?.answers?.find((item) => item.id === "metaontic_character_reference");
+      const selected = answer?.custom ? answer.custom.trim() : answer?.selected?.length === 1 ? answer.selected[0] : "";
+      const choice2 = selected === first ? "generate_first" : selected === TEXT ? "text_only" : null;
+      if (!choice2) return null;
+      if (stableId) {
+        await mkdir6(path8.dirname(file), { recursive: true, mode: 448 });
+        const temp = file + "." + Date.now() + ".tmp";
+        try {
+          await writeFile3(temp, JSON.stringify({ version: 1, choice: choice2, time: (/* @__PURE__ */ new Date()).toISOString() }), { mode: 384, flag: "wx" });
+          await rename4(temp, file);
+        } finally {
+          await rm4(temp, { force: true }).catch(() => {
+          });
+        }
+      }
+      return choice2;
+    }
+    let pending = waiting.get(key);
+    if (!pending) {
+      pending = choose();
+      waiting.set(key, pending);
+    }
+    let choice;
+    try {
+      choice = await pending;
+    } finally {
+      if (waiting.get(key) === pending) waiting.delete(key);
+    }
+    if (choice === "text_only") return null;
+    if (choice === "generate_first") return deny(isVolcengine(config) ? "\u7528\u6237\u9009\u62E9\u5148\u4F7F\u7528\u89D2\u8272\u56FE\uFF0C\u5DF2\u505C\u6B62\u7EAF\u6587\u751F\u89C6\u9891\u63D0\u4EA4\u3002\u8BF7\u5148\u53D6\u5F97\u5E76\u5BA1\u6838\u7528\u6237\u63D0\u4F9B\u7684\u89D2\u8272\u56FE\uFF0C\u518D\u4F20referenceImages/characterReferenceImages\uFF1B\u4E0D\u8981\u91CD\u590D\u8BE2\u95EE\u6216\u76F4\u63A5\u751F\u6210\u89C6\u9891\u3002" : "\u7528\u6237\u5DF2\u660E\u786E\u9009\u62E9\u5148\u751F\u6210\u89D2\u8272\u56FE\uFF0C\u5DF2\u505C\u6B62\u7EAF\u6587\u751F\u89C6\u9891\u63D0\u4EA4\u3002\u8BF7\u5148\u7528video_prepare_image(operation:create_character)\u6309\u5DF2\u786E\u8BA4\u8BBE\u5B9A\u51FA\u56FE\uFF0C\u56FE\u7247\u5355\u72EC\u8BA1\u8D39\uFF1B\u5C55\u793A\u5BA1\u6838\u540E\u5C06\u56FE\u7247\u4F20\u5165referenceImages\u548CcharacterReferenceImages\uFF0C\u518D\u5355\u72EC\u786E\u8BA4\u89C6\u9891\u8D39\u7528\u4E0E\u5236\u4F5C\u3002\u4E0D\u8981\u91CD\u590D\u8BE2\u95EE\u6B64\u9009\u62E9\uFF0C\u4E0D\u8981\u76F4\u63A5\u91CD\u63D0\u7EAF\u6587\u751F\u89C6\u9891\uFF1B\u7528\u6237\u660E\u786E\u6539\u53D8\u65B9\u6848\u65F6\uFF0C\u4F20resetCharacterChoice:true\u91CD\u65B0\u53D6\u5F97\u9009\u62E9\u3002");
+    return deny("\u89D2\u8272\u56FE\u9009\u62E9\u5C1A\u672A\u53D6\u5F97\u660E\u786E\u7B54\u590D\uFF0C\u5DF2\u505C\u6B62\u63D0\u4EA4\u3002\u53D6\u6D88\u3001\u8DF3\u8FC7\u3001pending\u3001\u4EA4\u4E92\u4E0D\u53EF\u7528\u6216\u8BB0\u5F55\u5931\u8D25\u90FD\u4E0D\u7B49\u4E8E\u9009\u62E9\u76F4\u63A5\u6587\u751F\u89C6\u9891\uFF1B\u6062\u590D\u8BE2\u95EE\u80FD\u529B\u540E\u518D\u7EE7\u7EED\uFF0C\u4E0D\u5F97\u9ED8\u8BA4\u8DF3\u8FC7\u3002");
+  } catch {
+    return deny("\u89D2\u8272\u56FE\u9009\u62E9\u672A\u5B8C\u6210\uFF0C\u672A\u63D0\u4EA4\u89C6\u9891\u3002\u8BF7\u6062\u590D\u8BE2\u95EE\u4E0E\u9009\u62E9\u8BB0\u5F55\u80FD\u529B\u540E\u518D\u7EE7\u7EED\uFF0C\u4E0D\u8981\u81EA\u52A8\u8DF3\u8FC7\u6216\u91CD\u63D0\u3002");
+  }
+}
 
 // src/workflow/approval.ts
 init_connection();
@@ -3657,6 +3741,8 @@ async function preflightGate(ctx, config, exec) {
     };
   }
   const args = exec.arguments && typeof exec.arguments === "object" ? exec.arguments : {};
+  const characterChoice = await characterChoiceGate(ctx, config, exec, args);
+  if (characterChoice) return characterChoice;
   const consent = await ffmpegConsentGate(config, exec, args);
   if (consent) return consent;
   if (isManualKey(config)) {
@@ -3749,7 +3835,7 @@ async function recoverRealPersonImages(config, body, ctx, exec, final, state = {
   try {
     for (const item of images) {
       const source = String(item.image_url.url);
-      const key = createHash2("sha256").update(source).digest("hex");
+      const key = createHash3("sha256").update(source).digest("hex");
       const entry = state.images[key] ||= {};
       if (entry.failed) throw new Error(`\u56FE\u7247\u4EFB\u52A1 ${entry.taskId || ""} \u5DF2\u660E\u786E\u5931\u8D25\uFF1A${entry.failed}\u3002\u4E0D\u81EA\u52A8\u518D\u6B21\u51FA\u56FE\u3002`);
       if (!entry.imageUrl) {
@@ -3989,18 +4075,18 @@ async function runTask(liveConfig, body, signal, progress = {}) {
 // src/media/merge.ts
 init_config();
 init_connection();
-import { rm as rm5, mkdir as mkdir7, writeFile as writeFile3, rename as rename5, stat as stat4, copyFile } from "node:fs/promises";
-import path9 from "node:path";
+import { rm as rm6, mkdir as mkdir8, writeFile as writeFile4, rename as rename6, stat as stat4, copyFile } from "node:fs/promises";
+import path10 from "node:path";
 
 // src/media/download.ts
-import { mkdir as mkdir6, rename as rename4, rm as rm4 } from "node:fs/promises";
-import path8 from "node:path";
+import { mkdir as mkdir7, rename as rename5, rm as rm5 } from "node:fs/promises";
+import path9 from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import { createWriteStream } from "node:fs";
 var DOWNLOAD_TIMEOUT_MS = 15 * 60 * 1e3;
 async function downloadFile(url, destPath, { signal } = {}) {
-  await mkdir6(path8.dirname(destPath), { recursive: true });
+  await mkdir7(path9.dirname(destPath), { recursive: true });
   const partial = `${destPath}.${uniqueSuffix("part")}`;
   const timeout = AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS);
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
@@ -4017,10 +4103,10 @@ async function downloadFile(url, destPath, { signal } = {}) {
       });
     }
     await pipeline(Readable.fromWeb(response.body), createWriteStream(partial));
-    await rename4(partial, destPath);
+    await rename5(partial, destPath);
     return destPath;
   } catch (error) {
-    await rm4(partial, { force: true }).catch(() => {
+    await rm5(partial, { force: true }).catch(() => {
     });
     if (error?.code === "download_failed") throw error;
     if (signal?.aborted) throw abortError();
@@ -4082,19 +4168,19 @@ async function alignSegmentAudio(config, files, probed, outPath, { signal, binar
       trimmed.push({ index: index + 1, paddingSeconds: Number(padding.toFixed(3)) });
       aligned.push(temp);
     } else {
-      await rm5(temp, { force: true });
+      await rm6(temp, { force: true });
       aligned.push(file);
     }
   }
   return { files: aligned, temps, trimmed };
 }
 async function cleanupSegmentTemps(temps) {
-  for (const temp of temps || []) await rm5(temp, { force: true });
+  for (const temp of temps || []) await rm6(temp, { force: true });
 }
 async function mergeClips(config, files, outPath, { signal } = {}) {
   const binary = resolveBinary(config, "ffmpegBinary", "ffmpeg");
-  await mkdir7(path9.dirname(outPath), { recursive: true });
-  await rm5(outPath, { force: true });
+  await mkdir8(path10.dirname(outPath), { recursive: true });
+  await rm6(outPath, { force: true });
   const work = `${outPath}.${uniqueSuffix("work")}.mp4`;
   let copyError = "";
   let audioError = "";
@@ -4115,7 +4201,7 @@ async function mergeClips(config, files, outPath, { signal } = {}) {
     if (mergeMode !== "reencode" && paramsMatch) {
       const listPath = `${work}.concat.txt`;
       const lines = files.map((file) => `file '${file.replace(/'/g, "'\\''")}'`).join("\n");
-      await writeFile3(listPath, `${lines}
+      await writeFile4(listPath, `${lines}
 `, "utf8");
       try {
         const { code: code2, stderr: stderr2 } = await runProcess(binary, [
@@ -4133,12 +4219,12 @@ async function mergeClips(config, files, outPath, { signal } = {}) {
           work
         ], { signal });
         if (code2 === 0 && await exists(work)) {
-          await rename5(work, outPath);
+          await rename6(work, outPath);
           return { path: outPath, mode: "copy", trimmed };
         }
         copyError = stderr2.trim().slice(-400);
       } finally {
-        await rm5(listPath, { force: true });
+        await rm6(listPath, { force: true });
       }
     } else if (!paramsMatch) {
       copyError = "\u5206\u6BB5\u5206\u8FA8\u7387\u4E0D\u4E00\u81F4\uFF0C\u8DF3\u8FC7\u65E0\u635F\u62FC\u63A5\u3002";
@@ -4151,7 +4237,7 @@ async function mergeClips(config, files, outPath, { signal } = {}) {
     const videoParts = files.map((_, index) => `[${index}:v]scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=${fps}[v${index}]`);
     const videoInputs = files.map((_, index) => `[v${index}]`).join("");
     async function encode(filter2, maps, withAudioTrack) {
-      await rm5(work, { force: true });
+      await rm6(work, { force: true });
       const args = ["-y"];
       for (const file of files) args.push("-i", file);
       args.push("-filter_complex", filter2, ...maps, "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p");
@@ -4169,7 +4255,7 @@ async function mergeClips(config, files, outPath, { signal } = {}) {
       ].join(";");
       const { code: code2, stderr: stderr2 } = await encode(filter2, ["-map", "[v]", "-map", "[a]"], true);
       if (code2 === 0 && await exists(work)) {
-        await rename5(work, outPath);
+        await rename6(work, outPath);
         return { path: outPath, mode: "reencode", trimmed };
       }
       audioError = stderr2.trim().slice(-400);
@@ -4177,7 +4263,7 @@ async function mergeClips(config, files, outPath, { signal } = {}) {
     const filter = [...videoParts, `${videoInputs}concat=n=${files.length}:v=1:a=0[v]`].join(";");
     const { code, stderr } = await encode(filter, ["-map", "[v]"], false);
     if (code === 0 && await exists(work)) {
-      await rename5(work, outPath);
+      await rename6(work, outPath);
       return { path: outPath, mode: withAudio ? "reencode-video-only" : "reencode", trimmed };
     }
     const detail = [copyError, audioError, stderr.trim().slice(-400)].filter(Boolean).join(" | ");
@@ -4257,7 +4343,7 @@ async function downloadSegmentsAndMerge(config, {
   const ffmpegReady = segments.length > 1 ? await hasFfmpeg(config, signal) : true;
   let probeWarned = false;
   for (const [index, segment] of segments.entries()) {
-    const dest = path9.join(
+    const dest = path10.join(
       segmentsDir,
       `${String(segment.index).padStart(2, "0")}-${segment.kind}.mp4`
     );
@@ -4315,14 +4401,14 @@ async function downloadSegmentsAndMerge(config, {
       installHint: guide.hint
     };
   }
-  const finalPath = path9.join(outDir, `${stamp}-${deliveredSeconds}s.mp4`);
+  const finalPath = path10.join(outDir, `${stamp}-${deliveredSeconds}s.mp4`);
   try {
     if (files.length === 1 && keepSingleFile) {
       return { files, segmentsDir, deliveredSeconds, merged: true, mergeMode: "segment", videoPath: files[0] };
     }
     if (files.length === 1) {
-      await mkdir7(path9.dirname(finalPath), { recursive: true });
-      await rm5(finalPath, { force: true });
+      await mkdir8(path10.dirname(finalPath), { recursive: true });
+      await rm6(finalPath, { force: true });
       await copyFile(files[0], finalPath);
       await appendRequestLog({ event: "delivery_copied", sourcePath: files[0], videoPath: finalPath });
       return { files, segmentsDir, deliveredSeconds, merged: true, mergeMode: "single", videoPath: finalPath };
@@ -4378,6 +4464,7 @@ function videoTool(liveConfig, deps, ctx) {
     parameters: {
       type: "object",
       properties: {
+        resetCharacterChoice: { type: "boolean", description: "\u4EC5\u5728\u7528\u6237\u660E\u786E\u6539\u53D8\u5DF2\u786E\u8BA4\u7684\u89D2\u8272\u56FE\u65B9\u6848\u65F6\u8BBEtrue\uFF0C\u91CD\u65B0\u5F39\u51FA\u9009\u62E9\uFF1B\u4E0D\u4F1A\u76F4\u63A5\u6539\u4E3A\u7EAF\u6587\u751F\uFF0C\u4E5F\u4E0D\u80FD\u7ED5\u8FC7\u786E\u8BA4\u3002" },
         characterReferenceImages: { type: "array", items: { type: "string" }, description: "\u5DF2\u5BA1\u6838\u7684\u6700\u521D\u89D2\u8272\u53C2\u8003\u56FE\uFF0C\u6309\u56FA\u5B9A\u987A\u5E8F\u7528\u4E8E\u6BCF\u6BB5\u7EED\u62CD\uFF1B\u672A\u63D0\u4F9B\u65F6\u6CBF\u7528\u9996\u6BB5\u53C2\u8003\u56FE\u6216\u9996\u5E27\u3002\u652F\u6301URL\u3001\u672C\u5730\u56FE\u7247\u6216data URI\u3002\u65AD\u70B9\u56FA\u5B9A\u6B64\u5957\u56FE\uFF0C\u4E0D\u81EA\u52A8\u91CD\u753B\u6216\u66FF\u6362\u3002\u771F\u4EBA\u8F6C\u6362\u4ECD\u9700\u5355\u72EC\u540C\u610F\u53CA\u7ED3\u679C\u5BA1\u6838\u3002" },
         prompt: {
           type: "string",
@@ -5494,9 +5581,9 @@ function setupTool(config) {
 
 // src/internal/hyperframes.ts
 import { spawn as spawn2 } from "node:child_process";
-import path10 from "node:path";
+import path11 from "node:path";
 import { createRequire as createRequire2 } from "node:module";
-import { stat as stat5, mkdir as mkdir8 } from "node:fs/promises";
+import { stat as stat5, mkdir as mkdir9 } from "node:fs/promises";
 function runHyperframes(cli, args, cwd, config, signal) {
   return new Promise((resolve3, reject) => {
     if (signal?.aborted) return reject(new Error("Hyperframes \u5DF2\u53D6\u6D88\u3002"));
@@ -5511,7 +5598,7 @@ function runHyperframes(cli, args, cwd, config, signal) {
         ...Object.fromEntries([
           ["HYPERFRAMES_FFMPEG_PATH", resolveBinary(config, "ffmpegBinary", "ffmpeg")],
           ["HYPERFRAMES_FFPROBE_PATH", resolveBinary(config, "ffprobeBinary", "ffprobe")]
-        ].filter(([, binary]) => path10.isAbsolute(binary)))
+        ].filter(([, binary]) => path11.isAbsolute(binary)))
       },
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true
@@ -5591,16 +5678,16 @@ function hyperframesTool(config, deps) {
       let cli;
       try {
         const require2 = createRequire2(import.meta.url);
-        cli = path10.join(path10.dirname(require2.resolve("hyperframes/package.json")), "bin/hyperframes.mjs");
+        cli = path11.join(path11.dirname(require2.resolve("hyperframes/package.json")), "bin/hyperframes.mjs");
       } catch {
         return { status: "dependency_missing", note: "Hyperframes \u4E3A\u5185\u90E8\u5F00\u53D1\u80FD\u529B\uFF0C\u516C\u5F00\u63D2\u4EF6\u5305\u4E0D\u5305\u542B\u8BE5\u4F9D\u8D56\uFF1B\u9700\u5728\u5F00\u53D1\u73AF\u5883\u5355\u72EC\u51C6\u5907\u3002" };
       }
       let cwd = process.cwd();
       if (deps.workdir && exec?.agent) cwd = await deps.workdir.ensure(exec.agent, exec.signal) || cwd;
-      const project = path10.resolve(cwd, args.projectDir || ".");
+      const project = path11.resolve(cwd, args.projectDir || ".");
       if (action !== "check") {
         if (!args.projectDir) throw new Error("lint/render \u5FC5\u987B\u6307\u5B9A projectDir\u3002");
-        if (!(await stat5(path10.join(project, "index.html"))).isFile()) throw new Error("\u9879\u76EE\u7F3A\u5C11 index.html\u3002");
+        if (!(await stat5(path11.join(project, "index.html"))).isFile()) throw new Error("\u9879\u76EE\u7F3A\u5C11 index.html\u3002");
       }
       let videoPath;
       let command = ["doctor", "--json"];
@@ -5608,9 +5695,9 @@ function hyperframesTool(config, deps) {
       if (action === "render") {
         if (args.fps !== void 0 && ![24, 25, 30, 50, 60].includes(args.fps)) throw new Error("\u4E0D\u652F\u6301\u7684\u5E27\u7387\u3002");
         const output = args.output || `renders/output-${Date.now()}.mp4`;
-        videoPath = path10.resolve(project, output);
-        const relative = path10.relative(project, videoPath);
-        if (!relative || relative === ".." || relative.startsWith(`..${path10.sep}`) || path10.isAbsolute(relative) || path10.extname(videoPath).toLowerCase() !== ".mp4") {
+        videoPath = path11.resolve(project, output);
+        const relative = path11.relative(project, videoPath);
+        if (!relative || relative === ".." || relative.startsWith(`..${path11.sep}`) || path11.isAbsolute(relative) || path11.extname(videoPath).toLowerCase() !== ".mp4") {
           throw new Error("\u8F93\u51FA\u5FC5\u987B\u662F\u9879\u76EE\u76EE\u5F55\u5185\u7684 .mp4 \u6587\u4EF6\u3002");
         }
         try {
@@ -5619,7 +5706,7 @@ function hyperframesTool(config, deps) {
         } catch (error) {
           if (error.code !== "ENOENT") throw error;
         }
-        await mkdir8(path10.dirname(videoPath), { recursive: true });
+        await mkdir9(path11.dirname(videoPath), { recursive: true });
         command = ["render", project, "--output", videoPath, "--fps", String(args.fps || 30), "--workers", "1", "--strict"];
       }
       const result = await runHyperframes(cli, command, action === "check" ? cwd : project, config, exec?.signal);
@@ -5954,7 +6041,8 @@ function buildPromptGuidance(config) {
     "\xB7 \u5B98\u65B9\u63D0\u793A\u8BCD\u7EC6\u5219\uFF1A\u5148\u5B9A\u4E49\u4EBA\u7269\u3001\u9053\u5177\u3001\u573A\u666F\u7B49\u4E3B\u4F53\uFF0C\u4F7F\u75282\u20133\u4E2A\u7A33\u5B9A\u53EF\u8BC6\u522B\u7279\u5F81\u4E0E\u7D20\u6750\u7F16\u53F7\u5EFA\u7ACB\u7ED1\u5B9A\uFF0C\u540E\u6587\u56FA\u5B9A\u4F7F\u7528\u540C\u4E00\u6807\u7B7E\u3002\u6BCF\u4E2A\u751F\u6210\u6BB5\u5185\u90E8\u6309\u955C\u59341/\u955C\u59342/\u955C\u59343\u7684\u4E8B\u4EF6\u987A\u5E8F\u5199\u8C01\u3001\u5728\u54EA\u3001\u505A\u4EC0\u4E48\u3001\u955C\u5934\u600E\u4E48\u52A8\u53CA\u58F0\u97F3\uFF0C\u4E0D\u5F3A\u884C\u51D1\u6EE1\u4E09\u4E2A\u955C\u5934\uFF1B\u5206\u955C\u7F16\u53F7\u4E0D\u589E\u52A0\u4ED8\u8D39\u751F\u6210\u6B21\u6570\uFF0C2.0\u4E0D\u5F3A\u5236\u9010\u955C\u79D2\u70B9\u3002\u52A8\u4F5C\u5199\u5177\u4F53\u90E8\u4F4D\u3001\u5E45\u5EA6\u3001\u901F\u5EA6\u3001\u529B\u5EA6\u548C\u60EF\u6027\u627F\u63A5\uFF0C\u7528\u53EF\u89C1\u8868\u60C5/\u59FF\u6001\u8868\u73B0\u60C5\u7EEA\uFF1B\u4E00\u822C\u4F18\u5148\u4F4E\u7F13\u8FDE\u7EED\u5C0F\u52A8\u4F5C\uFF0C\u52A8\u4F5C\u620F\u4E0E\u7528\u6237\u660E\u786E\u5267\u60C5\u4F18\u5148\uFF0C\u4E0D\u64C5\u81EA\u6539\u5199\u3002\u5C06\u666F\u522B\uFF08\u8FDC\u666F/\u5168\u666F/\u4E2D\u666F/\u8FD1\u666F/\u7279\u5199\uFF09\u3001\u89C6\u89D2\uFF08\u4FEF\u62CD/\u4EF0\u62CD/\u822A\u62CD/\u5FAE\u8DDD\u7B49\uFF09\u3001\u8FD0\u955C\uFF08\u63A8/\u62C9/\u6447/\u79FB/\u73AF\u7ED5/\u8DDF\u968F/\u5347\u964D/\u53D8\u7126\uFF09\u5206\u522B\u5199\u6E05\uFF0C\u4E00\u4E2A\u955C\u5934\u5C3D\u91CF\u53EA\u5B89\u6392\u4E00\u79CD\u8FD0\u955C\uFF0C\u907F\u514D\u4E92\u76F8\u77DB\u76FE\u3002\u753B\u8D28\u63CF\u8FF0\u5199\u7EB9\u7406\u3001\u8272\u5F69\u548C\u5149\u5F71\u8D28\u611F\uFF0C\u4E0D\u80FD\u4EE3\u66FF\u7528\u6237\u786E\u8BA4\u7684480P/720P\u53C2\u6570\uFF1B\u89C6\u89C9\u98CE\u683C\u4E0E\u7528\u6237\u65B9\u6848\u4E00\u81F4\uFF0C\u9010\u6BB5\u4FDD\u6301\u7EDF\u4E00\u3002\u7EA6\u675F\u8BCD\u6309\u9700\u6C42\u660E\u786E\u65E0\u5B57\u5E55\u3001\u65E0\u65B0\u589ELogo\u6216\u6C34\u5370\u3001\u4E3B\u4F53\u7A33\u5B9A\u4E0D\u53D8\u5F62\u4E0E\u65E0\u95EA\u70C1\uFF0C\u4F46\u4E0D\u5F97\u8986\u76D6\u7528\u6237\u660E\u786E\u8981\u6C42\u7684\u5B57\u5E55\u3001\u54C1\u724C\u6807\u8BC6\u6216\u6C34\u5370\u3002",
     "\xB7 \u811A\u672C\u4E0E\u9010\u6BB5\u63D0\u793A\u8BCD\u91C7\u7528\u5B98\u65B9\u8FDB\u9636\u516C\u5F0F\uFF1A\u7CBE\u51C6\u4E3B\u4F53\u3001\u52A8\u4F5C\u7EC6\u8282\u3001\u573A\u666F\u73AF\u5883\u3001\u5149\u5F71\u8272\u8C03\u3001\u955C\u5934\u8FD0\u955C\u3001\u89C6\u89C9\u98CE\u683C\u3001\u753B\u8D28\u3001\u7EA6\u675F\u6761\u4EF6\u3002\u6BCF\u4E2A\u7EED\u62CD\u6BB5\u5728\u811A\u672C\u5206\u6BB5\u8868\u4E2D\u53E6\u5199\u660E\u786E\u7684\u8FC7\u6E21\u753B\u9762\u63CF\u8FF0\uFF1A\u4E0A\u4E00\u6BB5\u63A5\u7F1D\u72B6\u6001\u2192\u672C\u6BB5\u8D77\u59CB\u52A8\u4F5C\u4E0E\u955C\u5934\u2192\u58F0\u97F3\u4EA4\u63A5\uFF1B\u540C\u666F\u522B\u8FDE\u7EED\u6216\u5207\u4E2D\u666F/\u8FD1\u666F\u7531\u5267\u60C5\u51B3\u5B9A\uFF0C\u4E0D\u56E0\u5206\u6BB5\u81EA\u52A8\u6362\u573A\u666F\u3002\u8BE5\u63CF\u8FF0\u4E0E\u5B8C\u6574\u811A\u672C\u3001\u793A\u610F\u56FE\u4E00\u540C\u5C55\u793A\u5BA1\u6838\uFF0C\u4FEE\u6539\u540E\u91CD\u65B0\u5BA1\u6838\u3002\u6267\u884C\u65F6\u5C06\u8BE5\u6BB5\u5DF2\u5BA1\u6838\u63CF\u8FF0\u5199\u5165 segmentPrompts \u5BF9\u5E94\u6761\u76EE\u7684\u5355\u884C\u3010\u8FC7\u6E21\u753B\u9762\u3011\uFF0C\u6216 video_extend.transitionDescription\uFF1B\u76F4\u63A5\u7528\u201C\u89C6\u98911\u201D\u6307\u4EE3\u7D20\u6750\u5E76\u4F7F\u7528\u5411\u524D/\u5411\u540E\u5EF6\u957F\u89C6\u98911\uFF0C\u4E0D\u5199\u53C2\u8003\u89C6\u98911\u3002\u8F68\u9053\u8865\u5168\u591A\u4E2A\u65E2\u6709\u89C6\u9891\u7684\u5B98\u65B9\u53E5\u5F0F\u4EC5\u4F5C\u8BBE\u8BA1\u53C2\u8003\uFF0C\u4E0D\u5047\u79F0\u5F53\u524D\u5DE5\u5177\u5DF2\u652F\u6301\u591A\u89C6\u9891\u8F93\u5165\uFF0C\u4E5F\u4E0D\u4E3A\u8F6C\u573A\u64C5\u81EA\u589E\u52A0\u4ED8\u8D39\u4EFB\u52A1\u3002\u4FDD\u7559\u4EBA\u7269/\u58F0\u97F3/\u98CE\u683C\u8FDE\u7EED\u6027\uFF0C\u4E0D\u4FDD\u8BC1\u5B8C\u5168\u6D88\u9664\u63A5\u7F1D\u8DF3\u53D8\u3002",
     "\xB7 \u7EED\u62CD\u4F30\u4EF7\u53E3\u5F84\uFF1A\u4F30\u4EF7\u6309\u771F\u5B9E\u8F93\u5165\u533A\u5206\u6863\u4F4D\uFF1A\u9996\u6BB5\u751F\u6210\u65E0\u89C6\u9891\u8F93\u5165\uFF08\u53C2\u8003\u56FE/\u9996\u5C3E\u5E27\u4ECD\u4E3A\u65E0\u89C6\u9891\u8F93\u5165\uFF09\uFF0C\u6BCF\u4E2A\u7EED\u62CD\u6BB5\u6709\u89C6\u9891\u8F93\u5165\uFF0C\u7528\u4E0A\u4E00\u6BB5\u5B8C\u6574\u89C6\u9891\u65F6\u957F\u52A0\u672C\u6BB5\u8F93\u51FA\u65F6\u957F\u8BA1token\uFF0C\u5207\u6362\u5230\u542B\u89C6\u9891\u8F93\u5165\u5355\u4EF7\uFF1B\u4E0D\u628A\u7D2F\u8BA1\u6210\u7247\u65F6\u957F\u5F53\u4E0A\u4E00\u6BB5\u8F93\u5165\u3002\u811A\u672C\u8D39\u7528\u9884\u4F30\u9010\u6BB5\u5217\u6863\u4F4D\u3001\u8F93\u5165/\u8F93\u51FA\u65F6\u957F\u3001\u5355\u4EF7\u4E0E\u91D1\u989D\u518D\u5408\u8BA1\uFF1B\u5236\u4F5C\u786E\u8BA4\u548C\u6062\u590D\u9884\u68C0\u540C\u53E3\u5F84\uFF0C\u5916\u90E8\u89C6\u9891\u65F6\u957F\u4E0D\u660E\u5C31\u660E\u786E\u65E0\u6CD5\u53EF\u9760\u4F30\u4EF7\uFF0C\u4E0D\u6309\u7EAF\u751F\u6210\u8D39\u7528\u515C\u5E95\uFF0C\u4E0D\u8C03\u7528\u4ED8\u8D39\u4EFB\u52A1\u8BD5\u7B97\u3002",
-    "\xB7 \u7EAF\u6587\u751F\u89D2\u8272\u56FE\uFF1A\u7EAF\u6587\u751F\u89C6\u9891\u89D2\u8272\u56FE\u9009\u62E9\uFF1A\u6709\u9700\u8981\u56FA\u5B9A\u5916\u5F62\u7684\u4EBA\u7269/\u4E3B\u4F53\u4E14\u672A\u63D0\u4F9B\u56FE\u7247\u65F6\uFF0C\u5728\u51C6\u5907\u4EBA\u7269\u4E0E\u98CE\u683C\u540E\u3001\u6700\u7EC8\u811A\u672C\u5BA1\u6838\u4E0E\u89C6\u9891\u5236\u4F5C\u524D\uFF0C\u5FC5\u987B\u7528\u63D0\u95EE\u5DE5\u5177\u8BE2\u95EE\u201C\u662F\u5426\u5148\u751F\u6210\u89D2\u8272\u53C2\u8003\u56FE\uFF1F\u56FE\u7247\u8C03\u7528\u5355\u72EC\u8BA1\u8D39\uFF0C\u751F\u6210\u540E\u5148\u770B\u56FE\u786E\u8BA4\u3002\u201D\u4E24\u4E2A\u9009\u9879\u4E3A\u201C\u5148\u751F\u6210\u89D2\u8272\u56FE\uFF08\u5355\u72EC\u8BA1\u8D39\uFF09/\u76F4\u63A5\u6587\u751F\u89C6\u9891\u201D\u3002\u672C\u6B21\u5DF2\u660E\u786E\u540C\u610F\u6216\u62D2\u7EDD\u5219\u8BB0\u5F55\u5230\u9879\u76EE\uFF0C\u4E0D\u91CD\u590D\u95EE\uFF1B\u672A\u7B54/\u53D6\u6D88/pending\u4E0D\u8868\u793A\u540C\u610F\uFF0C\u4E0D\u8C03\u7528\u56FE\u7247\u6216\u89C6\u9891\u3002\u7528\u6237\u62D2\u7EDD\u65F6\u4FDD\u7559\u7EAF\u6587\u751F\u65B9\u6848\uFF0C\u4E0D\u81EA\u52A8\u52A0\u56FE\uFF1B\u6CA1\u6709\u56FA\u5B9A\u4E3B\u4F53\u7684\u7A7A\u955C\u4E0D\u5F3A\u52A0\u89D2\u8272\u3002\u7528\u6237\u540C\u610F\u540E\u5148\u660E\u786E\u5916\u5F62\u4E0E\u975E\u771F\u4EBA\u98CE\u683C\uFF08\u5F71\u54CD\u539F\u5B9A\u5199\u5B9E\u98CE\u683C\u65F6\u987B\u8BF4\u660E\u5E76\u786E\u8BA4\uFF09\uFF0C\u8C03\u7528video_prepare_image(operation:create_character,prompt:\u89D2\u8272\u8BBE\u5B9A,style:\u5DF2\u786E\u8BA4\u98CE\u683C)\uFF0C\u9ED8\u8BA4\u4E00\u6B21\u4E00\u5F20\uFF0C\u4E0D\u9700\u8981\u539F\u56FE\u3002\u8BB0\u5F55taskId/imageUrl\uFF1B\u8D85\u65F6\u67E5\u8BE2\u539FtaskId\uFF0C\u4E0D\u91CD\u53D1\uFF1B\u5931\u8D25\u6216\u4E0D\u6EE1\u610F\u5148\u505C\u6B62\uFF0C\u91CD\u753B\u5148\u786E\u8BA4\u65B0\u589E\u8D39\u7528\u3002\u7ED3\u679C\u5728\u6B63\u6587\u5185\u5D4C\u5E76\u7ED9\u539F\u56FE\u94FE\u63A5\uFF0C\u5355\u72EC\u8BE2\u95EE\u201C\u8FD9\u5F20\u89D2\u8272\u56FE\u53EF\u4EE5\u7528\u4E8E\u63A5\u4E0B\u6765\u7684\u89C6\u9891\u5417\uFF1F\u201D\uFF0C\u5F85\u660E\u786E\u8BA4\u53EF\u540E\uFF0C\u5C06imageUrl\u540C\u65F6\u5199\u5165video_generate.referenceImages\u548CcharacterReferenceImages\u3002\u518D\u5C55\u793A\u542B\u89D2\u8272\u56FE\u3001\u811A\u672C\u3001\u5206\u955C\u4E0E\u8D39\u7528\u9884\u4F30\u7684\u672C\u7248\u6750\u6599\u5E76\u5BA1\u6838\uFF0C\u6700\u540E\u5355\u72EC\u786E\u8BA4\u89C6\u9891\u5236\u4F5C\u3002\u811A\u672C\u672B\u5C3E\u6CE8\u660E\u89D2\u8272\u56FE\u5355\u72EC\u8BA1\u8D39\u4E14\u4E0D\u5305\u542B\u5728\u89C6\u9891\u4F30\u4EF7\u4E2D\uFF1B\u9879\u76EE\u8BB0\u5F55\u89D2\u8272\u56FE\u9009\u62E9\u3001\u4EFB\u52A1\u53CA\u5BA1\u6838\u72B6\u6001\uFF0C\u6062\u590D\u540E\u4E0D\u91CD\u590D\u51FA\u56FE\u6216\u91CD\u590D\u95EE\u5DF2\u786E\u8BA4\u9009\u62E9\u3002\u706B\u5C71\u76F4\u8FDE\u65E0\u6B64\u56FE\u7247\u901A\u9053\u65F6\u5148\u8BF4\u660E\u9650\u5236\uFF0C\u53EF\u8BA9\u7528\u6237\u63D0\u4F9B\u89D2\u8272\u56FE\uFF0C\u4E0D\u8C0E\u79F0\u53EF\u4EE3\u753B\u3002",
+    "\xB7 \u89D2\u8272\u56FE\u9009\u62E9\u5F3A\u5236\u68C0\u67E5\uFF1A\u89D2\u8272\u56FE\u9009\u62E9\u5FC5\u987B\u7531\u63D0\u4EA4\u524D\u4EE3\u7801\u6821\u9A8C\uFF1A\u65B0\u5EFA\u65E0\u56FEvideo_generate\u8C03\u7528\u901A\u8FC7userQuestions\u670D\u52A1\u8BE2\u95EE\u4E24\u9879\u9009\u62E9\uFF0C\u4E0D\u80FD\u4EC5\u9760\u52A9\u624B\u63D0\u793A\u8BCD\u3002\u76F4\u63A5\u6587\u751F\u7684\u660E\u786E\u9009\u62E9\u624D\u8FDB\u5165\u539F\u89C6\u9891\u5236\u4F5C\u5BA1\u6279\uFF1B\u5148\u751F\u6210\u89D2\u8272\u56FE\u5219\u505C\u6B62\u8BE5\u6B21\u89C6\u9891\u63D0\u4EA4\u3001\u63D0\u793A\u5148\u51FA\u56FE\u548C\u5BA1\u6838\uFF0C\u5E26\u56FE\u540E\u518D\u5236\u4F5C\u3002\u672A\u7B54/\u53D6\u6D88/pending/\u4EA4\u4E92\u4E0D\u53EF\u7528/\u8BB0\u5F55\u5931\u8D25\u5747\u505C\u6B62\uFF0C\u4E0D\u9ED8\u8BA4\u6587\u751F\u3002\u6309\u4F1A\u8BDD\u4E0E\u5F53\u524D\u811A\u672C\u89C4\u683C\u8BB0\u5F55\u660E\u786E\u9009\u62E9\uFF0C\u91CD\u8BD5\u76F8\u540C\u4EFB\u52A1\u4E0D\u91CD\u590D\u95EE\uFF1B\u65B0\u9879\u76EE\u91CD\u65B0\u9009\u62E9\u3002\u5DF2\u6709\u56FE\u7247\u6216resume\u7EED\u505A\u4E0D\u91CD\u95EE\u3001\u4E0D\u6539\u53D8\u5DF2\u63D0\u4EA4\u4EFB\u52A1\u3002\u52A9\u624B\u4E0D\u8981\u53E6\u884C\u91CD\u590D\u521B\u5EFA\u540C\u4E00\u89D2\u8272\u56FE\u9009\u62E9\u95EE\u9898\uFF1B\u82E5\u63D0\u4EA4\u524D\u4EA4\u4E92\u88AB\u62E6\u622A\uFF0C\u6309\u8FD4\u56DE\u7684\u771F\u5B9E\u7528\u6237\u9009\u62E9\u63A8\u8FDB\u3002",
+    "\xB7 \u7EAF\u6587\u751F\u89D2\u8272\u56FE\uFF1A\u7EAF\u6587\u751F\u89C6\u9891\u89D2\u8272\u56FE\u9009\u62E9\uFF1A\u6709\u9700\u8981\u56FA\u5B9A\u5916\u5F62\u7684\u4EBA\u7269/\u4E3B\u4F53\u4E14\u672A\u63D0\u4F9B\u56FE\u7247\u65F6\uFF0C\u5728\u51C6\u5907\u4EBA\u7269\u4E0E\u98CE\u683C\u540E\u3001\u6700\u7EC8\u811A\u672C\u5BA1\u6838\u4E0E\u89C6\u9891\u5236\u4F5C\u524D\uFF0C\u9009\u62E9\u7531\u63D2\u4EF6\u63D0\u4EA4\u524D\u7684\u5185\u7F6E\u4EA4\u4E92\u53D6\u5F97\uFF0C\u9009\u9879\u4E3A\u201C\u5148\u751F\u6210\u89D2\u8272\u56FE\uFF08\u5355\u72EC\u8BA1\u8D39\uFF09/\u76F4\u63A5\u6587\u751F\u89C6\u9891\u201D\uFF1B\u4E0D\u8981\u53E6\u884C\u91CD\u590D\u5F39\u540C\u4E00\u9009\u62E9\u3002\u672C\u6B21\u5DF2\u660E\u786E\u540C\u610F\u6216\u62D2\u7EDD\u5219\u8BB0\u5F55\u5230\u9879\u76EE\uFF0C\u4E0D\u91CD\u590D\u95EE\uFF1B\u672A\u7B54/\u53D6\u6D88/pending\u4E0D\u8868\u793A\u540C\u610F\uFF0C\u4E0D\u8C03\u7528\u56FE\u7247\u6216\u89C6\u9891\u3002\u7528\u6237\u62D2\u7EDD\u65F6\u4FDD\u7559\u7EAF\u6587\u751F\u65B9\u6848\uFF0C\u4E0D\u81EA\u52A8\u52A0\u56FE\uFF1B\u6CA1\u6709\u56FA\u5B9A\u4E3B\u4F53\u7684\u7A7A\u955C\u4E0D\u5F3A\u52A0\u89D2\u8272\u3002\u7528\u6237\u540C\u610F\u540E\u5148\u660E\u786E\u5916\u5F62\u4E0E\u975E\u771F\u4EBA\u98CE\u683C\uFF08\u5F71\u54CD\u539F\u5B9A\u5199\u5B9E\u98CE\u683C\u65F6\u987B\u8BF4\u660E\u5E76\u786E\u8BA4\uFF09\uFF0C\u8C03\u7528video_prepare_image(operation:create_character,prompt:\u89D2\u8272\u8BBE\u5B9A,style:\u5DF2\u786E\u8BA4\u98CE\u683C)\uFF0C\u9ED8\u8BA4\u4E00\u6B21\u4E00\u5F20\uFF0C\u4E0D\u9700\u8981\u539F\u56FE\u3002\u8BB0\u5F55taskId/imageUrl\uFF1B\u8D85\u65F6\u67E5\u8BE2\u539FtaskId\uFF0C\u4E0D\u91CD\u53D1\uFF1B\u5931\u8D25\u6216\u4E0D\u6EE1\u610F\u5148\u505C\u6B62\uFF0C\u91CD\u753B\u5148\u786E\u8BA4\u65B0\u589E\u8D39\u7528\u3002\u7ED3\u679C\u5728\u6B63\u6587\u5185\u5D4C\u5E76\u7ED9\u539F\u56FE\u94FE\u63A5\uFF0C\u5355\u72EC\u8BE2\u95EE\u201C\u8FD9\u5F20\u89D2\u8272\u56FE\u53EF\u4EE5\u7528\u4E8E\u63A5\u4E0B\u6765\u7684\u89C6\u9891\u5417\uFF1F\u201D\uFF0C\u5F85\u660E\u786E\u8BA4\u53EF\u540E\uFF0C\u5C06imageUrl\u540C\u65F6\u5199\u5165video_generate.referenceImages\u548CcharacterReferenceImages\u3002\u518D\u5C55\u793A\u542B\u89D2\u8272\u56FE\u3001\u811A\u672C\u3001\u5206\u955C\u4E0E\u8D39\u7528\u9884\u4F30\u7684\u672C\u7248\u6750\u6599\u5E76\u5BA1\u6838\uFF0C\u6700\u540E\u5355\u72EC\u786E\u8BA4\u89C6\u9891\u5236\u4F5C\u3002\u811A\u672C\u672B\u5C3E\u6CE8\u660E\u89D2\u8272\u56FE\u5355\u72EC\u8BA1\u8D39\u4E14\u4E0D\u5305\u542B\u5728\u89C6\u9891\u4F30\u4EF7\u4E2D\uFF1B\u9879\u76EE\u8BB0\u5F55\u89D2\u8272\u56FE\u9009\u62E9\u3001\u4EFB\u52A1\u53CA\u5BA1\u6838\u72B6\u6001\uFF0C\u6062\u590D\u540E\u4E0D\u91CD\u590D\u51FA\u56FE\u6216\u91CD\u590D\u95EE\u5DF2\u786E\u8BA4\u9009\u62E9\u3002\u706B\u5C71\u76F4\u8FDE\u65E0\u6B64\u56FE\u7247\u901A\u9053\u65F6\u5148\u8BF4\u660E\u9650\u5236\uFF0C\u53EF\u8BA9\u7528\u6237\u63D0\u4F9B\u89D2\u8272\u56FE\uFF0C\u4E0D\u8C0E\u79F0\u53EF\u4EE3\u753B\u3002",
     "\xB7 \u521D\u59CB\u89D2\u8272\u53C2\u8003\uFF1A\u6700\u521D\u89D2\u8272\u56FE\u6301\u7EED\u53C2\u8003\uFF1A\u6BCF\u6BB5\u7EED\u62CD\u643A\u5E26\u4E0A\u4E00\u6BB5\u89C6\u9891\u4E0E\u540C\u4E00\u5957\u6700\u521D\u5DF2\u5BA1\u6838\u89D2\u8272\u56FE\uFF1BcharacterReferenceImages\u53EF\u660E\u786E\u6307\u5B9A\uFF0C\u672A\u6307\u5B9A\u65F6\u6CBF\u7528\u9996\u6BB5referenceImages\u6216\u9996\u5E27\uFF0C\u9996\u5E27\u5728\u7EED\u62CD\u4E2D\u6539\u4F5Creference_image\u800C\u4E0D\u662Ffirst_frame\u3002\u89D2\u8272\u56FE\u5F52\u4E00\u5316\u540E\u968F\u65AD\u70B9\u4FDD\u5B58\uFF0C\u4E0D\u4F7F\u7528\u540E\u7EED\u6BB5\u843D\u622A\u56FE\u66FF\u4EE3\u521D\u59CB\u89D2\u8272\uFF0C\u4E0D\u81EA\u52A8\u91CD\u753B\uFF1B\u65E0\u521D\u59CB\u56FE\u7247\u65F6\u4ECD\u4E3A\u7EAF\u89C6\u9891\u7EED\u62CD\uFF0C\u4E0D\u865A\u6784\u89D2\u8272\u53C2\u8003\u56FE\u3002\u771F\u4EBA\u9650\u5236\u987B\u5148\u83B7\u8F6C\u6362\u540C\u610F\u3001\u5C55\u793A\u5BA1\u6838\uFF0C\u518D\u5355\u6B21\u89C6\u9891\u91CD\u8BD5\uFF1B\u6210\u529F\u540E\u590D\u7528\u5DF2\u5BA1\u6838\u8F6C\u6362\u56FE\u3002\u539F\u5DF2\u63D0\u4EA4\u4EFB\u52A1\u4FDD\u7559originalBody\uFF0C\u4E0D\u56E0\u52A0\u56FE\u800C\u91CD\u65B0\u63D0\u4EA4\u3002",
     "\xB7 \u6D41\u7A0B\u8017\u65F6\u65E5\u5FD7\uFF1A\u9636\u6BB5\u8BA1\u65F6\uFF1A\u7F16\u5199\u811A\u672C\u524D\u7528video_stage(stage:script_design,action:start)\uFF0C\u5B8C\u6574\u811A\u672C\u4FDD\u5B58\u540Efinish\u539FspanId\uFF1B\u793A\u610F\u56FE\u7ED8\u5236\u7528storyboard_design\uFF0C\u5C55\u793A\u811A\u672C\u7528script_present\u3002\u5BA1\u6838/\u5236\u4F5C/\u53C2\u8003\u56FE/\u5206\u6BB5\u9884\u89C8\u7B49\u5F85\u5206\u522B\u7528script_review_wait\u3001production_confirm_wait\u3001reference_review_wait\u3001segment_review_wait\uFF0C\u5C55\u793A\u6210\u679C\u7528result_present\u3002\u7528\u6237\u56DE\u590D\u540E\u7ED3\u675F\u5BF9\u5E94\u7B49\u5F85\u6807\u8BB0\uFF1B\u4E0D\u5F97\u628A\u7B49\u5F85\u6DF7\u5165\u811A\u672C\u8BBE\u8BA1\u65F6\u95F4\uFF0C\u4E0D\u4E3A\u8BA1\u65F6\u91CD\u590D\u751F\u6210\u5185\u5BB9\u3002\u6807\u8BB0\u4EC5\u8BB0\u5F55\u8FB9\u754C\u5899\u949F\u8017\u65F6\uFF0C\u4E0D\u7B49\u4E8E\u6A21\u578B\u7EAF\u63A8\u7406\u65F6\u95F4\uFF1B\u6807\u8BB0\u4E0D\u53EF\u7528\u4ECD\u6B63\u5E38\u63A8\u8FDB\uFF0C\u4E0D\u731C\u8017\u65F6\u3002",
     "\xB7 \u5168\u90E8\u6587\u4EF6\u4EA4\u4ED8\uFF1A\u6240\u6709\u7528\u6237\u4EA4\u4ED8\u7684\u6587\u4EF6\uFF08\u811A\u672C\u3001\u5206\u955C\u793A\u610F\u56FE\u3001\u8F6C\u6362\u56FE\u7247\u3001\u5355\u6BB5/\u7EED\u62CD\u9884\u89C8\u3001\u5408\u5E76\u6210\u7247\u3001\u6062\u590D\u540E\u6210\u679C\u3001\u5BFC\u51FAPDF\u7B49\uFF09\u90FD\u987B\u5728\u7528\u6237\u53EF\u89C1\u6B63\u6587\u7ED9\u51FA\u9010\u9879\u53EF\u70B9\u51FBMarkdown\u94FE\u63A5\uFF0C\u4E0D\u80FD\u53EA\u7ED9\u76EE\u5F55\u3001\u53CD\u5F15\u53F7\u6216\u666E\u901A\u6587\u672C\u8DEF\u5F84\uFF1B\u672C\u5730\u8DEF\u5F84\u5148\u786E\u8BA4\u6587\u4EF6\u5B58\u5728\u5E76\u8F6C\u7EDD\u5BF9\u8DEF\u5F84\uFF0C\u7528\u5C16\u62EC\u53F7\u5305\u88F9\u3002\u56FE\u7247\u53E6\u987B\u5185\u5D4C\uFF0C\u811A\u672C\u53E6\u987B\u5B8C\u6574\u5C55\u793A\u6B63\u6587\uFF1Bpresent\u767B\u8BB0\u6210\u529F\u4ECD\u4FDD\u7559\u94FE\u63A5\uFF0C\u4E0D\u58F0\u79F0\u5361\u7247\u5DF2\u64AD\u653E\u3002\u53EA\u94FE\u63A5\u771F\u5B9E\u8FD4\u56DE\u6216\u5DF2\u6838\u5B9E\u6587\u4EF6\uFF0C\u4E0D\u7F16\u9020\u8DEF\u5F84\uFF0C\u4E0D\u4E3A\u8865\u94FE\u63A5\u91CD\u65B0\u4ED8\u8D39\u751F\u6210\u3002\u6062\u590D\u76EE\u5F55\u3001\u4EFB\u52A1ID\u3001\u914D\u7F6E\u6587\u4EF6\u7B49\u5185\u90E8\u53C2\u6570\u7EE7\u7EED\u6309\u539F\u53C2\u6570\u4F7F\u7528\uFF0C\u4E0D\u5F53\u4F5C\u53EF\u64AD\u653E\u6210\u679C\u3002",

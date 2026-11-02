@@ -107,7 +107,7 @@ for (const name of ['video_generate', 'video_extend']) {
 }
 
 test('resume target cannot exceed 120 seconds even for 2.5', () => {
-  const h = vm.createContext({ MAX_SEGMENTS: 10, MAX_TOTAL_SECONDS: 120, MIN_SECONDS: 4, MAX_SEGMENT_SECONDS: 15,
+  const h = vm.createContext({ characterChoiceGate: async () => null, MAX_SEGMENTS: 10, MAX_TOTAL_SECONDS: 120, MIN_SECONDS: 4, MAX_SEGMENT_SECONDS: 15,
     sumStepSeconds: steps => steps.reduce((n, s) => n + s.seconds, 0) });
   vm.runInContext(sourceOf('workflow/resume'), h);
   const result = h.resumePlanFrom({ done: 1, cursor: 30, plan: [{ kind: 'generate', seconds: 30 }] }, { askedTotal: 300, segmentSeconds: 30 });
@@ -116,7 +116,7 @@ test('resume target cannot exceed 120 seconds even for 2.5', () => {
 });
 
 test('resume estimates use actual remaining steps and inherited merge option for both tools', () => fixture(async h => {
-  const estimator = vm.createContext({
+  const estimator = vm.createContext({ characterChoiceGate: async () => null,
     resumeDirOf: value => value, readPauseFile: h.record, assertResumeConnection() {},
     resolveSegmentSeconds: () => 15, modelMaxSeconds: () => 15, MAX_SEGMENTS: 10, MIN_SECONDS: 4,
     clampInteger: (value, min, max, fallback) => value == null ? fallback : Math.max(min, Math.min(max, value)),
@@ -157,7 +157,7 @@ for (const name of ['video_generate', 'video_extend']) test(`${name}: final-segm
 
 test('service preflight estimates only the segment that this call will execute', async () => {
   const calls = [];
-  const context = vm.createContext({
+  const context = vm.createContext({ characterChoiceGate: async () => null,
     resumeDirOf: value => value || '', approvalPolicy: () => 'ask', ffmpegConsentGate: async () => null,
     isManualKey: () => false, estimateArgsFor: async () => ({ remainingPlan: [{ kind: 'extend', seconds: 7 }, { kind: 'extend', seconds: 12 }] }),
     estimatePlan: () => { throw new Error('must use saved plan'); },

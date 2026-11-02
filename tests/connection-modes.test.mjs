@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 const source = sourceOf('config', 'providers/connection', 'workflow/approval');
 function harness() {
-  const context = vm.createContext({
+  const context = vm.createContext({ characterChoiceGate: async () => null,
     METAONTIC_BASE_URL: 'https://ai.bileego.com',
     ref: (config, key, fallback) => config[key] ?? fallback,
     envValue: () => '',

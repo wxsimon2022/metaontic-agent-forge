@@ -395,3 +395,10 @@ test('created and reviewed role image is used for initial video and continuation
  assert.equal(h.images,1);assert.equal(h.videos,2);
  for(const post of h.calls.filter(x=>x.body?.content))assert.deepEqual(post.body.content.filter(x=>x.type==='image_url').map(x=>x.image_url.url),references);
 }));
+
+test('actual video preflight asks the character choice before payment and never submits when image creation is chosen',()=>fixture(async h=>{
+ let asked=0;const prior=h.ctx.get;
+ h.ctx.get=name=>name==='userQuestions'?{ask:async req=>{asked++;return {answers:[{id:req.questions[0].id,selected:['先生成角色图（单独计费）']}]};}}:prior(name);
+ const decision=await api.preflightGate(h.ctx,h.config,{...h.exec,agent:{session:{id:'real-gate-test'}},name:'video_generate',arguments:{prompt:'新角色',duration:15,merge:false,resolution:'480p'}});
+ assert.equal(decision.kind,'deny');assert.match(decision.reason,/video_prepare_image/);assert.equal(asked,1);assert.equal(h.videos,0);assert.equal(h.images,0);
+}));
