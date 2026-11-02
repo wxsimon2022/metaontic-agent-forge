@@ -866,7 +866,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.11.3".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.11.4".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1482,21 +1482,28 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.11.3",
-    description: "DeepSeek Harness video creation plugin with a Video Creation Assistant for concepts, script review and confirmed production; supports reference images, video continuation, segment previews, resumable generation, local merging, and MetaOnticVideo, MetaOntic AI or Volcano Engine access.",
+    version: "3.11.4",
+    description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
     license: "MIT",
     type: "module",
     keywords: [
+      "metaontic-video",
       "deepseek-harness",
-      "dsh",
+      "deepseek-harness-plugin",
       "dsh-plugin",
+      "ai-video",
+      "ai-video-generation",
       "seedance",
-      "video",
-      "video-extension",
+      "seedance-2",
+      "long-video",
+      "video-generation",
       "text-to-video",
+      "image-to-video",
+      "video-continuation",
+      "video-extension",
+      "storyboard",
       "ffmpeg",
       "new-api",
-      "agent-preset",
       "video-director"
     ],
     repository: {
@@ -1523,6 +1530,7 @@
       "icon.svg",
       "logo.svg",
       "README.md",
+      "README.en.md",
       "MetaOnticVideo\u4F7F\u7528\u8BF4\u660E\u4E66.md",
       "MetaOnticVideo\u4F7F\u7528\u8BF4\u660E\u4E66.pdf",
       "CHANGELOG.md",
@@ -1569,15 +1577,14 @@
       "@deepseek-ai/schemastery": "~3.18.5"
     },
     releaseNotes: {
-      version: "3.11.3",
+      version: "3.11.4",
       prerelease: false,
-      publishedAt: "2026-11-01T14:23:13Z",
+      publishedAt: "2026-11-02T00:58:26Z",
       items: [
-        "\u4F18\u5316\uFF1A\u89C6\u9891\u6A21\u578B\u4E0E\u56FE\u7247\u6A21\u578B\u5206\u522B\u5206\u7EC4\uFF0C\u5171\u7528\u5F00\u5173\u548C\u5171\u7528Key\u4F4D\u4E8E\u6A21\u578B\u4E0A\u65B9\uFF0C\u72EC\u7ACBKey\u5F52\u5165\u5BF9\u5E94\u6A21\u578B\u3002",
-        "\u4F18\u5316\uFF1A\u767B\u5F55\u533A\u79FB\u81F3\u63A5\u5165\u65B9\u5F0F\u4E0B\u65B9\uFF0C\u91CD\u7F6E\u5165\u53E3\u79FB\u81F3\u8BBE\u7F6E\u9875\u5E95\u90E8\uFF0C\u7EDF\u4E00\u914D\u7F6E\u533A\u7684\u6807\u7B7E\u3001\u95F4\u8DDD\u4E0E\u5BF9\u9F50\u3002",
-        "\u4F18\u5316\uFF1A\u753B\u9762\u6BD4\u4F8B\u4E0E\u58F0\u97F3\u8BBE\u7F6E\u4F7F\u7528\u5E76\u6392\u5361\u7247\u548C\u6E05\u6670\u7684\u58F0\u97F3\u5F00\u5173\uFF0C\u7A84\u7A97\u53E3\u81EA\u52A8\u4E0A\u4E0B\u6392\u5217\u3002",
-        "\u4F18\u5316\uFF1A\u66F4\u591A\u8BBE\u7F6E\u6309\u753B\u9762\u3001\u89C6\u9891\u5408\u5E76\u3001\u67E5\u8BE2\u4E0E\u7B49\u5F85\u3001\u672C\u5730\u5DE5\u5177\u5206\u7EC4\uFF1B\u6210\u5BF9\u53C2\u6570\u5BF9\u9F50\uFF0C\u5DE5\u5177\u8DEF\u5F84\u5360\u6574\u884C\uFF0C\u5E2E\u52A9\u8BF4\u660E\u5F52\u5165\u5BF9\u5E94\u5206\u7EC4\u3002",
-        "\u4F18\u5316\uFF1A\u5B8C\u5584\u5BBD\u7A84\u7A97\u53E3\u53CA\u660E\u6697\u4E3B\u9898\u5E03\u5C40\uFF0C\u540C\u6B65\u4E2D\u82F1\u6587\u6587\u6848\u3001\u771F\u5B9E\u6307\u5357\u914D\u56FE\u548C\u4F7F\u7528\u8BF4\u660E\u4E66PDF\u3002"
+        "\u4F18\u5316\uFF1A\u4ED3\u5E93\u7B80\u4ECB\u3001\u4E3B\u9875\u4E0E\u641C\u7D22\u4E3B\u9898\u8865\u5168\uFF0C\u7A81\u51FADeepSeek Harness\u3001Seedance 2.0\u957F\u89C6\u9891\u3001\u6587\u751F\u89C6\u9891\u3001\u56FE\u751F\u89C6\u9891\u548C\u89C6\u9891\u7EED\u62CD\u7528\u9014\u3002",
+        "\u4F18\u5316\uFF1A\u91CD\u6574README\u9996\u5C4F\uFF0C\u7A81\u51FA\u8D85\u8FC715\u79D2\u89C6\u9891\u7684\u591A\u6BB5\u751F\u6210\u6D41\u7A0B\uFF0C\u96C6\u4E2D\u5B89\u88C5\u3001Key\u914D\u7F6E\u3001\u6B63\u5F0F\u7248\u4E0B\u8F7D\u3001\u5E38\u89C1\u95EE\u9898\u4E0E\u6587\u6863\u5BFC\u822A\u3002",
+        "\u4F18\u5316\uFF1A\u65B0\u589E\u82F1\u6587README\u5E76\u7EB3\u5165\u63D2\u4EF6\u5305\uFF0C\u5B8C\u5584\u4E2D\u82F1\u6587\u5165\u53E3\u3001\u5305\u7B80\u4ECB\u4E0E\u5173\u952E\u8BCD\uFF0C\u65B9\u4FBF\u4E0D\u540C\u8BED\u8A00\u7528\u6237\u53D1\u73B0\u4E0E\u4F7F\u7528\u3002",
+        "\u4FEE\u590D\uFF1A\u4FEE\u6B63README\u4E2D\u8FC7\u65F6\u7684\u8BBE\u7F6E\u5E03\u5C40\u3001\u91CD\u7F6E\u5165\u53E3\u548C\u4EA4\u4ED8\u987A\u5E8F\u8BF4\u660E\uFF0C\u8865\u9F50\u5DE5\u5177\u7D22\u5F15\uFF0C\u4E0E\u5F53\u524D\u63D2\u4EF6\u884C\u4E3A\u4FDD\u6301\u4E00\u81F4\u3002"
       ]
     }
   };
