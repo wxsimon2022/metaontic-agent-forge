@@ -63,7 +63,14 @@ stages:
           - 'npm run build'
           - 'node --test tests/*.test.mjs'
           - 'node scripts/validate-release.mjs'
-          - 'mkdir -p dist && npm pack --pack-destination dist && ls -l dist'
+          - 'mkdir -p dist'
+          - 'npm pack --pack-destination dist'
+          - 'TGZ=$(ls dist/metaontic-video-*.tgz | head -1)'
+          - 'VERSION=${TGZ##*/metaontic-video-}; VERSION=${VERSION%.tgz}'
+          - 'echo "成品版本 $VERSION"'
+          - 'command -v python3 >/dev/null 2>&1 || { echo "构建机没有 python3，无法生成 Windows 成品包，请把日志发给维护者"; exit 1; }'
+          - 'python3 scripts/package-windows.py "$TGZ" "dist/MetaOnticVideo-Windows-$VERSION.zip"'
+          - 'ls -l dist'
         artifacts:
           - name: PLUGIN_PACKAGE
             path:
