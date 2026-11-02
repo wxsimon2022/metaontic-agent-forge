@@ -28,24 +28,49 @@ stages:
       - step: build@nodejs
         name: build_test
         displayName: 安装依赖、构建与测试
-        # 下拉列表里没有这一项时，改选列表中最新的 18/20/22 版本即可，下面的命令无需改动
+        # 构建机实际使用下面命令准备的 Node 20，本字段不决定构建结果；下拉里若有 18 及以上的版本，选哪个都可以
         nodeVersion: 20.11.1
         commands:
-          - set -e
-          - node -v && npm -v
-          - 'V=$(node -p process.versions.node | cut -d. -f1); if [ $V -lt 18 ]; then echo 构建机 Node 版本低于 18，请在流水线里改选 18 及以上的 Node 版本; exit 1; fi'
-          - npm config set registry https://registry.npmmirror.com
-          - npm ci
-          - npm run build
-          - node --test tests/*.test.mjs
-          - node scripts/validate-release.mjs
-          - mkdir -p dist && npm pack --pack-destination dist && ls -l dist
+          - 'set -x'
+          - 'echo "构建机 $(uname -s -m) / $(head -1 /etc/os-release 2>/dev/null) / $(ldd --version 2>/dev/null | head -1)"'
+          - 'echo "工作目录 $(pwd)"'
+          - 'for c in curl wget tar git python3; do printf "%s=%s " "$c" "$(command -v $c || echo 无)"; done; echo'
+          - 'command -v node >/dev/null 2>&1 || for p in "$HOME"/.local/node/bin/node /opt/*/bin/node /opt/*/*/bin/node /usr/local/*/bin/node /usr/local/lib/nodejs/*/bin/node "$HOME"/.nvm/versions/node/*/bin/node; do [ -x "$p" ] && { export PATH="$(dirname "$p"):$PATH"; break; }; done'
+          - 'if ! command -v node >/dev/null 2>&1; then'
+          - 'NODE_VERSION=20.19.0'
+          - 'if uname -m | grep -qE "aarch64|arm64"; then ARCH=linux-arm64; else ARCH=linux-x64; fi'
+          - 'GLIBC=$(ldd --version 2>/dev/null | head -1 | grep -oE "[0-9]+\.[0-9]+$")'
+          - 'if [ -n "$GLIBC" ] && [ "${GLIBC%%.*}" = 2 ] && [ "${GLIBC#*.}" -lt 28 ]; then FLAVOR="$ARCH-glibc-217"; BASE=https://cdn.npmmirror.com/binaries/node-unofficial-builds; else FLAVOR="$ARCH"; BASE=https://cdn.npmmirror.com/binaries/node; fi'
+          - 'URL="$BASE/v$NODE_VERSION/node-v$NODE_VERSION-$FLAVOR.tar.gz"'
+          - 'NODE_DIR="${HOME:-/tmp}/.local/node"'
+          - 'mkdir -p "$NODE_DIR" /tmp/node-dl'
+          - 'echo "未找到可用 Node，下载 $URL"'
+          - 'if [ "$BASE" = https://cdn.npmmirror.com/binaries/node ]; then ALT="https://cdn.npmmirror.com/binaries/node-unofficial-builds/v$NODE_VERSION/node-v$NODE_VERSION-$ARCH-glibc-217.tar.gz"; else ALT="https://cdn.npmmirror.com/binaries/node/v$NODE_VERSION/node-v$NODE_VERSION-$ARCH.tar.gz"; fi'
+          - 'DOWNLOADED=0'
+          - 'for U in "$URL" "$ALT"; do'
+          - 'echo "尝试下载 $U"'
+          - 'if command -v curl >/dev/null 2>&1; then curl -fsSL --retry 2 "$U" -o /tmp/node-dl/node.tar.gz || true; else wget -qO /tmp/node-dl/node.tar.gz "$U" || true; fi'
+          - 'if tar -tzf /tmp/node-dl/node.tar.gz >/dev/null 2>&1; then DOWNLOADED=1; break; fi'
+          - 'done'
+          - '[ "$DOWNLOADED" = 1 ] || { echo "Node 下载失败，请把本次流水线日志发给维护者"; exit 1; }'
+          - 'tar -xzf /tmp/node-dl/node.tar.gz -C "$NODE_DIR" --strip-components=1'
+          - 'export PATH="$NODE_DIR/bin:$PATH"'
+          - 'fi'
+          - 'node -v && npm -v || { echo "构建机上没有可用的 Node/npm，请把本次流水线日志发给维护者"; exit 1; }'
+          - 'V=$(node -p process.versions.node | cut -d. -f1); [ "$V" -ge 18 ] || { echo "构建需要 Node 18 及以上，当前为 $V"; exit 1; }'
+          - 'npm config set registry https://registry.npmmirror.com'
+          - 'npm ci'
+          - 'npm run build'
+          - 'node --test tests/*.test.mjs'
+          - 'node scripts/validate-release.mjs'
+          - 'mkdir -p dist && npm pack --pack-destination dist && ls -l dist'
         artifacts:
           - name: PLUGIN_PACKAGE
             path:
               - ./dist
         caches:
           - ~/.npm
+          - ~/.local/node
         notify: []
         strategy:
           retry: '0'
