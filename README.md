@@ -506,6 +506,8 @@ git show --no-patch "v<版本>"
 
 `v*` 标签触发完整构建与测试，通过后使用 GitHub 自动令牌上传插件包，并使用仓库 Actions Secret `GITEE_TOKEN` 创建 Gitee Release 和上传同一插件包。该密钥应具有 `hackloop/metaontic-video` 的发布权限；缺失或上传失败时工作流明确报错，不将单仓成功报告为双仓成功。手动运行工作流时须选择与包版本匹配的标签。
 
+某次发布只补齐镜像时，手动运行 `sync-gitee` 工作流并填写对应标签；它从 GitHub Release 取回该版本的 `.tgz`、Windows ZIP 及校验文件，逐个补传到 Gitee 发布页并核对大小，不会覆盖或改动已有附件。
+
 本机打包可执行 `npm pack --pack-destination /tmp`。需要目录安装时，将 `.tgz` 解压后使用其中的 `package` 目录：
 
 ```bash
