@@ -185,6 +185,29 @@ async function runOnlineUpdate() {
         context.setUpdateMessage(context.t('versionUpdateUnavailable', { detail: probe.tried.join('，') }));
         return;
     }
+    // Local directory links/junctions must never be replaced in-place by pnpm.
+    // Inspect the actual recorded source, not navigator.platform or the UI version.
+    try {
+        if (typeof pluginManager.listBundles !== 'function') throw new Error('source-unavailable');
+        const listed = await pluginManager.listBundles();
+        const bundles = Array.isArray(listed) ? listed : listed?.ok === true && Array.isArray(listed.value) ? listed.value : null;
+        const bundle = bundles?.find(item => item?.name === context.PLUGIN_PACKAGE && item.installed === true);
+        let source = typeof bundle?.source === 'string' ? bundle.source.trim() : '';
+        if (source.startsWith(`${context.PLUGIN_PACKAGE}@`)) source = source.slice(context.PLUGIN_PACKAGE.length + 1);
+        if (!source) throw new Error('source-unavailable');
+        const linked = /^link:/i.test(source);
+        const local = /^(?:file:|[a-z]:[\\/]|[\\/]|~[\\/])/i.test(source);
+        if (linked || (local && !/\.(?:tgz|tar\.gz)(?:[?#].*)?$/i.test(source))) {
+            context.setUpdateStatus('failed');
+            context.setUpdateMessage('当前为本地目录链接安装，已停止在线更新，未执行替换。目录链接切换为成品包存在文件被清空或仍加载旧目录的风险。请先备份并保留原目录，使用成品包迁移流程；若目录已空，先恢复完整package。不要重置Key或直接卸载。');
+            return;
+        }
+        if (bundle.error || bundle.meta?.error) throw new Error('metadata-unavailable');
+    } catch {
+        context.setUpdateStatus('failed');
+        context.setUpdateMessage('无法核实插件安装来源或元信息，已停止更新，未执行替换。请保留现有配置和安装目录，核对安装状态后再处理；不要重置Key或先卸载。');
+        return;
+    }
     const requestId = `${context.PLUGIN_PACKAGE}-update-${Date.now()}`;
     const install = async (spec) => {
         try {

@@ -41,7 +41,7 @@ test('installation never falls back to master, even when a release tag fails to 
  const actions=ctx.createUpdateActions({updateConfirm:true,updateLatest:'3.10.0',availableVersions:['3.10.0','3.8.2'],
  setUpdateConfirm(){},setUpdateStatus(){},setUpdateMessage(){},t:key=>key,UPDATE_SPEC:'git+https://gitee.com/hackloop/metaontic-video.git',
  PLUGIN_PACKAGE:'metaontic-video',UPDATE_ATTEMPTS:1,manager:()=>({manager:{
- installBundle:async spec=>{specs.push(spec);return {ok:false,error:{message:'Could not resolve'}};},
+ listBundles: async () => ({ok:true,value:[{name:'metaontic-video',installed:true,source:'https://example.invalid/metaontic-video.tgz'}]}), installBundle:async spec=>{specs.push(spec);return {ok:false,error:{message:'Could not resolve'}};},
  removeBundle:()=>assert.fail('must not uninstall'),}})});
  await actions.runOnlineUpdate();assert.equal(specs.length,2);assert.ok(specs.every(spec=>spec.endsWith('/v3.10.0/metaontic-video-3.10.0.tgz')));
 });
@@ -80,7 +80,7 @@ test('older and identical versions cannot install even if the action is called d
   let installs=0;
   const actions=ctx.createUpdateActions({PLUGIN_VERSION:'3.10.0',isNewerVersion:ctx.isNewerVersion,
    updateConfirm:true,updateLatest:target,setUpdateConfirm(){},setUpdateStatus(){},setUpdateMessage(){},t:key=>key,
-   manager:()=>({manager:{installBundle:async()=>{installs++;}}})});
+   manager:()=>({manager:{listBundles: async () => ({ok:true,value:[{name:'metaontic-video',installed:true,source:'https://example.invalid/metaontic-video.tgz'}]}), installBundle:async()=>{installs++;}}})});
   await actions.runOnlineUpdate();assert.equal(installs,0);
  }
 });
@@ -96,6 +96,6 @@ test('higher-version installation reports a successful update',async()=>{
  const actions=ctx.createUpdateActions({PLUGIN_VERSION:'3.8.2',isNewerVersion:ctx.isNewerVersion,
  updateConfirm:true,updateLatest:'3.10.0',availableVersions:['3.10.0','3.9.0','3.8.2'],
  setUpdateConfirm(){},setUpdateStatus(){},setUpdateMessage:key=>messages.push(key),setUpdateLatest(){},t:key=>key,
- UPDATE_ATTEMPTS:1,PLUGIN_PACKAGE:'metaontic-video',manager:()=>({manager:{installBundle:async()=>({ok:true,value:{application:'applied',version:'3.8.2'}})}})});
+ UPDATE_ATTEMPTS:1,PLUGIN_PACKAGE:'metaontic-video',manager:()=>({manager:{listBundles: async () => ({ok:true,value:[{name:'metaontic-video',installed:true,source:'https://example.invalid/metaontic-video.tgz'}]}), installBundle:async()=>({ok:true,value:{application:'applied',version:'3.8.2'}})}})});
  await actions.runOnlineUpdate();assert.equal(messages.at(-1),'versionUpdateDone');
 });

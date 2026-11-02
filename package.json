@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.13.1",
+  "version": "3.13.2",
   "description": "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
   "license": "MIT",
   "type": "module",
@@ -95,14 +95,14 @@
   },
   "dependencies": {},
   "releaseNotes": {
-    "version": "3.13.1",
+    "version": "3.13.2",
     "prerelease": false,
-    "publishedAt": "2026-11-02T06:27:58Z",
+    "publishedAt": "2026-11-02T06:46:19Z",
     "items": [
-      "修复：Windows安装资料ZIP内置原始tgz，改为安装成品文件，由安装器管理插件文件，减少对外部解压目录的依赖。",
-      "优化：补充旧安装目录变空、locale缺失的完整目录恢复步骤，保留Key、配置及任务记录，不先卸载或重置。",
-      "优化：Windows ZIP采用固定时间戳并附SHA-256校验，重复打包一致，确保跨仓同步使用相同附件。",
-      "新增：建立Windows/macOS兼容开发规范，发布前自动在双平台验证成品安装、中文空格路径、语言资源、技能、指南及源文件移走后的加载。"
+      "修复：立即更新前读取真实安装来源，本地目录链接安装停止直接替换，避免触发外部目录异常；不卸载、不清目录、不重置Key。",
+      "修复：安装来源无法核实、查询失败或元信息异常时停止更新，不继续调用安装器。",
+      "优化：tgz成品及仓库安装保留在线更新入口；补充本地目录用户的恢复与迁移限制说明。",
+      "优化：双平台发布检查增加真实成品包升级，验证语言资源、原安装文件、配置与任务记录；增加目录链接与异常来源回归测试。"
     ]
   }
 }

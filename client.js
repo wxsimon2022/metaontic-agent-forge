@@ -866,7 +866,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.13.1".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.13.2".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1009,6 +1009,27 @@
       if (!pluginManager || typeof pluginManager.installBundle !== "function") {
         context.setUpdateStatus("failed");
         context.setUpdateMessage(context.t("versionUpdateUnavailable", { detail: probe.tried.join("\uFF0C") }));
+        return;
+      }
+      try {
+        if (typeof pluginManager.listBundles !== "function") throw new Error("source-unavailable");
+        const listed = await pluginManager.listBundles();
+        const bundles = Array.isArray(listed) ? listed : listed?.ok === true && Array.isArray(listed.value) ? listed.value : null;
+        const bundle = bundles?.find((item) => item?.name === context.PLUGIN_PACKAGE && item.installed === true);
+        let source = typeof bundle?.source === "string" ? bundle.source.trim() : "";
+        if (source.startsWith(`${context.PLUGIN_PACKAGE}@`)) source = source.slice(context.PLUGIN_PACKAGE.length + 1);
+        if (!source) throw new Error("source-unavailable");
+        const linked = /^link:/i.test(source);
+        const local = /^(?:file:|[a-z]:[\\/]|[\\/]|~[\\/])/i.test(source);
+        if (linked || local && !/\.(?:tgz|tar\.gz)(?:[?#].*)?$/i.test(source)) {
+          context.setUpdateStatus("failed");
+          context.setUpdateMessage("\u5F53\u524D\u4E3A\u672C\u5730\u76EE\u5F55\u94FE\u63A5\u5B89\u88C5\uFF0C\u5DF2\u505C\u6B62\u5728\u7EBF\u66F4\u65B0\uFF0C\u672A\u6267\u884C\u66FF\u6362\u3002\u76EE\u5F55\u94FE\u63A5\u5207\u6362\u4E3A\u6210\u54C1\u5305\u5B58\u5728\u6587\u4EF6\u88AB\u6E05\u7A7A\u6216\u4ECD\u52A0\u8F7D\u65E7\u76EE\u5F55\u7684\u98CE\u9669\u3002\u8BF7\u5148\u5907\u4EFD\u5E76\u4FDD\u7559\u539F\u76EE\u5F55\uFF0C\u4F7F\u7528\u6210\u54C1\u5305\u8FC1\u79FB\u6D41\u7A0B\uFF1B\u82E5\u76EE\u5F55\u5DF2\u7A7A\uFF0C\u5148\u6062\u590D\u5B8C\u6574package\u3002\u4E0D\u8981\u91CD\u7F6EKey\u6216\u76F4\u63A5\u5378\u8F7D\u3002");
+          return;
+        }
+        if (bundle.error || bundle.meta?.error) throw new Error("metadata-unavailable");
+      } catch {
+        context.setUpdateStatus("failed");
+        context.setUpdateMessage("\u65E0\u6CD5\u6838\u5B9E\u63D2\u4EF6\u5B89\u88C5\u6765\u6E90\u6216\u5143\u4FE1\u606F\uFF0C\u5DF2\u505C\u6B62\u66F4\u65B0\uFF0C\u672A\u6267\u884C\u66FF\u6362\u3002\u8BF7\u4FDD\u7559\u73B0\u6709\u914D\u7F6E\u548C\u5B89\u88C5\u76EE\u5F55\uFF0C\u6838\u5BF9\u5B89\u88C5\u72B6\u6001\u540E\u518D\u5904\u7406\uFF1B\u4E0D\u8981\u91CD\u7F6EKey\u6216\u5148\u5378\u8F7D\u3002");
         return;
       }
       const requestId = `${context.PLUGIN_PACKAGE}-update-${Date.now()}`;
@@ -1482,7 +1503,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.13.1",
+    version: "3.13.2",
     description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
     license: "MIT",
     type: "module",
@@ -1577,14 +1598,14 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.13.1",
+      version: "3.13.2",
       prerelease: false,
-      publishedAt: "2026-11-02T06:27:58Z",
+      publishedAt: "2026-11-02T06:46:19Z",
       items: [
-        "\u4FEE\u590D\uFF1AWindows\u5B89\u88C5\u8D44\u6599ZIP\u5185\u7F6E\u539F\u59CBtgz\uFF0C\u6539\u4E3A\u5B89\u88C5\u6210\u54C1\u6587\u4EF6\uFF0C\u7531\u5B89\u88C5\u5668\u7BA1\u7406\u63D2\u4EF6\u6587\u4EF6\uFF0C\u51CF\u5C11\u5BF9\u5916\u90E8\u89E3\u538B\u76EE\u5F55\u7684\u4F9D\u8D56\u3002",
-        "\u4F18\u5316\uFF1A\u8865\u5145\u65E7\u5B89\u88C5\u76EE\u5F55\u53D8\u7A7A\u3001locale\u7F3A\u5931\u7684\u5B8C\u6574\u76EE\u5F55\u6062\u590D\u6B65\u9AA4\uFF0C\u4FDD\u7559Key\u3001\u914D\u7F6E\u53CA\u4EFB\u52A1\u8BB0\u5F55\uFF0C\u4E0D\u5148\u5378\u8F7D\u6216\u91CD\u7F6E\u3002",
-        "\u4F18\u5316\uFF1AWindows ZIP\u91C7\u7528\u56FA\u5B9A\u65F6\u95F4\u6233\u5E76\u9644SHA-256\u6821\u9A8C\uFF0C\u91CD\u590D\u6253\u5305\u4E00\u81F4\uFF0C\u786E\u4FDD\u8DE8\u4ED3\u540C\u6B65\u4F7F\u7528\u76F8\u540C\u9644\u4EF6\u3002",
-        "\u65B0\u589E\uFF1A\u5EFA\u7ACBWindows/macOS\u517C\u5BB9\u5F00\u53D1\u89C4\u8303\uFF0C\u53D1\u5E03\u524D\u81EA\u52A8\u5728\u53CC\u5E73\u53F0\u9A8C\u8BC1\u6210\u54C1\u5B89\u88C5\u3001\u4E2D\u6587\u7A7A\u683C\u8DEF\u5F84\u3001\u8BED\u8A00\u8D44\u6E90\u3001\u6280\u80FD\u3001\u6307\u5357\u53CA\u6E90\u6587\u4EF6\u79FB\u8D70\u540E\u7684\u52A0\u8F7D\u3002"
+        "\u4FEE\u590D\uFF1A\u7ACB\u5373\u66F4\u65B0\u524D\u8BFB\u53D6\u771F\u5B9E\u5B89\u88C5\u6765\u6E90\uFF0C\u672C\u5730\u76EE\u5F55\u94FE\u63A5\u5B89\u88C5\u505C\u6B62\u76F4\u63A5\u66FF\u6362\uFF0C\u907F\u514D\u89E6\u53D1\u5916\u90E8\u76EE\u5F55\u5F02\u5E38\uFF1B\u4E0D\u5378\u8F7D\u3001\u4E0D\u6E05\u76EE\u5F55\u3001\u4E0D\u91CD\u7F6EKey\u3002",
+        "\u4FEE\u590D\uFF1A\u5B89\u88C5\u6765\u6E90\u65E0\u6CD5\u6838\u5B9E\u3001\u67E5\u8BE2\u5931\u8D25\u6216\u5143\u4FE1\u606F\u5F02\u5E38\u65F6\u505C\u6B62\u66F4\u65B0\uFF0C\u4E0D\u7EE7\u7EED\u8C03\u7528\u5B89\u88C5\u5668\u3002",
+        "\u4F18\u5316\uFF1Atgz\u6210\u54C1\u53CA\u4ED3\u5E93\u5B89\u88C5\u4FDD\u7559\u5728\u7EBF\u66F4\u65B0\u5165\u53E3\uFF1B\u8865\u5145\u672C\u5730\u76EE\u5F55\u7528\u6237\u7684\u6062\u590D\u4E0E\u8FC1\u79FB\u9650\u5236\u8BF4\u660E\u3002",
+        "\u4F18\u5316\uFF1A\u53CC\u5E73\u53F0\u53D1\u5E03\u68C0\u67E5\u589E\u52A0\u771F\u5B9E\u6210\u54C1\u5305\u5347\u7EA7\uFF0C\u9A8C\u8BC1\u8BED\u8A00\u8D44\u6E90\u3001\u539F\u5B89\u88C5\u6587\u4EF6\u3001\u914D\u7F6E\u4E0E\u4EFB\u52A1\u8BB0\u5F55\uFF1B\u589E\u52A0\u76EE\u5F55\u94FE\u63A5\u4E0E\u5F02\u5E38\u6765\u6E90\u56DE\u5F52\u6D4B\u8BD5\u3002"
       ]
     }
   };
