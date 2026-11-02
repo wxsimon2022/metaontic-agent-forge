@@ -866,7 +866,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.13.6".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.13.7".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1503,7 +1503,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.13.6",
+    version: "3.13.7",
     description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
     license: "MIT",
     type: "module",
@@ -1599,12 +1599,13 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.13.6",
+      version: "3.13.7",
       prerelease: false,
-      publishedAt: "2026-11-02T08:27:25.697Z",
+      publishedAt: "2026-11-02T10:57:52.992Z",
       items: [
-        "\u4F18\u5316\uFF1A\u4F7F\u7528\u8BF4\u660E\u4E66\u7CBE\u7B80\u4E3A\u9762\u5411\u4F7F\u7528\u7684\u57FA\u7840\u6D41\u7A0B\uFF0C\u79FB\u9664\u89D2\u8272\u53C2\u8003\u56FE\u98CE\u683C\u6E05\u5355\u7B49\u7EC6\u8282\u6761\u76EE\uFF1B\u89D2\u8272\u56FE\u7684\u9009\u62E9\u3001\u5355\u72EC\u8BA1\u8D39\u3001\u5C55\u793A\u5BA1\u6838\u4E0E\u771F\u4EBA\u9650\u5236\u8F6C\u6362\u6D41\u7A0B\u4ECD\u5728\u6B63\u6587\u4FDD\u7559\u3002",
-        "\u4F18\u5316\uFF1AWindows \u5B89\u88C5\u8BF4\u660E\u8865\u5145\u53EF\u76F4\u63A5\u590D\u5236\u7C98\u8D34\u7684\u6210\u54C1\u5730\u5740\uFF0C\u5199\u660E Gitee \u4E0E GitHub \u4E24\u4E2A\u6765\u6E90\uFF0C\u5E76\u8BF4\u660E\u53D1\u5E03\u65B0\u7248\u672C\u540E\u5982\u4F55\u66FF\u6362\u5730\u5740\u4E2D\u7684\u7248\u672C\u53F7\u3002"
+        "\u4F18\u5316\uFF1AGitee \u6D41\u6C34\u7EBF\u8865\u5168\u4E3A\u5B8C\u6574\u7684\u6784\u5EFA\u6821\u9A8C\uFF1A\u5411 master \u63A8\u9001\u3001\u53D1\u8D77\u9762\u5411 master \u7684 PR \u6216\u63A8\u9001\u6807\u7B7E\u65F6\uFF0C\u81EA\u52A8\u51C6\u5907\u73AF\u5883\u3001\u5B89\u88C5\u4F9D\u8D56\u3001\u6267\u884C\u6784\u5EFA\u4E0E\u5355\u5143\u6D4B\u8BD5\uFF0C\u5E76\u628A tgz \u4E0E Windows \u6210\u54C1\u5305\u653E\u8FDB\u6D41\u6C34\u7EBF\u5236\u54C1\u4F9B\u4E0B\u8F7D\u6838\u5BF9\u3002",
+        "\u4F18\u5316\uFF1AGitee \u6784\u5EFA\u673A\u4E0D\u518D\u4F9D\u8D56\u9884\u88C5\u73AF\u5883\uFF1ANode 20 \u7531\u6D41\u6C34\u7EBF\u81EA\u884C\u4E0B\u8F7D\uFF08\u8001\u955C\u50CF\u81EA\u52A8\u6539\u7528 glibc \u517C\u5BB9\u7248\uFF09\uFF0CWindows \u6210\u54C1\u5305\u6240\u9700\u7684 Python 3 \u4E5F\u4F1A\u6309\u9700\u5B89\u88C5\uFF1B\u7F3A\u5931\u65F6\u65E5\u5FD7\u7ED9\u51FA\u660E\u786E\u63D0\u793A\uFF0C\u4E0D\u518D\u9759\u9ED8\u8DF3\u8FC7\u3002",
+        "\u4F18\u5316\uFF1AGitee \u6D41\u6C34\u7EBF\u6309\u6807\u7B7E\u8FD0\u884C\u65F6\u6838\u5BF9\u6807\u7B7E\u4E0E\u5305\u5185\u7248\u672C\u662F\u5426\u4E00\u81F4\uFF0C\u4E0D\u4E00\u81F4\u7ACB\u5373\u5931\u8D25\uFF0C\u4FDD\u8BC1\u6210\u54C1\u4E0E\u6807\u7B7E\u5BF9\u5E94\uFF1B\u540C\u65F6\u65B0\u589E ci- \u5F00\u5934\u7684\u6F14\u7EC3\u6807\u7B7E\uFF0C\u53EF\u968F\u65F6\u9A8C\u8BC1\u6309\u6807\u7B7E\u8FD0\u884C\u7684\u6D41\u7A0B\uFF0C\u6F14\u7EC3\u4E0D\u4EA7\u751F\u53D1\u5E03\u4EF6\u3002"
       ]
     }
   };

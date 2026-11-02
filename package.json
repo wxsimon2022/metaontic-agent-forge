@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.13.6",
+  "version": "3.13.7",
   "description": "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
   "license": "MIT",
   "type": "module",
@@ -96,12 +96,13 @@
   },
   "dependencies": {},
   "releaseNotes": {
-    "version": "3.13.6",
+    "version": "3.13.7",
     "prerelease": false,
-    "publishedAt": "2026-11-02T08:27:25.697Z",
+    "publishedAt": "2026-11-02T10:57:52.992Z",
     "items": [
-      "优化：使用说明书精简为面向使用的基础流程，移除角色参考图风格清单等细节条目；角色图的选择、单独计费、展示审核与真人限制转换流程仍在正文保留。",
-      "优化：Windows 安装说明补充可直接复制粘贴的成品地址，写明 Gitee 与 GitHub 两个来源，并说明发布新版本后如何替换地址中的版本号。"
+      "优化：Gitee 流水线补全为完整的构建校验：向 master 推送、发起面向 master 的 PR 或推送标签时，自动准备环境、安装依赖、执行构建与单元测试，并把 tgz 与 Windows 成品包放进流水线制品供下载核对。",
+      "优化：Gitee 构建机不再依赖预装环境：Node 20 由流水线自行下载（老镜像自动改用 glibc 兼容版），Windows 成品包所需的 Python 3 也会按需安装；缺失时日志给出明确提示，不再静默跳过。",
+      "优化：Gitee 流水线按标签运行时核对标签与包内版本是否一致，不一致立即失败，保证成品与标签对应；同时新增 ci- 开头的演练标签，可随时验证按标签运行的流程，演练不产生发布件。"
     ]
   }
 }
