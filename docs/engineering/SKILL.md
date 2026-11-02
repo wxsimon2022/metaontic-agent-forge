@@ -40,6 +40,7 @@ description: 用于本仓库视频与图片接入、断点恢复、费用确认�
 - 先比较最近发布到当前工作区的全部逻辑变化，展示完整说明，再按 README 发布；操作指南必须复核且纳入包；用户要求指南只面向使用，只讲选择 MetaOntic AI 的配置路线，不列其他接入方式，不写 A/B 标记、版本号、更新记录或发布信息；配图优先真实插件组件预览。核对结论及适用版本只写入 docs/engineering/release-<版本>.md，不写进指南或配图；发布时检查指南正文和配图，不得添加“适用版本”“本次更新”“发布核对”等章节。更新内容统一留在 CHANGELOG、README 更新区和 releaseNotes。
 - CI checkout 后显式取回注解标签，再读取完整发布说明，避免 checkout 将标签覆盖为提交引用而只读出提交标题。
 - Gitee 更新已有 Release 使用 PATCH，携带 tag_name；发布后核对 GitHub/Gitee 的说明与附件，不只看工作流绿色。
+- Gitee Go 流水线 `.workflow/MetaOnticVideo.yml` 只在 master 推送、面向 master 的 PR、`v*` 标签时做构建与测试校验并暂存 tgz 制品，不发版；GitHub/Gitee Release 成品统一由 GitHub Actions `publish` 产出，不在 Gitee 侧另打一份包。构建机需 Node 18 及以上（esbuild 要求），下拉里没有指定版本时改选最新的 18/20/22 即可，命令无需改动。
 
 Key 共用规则：A 接入固定共用登录下发的 Key，模型配置中不显示 Key、Key 状态或共用开关；仅 B 接入可以选择共用或分别填写视频模型 Key、图片模型 Key。A 忽略旧配置中残留的独立图片 Key。
 

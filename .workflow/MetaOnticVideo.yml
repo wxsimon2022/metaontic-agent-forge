@@ -1,8 +1,51 @@
-version: "1.0"
+version: '1.0'
+# 流水线唯一标识，对应 Gitee 网页上已有的这条流水线，改名会与网页记录对不上，请勿随意修改
 name: 流水线-202611021547
-displayName: 流水线-202611021547
+displayName: MetaOnticVideo 构建与测试
 triggers:
+  # 开启自动触发
+  trigger: auto
   push:
     branches:
+      # 精确匹配：向 master 提交（含分支合并、PR 合并）后触发
+      precise:
+        - master
+    tags:
+      # 前缀匹配：推送 v 开头的正式版标签时再跑一次，用于发版前校验
       prefix:
-        - ''
+        - v
+  pr:
+    branches:
+      precise:
+        - master
+stages:
+  - name: stage-build-test
+    displayName: 安装依赖、构建与测试
+    strategy: naturally
+    trigger: auto
+    executor: []
+    steps:
+      - step: build@nodejs
+        name: build_test
+        displayName: 安装依赖、构建与测试
+        # 下拉列表里没有这一项时，改选列表中最新的 18/20/22 版本即可，下面的命令无需改动
+        nodeVersion: 20.11.1
+        commands:
+          - set -e
+          - node -v && npm -v
+          - 'V=$(node -p process.versions.node | cut -d. -f1); if [ $V -lt 18 ]; then echo 构建机 Node 版本低于 18，请在流水线里改选 18 及以上的 Node 版本; exit 1; fi'
+          - npm config set registry https://registry.npmmirror.com
+          - npm ci
+          - npm run build
+          - node --test tests/*.test.mjs
+          - node scripts/validate-release.mjs
+          - mkdir -p dist && npm pack --pack-destination dist && ls -l dist
+        artifacts:
+          - name: PLUGIN_PACKAGE
+            path:
+              - ./dist
+        caches:
+          - ~/.npm
+        notify: []
+        strategy:
+          retry: '0'
