@@ -17,7 +17,8 @@ export async function publishGitee({ token, tag, archive, notes, prerelease = fa
     } else {
       body = new URLSearchParams({ access_token: token, ...data });
     }
-    const response = await request(url, { method, body, signal: AbortSignal.timeout(60000) });
+    // Uploads are much slower than metadata calls; a short timeout aborted the Windows ZIP mid-transfer.
+    const response = await request(url, { method, body, signal: AbortSignal.timeout(file ? 300000 : 60000) });
     if (allow404 && response.status === 404) return null;
     if (!response.ok) throw new Error(`Gitee ${method} ${path}: HTTP ${response.status}`);
     return response.json();
@@ -38,7 +39,14 @@ export async function publishGitee({ token, tag, archive, notes, prerelease = fa
   const existing = attachments.find(item => (item.name || item.file_name) === basename(archive));
   if (existing) {
     if (Number(existing.size) !== bytes.length) throw new Error('Existing Gitee attachment has a different size; refusing to replace it.');
-  } else await api(path, { method: 'POST', file: bytes });
+  } else {
+    try { await api(path, { method: 'POST', file: bytes }); }
+    catch (error) {
+      // Gitee can finish a slow upload after the client gives up; confirm before failing the release.
+      const retried = await api(path);
+      if (!Array.isArray(retried) || !retried.some(item => (item.name || item.file_name) === basename(archive) && Number(item.size) === bytes.length)) throw error;
+    }
+  }
   const verified = await api(path);
   if (!verified.some(item => (item.name || item.file_name) === basename(archive) && Number(item.size) === bytes.length)) {
     throw new Error('Gitee attachment verification failed.');

@@ -68,6 +68,8 @@ github:wxsimon2022/metaontic-video
 3. 在 DeepSeek Harness「插件 → 添加插件」中填写该 `.tgz` 文件的完整绝对路径，例如 `D:\software\MetaOnticVideo-Windows\metaontic-video-数字版本号.tgz`，文件名须替换为实际文件名。
 4. 按提示安装、启用，进入设置页配置 Key。由安装器管理插件文件，避免直接依赖外部解压目录。
 
+安装框要填的是文件，不是文件夹。如果提示「不是有效的插件包」，通常是填成了文件夹：解压后的 `MetaOnticVideo-Windows` 外层文件夹和 `package` 资料目录都不是安装对象，请改填同目录下 `metaontic-video-数字版本号.tgz` 的完整文件路径。
+
 若拿到的旧 ZIP 只有 `package` 目录，请从正式发布页另外下载 `.tgz` 成品，填写其完整本地路径安装；不要把 ZIP 或发布页地址填进安装框。
 
 **只有 `.tgz` 文件时：** 不必解压，直接使用本地文件完整路径安装。

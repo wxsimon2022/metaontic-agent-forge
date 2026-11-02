@@ -29,12 +29,14 @@ steps = """MetaOnticVideo Windows 安装教程（先看这里）
 如果没有该菜单，可复制文件夹地址，再在最后加上“\\”和.tgz文件名。
 例如：D:\\software\\MetaOnticVideo-Windows\\metaontic-video-VERSION.tgz
 上面只是示例，必须换成你电脑上的实际位置。
+注意：安装框要的是文件路径，不是文件夹路径。选文件夹会提示“不是有效的插件包”。
 
 第4步：粘贴到插件安装框
 打开 DeepSeek Harness → 插件 → 添加插件。
 把第3步的文件路径粘贴到安装地址输入框，再点击安装。
 如果路径最前和最后有英文双引号，先删掉这两个引号，再点安装。
-不要粘贴ZIP路径、发布网页地址，也不要填package目录。
+不要粘贴ZIP路径或发布网页地址，也不要填MetaOnticVideo-Windows文件夹或package目录。
+若界面提示“不是有效的插件包”，通常是填成了文件夹，请改填第2步的.tgz文件路径。
 
 第5步：填写Key并保存
 打开 插件 → 已安装插件 → MetaOnticVideo → 查看。
@@ -56,6 +58,9 @@ steps = """MetaOnticVideo Windows 安装教程（先看这里）
   现在推荐填.tgz文件路径，让安装器管理文件。package用于看说明或恢复旧目录。
 • 没有.tgz文件？可能拿到了旧ZIP。请从正式发布页下载.tgz成品，不选Source code。
 • 无法识别地址？核对是否填成发布网页或ZIP；是否遗漏文件名；是否多了两端引号。
+• 提示“不是有效的插件包”？安装框收到的是文件夹，不是插件成品。
+  解压后的MetaOnticVideo-Windows文件夹和package资料目录都不是安装对象。
+  请改填同目录下metaontic-video-VERSION.tgz文件的完整路径，注意复制的是文件。
 • ERR_PNPM_GIT_RESOLVE_FAILED？说明仍在使用Git来源，请核对本次填写的是.tgz文件路径。
 • 立即更新后原package目录空了/报locale缺失？先停下，不要反复更新。
   把本包完整package文件夹复制回错误提示的原路径，确保其中有locale/en.json和locale/zh.json。

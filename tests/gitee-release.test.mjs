@@ -41,3 +41,22 @@ for (const prerelease of [false,true]) test(`Gitee publishes and verifies ${prer
     await assert.rejects(publishGitee({ ...args, token: '' }), /Missing GITEE_TOKEN/);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
+
+test('slow Gitee upload survives a client timeout only when the attachment is verified', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'gitee-timeout-'));
+  try {
+    const filename = 'MetaOnticVideo-Windows-3.3.0.zip';
+    const archive = join(dir, filename); await writeFile(archive, 'archive-bytes');
+    const release = { id: 1, body: 'release notes', prerelease: false };
+    const makeRequest = ({ stored }) => async (url, options) => {
+      const path = url.pathname;
+      if (options.method === 'POST' && path.endsWith('/attach_files')) { if (!stored) throw new Error('The operation was aborted due to timeout'); return { ok: true, json: async () => ({}) }; }
+      if (path.endsWith('/attach_files')) return { ok: true, json: async () => (stored ? [{ name: filename, size: 13 }] : []) };
+      if (options.method === 'PATCH') return { ok: true, json: async () => release };
+      return { ok: true, json: async () => release };
+    };
+    const args = { token: 'test-token', tag: 'v3.3.0', archive, notes: 'release notes' };
+    await assert.rejects(publishGitee({ ...args, request: makeRequest({ stored: false }) }), /aborted due to timeout/);
+    assert.ok((await publishGitee({ ...args, request: makeRequest({ stored: true }) })).endsWith('v3.3.0'));
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
