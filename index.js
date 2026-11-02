@@ -277,17 +277,17 @@ function getInner(value) {
 function extractKeys(data) {
   return filterKeys(data ?? {}, (key) => !key.startsWith("$"));
 }
-function validateVolatileSchema(schema, path12 = [], blocked2 = false, seen = /* @__PURE__ */ new Map()) {
+function validateVolatileSchema(schema, path13 = [], blocked2 = false, seen = /* @__PURE__ */ new Map()) {
   const states = seen.get(schema) ?? /* @__PURE__ */ new Set();
   if (states.has(blocked2)) return;
   states.add(blocked2);
   seen.set(schema, states);
-  if (schema.meta?.volatile && blocked2) throw new ValidationError("volatile fields require a fixed object path without an enclosing volatile field", { path: path12 });
+  if (schema.meta?.volatile && blocked2) throw new ValidationError("volatile fields require a fixed object path without an enclosing volatile field", { path: path13 });
   const nested = blocked2 || !!schema.meta?.volatile;
-  if (schema.dict) for (const [key, child] of Object.entries(schema.dict)) validateVolatileSchema(child, [...path12, key], nested, seen);
-  if (schema.sKey) validateVolatileSchema(schema.sKey, [...path12, "<key>"], true, seen);
-  if (schema.inner && (schema.type !== "lazy" || schema.inner[kSchema])) validateVolatileSchema(schema.inner, [...path12, "*"], true, seen);
-  if (schema.list) for (let index = 0; index < schema.list.length; index++) validateVolatileSchema(schema.list[index], [...path12, String(index)], true, seen);
+  if (schema.dict) for (const [key, child] of Object.entries(schema.dict)) validateVolatileSchema(child, [...path13, key], nested, seen);
+  if (schema.sKey) validateVolatileSchema(schema.sKey, [...path13, "<key>"], true, seen);
+  if (schema.inner && (schema.type !== "lazy" || schema.inner[kSchema])) validateVolatileSchema(schema.inner, [...path13, "*"], true, seen);
+  if (schema.list) for (let index = 0; index < schema.list.length; index++) validateVolatileSchema(schema.list[index], [...path13, String(index)], true, seen);
 }
 function checkWithinRange(data, meta, description, options, skipMin = false) {
   const { max = Infinity, min = -Infinity } = meta;
@@ -1045,7 +1045,7 @@ var init_config = __esm({
     FORWARD_TRANSITION = "\u5411\u524D\u5EF6\u957F\u65F6\uFF0C\u672C\u6BB5\u6700\u540E\u4E00\u5E27\u5FC5\u987B\u7D27\u63A5\u89C6\u98911\u7B2C\u4E00\u5E27\uFF0C\u4FDD\u6301\u540C\u4E00\u6784\u56FE\u3001\u4EBA\u7269\u5927\u5C0F\u3001\u5DE6\u53F3\u4F4D\u7F6E\u3001\u5934\u90E8\u671D\u5411\u3001\u89C6\u7EBF\u3001\u624B\u90E8\u4F4D\u7F6E\u548C\u52A8\u4F5C\u9636\u6BB5\u3002\u52A8\u4F5C\u671D\u5411\u89C6\u98911\u7684\u5F00\u573A\u52A8\u4F5C\u53D1\u5C55\uFF0C\u4E0D\u91CD\u590D\u524D\u6BB5\u52A8\u4F5C\u3001\u4E0D\u5B9A\u683C\u7B49\u5F85\u3001\u4E0D\u4ECE\u753B\u9762\u53E6\u4E00\u4FA7\u91CD\u65B0\u5165\u573A\uFF1B\u4E0D\u64C5\u81EA\u5207\u955C\u6216\u91CD\u65B0\u5C45\u4E2D\u3002";
     CLOSEUP_TRANSITION = "\u955C\u5934\u8854\u63A5\u5EFA\u8BAE\uFF08\u4EC5\u5728\u672C\u6BB5\u672A\u660E\u786E\u6307\u5B9A\u8FD0\u955C\u6216\u5207\u955C\u5B89\u6392\u65F6\u91C7\u7528\uFF09\uFF1A\u5728\u5B8C\u6574\u53F0\u8BCD\u7ED3\u675F\u5904\u81EA\u7136\u5207\u5230\u4E0B\u4E00\u4F4D\u8BF4\u8BDD\u4EBA\u7684\u8FD1\u666F\u6216\u542C\u8BDD\u4EBA\u7684\u53CD\u5E94\u8FD1\u666F\uFF0C\u518D\u7EE7\u7EED\u672C\u6BB5\u5267\u60C5\u3002\u4FDD\u6301\u8F74\u7EBF\u3001\u89C6\u7EBF\u65B9\u5411\u3001\u5DE6\u53F3\u4EBA\u7269\u5173\u7CFB\u3001\u670D\u88C5\u548C\u97F3\u8272\uFF0C\u4E0D\u4EA4\u6362\u89D2\u8272\uFF1B\u53EA\u6539\u53D8\u666F\u522B\uFF0C\u4E0D\u65B0\u589E\u573A\u666F\u3002";
     CONTENT_REJECTION_HINT = "\u53C2\u8003\u89C6\u9891\u88AB\u4E0A\u6E38\u5185\u5BB9\u5BA1\u6838\u62D2\u7EDD\uFF0C\u5EF6\u957F\u5DF2\u505C\u6B62\u3002Seedance \u542B\u4EBA\u8138\u7EED\u62CD\u9700\u4F7F\u7528\u540C\u4E00\u4E0A\u6E38\u8D26\u53F7\u7684\u53D7\u4FE1\u539F\u59CB\u89C6\u9891\u6216\u6388\u6743\u7D20\u6750\uFF1B\u8BF7\u786E\u8BA4\u4E2D\u8F6C\u7AD9\u900F\u4F20\u4E86\u539F\u59CB video_url \u4E0E reference_video\uFF0C\u4E14\u524D\u540E\u8BF7\u6C42\u4F7F\u7528\u540C\u4E00\u4E0A\u6E38\u8D26\u53F7\u3002\u4E0D\u4F1A\u81EA\u52A8\u53BB\u6389\u53C2\u8003\u89C6\u9891\u751F\u6210\uFF0C\u4EE5\u514D\u4EBA\u7269\u4E0D\u4E00\u81F4\u3002";
-    PLUGIN_VERSION = true ? "3.13.7".trim().replace(/^v/i, "") : "";
+    PLUGIN_VERSION = true ? "3.13.8".trim().replace(/^v/i, "") : "";
   }
 });
 
@@ -1105,8 +1105,8 @@ function resolveSubmitPath(config) {
 }
 function resolveQueryPath(config, taskId) {
   if (isVolcengine(config)) return `/api/v3/contents/generations/tasks/${encodeURIComponent(taskId)}`;
-  const path12 = String(ref(config, "queryPath", "")).trim() || relayPreset().queryPath;
-  return path12.replace("{task_id}", encodeURIComponent(taskId));
+  const path13 = String(ref(config, "queryPath", "")).trim() || relayPreset().queryPath;
+  return path13.replace("{task_id}", encodeURIComponent(taskId));
 }
 function resolveModel(config) {
   const preset = relayPreset();
@@ -1836,6 +1836,97 @@ function createStoryboardReviewGuard() {
   return { observe, gate };
 }
 
+// src/workflow/delivery-order.ts
+import path5 from "node:path";
+function createDeliveryOrderGuard() {
+  const sessions = /* @__PURE__ */ new WeakMap();
+  function stateFor(session) {
+    let state = sessions.get(session);
+    if (!state) {
+      state = { turn: void 0, mergedShownTurn: void 0, records: [] };
+      sessions.set(session, state);
+    }
+    return state;
+  }
+  function absolute(session, target) {
+    const value = String(target ?? "").trim();
+    if (!value) return "";
+    try {
+      return path5.resolve(session?.header?.cwd || process.cwd(), value);
+    } catch {
+      return "";
+    }
+  }
+  function remember(session, value) {
+    if (!session || typeof session !== "object") return;
+    const segments = (value?.segments || []).filter((segment) => segment?.status === "succeeded" && segment?.localPath).map((segment) => absolute(session, segment.localPath)).filter(Boolean);
+    const merged = value?.merged && value?.videoPath ? absolute(session, value.videoPath) : "";
+    const distinct = merged && !segments.includes(merged) ? merged : "";
+    if (!distinct) return;
+    const key = [distinct, ...segments].join("\0");
+    const state = stateFor(session);
+    if (state.records.some((record) => record.key === key)) return;
+    state.records.push({ key, merged: distinct, segments });
+  }
+  function observe(session, event) {
+    if (!session || typeof session !== "object") return;
+    const data = event?.data || {};
+    const state = stateFor(session);
+    if (Number.isInteger(data.turn)) state.turn = data.turn;
+    if (event.type !== "deliverables/presented") return;
+    const shown = (data.files || []).map((file) => absolute(session, file?.path)).filter(Boolean);
+    if (shown.some((target) => state.records.some((record) => record.merged === target))) state.mergedShownTurn = data.turn;
+  }
+  function pickRecord(state, paths) {
+    let best = null;
+    let score = 0;
+    for (const record of state.records) {
+      const current = paths.filter((target) => target === record.merged || record.segments.includes(target)).length;
+      if (current > score) {
+        best = record;
+        score = current;
+      }
+    }
+    return best;
+  }
+  async function gate(exec) {
+    if (exec?.name !== "present" || !exec.agent?.session) return null;
+    const session = exec.agent.session;
+    const state = sessions.get(session);
+    if (!state?.records.length) return null;
+    let args = exec.arguments;
+    if (typeof args === "string") {
+      try {
+        args = JSON.parse(args);
+      } catch {
+        return null;
+      }
+    }
+    const files = Array.isArray(args?.files) ? args.files : [];
+    const paths = files.map((file) => absolute(session, typeof file === "string" ? file : file?.path)).filter(Boolean);
+    if (!paths.length) return null;
+    const record = pickRecord(state, paths);
+    if (!record?.merged) return null;
+    const mergedIndex = paths.indexOf(record.merged);
+    const order = () => `\u6B63\u786E\u987A\u5E8F\uFF1A1. ${record.merged}
+${record.segments.map((segment, index) => `${index + 2}. ${segment}`).join("\n")}`;
+    const segmentsBeforeMerged = mergedIndex > 0 && paths.slice(0, mergedIndex).some((target) => record.segments.includes(target));
+    if (segmentsBeforeMerged) {
+      await appendRequestLog({ event: "delivery_order_blocked", reason: "merged_not_first", files: paths });
+      return { kind: "deny", reason: `\u6210\u7247\u5C55\u793A\u987A\u5E8F\u4E0D\u5BF9\uFF1A\u5408\u5E76\u6210\u7247\u5FC5\u987B\u6392\u5728\u6240\u6709\u5206\u6BB5\u4E4B\u524D\u3002\u8BF7\u7ACB\u5373\u91CD\u65B0\u8C03\u7528 present\uFF0C\u628A\u5408\u5E76\u6210\u7247\u653E\u5728 files \u6570\u7EC4\u7B2C\u4E00\u4E2A\uFF0C\u518D\u6309\u6BB5\u53F7\u4F9D\u6B21\u653E\u7B2C\u4E00\u6BB5\u3001\u7B2C\u4E8C\u6BB5\u2026\u2026
+${order()}` };
+    }
+    if (mergedIndex >= 0) return null;
+    const shownSegments = paths.filter((target) => record.segments.includes(target)).length;
+    if (!shownSegments) return null;
+    if (Number.isInteger(state.turn) && state.mergedShownTurn === state.turn) return null;
+    await appendRequestLog({ event: "delivery_order_blocked", reason: "merged_missing", files: paths });
+    return { kind: "deny", reason: `\u8FD9\u6B21\u53EA\u5C55\u793A\u4E86\u5206\u6BB5\uFF0C\u6210\u7247\u8981\u6392\u5728\u7B2C\u4E00\u4E2A\u4F4D\u7F6E\u3002\u8BF7\u7ACB\u5373\u91CD\u65B0\u8C03\u7528 present\uFF0C\u628A\u5408\u5E76\u6210\u7247\u653E\u5728 files \u6570\u7EC4\u7B2C\u4E00\u4E2A\uFF0C\u518D\u6309\u6BB5\u53F7\u4F9D\u6B21\u653E\u5206\u6BB5\u3002
+${order()}` };
+  }
+  return { remember, observe, gate };
+}
+
 // src/utils/timing.ts
 import { randomUUID } from "node:crypto";
 import { performance } from "node:perf_hooks";
@@ -1943,8 +2034,8 @@ async function fetchActualCost(config, taskIds, signal) {
   const base = resolveBaseUrl(config).replace(/\/v1\/?$/, "");
   if (!key || !base) return pending("\u8D39\u7528\u5F85\u67E5\u8BE2\uFF1A\u539F\u8C03\u7528\u8FDE\u63A5\u4E0D\u53EF\u7528\u3002");
   const requestSignal = signal ? AbortSignal.any([signal, AbortSignal.timeout(8e3)]) : AbortSignal.timeout(8e3);
-  async function get(path12, authenticated) {
-    const response = await fetch(`${base}${path12}`, {
+  async function get(path13, authenticated) {
+    const response = await fetch(`${base}${path13}`, {
       method: "GET",
       redirect: "error",
       signal: requestSignal,
@@ -2044,7 +2135,7 @@ function withActualCost(tool, liveConfig) {
 
 // src/workflow/execution.ts
 import { createRequire } from "node:module";
-import path5 from "node:path";
+import path6 from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 var progressRecordModule;
 async function appendVideoExecution(exec, phase) {
@@ -2052,7 +2143,7 @@ async function appendVideoExecution(exec, phase) {
   try {
     const resolver = createRequire(import.meta.url);
     const modulePath = resolver.resolve("@deepseek-ai/dsh-session", {
-      paths: [path5.dirname(process.argv[1] || process.execPath), path5.dirname(fileURLToPath(import.meta.url))]
+      paths: [path6.dirname(process.argv[1] || process.execPath), path6.dirname(fileURLToPath(import.meta.url))]
     });
     progressRecordModule ??= import(pathToFileURL(modulePath).href);
     const { appendPluginRecord } = await progressRecordModule;
@@ -2060,23 +2151,29 @@ async function appendVideoExecution(exec, phase) {
   } catch {
   }
 }
-function withVideoExecution(tool) {
+function withVideoExecution(tool, onResult = void 0) {
   return {
     ...tool,
     async execute(args, exec) {
       await appendVideoExecution(exec, "start");
+      let value;
       try {
-        return await tool.execute(args, exec);
+        value = await tool.execute(args, exec);
       } finally {
         await appendVideoExecution(exec, "end");
       }
+      try {
+        onResult?.(exec?.agent?.session, value);
+      } catch {
+      }
+      return value;
     }
   };
 }
 
 // src/workflow/resume.ts
 init_config();
-import path6 from "node:path";
+import path7 from "node:path";
 import { readFile as readFile2, open as open2, rm as rm2, mkdir as mkdir4, writeFile, rename as rename2 } from "node:fs/promises";
 import os2 from "node:os";
 init_connection();
@@ -2174,10 +2271,10 @@ var PAUSE_FILE = "paused-plan.json";
 function resumeDirOf(value) {
   const raw = typeof value === "string" ? value : value?.dir ?? value?.path ?? value?.resumeDir ?? value?.token ?? "";
   const dir = String(raw ?? "").trim();
-  return dir ? path6.resolve(dir) : "";
+  return dir ? path7.resolve(dir) : "";
 }
 async function readPauseFile(dir) {
-  const file = path6.join(dir, PAUSE_FILE);
+  const file = path7.join(dir, PAUSE_FILE);
   let text;
   try {
     text = await readFile2(file, "utf8");
@@ -2231,7 +2328,7 @@ async function describeResumeLock(file) {
 async function acquireResumeLock(dir, { toolName, callId, staleMs }) {
   const empty = { file: null, async release() {
   } };
-  const file = path6.join(dir, RESUME_LOCK);
+  const file = path7.join(dir, RESUME_LOCK);
   const token = uniqueSuffix("lock");
   const record = {
     tool: toolName,
@@ -2337,7 +2434,7 @@ function withResumeLock(tool, toolName, config) {
 }
 async function writePauseFile(dir, data) {
   await mkdir4(dir, { recursive: true, mode: 448 });
-  const file = path6.join(dir, PAUSE_FILE);
+  const file = path7.join(dir, PAUSE_FILE);
   const temp = `${file}.${uniqueSuffix("part")}`;
   try {
     await writeFile(temp, `${JSON.stringify(data, null, 2)}
@@ -2504,7 +2601,7 @@ function jsonSafeTool(tool) {
 }
 
 // src/providers/submissions.ts
-import path7 from "node:path";
+import path8 from "node:path";
 import { createHash, randomUUID as randomUUID3 } from "node:crypto";
 import { mkdir as mkdir5, readFile as readFile3, writeFile as writeFile2, rename as rename3, rm as rm3, open as open3, readdir as readdir2 } from "node:fs/promises";
 init_connection();
@@ -2530,14 +2627,14 @@ function findKey(payload, keys, depth = Infinity) {
   }
   return void 0;
 }
-function collectUrls(payload, path12 = [], found = []) {
+function collectUrls(payload, path13 = [], found = []) {
   if (typeof payload === "string") {
-    if (/^https?:\/\//i.test(payload)) found.push([path12, payload]);
+    if (/^https?:\/\//i.test(payload)) found.push([path13, payload]);
   } else if (Array.isArray(payload)) {
-    for (const item of payload) collectUrls(item, path12, found);
+    for (const item of payload) collectUrls(item, path13, found);
   } else if (payload && typeof payload === "object") {
     for (const [key, value] of Object.entries(payload)) {
-      collectUrls(value, [...path12, key], found);
+      collectUrls(value, [...path13, key], found);
     }
   }
   return found;
@@ -2555,22 +2652,22 @@ function extractTaskId(payload) {
 }
 function extractVideoUrl(payload) {
   const candidates = collectUrls(payload).filter(
-    ([path12, url]) => !looksLikeImageUrl(url) && !path12.some(isImageKey)
+    ([path13, url]) => !looksLikeImageUrl(url) && !path13.some(isImageKey)
   );
   if (!candidates.length) return void 0;
   for (const wanted of VIDEO_URL_KEYS) {
-    for (const [path12, url] of candidates) {
-      if (path12.length && String(path12.at(-1)).toLowerCase() === wanted) return url;
+    for (const [path13, url] of candidates) {
+      if (path13.length && String(path13.at(-1)).toLowerCase() === wanted) return url;
     }
   }
-  for (const [path12, url] of candidates) {
-    if (path12.length && GENERIC_URL_KEYS.has(String(path12.at(-1)).toLowerCase())) return url;
+  for (const [path13, url] of candidates) {
+    if (path13.length && GENERIC_URL_KEYS.has(String(path13.at(-1)).toLowerCase())) return url;
   }
   return candidates[0][1];
 }
 function extractImageUrl(payload) {
   const found = collectUrls(payload).find(
-    ([path12, url]) => looksLikeImageUrl(url) || path12.some(isImageKey)
+    ([path13, url]) => looksLikeImageUrl(url) || path13.some(isImageKey)
   );
   return found?.[1];
 }
@@ -2627,8 +2724,8 @@ async function relayRequest(config, requestPath, options = {}) {
     throw error;
   }
 }
-async function relayRequestCore(config, path12, { method = "GET", body, signal } = {}, trace = {}) {
-  const url = `${resolveBaseUrl(config)}${path12}`;
+async function relayRequestCore(config, path13, { method = "GET", body, signal } = {}, trace = {}) {
+  const url = `${resolveBaseUrl(config)}${path13}`;
   const timeout = AbortSignal.timeout(RELAY_TIMEOUT_MS);
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
   const serialized = body === void 0 ? void 0 : JSON.stringify(body);
@@ -2769,7 +2866,7 @@ function submissionIdentity(config) {
   return hash(JSON.stringify([isVolcengine(config) ? "volcengine" : isMetaontic(config) ? "metaontic" : "service", resolveBaseUrl(config), hash(resolveApiKey(config))]));
 }
 function directory() {
-  return path7.join(dshHome(), "state", "metaontic-video", "submissions");
+  return path8.join(dshHome(), "state", "metaontic-video", "submissions");
 }
 async function save(file, record) {
   const temporary = `${file}.${randomUUID3()}.tmp`;
@@ -2789,7 +2886,7 @@ async function guardedSubmit(config, requestPath, body, signal, scope = "") {
   const identity = submissionIdentity(config);
   const id = hash(JSON.stringify([identity, requestPath, body]));
   await mkdir5(directory(), { recursive: true, mode: 448 });
-  const file = path7.join(directory(), `${id}.json`);
+  const file = path8.join(directory(), `${id}.json`);
   let handle;
   try {
     handle = await open3(file, "wx", 384);
@@ -2830,7 +2927,7 @@ async function guardedSubmit(config, requestPath, body, signal, scope = "") {
 }
 async function finishSubmission(config, requestPath, body) {
   const id = hash(JSON.stringify([submissionIdentity(config), requestPath, body]));
-  await rm3(path7.join(directory(), `${id}.json`), { force: true });
+  await rm3(path8.join(directory(), `${id}.json`), { force: true });
 }
 async function finishKnownTask(config, taskId) {
   const identity = submissionIdentity(config);
@@ -2839,7 +2936,7 @@ async function finishKnownTask(config, taskId) {
     throw error;
   })) {
     if (!/^[a-f0-9]{64}\.json$/.test(name)) continue;
-    const file = path7.join(directory(), name);
+    const file = path8.join(directory(), name);
     const raw = await readFile3(file, "utf8").catch((error) => {
       if (error.code === "ENOENT") return null;
       throw error;
@@ -2851,7 +2948,7 @@ async function finishKnownTask(config, taskId) {
 }
 async function readSubmission(id) {
   if (!/^[a-f0-9]{64}$/.test(String(id))) throw new Error("\u63D0\u4EA4\u8BB0\u5F55 ID \u683C\u5F0F\u4E0D\u6B63\u786E\u3002");
-  const record = JSON.parse(await readFile3(path7.join(directory(), `${id}.json`), "utf8"));
+  const record = JSON.parse(await readFile3(path8.join(directory(), `${id}.json`), "utf8"));
   if (record.id !== id) throw new Error("\u63D0\u4EA4\u8BB0\u5F55\u635F\u574F\uFF0C\u5DF2\u505C\u6B62\u3002");
   return record;
 }
@@ -2859,7 +2956,7 @@ async function reconcileSubmission(config, id, taskId, confirmedNotCreated) {
   const record = await readSubmission(id);
   if (/\/tasks\/doubao$/.test(record.requestPath)) config = imageConfig(config);
   if (record.identity !== submissionIdentity(config)) throw new Error("\u8BF7\u6062\u590D\u539F\u63A5\u5165\u65B9\u5F0F\u3001\u5730\u5740\u548C Key \u540E\u6838\u5BF9\u63D0\u4EA4\u3002");
-  const file = path7.join(directory(), `${id}.json`);
+  const file = path8.join(directory(), `${id}.json`);
   if (record.status === "submitting" && Date.now() - Date.parse(record.createdAt) < 15e4) throw new Error("\u539F\u63D0\u4EA4\u4ECD\u53EF\u80FD\u6B63\u5728\u6267\u884C\uFF0C\u8BF7\u7B49\u5F85\u5176\u8FD4\u56DE\u540E\u518D\u6838\u5BF9\u3002");
   if (taskId) {
     const image = /\/tasks\/doubao$/.test(record.requestPath);
@@ -2944,7 +3041,7 @@ ${artifactLink(label, segment.localPath, segment.videoUrl)}`;
     "\u3010\u4EA4\u4ED8\u6E05\u5355\uFF1A\u6BCF\u4E2A\u5206\u6BB5\u4E0E\u5408\u5E76\u7ED3\u679C\u5206\u522B\u5C55\u793A\u3011",
     ...items,
     linkRule,
-    "\u8BF7\u5B9E\u9645\u4F7F\u7528 present/\u6587\u4EF6\u5C55\u793A\u5DE5\u5177\uFF0C\u5148\u5C55\u793A\u5408\u5E76\u6210\u7247\uFF0C\u518D\u6309\u6BB5\u53F7\u4F9D\u6B21\u5C55\u793A\u5404\u5206\u6BB5\uFF1B\u6CA1\u6709\u5408\u5E76\u7ED3\u679C\u65F6\u53EA\u6309\u6BB5\u53F7\u5C55\u793A\u5206\u6BB5\u3002\u6BCF\u9879\u6807\u660E\u5BF9\u5E94\u6BB5\u53F7\u6216\u5408\u5E76\u7ED3\u679C\uFF0C\u4E0D\u53EA\u5C55\u793A\u6700\u540E\u4E00\u6BB5\u6216\u5408\u5E76\u89C6\u9891\u3002\u5C55\u793A\u5DE5\u5177\u4E0D\u53EF\u7528\u65F6\uFF0C\u4E3A\u6BCF\u9879\u63D0\u4F9B\u53EF\u70B9\u51FB\u6587\u4EF6\u8DEF\u5F84\u6216\u64AD\u653E\u94FE\u63A5\u3002\u5DF2\u6709\u6587\u4EF6\u76F4\u63A5\u4EA4\u4ED8\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u3002"
+    "\u8BF7\u5B9E\u9645\u4F7F\u7528 present/\u6587\u4EF6\u5C55\u793A\u5DE5\u5177\uFF0C\u5148\u5C55\u793A\u5408\u5E76\u6210\u7247\uFF0C\u518D\u6309\u6BB5\u53F7\u4F9D\u6B21\u5C55\u793A\u5404\u5206\u6BB5\uFF1B\u6CA1\u6709\u5408\u5E76\u7ED3\u679C\u65F6\u53EA\u6309\u6BB5\u53F7\u5C55\u793A\u5206\u6BB5\u3002\u6BCF\u9879\u6807\u660E\u5BF9\u5E94\u6BB5\u53F7\u6216\u5408\u5E76\u7ED3\u679C\uFF0C\u4E0D\u53EA\u5C55\u793A\u6700\u540E\u4E00\u6BB5\u6216\u5408\u5E76\u89C6\u9891\u3002\u5C55\u793A\u5DE5\u5177\u4E0D\u53EF\u7528\u65F6\uFF0C\u4E3A\u6BCF\u9879\u63D0\u4F9B\u53EF\u70B9\u51FB\u6587\u4EF6\u8DEF\u5F84\u6216\u64AD\u653E\u94FE\u63A5\u3002\u5DF2\u6709\u6587\u4EF6\u76F4\u63A5\u4EA4\u4ED8\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u3002present \u7684 files \u6570\u7EC4\u7B2C\u4E00\u4E2A\u5FC5\u987B\u662F\u5408\u5E76\u6210\u7247\uFF0C\u5176\u540E\u624D\u6309\u6BB5\u53F7\u653E\u5206\u6BB5\uFF1B\u987A\u5E8F\u4E0D\u5BF9\u6216\u6F0F\u6389\u6210\u7247\u7684 present \u4F1A\u88AB\u63D2\u4EF6\u62E6\u4E0B\uFF0C\u6309\u63D0\u793A\u628A\u6210\u7247\u632A\u5230\u7B2C\u4E00\u4E2A\u91CD\u53D1\u5373\u53EF\uFF0C\u4E0D\u5F97\u56E0\u6B64\u7701\u7565\u6210\u7247\u6216\u5206\u6BB5\u3002"
   ].join("\n");
 }
 function recoveryInstruction(value, toolName) {
@@ -3397,7 +3494,7 @@ import { createHash as createHash3 } from "node:crypto";
 // src/workflow/character-choice.ts
 import { createHash as createHash2 } from "node:crypto";
 import { mkdir as mkdir6, readFile as readFile4, writeFile as writeFile3, rename as rename4, rm as rm4 } from "node:fs/promises";
-import path8 from "node:path";
+import path9 from "node:path";
 init_connection();
 var waiting = /* @__PURE__ */ new Map();
 var localIds = /* @__PURE__ */ new WeakMap();
@@ -3415,7 +3512,7 @@ async function characterChoiceGate(ctx, config, exec, args) {
   const stableId = typeof session.id === "string" ? session.id : typeof session.header?.id === "string" ? session.header.id : null;
   if (!localIds.has(session)) localIds.set(session, `live-${++nextId}`);
   const key = createHash2("sha256").update(JSON.stringify([stableId || localIds.get(session), args?.prompt || "", args?.duration, args?.resolution, args?.ratio])).digest("hex");
-  const file = path8.join(dshHome(), "metaontic-video", "character-choices", key + ".json");
+  const file = path9.join(dshHome(), "metaontic-video", "character-choices", key + ".json");
   try {
     async function choose() {
       if (stableId && args?.resetCharacterChoice !== true) {
@@ -3447,7 +3544,7 @@ async function characterChoiceGate(ctx, config, exec, args) {
       const choice2 = selected === first ? "generate_first" : selected === TEXT ? "text_only" : null;
       if (!choice2) return null;
       if (stableId) {
-        await mkdir6(path8.dirname(file), { recursive: true, mode: 448 });
+        await mkdir6(path9.dirname(file), { recursive: true, mode: 448 });
         const temp = file + "." + Date.now() + ".tmp";
         try {
           await writeFile3(temp, JSON.stringify({ version: 1, choice: choice2, time: (/* @__PURE__ */ new Date()).toISOString() }), { mode: 384, flag: "wx" });
@@ -4083,17 +4180,17 @@ async function runTask(liveConfig, body, signal, progress = {}) {
 init_config();
 init_connection();
 import { rm as rm6, mkdir as mkdir8, writeFile as writeFile4, rename as rename6, stat as stat4, copyFile } from "node:fs/promises";
-import path10 from "node:path";
+import path11 from "node:path";
 
 // src/media/download.ts
 import { mkdir as mkdir7, rename as rename5, rm as rm5 } from "node:fs/promises";
-import path9 from "node:path";
+import path10 from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import { createWriteStream } from "node:fs";
 var DOWNLOAD_TIMEOUT_MS = 15 * 60 * 1e3;
 async function downloadFile(url, destPath, { signal } = {}) {
-  await mkdir7(path9.dirname(destPath), { recursive: true });
+  await mkdir7(path10.dirname(destPath), { recursive: true });
   const partial = `${destPath}.${uniqueSuffix("part")}`;
   const timeout = AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS);
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
@@ -4186,7 +4283,7 @@ async function cleanupSegmentTemps(temps) {
 }
 async function mergeClips(config, files, outPath, { signal } = {}) {
   const binary = resolveBinary(config, "ffmpegBinary", "ffmpeg");
-  await mkdir8(path10.dirname(outPath), { recursive: true });
+  await mkdir8(path11.dirname(outPath), { recursive: true });
   await rm6(outPath, { force: true });
   const work = `${outPath}.${uniqueSuffix("work")}.mp4`;
   let copyError = "";
@@ -4350,7 +4447,7 @@ async function downloadSegmentsAndMerge(config, {
   const ffmpegReady = segments.length > 1 ? await hasFfmpeg(config, signal) : true;
   let probeWarned = false;
   for (const [index, segment] of segments.entries()) {
-    const dest = path10.join(
+    const dest = path11.join(
       segmentsDir,
       `${String(segment.index).padStart(2, "0")}-${segment.kind}.mp4`
     );
@@ -4408,13 +4505,13 @@ async function downloadSegmentsAndMerge(config, {
       installHint: guide.hint
     };
   }
-  const finalPath = path10.join(outDir, `${stamp}-${deliveredSeconds}s.mp4`);
+  const finalPath = path11.join(outDir, `${stamp}-${deliveredSeconds}s.mp4`);
   try {
     if (files.length === 1 && keepSingleFile) {
       return { files, segmentsDir, deliveredSeconds, merged: true, mergeMode: "segment", videoPath: files[0] };
     }
     if (files.length === 1) {
-      await mkdir8(path10.dirname(finalPath), { recursive: true });
+      await mkdir8(path11.dirname(finalPath), { recursive: true });
       await rm6(finalPath, { force: true });
       await copyFile(files[0], finalPath);
       await appendRequestLog({ event: "delivery_copied", sourcePath: files[0], videoPath: finalPath });
@@ -5588,7 +5685,7 @@ function setupTool(config) {
 
 // src/internal/hyperframes.ts
 import { spawn as spawn2 } from "node:child_process";
-import path11 from "node:path";
+import path12 from "node:path";
 import { createRequire as createRequire2 } from "node:module";
 import { stat as stat5, mkdir as mkdir9 } from "node:fs/promises";
 function runHyperframes(cli, args, cwd, config, signal) {
@@ -5605,7 +5702,7 @@ function runHyperframes(cli, args, cwd, config, signal) {
         ...Object.fromEntries([
           ["HYPERFRAMES_FFMPEG_PATH", resolveBinary(config, "ffmpegBinary", "ffmpeg")],
           ["HYPERFRAMES_FFPROBE_PATH", resolveBinary(config, "ffprobeBinary", "ffprobe")]
-        ].filter(([, binary]) => path11.isAbsolute(binary)))
+        ].filter(([, binary]) => path12.isAbsolute(binary)))
       },
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true
@@ -5685,16 +5782,16 @@ function hyperframesTool(config, deps) {
       let cli;
       try {
         const require2 = createRequire2(import.meta.url);
-        cli = path11.join(path11.dirname(require2.resolve("hyperframes/package.json")), "bin/hyperframes.mjs");
+        cli = path12.join(path12.dirname(require2.resolve("hyperframes/package.json")), "bin/hyperframes.mjs");
       } catch {
         return { status: "dependency_missing", note: "Hyperframes \u4E3A\u5185\u90E8\u5F00\u53D1\u80FD\u529B\uFF0C\u516C\u5F00\u63D2\u4EF6\u5305\u4E0D\u5305\u542B\u8BE5\u4F9D\u8D56\uFF1B\u9700\u5728\u5F00\u53D1\u73AF\u5883\u5355\u72EC\u51C6\u5907\u3002" };
       }
       let cwd = process.cwd();
       if (deps.workdir && exec?.agent) cwd = await deps.workdir.ensure(exec.agent, exec.signal) || cwd;
-      const project = path11.resolve(cwd, args.projectDir || ".");
+      const project = path12.resolve(cwd, args.projectDir || ".");
       if (action !== "check") {
         if (!args.projectDir) throw new Error("lint/render \u5FC5\u987B\u6307\u5B9A projectDir\u3002");
-        if (!(await stat5(path11.join(project, "index.html"))).isFile()) throw new Error("\u9879\u76EE\u7F3A\u5C11 index.html\u3002");
+        if (!(await stat5(path12.join(project, "index.html"))).isFile()) throw new Error("\u9879\u76EE\u7F3A\u5C11 index.html\u3002");
       }
       let videoPath;
       let command = ["doctor", "--json"];
@@ -5702,9 +5799,9 @@ function hyperframesTool(config, deps) {
       if (action === "render") {
         if (args.fps !== void 0 && ![24, 25, 30, 50, 60].includes(args.fps)) throw new Error("\u4E0D\u652F\u6301\u7684\u5E27\u7387\u3002");
         const output = args.output || `renders/output-${Date.now()}.mp4`;
-        videoPath = path11.resolve(project, output);
-        const relative = path11.relative(project, videoPath);
-        if (!relative || relative === ".." || relative.startsWith(`..${path11.sep}`) || path11.isAbsolute(relative) || path11.extname(videoPath).toLowerCase() !== ".mp4") {
+        videoPath = path12.resolve(project, output);
+        const relative = path12.relative(project, videoPath);
+        if (!relative || relative === ".." || relative.startsWith(`..${path12.sep}`) || path12.isAbsolute(relative) || path12.extname(videoPath).toLowerCase() !== ".mp4") {
           throw new Error("\u8F93\u51FA\u5FC5\u987B\u662F\u9879\u76EE\u76EE\u5F55\u5185\u7684 .mp4 \u6587\u4EF6\u3002");
         }
         try {
@@ -5713,7 +5810,7 @@ function hyperframesTool(config, deps) {
         } catch (error) {
           if (error.code !== "ENOENT") throw error;
         }
-        await mkdir9(path11.dirname(videoPath), { recursive: true });
+        await mkdir9(path12.dirname(videoPath), { recursive: true });
         command = ["render", project, "--output", videoPath, "--fps", String(args.fps || 30), "--workers", "1", "--strict"];
       }
       const result = await runHyperframes(cli, command, action === "check" ? cwd : project, config, exec?.signal);
@@ -5748,9 +5845,12 @@ function compareVideoCosts(config, args) {
   const groupRatio = args?.groupRatio ?? (isVolcengine(config) || isMetaontic(config) ? 1 : ref(config, "estimateGroupRatio", 0.8));
   if (!Number.isFinite(groupRatio) || groupRatio < 0 || groupRatio > 10) throw new Error("\u5206\u7EC4\u500D\u7387\u987B\u4E3A0\u201310\u7684\u6709\u6548\u6570\u5B57\u3002");
   if (isVolcengine(config) && groupRatio !== 1) throw new Error("\u706B\u5C71\u76F4\u8FDE\u4E0D\u9002\u7528\u4E2D\u8F6C\u5206\u7EC4\u6298\u6263\u3002");
-  const officialModel = duration > 15 ? "doubao-seedance-2-5" : model;
+  const officialModel = "doubao-seedance-2-5";
   const officialRates = RATES.find(([prefix]) => officialModel.startsWith(prefix))[1];
-  const officialPlan = planVideoSegments(duration, officialModel.startsWith("doubao-seedance-2-5") ? 30 : 15, officialModel.startsWith("doubao-seedance-2-5") ? 30 : 15);
+  const officialPlan = Array.from({ length: Math.ceil(duration / 30) }, (_step, index) => ({
+    kind: index ? "extend" : "generate",
+    seconds: 30
+  }));
   function calculate(id, plan, price, multiplier) {
     const pixels = args.resolution === "720p" ? [1280, 720] : id.startsWith("doubao-seedance-2-5") ? [854, 480] : [864, 496];
     const dimensions = ratio === "9:16" ? [...pixels].reverse() : pixels;
@@ -5774,7 +5874,7 @@ function compareVideoCosts(config, args) {
     plugin: calculate(model, planned.plan, rates[1], groupRatio),
     pluginChannel: isVolcengine(config) ? "\u706B\u5C71\u76F4\u8FDE\uFF08\u65E0\u4E2D\u8F6C\u6298\u6263\uFF09" : "MetaOnticVideo\u4E2D\u8F6C\u5236\u4F5C\u65B9\u6848",
     sources: ["https://docs.volcengine.com/docs/ark/model-pricing?lang=zh", "https://ai.bileego.com/pricing"],
-    notes: ["\u8FD9\u662F\u89C6\u9891API\u57FA\u7840\u516C\u5F0F\u4F30\u4EF7\uFF0C\u975E\u56FA\u5B9A\u62A5\u4EF7\uFF1B\u542B\u89C6\u9891\u8F93\u5165\u7684\u6700\u4F4E\u7528\u91CF\u8865\u8DB3\u5C1A\u672A\u8BA1\u5165\uFF0C\u5B9E\u9645\u4EE5\u6E20\u9053\u8D26\u5355\u4E3A\u51C6\u3002", "\u7EED\u62CD\u8F93\u5165\u6309\u4E0A\u4E00\u6BB5\u5B8C\u6574\u89C6\u9891\u65F6\u957F\u8BA1\u5165\uFF0C\u4E0D\u6309\u7D2F\u8BA1\u6210\u7247\u8F93\u5165\uFF1B\u53C2\u8003\u56FE\u7247\u4E0D\u7B49\u540C\u53C2\u8003\u89C6\u9891\uFF0C\u4E0D\u4F7F\u7528\u542B\u89C6\u9891\u5355\u4EF7\u3002", "\u4E0D\u542B\u56FE\u7247\u751F\u6210\u6216\u8F6C\u6362\u3001\u91CD\u8BD5\u3001\u72EC\u7ACB\u914D\u97F3\u53CA\u5176\u4ED6\u989D\u5916\u8C03\u7528\uFF1B\u672C\u5730\u5408\u5E76\u4E0D\u4EA7\u751F\u89C6\u9891\u6A21\u578B\u8C03\u7528\u8D39\uFF0C\u63A5\u7F1D\u88C1\u526A\u4F1A\u7F29\u77ED\u4EA4\u4ED8\u65F6\u957F\u3002", "\u4E0D\u540C\u6A21\u578B\u7684\u8D28\u91CF\u4E0E\u80FD\u529B\u6709\u5DEE\u5F02\uFF1B\u706B\u5C71\u5B98\u65B9\u4E3AAPI\u520A\u4F8B\u4EF7\uFF0C\u4E0D\u662F\u7F51\u9875\u79EF\u5206\u6216\u5957\u9910\u4EF7\u683C\u3002", "\u4E2D\u8F6C\u500D\u7387\u4EC5\u5728Key\u786E\u6709\u5BF9\u5E94\u5206\u7EC4\u6743\u9650\u4E14\u5B9E\u9645\u4F7F\u7528\u8BE5\u5206\u7EC4\u65F6\u6210\u7ACB\uFF1B\u4EF7\u683C\u65E5\u671F\u540E\u53EF\u80FD\u8C03\u6574\uFF0C\u5236\u4F5C\u524D\u9700\u590D\u6838\u3002"]
+    notes: ["\u8FD9\u662F\u89C6\u9891API\u57FA\u7840\u516C\u5F0F\u4F30\u4EF7\uFF0C\u975E\u56FA\u5B9A\u62A5\u4EF7\uFF1B\u542B\u89C6\u9891\u8F93\u5165\u7684\u6700\u4F4E\u7528\u91CF\u8865\u8DB3\u5C1A\u672A\u8BA1\u5165\uFF0C\u5B9E\u9645\u4EE5\u6E20\u9053\u8D26\u5355\u4E3A\u51C6\u3002", "\u7EED\u62CD\u8F93\u5165\u6309\u4E0A\u4E00\u6BB5\u5B8C\u6574\u89C6\u9891\u65F6\u957F\u8BA1\u5165\uFF0C\u4E0D\u6309\u7D2F\u8BA1\u6210\u7247\u8F93\u5165\uFF1B\u53C2\u8003\u56FE\u7247\u4E0D\u7B49\u540C\u53C2\u8003\u89C6\u9891\uFF0C\u4E0D\u4F7F\u7528\u542B\u89C6\u9891\u5355\u4EF7\u3002", "\u4E0D\u542B\u56FE\u7247\u751F\u6210\u6216\u8F6C\u6362\u3001\u91CD\u8BD5\u3001\u72EC\u7ACB\u914D\u97F3\u53CA\u5176\u4ED6\u989D\u5916\u8C03\u7528\uFF1B\u672C\u5730\u5408\u5E76\u4E0D\u4EA7\u751F\u89C6\u9891\u6A21\u578B\u8C03\u7528\u8D39\uFF0C\u63A5\u7F1D\u88C1\u526A\u4F1A\u7F29\u77ED\u4EA4\u4ED8\u65F6\u957F\u3002", "\u4E0D\u540C\u6A21\u578B\u7684\u8D28\u91CF\u4E0E\u80FD\u529B\u6709\u5DEE\u5F02\uFF1B\u706B\u5C71\u5B98\u65B9\u4E3AAPI\u520A\u4F8B\u4EF7\uFF0C\u4E0D\u662F\u7F51\u9875\u79EF\u5206\u6216\u5957\u9910\u4EF7\u683C\u3002", "\u706B\u5C71\u5B98\u65B9\u65B9\u6848\u6309\u6BCF\u6BB5 30 \u79D2\u8BA1\uFF1A\u4E0D\u8DB3 30 \u79D2\u7684\u5C3E\u6BB5\u4E5F\u6309 30 \u79D2\u8BA1\u8D39\uFF0C\u4E0D\u6309\u5269\u4F59\u79D2\u6570\u6298\u534A\u3002", "\u4E2D\u8F6C\u500D\u7387\u4EC5\u5728Key\u786E\u6709\u5BF9\u5E94\u5206\u7EC4\u6743\u9650\u4E14\u5B9E\u9645\u4F7F\u7528\u8BE5\u5206\u7EC4\u65F6\u6210\u7ACB\uFF1B\u4EF7\u683C\u65E5\u671F\u540E\u53EF\u80FD\u8C03\u6574\uFF0C\u5236\u4F5C\u524D\u9700\u590D\u6838\u3002"]
   };
 }
 function estimateTool(config) {
@@ -6055,7 +6155,7 @@ function buildPromptGuidance(config) {
     "\xB7 \u5168\u90E8\u6587\u4EF6\u4EA4\u4ED8\uFF1A\u6240\u6709\u7528\u6237\u4EA4\u4ED8\u7684\u6587\u4EF6\uFF08\u811A\u672C\u3001\u5206\u955C\u793A\u610F\u56FE\u3001\u8F6C\u6362\u56FE\u7247\u3001\u5355\u6BB5/\u7EED\u62CD\u9884\u89C8\u3001\u5408\u5E76\u6210\u7247\u3001\u6062\u590D\u540E\u6210\u679C\u3001\u5BFC\u51FAPDF\u7B49\uFF09\u90FD\u987B\u5728\u7528\u6237\u53EF\u89C1\u6B63\u6587\u7ED9\u51FA\u9010\u9879\u53EF\u70B9\u51FBMarkdown\u94FE\u63A5\uFF0C\u4E0D\u80FD\u53EA\u7ED9\u76EE\u5F55\u3001\u53CD\u5F15\u53F7\u6216\u666E\u901A\u6587\u672C\u8DEF\u5F84\uFF1B\u672C\u5730\u8DEF\u5F84\u5148\u786E\u8BA4\u6587\u4EF6\u5B58\u5728\u5E76\u8F6C\u7EDD\u5BF9\u8DEF\u5F84\uFF0C\u7528\u5C16\u62EC\u53F7\u5305\u88F9\u3002\u56FE\u7247\u53E6\u987B\u5185\u5D4C\uFF0C\u811A\u672C\u53E6\u987B\u5B8C\u6574\u5C55\u793A\u6B63\u6587\uFF1Bpresent\u767B\u8BB0\u6210\u529F\u4ECD\u4FDD\u7559\u94FE\u63A5\uFF0C\u4E0D\u58F0\u79F0\u5361\u7247\u5DF2\u64AD\u653E\u3002\u53EA\u94FE\u63A5\u771F\u5B9E\u8FD4\u56DE\u6216\u5DF2\u6838\u5B9E\u6587\u4EF6\uFF0C\u4E0D\u7F16\u9020\u8DEF\u5F84\uFF0C\u4E0D\u4E3A\u8865\u94FE\u63A5\u91CD\u65B0\u4ED8\u8D39\u751F\u6210\u3002\u6062\u590D\u76EE\u5F55\u3001\u4EFB\u52A1ID\u3001\u914D\u7F6E\u6587\u4EF6\u7B49\u5185\u90E8\u53C2\u6570\u7EE7\u7EED\u6309\u539F\u53C2\u6570\u4F7F\u7528\uFF0C\u4E0D\u5F53\u4F5C\u53EF\u64AD\u653E\u6210\u679C\u3002",
     "\xB7 \u89C6\u9891\u6587\u4EF6\u94FE\u63A5\uFF1A\u89C6\u9891\u4EA4\u4ED8\u6B63\u6587\u5FC5\u987B\u9010\u9879\u9644Markdown\u53EF\u70B9\u51FB\u94FE\u63A5\uFF0C\u4F8B\u5982[\u89C2\u770B\u7B2C\u4E00\u6BB5](<\u7EDD\u5BF9\u6587\u4EF6\u8DEF\u5F84>)\uFF0C\u8DEF\u5F84\u542B\u7A7A\u683C\u4E5F\u7528\u5C16\u62EC\u53F7\u5305\u88F9\uFF1B\u6709present\u4ECD\u987B\u7ED9\u6B63\u6587\u94FE\u63A5\uFF0C\u666E\u901A\u6587\u672C\u6216\u53CD\u5F15\u53F7\u8DEF\u5F84\u4E0D\u7B97\u94FE\u63A5\uFF0C\u672A\u7ECF\u9A8C\u8BC1\u4E0D\u5F97\u8BF4\u4E0A\u65B9\u5361\u7247\u53EF\u76F4\u63A5\u64AD\u653E\u3002\u7F3A\u6587\u4EF6\u5148\u67E5\u539F\u4EFB\u52A1\u548C\u4EA4\u4ED8\u8DEF\u5F84\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u3002",
     "\xB7 \u4EA4\u4ED8\u6587\u4EF6\u6392\u5E8F\uFF1A\u4EA4\u4ED8\u6587\u4EF6\u987A\u5E8F\u7EDF\u4E00\u4E3A\uFF1A\u5408\u5E76\u540E\u7684\u5B8C\u6574\u89C6\u9891\u7B2C\u4E00\uFF0C\u5176\u540E\u4F9D\u6B21\u4E3A\u7B2C\u4E00\u6BB5\u3001\u7B2C\u4E8C\u6BB5\u53CA\u540E\u7EED\u5206\u6BB5\uFF1Bpresent\u8C03\u7528\u3001\u6B63\u6587\u6587\u4EF6\u94FE\u63A5\u548C\u4EA4\u4ED8\u6E05\u5355\u90FD\u9075\u5B88\u6B64\u987A\u5E8F\u3002\u6682\u505C\u65F6\u5DF2\u6709\u7D2F\u8BA1\u5408\u5E76\u89C6\u9891\u6807\u4E3A\u201C\u5DF2\u5B8C\u6210\u90E8\u5206\u5408\u5E76\u89C6\u9891\u201D\uFF0C\u4E0D\u6807\u6210\u5B8C\u6574\u6210\u7247\uFF1B\u5408\u5E76\u5931\u8D25\u6216\u672A\u5408\u5E76\u65F6\u53EA\u6309\u6BB5\u53F7\u4EA4\u4ED8\u771F\u5B9E\u6587\u4EF6\u3002",
-    "\xB7 \u957F\u89C6\u9891\u4EA4\u4ED8\uFF1A\u76EE\u6807\u8D85\u8FC715\u79D2\u4E14\u5B9E\u9645\u5206\u6BB5\u751F\u6210\u65F6\uFF0C\u6BCF\u6B21\u5DE5\u5177\u8FD4\u56DE\u540E\u5206\u522B\u5C55\u793A\u5168\u90E8\u5DF2\u5B8C\u6210\u5206\u6BB5\uFF1B\u5168\u90E8\u751F\u6210\u4E14\u5408\u5E76\u6210\u529F\u65F6\uFF0C\u5148\u5C55\u793A\u5408\u5E76\u540E\u5B8C\u6574\u89C6\u9891\uFF0C\u518D\u6309\u6BB5\u53F7\u5C55\u793A\u7B2C\u4E00\u6BB5\u3001\u7B2C\u4E8C\u6BB5\u53CA\u540E\u7EED\u5206\u6BB5\u3002\u4F7F\u7528 present/\u6587\u4EF6\u5C55\u793A\u5DE5\u5177\u9010\u9879\u5C55\u793A\u5E76\u6807\u6CE8\u6BB5\u53F7\uFF0C\u4E0D\u5F97\u53EA\u7ED9\u5408\u5E76\u89C6\u9891\u3001\u53EA\u7ED9\u6700\u540E\u4E00\u6BB5\u6216\u53EA\u5217\u76EE\u5F55\u3002\u6682\u505C\u65F6\u5148\u4EA4\u4ED8\u5DF2\u5B8C\u6210\u5206\u6BB5\uFF0C\u5408\u5E76\u5931\u8D25\u4ECD\u4EA4\u4ED8\u5206\u6BB5\u5E76\u6309\u539Fresume\u91CD\u8BD5\u4EA4\u4ED8\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u3002\u53EA\u4F7F\u7528\u7ED3\u679C\u4E2D\u771F\u5B9E\u8FD4\u56DE\u7684localPath/videoUrl\u548C\u5DF2\u786E\u8BA4\u5408\u5E76\u7684videoPath\uFF1B\u5355\u6BB5\u76F4\u51FA\u4E0D\u865A\u6784\u7B2C\u4E8C\u6BB5\u6216\u5408\u5E76\u7ED3\u679C\u3002",
+    "\xB7 \u957F\u89C6\u9891\u4EA4\u4ED8\uFF1A\u76EE\u6807\u8D85\u8FC715\u79D2\u4E14\u5B9E\u9645\u5206\u6BB5\u751F\u6210\u65F6\uFF0C\u6BCF\u6B21\u5DE5\u5177\u8FD4\u56DE\u540E\u5206\u522B\u5C55\u793A\u5168\u90E8\u5DF2\u5B8C\u6210\u5206\u6BB5\uFF1B\u5168\u90E8\u751F\u6210\u4E14\u5408\u5E76\u6210\u529F\u65F6\uFF0C\u5148\u5C55\u793A\u5408\u5E76\u540E\u5B8C\u6574\u89C6\u9891\uFF0C\u518D\u6309\u6BB5\u53F7\u5C55\u793A\u7B2C\u4E00\u6BB5\u3001\u7B2C\u4E8C\u6BB5\u53CA\u540E\u7EED\u5206\u6BB5\u3002\u4F7F\u7528 present/\u6587\u4EF6\u5C55\u793A\u5DE5\u5177\u9010\u9879\u5C55\u793A\u5E76\u6807\u6CE8\u6BB5\u53F7\uFF0Cpresent \u7684 files \u6570\u7EC4\u7B2C\u4E00\u4E2A\u5FC5\u987B\u662F\u5408\u5E76\u6210\u7247\uFF0C\u5176\u540E\u624D\u6309\u6BB5\u53F7\u653E\u5206\u6BB5\uFF1B\u987A\u5E8F\u4E0D\u5BF9\u6216\u53EA\u5C55\u793A\u5206\u6BB5\u65F6\u63D2\u4EF6\u4F1A\u62E6\u4E0B\u8FD9\u6B21 present\uFF0C\u6309\u63D0\u793A\u628A\u6210\u7247\u632A\u5230\u7B2C\u4E00\u4E2A\u518D\u91CD\u53D1\u5373\u53EF\uFF0C\u4E0D\u5F97\u56E0\u6B64\u7701\u7565\u6210\u7247\u6216\u5206\u6BB5\u3002\u4E0D\u5F97\u53EA\u7ED9\u5408\u5E76\u89C6\u9891\u3001\u53EA\u7ED9\u6700\u540E\u4E00\u6BB5\u6216\u53EA\u5217\u76EE\u5F55\u3002\u6682\u505C\u65F6\u5148\u4EA4\u4ED8\u5DF2\u5B8C\u6210\u5206\u6BB5\uFF0C\u5408\u5E76\u5931\u8D25\u4ECD\u4EA4\u4ED8\u5206\u6BB5\u5E76\u6309\u539Fresume\u91CD\u8BD5\u4EA4\u4ED8\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u3002\u53EA\u4F7F\u7528\u7ED3\u679C\u4E2D\u771F\u5B9E\u8FD4\u56DE\u7684localPath/videoUrl\u548C\u5DF2\u786E\u8BA4\u5408\u5E76\u7684videoPath\uFF1B\u5355\u6BB5\u76F4\u51FA\u4E0D\u865A\u6784\u7B2C\u4E8C\u6BB5\u6216\u5408\u5E76\u7ED3\u679C\u3002",
     "\xB7 \u91CD\u7F6E\u63D2\u4EF6\u540E\u7684\u6062\u590D\uFF1A\u91CD\u7F6E\u53EA\u6E05\u9664\u914D\u7F6E\u4E0E\u767B\u5F55\u72B6\u6001\uFF0C\u4E0D\u4EE3\u8868\u63D2\u4EF6\u88AB\u5378\u8F7D\u6216\u505C\u7528\u3002\u5148\u8C03\u7528 video_config(action:get) \u6838\u5BF9\u5F53\u524D\u5B9E\u9645\u63A5\u5165\u4E0E\u5BC6\u94A5\u72B6\u6001\uFF0C\u4E0D\u6CBF\u7528\u91CD\u7F6E\u524D\u7684\u914D\u7F6E\u7ED3\u8BBA\uFF1B\u670D\u52A1\u7AEF\u6A21\u5F0F\u5F15\u5BFC\u63D2\u4EF6\u8BE6\u60C5\u9875\u767B\u5F55\uFF0CMetaOntic AI \u5F15\u5BFC\u9009\u62E9\u8BE5\u63A5\u5165\u5E76\u586B\u5199\u89C6\u9891/\u56FE\u7247 Key \u540E\u4FDD\u5B58\uFF0C\u706B\u5C71\u76F4\u8FDE\u586B\u5199\u706B\u5C71 Key \u540E\u4FDD\u5B58\u3002\u4E0D\u8981\u5728\u804A\u5929\u4E2D\u7D22\u53D6\u6216\u5C55\u793A Key\u3002\u7F3A Key\u3001\u91CD\u7F6E\u540E\u672A\u914D\u7F6E\u3001\u4FDD\u5B58\u5931\u8D25\u4E0D\u5C5E\u4E8E\u5DE5\u5177\u7F3A\u5931\uFF0C\u7981\u6B62\u636E\u6B64\u5EFA\u8BAE\u91CD\u88C5\u3001\u91CD\u65B0\u542F\u7528\u6216\u91CD\u542F App\uFF1B\u53EA\u6709\u660E\u786E restart-required \u624D\u63D0\u793A\u91CD\u542F\u3002\u5DE5\u5177\u6682\u4E0D\u53EF\u89C1\u65F6\u5148\u5237\u65B0\u5DE5\u5177\u53D1\u73B0\u6216\u8BA9\u7528\u6237\u91CD\u65B0\u6253\u5F00\u63D2\u4EF6\u8BE6\u60C5\u6838\u5BF9\u72B6\u6001\uFF1B\u4EC5\u786E\u8BA4\u5B9E\u9645\u672A\u5B89\u88C5/\u5DF2\u7981\u7528\u65F6\u624D\u6307\u5BFC\u5B89\u88C5/\u542F\u7528\u3002\u4FDD\u7559\u5DF2\u5BA1\u6838\u811A\u672C\u3001\u6E05\u6670\u5EA6\u3001\u6587\u4EF6\u3001\u4EFB\u52A1ID\u4E0E\u6062\u590D\u8FDB\u5EA6\uFF1B\u914D\u7F6E\u6062\u590D\u540E\u5148\u68C0\u67E5\u539F\u4EFB\u52A1\u72B6\u6001\uFF0C\u4E0D\u81EA\u52A8\u91CD\u65B0\u751F\u6210\u3001\u4E0D\u9ED8\u8BA4\u91CD\u95EE\u811A\u672C\uFF0C\u65E7\u786E\u8BA4\u7A97\u53E3\u5931\u6548\u65F6\u53EA\u8865\u7F3A\u5931\u7684\u5F53\u524D\u5236\u4F5C\u786E\u8BA4\uFF0C\u811A\u672C\u6216\u5236\u4F5C\u53C2\u6570\u53D8\u66F4\u4ECD\u987B\u91CD\u65B0\u5BA1\u6838\u4E0E\u8D39\u7528\u786E\u8BA4\u3002",
     "\xB7 \u771F\u4EBA\u56FE\u751F\u89C6\u9891\uFF1AA\u3001B \u6A21\u5F0F\u5206\u522B\u914D\u7F6E\u89C6\u9891\u6A21\u578B model \u4E0E\u56FE\u7247\u6A21\u578B imageModel\u3002\u56FE\u7247\u6A21\u578B\u652F\u6301 doubao-seedream-5-0-260128\u3001doubao-seedream-5-0-pro-260628\u3002\u52A9\u624B\u5148\u770B\u56FE\u6216\u6839\u636E\u7528\u6237\u8BF4\u660E\u5224\u65AD\u662F\u5426\u771F\u4EBA\uFF0C\u4E0D\u80FD\u770B\u56FE\u65F6\u5148\u6F84\u6E05\uFF0C\u4E0D\u80FD\u5047\u79F0\u5DF2\u81EA\u52A8\u8BC6\u522B\u3002\u786E\u8BA4\u771F\u4EBA\u65F6\uFF0C\u5148\u4E0E\u7528\u6237\u786E\u5B9A\u660E\u663E\u975E\u771F\u4EBA\u98CE\u683C\uFF0C\u5728\u5236\u4F5C\u786E\u8BA4\u4E2D\u8BF4\u660E\u56FE\u7247\u9884\u5904\u7406\u53E6\u884C\u8BA1\u8D39\uFF1B\u4F7F\u7528 video_prepare_image \u5904\u7406\u6BCF\u4E00\u5F20\u771F\u4EBA\u53C2\u8003\u56FE\uFF08\u542B\u9996\u5C3E\u5E27\uFF09\uFF0C\u5C55\u793A\u8FD4\u56DE\u56FE\u7247\u5E76\u6838\u5BF9\u5DF2\u6210\u4E3A\u975E\u771F\u4EBA\u89D2\u8272\u540E\uFF0C\u4EC5\u5C06\u5904\u7406\u7ED3\u679C\u7528\u4E8E\u89C6\u9891\u3002\u5373\u4F7F\u4E8B\u5148\u6CA1\u6709\u8BC6\u522B\u5230\u771F\u4EBA\uFF0C\u89C6\u9891\u63A5\u53E3\u660E\u786E\u8FD4\u56DE\u771F\u4EBA\u9650\u5236\u65F6\uFF0C\u63D2\u4EF6\u4F1A\u53E6\u884C\u8BE2\u95EE\u662F\u5426\u7528 Seedream \u8F6C\u4E3A\u975E\u771F\u4EBA\u4E8C\u7EF4\u52A8\u753B\u98CE\u683C\uFF0C\u9010\u5F20\u4FDD\u5B58\u56FE\u7247\u4EFB\u52A1\u548C\u7ED3\u679C\uFF1B\u8F6C\u6362\u5B8C\u6210\u8FD4\u56DEreview_required\u540E\uFF0C\u5FC5\u987B\u9010\u5F20\u5C55\u793A\u56FE\u7247\u5E76\u7B49\u7528\u6237\u6838\u5BF9\u4E3A\u975E\u771F\u4EBA\u4E14\u540C\u610F\u91CD\u8BD5\uFF0C\u518D\u5E26\u539Fresume\u548CreferenceImagesReviewed:true\u7EED\u505A\u4E00\u6B21\uFF0C\u8BF4\u660E\u56FE\u7247\u4E0E\u89C6\u9891\u91CD\u8BD5\u5206\u522B\u8BA1\u8D39\uFF1B\u53EA\u6709\u7528\u6237\u660E\u786E\u5141\u8BB8\u624D\u8F6C\u6362\uFF0C\u62D2\u7EDD\u3001\u53D6\u6D88\u6216\u65E0\u6CD5\u786E\u8BA4\u90FD\u505C\u6B62\uFF0C\u7981\u6B62\u52A9\u624B\u7ED5\u8FC7\u786E\u8BA4\u6216\u81EA\u884C\u91CD\u590D\u63D0\u4EA4\u3002\u5904\u7406\u5931\u8D25\u6216\u7ED3\u679C\u4ECD\u50CF\u771F\u4EBA\u5219\u505C\u6B62\uFF0C\u4E0D\u5C06\u539F\u771F\u4EBA\u56FE\u63D0\u4EA4\u89C6\u9891\uFF0C\u4E5F\u4E0D\u53CD\u590D\u81EA\u52A8\u91CD\u8BD5\u4ED8\u8D39\u8C03\u7528\u3002\u975E\u771F\u4EBA\u539F\u56FE\u76F4\u63A5\u4F7F\u7528\u3002C \u6A21\u5F0F\u76EE\u524D\u672A\u63A5\u6B64\u5DE5\u5177\uFF0C\u987B\u5148\u51C6\u5907\u975E\u771F\u4EBA\u53C2\u8003\u56FE\u3002",
     "\xB7 \u63D0\u4EA4\u8D85\u65F6\u3001\u65AD\u7F51\u6216\u54CD\u5E94\u7F3A\u5C11ID\u65F6\uFF0C\u82E5\u8FD4\u56DEsubmission_unknown\u53CA\u63D0\u4EA4\u8BB0\u5F55ID\uFF0C\u7981\u6B62\u91CD\u65B0\u751F\u6210\uFF1B\u5148\u7528media_submission\u8BFB\u53D6\u8BB0\u5F55\u5E76\u8BA9\u7528\u6237\u6838\u5BF9\u6E20\u9053\u65E5\u5FD7\u3002\u627E\u5230\u539F\u4EFB\u52A1ID\u540E\u5173\u8054\u67E5\u8BE2\uFF1B\u53EA\u6709\u7528\u6237\u660E\u786E\u786E\u8BA4\u672A\u521B\u5EFA\uFF0C\u624D\u89E3\u9501\u5E76\u7ECF\u8D39\u7528\u786E\u8BA4\u540E\u518D\u6B21\u63D0\u4EA4\u3002\u63D2\u4EF6\u4E0D\u5047\u8BBE\u4E2D\u8F6C\u7AD9\u652F\u6301\u5E42\u7B49\u3002\u8F6C\u6362\u7684\u9636\u6BB5\u3001\u4EFB\u52A1\u4E0E\u7ED3\u679C\u968F\u65AD\u70B9\u4FDD\u5B58\uFF0C\u7EED\u505A\u4E0D\u4ECE\u5934\u8F6C\u6362\u3002",
@@ -6068,7 +6168,7 @@ function buildPromptGuidance(config) {
     "\xB7 **\u751F\u6210\u4E00\u6761\u65B0\u89C6\u9891\u5FC5\u987B\u5148\u8FC7\u4E24\u9053\u786E\u8BA4\uFF0C\u7F3A\u4E00\u4E0D\u53EF**\uFF1A\u2460 \u5148\u628A**\u89C6\u9891\u811A\u672C**\u5199\u51FA\u6765\u4EA4\u7ED9\u7528\u6237**\u5BA1\u6838**\uFF08\u811A\u672C\u8981\u542B\uFF1A\u753B\u9762\u98CE\u683C\u3001\u4EBA\u7269\u5F62\u8C61\u3001\u5206\u955C\u2014\u2014\u9010\u955C\u7684\u955C\u5934 / \u65F6\u95F4 / \u753B\u9762\u3001\u5BF9\u767D\u2014\u2014\u6709\u5BF9\u8BDD\u5C31\u9010\u53E5\u5199\u6E05\u8C01\u5728\u51E0\u79D2\u8BF4\u4EC0\u4E48\uFF09\uFF1B\u2461 \u811A\u672C\u5BA1\u6838\u901A\u8FC7\u540E\uFF0C**\u518D\u5355\u72EC\u95EE\u4E00\u6B21\u8981\u4E0D\u8981\u5F00\u59CB\u505A**\uFF08\u6240\u6709\u63A5\u5165\u65B9\u5F0F\u5747\u590D\u8FF0\u5F53\u524D\u811A\u672C\u7684\u53CC\u65B9\u6848\u57FA\u7840\u4F30\u4EF7\u5E76\u8BF4\u660E\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39\uFF1B\u4EC5\u670D\u52A1\u7AEF\u6A21\u5F0F\u6838\u5BF9\u989D\u5EA6\uFF09\uFF0C\u7528\u6237\u70B9\u5934\u4E86\u624D\u8C03\u7528 video_generate\u3002\u811A\u672C\u4E00\u6539\uFF0C\u4E24\u9053\u786E\u8BA4\u5168\u90E8\u4F5C\u5E9F\uFF0C\u8981\u91CD\u65B0\u8D70\u3002\u7528\u6237\u8BF4\u300C\u76F4\u63A5\u751F\u6210\u300D\u4E5F\u8981\u5148\u8D70\u8FD9\u4E24\u6B65\uFF0C\u4E0D\u8981\u8DF3\u8FC7\u3002\u7ED9\u5DF2\u6709\u89C6\u9891\u63A5\u957F\uFF08video_extend\uFF09\u4E0D\u9700\u8981\u811A\u672C\uFF0C\u4F46\u540C\u6837\u8981\u5148\u786E\u8BA4\u518D\u8C03\u7528\u3002",
     "\xB7 \u4EC5A/B\u63A5\u5165\uFF1Avideo_generate\u3001video_extend\u53CAvideo_status\u5B8C\u6210\u540E\u82E5\u8FD4\u56DEactualCost\uFF0C\u4EA4\u4ED8\u89C6\u9891\u65F6\u4E00\u5E76\u5C55\u793A\u4E2D\u8F6C\u7AD9\u771F\u5B9E\u6D88\u8017\uFF08\u9010\u4EFB\u52A1\u548C\u5408\u8BA1\uFF09\uFF1Bpaused\u53EA\u79F0\u5DF2\u751F\u6210\u90E8\u5206\uFF0Cpartial\u53EA\u79F0\u5DF2\u7ED3\u7B97\u5C0F\u8BA1\uFF0Cpending\u8BF4\u660E\u5F85\u7ED3\u7B97/\u5F85\u67E5\u8BE2\u3002\u5B9E\u9645\u91D1\u989D\u53D6\u4E2D\u8F6C\u6700\u7EC8\u7ED3\u7B97\u800C\u975E\u4F30\u4EF7\u3001\u9884\u6263\u6216\u4F59\u989D\u5DEE\uFF1B\u6CA1\u6709\u91D1\u989D\u4E0D\u8981\u62A50\u3002\u53EF\u7528\u539FtaskId\u8C03\u7528video_status\u8865\u67E5\u8D39\u7528\uFF0C\u4E0D\u56E0\u8D39\u7528\u7F3A\u5931\u91CD\u65B0\u751F\u6210\u3001\u91CD\u8BD5\u4ED8\u8D39\u4EFB\u52A1\u6216\u5EF6\u8FDF\u4EA4\u4ED8\u3002\u53EA\u7EDF\u8BA1\u89C6\u9891\u8D39\u7528\uFF0C\u56FE\u7247\u4E0E\u989D\u5916\u91CD\u505A\u53E6\u8BA1\uFF1BC\u706B\u5C71\u76F4\u8FDE\u4E0D\u63D0\u4F9B\u6B64\u4E2D\u8F6C\u8D26\u5355\u67E5\u8BE2\u3002",
     "\xB7 \u6BCF\u6B21\u65B0\u811A\u672C\u53CA\u6539\u7A3F\u5BA1\u6838\u524D\uFF0C\u65E0\u8BBA\u5355\u6BB5\u8FD8\u662F\u591A\u6BB5\uFF0C\u90FD\u5148\u8BFB\u53D6video-director\u7684references/segment-storyboard.md\u5E76\u5B9E\u9645\u5C55\u793A\u5F53\u524D\u7248\u955C\u5934\u53C2\u8003\u793A\u610F\u56FE\uFF1B\u4E00\u955C\u5230\u5E95\u4E5F\u5C55\u793A\u5173\u952E\u6784\u56FE\u4E0E\u52A8\u4F5C\u3002\u9700\u8981\u62C6\u5206\u751F\u6210\u65F6\u53E6\u5C55\u793A\u5206\u6BB5\u8868\uFF08\u6BB5\u53F7\u3001\u5168\u7247\u65F6\u95F4\u3001\u751F\u6210\u65F6\u957F\u3001\u751F\u6210/\u7EED\u62CD\u3001\u4E3B\u8981\u753B\u9762\u4E0E\u65B0\u5BF9\u767D\u3001\u8D77\u6B62\u72B6\u6001\u53CA\u4EA4\u63A5\uFF09\u3002\u6309\u5F53\u524D\u6A21\u578B\u548C\u5B9E\u9645\u5206\u6BB5\u89C4\u5219\u6838\u5BF9\uFF0C\u4E0D\u8C03\u7528\u751F\u6210\u5DE5\u5177\u8BD5\u7B97\uFF0C\u4E0D\u6309\u5206\u955C\u6570\u589E\u52A0\u4ED8\u8D39\u8C03\u7528\u3002\u7528\u672C\u5730SVG/PNG\u753B\u672C\u7248\u6784\u56FE\u4E0E\u52A8\u4F5C\u793A\u610F\u56FE\uFF0CHTML\u53EF\u4F5C\u9644\u52A0\u9884\u89C8\uFF1Bpresent\u767B\u8BB0\u540E\uFF0C\u5728\u6B63\u6587\u5185\u5D4C\u5F53\u524D\u7248\u56FE\u7247\u5E76\u7ED9\u6253\u5F00\u539F\u56FE\u94FE\u63A5\uFF0C\u660E\u786E\u6807\u6CE8\u201C\u793A\u610F\uFF0C\u975E\u5B9E\u9645\u751F\u6210\u753B\u9762\u201D\uFF0C\u5148\u53D1\u56FE\u7247\u6B63\u6587\u518D\u5F39\u811A\u672C\u5BA1\u6838\u7A97\u3002\u6539\u7A3F\u540C\u6B65\u66F4\u65B0\u56FE\u8868\uFF0C\u4E0D\u589E\u52A0\u7B2C\u4E09\u9053\u786E\u8BA4\uFF1B\u793A\u610F\u56FE\u4E0D\u80FD\u4EE3\u66FF\u771F\u5B9E\u9010\u6BB5\u9884\u89C8\u3002\u9ED8\u8BA4\u4E0D\u8C03\u7528\u4ED8\u8D39\u51FA\u56FE\u6A21\u578B\uFF0C\u89D2\u8272\u53C2\u8003\u56FE\u53EF\u5728\u53D6\u5F97\u540C\u610F\u540E\u7528video_prepare_image\u7684create_character\u751F\u6210\uFF0C\u56FE\u7247\u5355\u72EC\u8BA1\u8D39\uFF1B\u5206\u955C\u793A\u610F\u56FE\u4ECD\u4F7F\u7528\u672C\u5730\u7ED8\u5236\uFF0C\u4E0D\u80FD\u6DF7\u4E3A\u540C\u4E00\u6D41\u7A0B\u3002",
-    "\xB7 \u4E0D\u8BBA\u63A5\u5165\u65B9\u5F0F\u662FMetaOnticVideo\u3001MetaOntic AI\u8FD8\u662F\u706B\u5C71\u76F4\u8FDE\uFF0C\u5747\u5FC5\u987B\u9884\u4F30\u8D39\u7528\uFF0C\u4E0D\u5F97\u8DF3\u8FC7\u3002\u6BCF\u6B21\u811A\u672C\u5BA1\u6838\u524D\u5148\u8C03\u7528\u53EA\u8BFBvideo_estimate\uFF08\u76EE\u6807\u603B\u65F6\u957F\u3001\u7528\u6237\u5DF2\u786E\u8BA4resolution\u3001\u753B\u5E45\u548C\u771F\u5B9EsegmentSeconds\uFF09\uFF0C\u5C06\u8FD4\u56DE\u7684\u706B\u5C71\u5B98\u65B9\u65B9\u6848\u4E0EMetaOnticVideo\u63D2\u4EF6\u65B9\u6848\u4E24\u9879\u4EBA\u6C11\u5E01\u57FA\u7840\u4F30\u4EF7\u3001\u5404\u81EA\u6A21\u578B/\u5206\u6BB5/\u500D\u7387/\u65E5\u671F\u5199\u5165script.md\u6700\u540E\u7684\u201C\u8D39\u7528\u9884\u4F30\u201D\u4E00\u8282\uFF0C\u653E\u5728\u5B8C\u6574\u5267\u60C5\u3001\u5206\u955C\u3001\u5BF9\u767D\u3001\u7ED3\u5C3E\u53CA\u5206\u6BB5\u65B9\u6848\u4E4B\u540E\uFF1B\u6B63\u6587\u5C55\u793A\u811A\u672C\u65F6\u4E5F\u6309\u76F8\u540C\u987A\u5E8F\u5728\u672B\u5C3E\u5B8C\u6574\u5C55\u793A\u8FD9\u4E24\u9879\u91D1\u989D\u4E0E\u8BA1\u8D39\u524D\u63D0\uFF0C\u518D\u5F39\u5BA1\u6838\u7A97\u53E3\u3002\u4E0D\u5F97\u53EA\u5199\u5728\u5DE5\u5177\u7ED3\u679C\u3001\u6587\u4EF6\u5916\u7684\u8865\u5145\u6D88\u606F\u6216\u5236\u4F5C\u786E\u8BA4\u91CC\u3002\u8D85\u8FC715\u79D2\u7684\u5B98\u65B9\u53C2\u7167\u91C7\u75282.5\uFF0C\u8D85\u8FC730\u79D2\u4E5F\u5FC5\u987B\u5982\u5B9E\u5217\u4E3A\u5206\u6BB5\uFF1B\u63D2\u4EF6\u6309\u5F53\u524D\u5B9E\u9645\u6A21\u578B\u4E0E\u5206\u6BB5\u65B9\u6848\uFF0C\u7EED\u62CD\u5305\u542B\u4E0A\u4E00\u6BB5\u5B8C\u6574\u89C6\u9891\u8F93\u5165\u3002\u624B\u586BKey\u672A\u6838\u5B9E\u5206\u7EC4\u4E0D\u5F97\u5047\u8BBE0.8\u6298\u6263\uFF1B\u4E0D\u628A\u53C2\u8003\u56FE\u7247\u5F53\u53C2\u8003\u89C6\u9891\u8BA1\u4EF7\u3002\u5FC5\u987B\u6807\u660E\u6700\u4F4E\u7528\u91CF\u8865\u8DB3\u672A\u8BA1\u5165\u3001\u56FE\u7247\u8F6C\u6362/\u91CD\u505A/\u72EC\u7ACB\u914D\u97F3\u53E6\u8BA1\u3001\u5B9E\u9645\u4EE5\u8D26\u5355\u4E3A\u51C6\u53CA\u6A21\u578B\u6548\u679C\u4E0D\u540C\u3002\u53C2\u6570\u6539\u53D8\u91CD\u7B97\uFF0C\u8BD5\u7B97\u4E0D\u8C03\u7528\u751F\u6210\u5DE5\u5177\u3001\u4E0D\u8981\u6C42\u767B\u5F55\u6216\u989D\u5916\u5BA1\u6279\u3001\u4E0D\u66FF\u4EE3\u4E24\u9053\u786E\u8BA4\uFF1B\u5DE5\u5177\u62D2\u7EDD\u6216\u7F3A\u5C11\u53EF\u9760\u4EF7\u76EE\u65F6\u8BF4\u660E\u65E0\u6CD5\u53EF\u9760\u4F30\u7B97\u5E76\u6838\u5BF9\u4F9D\u636E\uFF0C\u7981\u6B62\u731C\u4EF7\u6216\u663E\u793A0\u5143\u3002\u5F53\u524D\u6BCF\u6B21\u751F\u6210\u5BA1\u6279\u53EF\u80FD\u53EA\u4F30\u672C\u6B21\u4E00\u6BB5\uFF0C\u4E0D\u80FD\u5192\u5145\u5168\u7247\u9884\u7B97\u3002",
+    "\xB7 \u4E0D\u8BBA\u63A5\u5165\u65B9\u5F0F\u662FMetaOnticVideo\u3001MetaOntic AI\u8FD8\u662F\u706B\u5C71\u76F4\u8FDE\uFF0C\u5747\u5FC5\u987B\u9884\u4F30\u8D39\u7528\uFF0C\u4E0D\u5F97\u8DF3\u8FC7\u3002\u6BCF\u6B21\u811A\u672C\u5BA1\u6838\u524D\u5148\u8C03\u7528\u53EA\u8BFBvideo_estimate\uFF08\u76EE\u6807\u603B\u65F6\u957F\u3001\u7528\u6237\u5DF2\u786E\u8BA4resolution\u3001\u753B\u5E45\u548C\u771F\u5B9EsegmentSeconds\uFF09\uFF0C\u5C06\u8FD4\u56DE\u7684\u706B\u5C71\u5B98\u65B9\u65B9\u6848\u4E0EMetaOnticVideo\u63D2\u4EF6\u65B9\u6848\u4E24\u9879\u4EBA\u6C11\u5E01\u57FA\u7840\u4F30\u4EF7\u3001\u5404\u81EA\u6A21\u578B/\u5206\u6BB5/\u500D\u7387/\u65E5\u671F\u5199\u5165script.md\u6700\u540E\u7684\u201C\u8D39\u7528\u9884\u4F30\u201D\u4E00\u8282\uFF0C\u653E\u5728\u5B8C\u6574\u5267\u60C5\u3001\u5206\u955C\u3001\u5BF9\u767D\u3001\u7ED3\u5C3E\u53CA\u5206\u6BB5\u65B9\u6848\u4E4B\u540E\uFF1B\u6B63\u6587\u5C55\u793A\u811A\u672C\u65F6\u4E5F\u6309\u76F8\u540C\u987A\u5E8F\u5728\u672B\u5C3E\u5B8C\u6574\u5C55\u793A\u8FD9\u4E24\u9879\u91D1\u989D\u4E0E\u8BA1\u8D39\u524D\u63D0\uFF0C\u518D\u5F39\u5BA1\u6838\u7A97\u53E3\u3002\u4E0D\u5F97\u53EA\u5199\u5728\u5DE5\u5177\u7ED3\u679C\u3001\u6587\u4EF6\u5916\u7684\u8865\u5145\u6D88\u606F\u6216\u5236\u4F5C\u786E\u8BA4\u91CC\u3002\u706B\u5C71\u5B98\u65B9\u53C2\u7167\u4E00\u5F8B\u91C7\u7528 Seedance 2.5\uFF0C\u4E00\u6BB5\u5C31\u662F 30 \u79D2\uFF1A\u4E0D\u8DB3 30 \u79D2\u7684\u5C3E\u6BB5\u4E5F\u6309 30 \u79D2\u8BA1\uFF0C\u4E0D\u6309\u5269\u4F59\u79D2\u6570\u6298\u534A\uFF1B\u8D85\u8FC7 30 \u79D2\u4E5F\u5FC5\u987B\u5982\u5B9E\u5217\u4E3A\u591A\u6B21\u751F\u6210/\u7EED\u62CD\uFF0C\u4E0D\u79F0\u4E00\u6B21\u76F4\u51FA\uFF1B\u63D2\u4EF6\u6309\u5F53\u524D\u5B9E\u9645\u6A21\u578B\u4E0E\u5206\u6BB5\u65B9\u6848\uFF0C\u7EED\u62CD\u5305\u542B\u4E0A\u4E00\u6BB5\u5B8C\u6574\u89C6\u9891\u8F93\u5165\u3002\u624B\u586BKey\u672A\u6838\u5B9E\u5206\u7EC4\u4E0D\u5F97\u5047\u8BBE0.8\u6298\u6263\uFF1B\u4E0D\u628A\u53C2\u8003\u56FE\u7247\u5F53\u53C2\u8003\u89C6\u9891\u8BA1\u4EF7\u3002\u5FC5\u987B\u6807\u660E\u6700\u4F4E\u7528\u91CF\u8865\u8DB3\u672A\u8BA1\u5165\u3001\u56FE\u7247\u8F6C\u6362/\u91CD\u505A/\u72EC\u7ACB\u914D\u97F3\u53E6\u8BA1\u3001\u5B9E\u9645\u4EE5\u8D26\u5355\u4E3A\u51C6\u53CA\u6A21\u578B\u6548\u679C\u4E0D\u540C\u3002\u53C2\u6570\u6539\u53D8\u91CD\u7B97\uFF0C\u8BD5\u7B97\u4E0D\u8C03\u7528\u751F\u6210\u5DE5\u5177\u3001\u4E0D\u8981\u6C42\u767B\u5F55\u6216\u989D\u5916\u5BA1\u6279\u3001\u4E0D\u66FF\u4EE3\u4E24\u9053\u786E\u8BA4\uFF1B\u5DE5\u5177\u62D2\u7EDD\u6216\u7F3A\u5C11\u53EF\u9760\u4EF7\u76EE\u65F6\u8BF4\u660E\u65E0\u6CD5\u53EF\u9760\u4F30\u7B97\u5E76\u6838\u5BF9\u4F9D\u636E\uFF0C\u7981\u6B62\u731C\u4EF7\u6216\u663E\u793A0\u5143\u3002\u5F53\u524D\u6BCF\u6B21\u751F\u6210\u5BA1\u6279\u53EF\u80FD\u53EA\u4F30\u672C\u6B21\u4E00\u6BB5\uFF0C\u4E0D\u80FD\u5192\u5145\u5168\u7247\u9884\u7B97\u3002",
     "\xB7 \u811A\u672C\u5C55\u793A\u662F\u5BA1\u6838\u7684\u5F3A\u5236\u524D\u7F6E\uFF1A\u9996\u6B21\u548C\u6BCF\u6B21\u6539\u7A3F\u5148\u4FDD\u5B58\u672C\u7248\u5B8C\u6574script.md\uFF08\u72B6\u6001\u4E3A\u8349\u7A3F\u3001\u6CE8\u660E\u7248\u672C\uFF09\uFF0C\u518D\u5728\u7528\u6237\u53EF\u89C1\u6B63\u6587\u5C55\u793A\u6545\u4E8B\u3001\u89C4\u683C/\u98CE\u683C\u3001\u4EBA\u7269\u6216\u4E3B\u4F53\u3001\u5206\u955C\u65F6\u95F4\u8868\u3001\u5B8C\u6574\u5BF9\u767D/\u58F0\u97F3\u4E0E\u7ED3\u5C3E\uFF1B\u53EA\u5199\u6587\u4EF6\u3001\u7ED9\u8DEF\u5F84\u3001\u6458\u8981\u3001\u4FEE\u6539\u70B9\u6216\u793A\u610F\u56FE\u4E0D\u7B97\u5C55\u793A\u3002\u6709present/\u6587\u4EF6\u5C55\u793A\u5DE5\u5177\u65F6\u53E6\u884C\u5C55\u793A\u672C\u7248script.md\uFF0C\u7B49\u5F85\u8C03\u7528\u5B8C\u6210\u540E\u624D\u8C03\u7528\u5BA1\u6838\u63D0\u95EE\u5DE5\u5177\uFF0C\u7981\u6B62\u5E76\u884C\u6216\u540C\u4E00\u5DE5\u5177\u6279\u6B21\u540C\u65F6\u53D1\u51FA\u3002\u5C55\u793A\u5931\u8D25\u3001\u4E0D\u652F\u6301Markdown\u6216\u5DE5\u5177\u7F3A\u5931\u65F6\uFF0C\u5148\u5728\u6B63\u6587\u5B8C\u6574\u8D34\u51FA\u811A\u672C\uFF0C\u518D\u63D0\u95EE\u3002\u5BA1\u6838\u7A97\u53E3\u53EA\u7528\u4E8E\u7B80\u77ED\u786E\u8BA4\uFF0C\u7981\u6B62\u628A\u5B8C\u6574\u811A\u672C\u653E\u5165question\u3001header\u3001\u9009\u9879\u6216\u9009\u9879\u63CF\u8FF0\uFF1B\u811A\u672C\u4E0E\u793A\u610F\u56FE\u5148\u5728\u7A97\u53E3\u5916\u5B8C\u6574\u5C55\u793A\uFF0C\u7B49\u5F85\u5B8C\u6210\u518D\u63D0\u95EE\u3002\u5DF2\u5F39\u7A97\u5374\u6F0F\u5C55\u793A\u65F6\uFF0C\u5148\u8865\u5B8C\u6574\u811A\u672C\u5E76\u91CD\u65B0\u5BA1\u6838\uFF0C\u4E0D\u6CBF\u7528\u8BE5\u6B21\u7B54\u590D\uFF0C\u4E0D\u8FDB\u5165\u5236\u4F5C\u786E\u8BA4\u6216\u751F\u6210\u3002",
     "\xB7 \u811A\u672Cscript.md\u7684\u5143\u4FE1\u606F\u7EDF\u4E00\u7528\u4E2D\u6587\uFF1A\u7248\u672C\uFF08\u7B2C1\u7248\u3001\u7B2C2\u7248\uFF09\u3001\u72B6\u6001\uFF08\u8349\u7A3F/\u5DF2\u5BA1\u6838/\u5DF2\u786E\u8BA4\u5236\u4F5C\uFF09\u3001\u5BA1\u6838\u65F6\u95F4\u3001\u5BA1\u6838\u4EBA\u3001\u5236\u4F5C\u786E\u8BA4\u65F6\u95F4\u3001\u5236\u4F5C\u786E\u8BA4\u4EBA\uFF1B\u786E\u8BA4\u4EBA\u586B\u201C\u7528\u6237\u201D\uFF0C\u672A\u786E\u8BA4\u7684\u65F6\u95F4\u548C\u4EBA\u5458\u7559\u7A7A\u3002\u6539\u7A3F\u9000\u56DE\u8349\u7A3F\uFF0C\u6E05\u7A7A\u5BA1\u6838\u4E0E\u5236\u4F5C\u786E\u8BA4\u7684\u65F6\u95F4\u53CA\u4EBA\u5458\u3002\u8BFB\u53D6\u65E7\u811A\u672C\u65F6\u8BC6\u522B\u539F\u82F1\u6587\u5143\u4FE1\u606F\u5E76\u5728\u4E0B\u6B21\u4FDD\u5B58\u65F6\u8F6C\u6362\u4E3A\u4E2D\u6587\uFF0C\u4E0D\u6539\u53D8\u65E2\u6709\u786E\u8BA4\u4E8B\u5B9E\u3002\u6B64\u7EA6\u5B9A\u4EC5\u7528\u4E8E\u7528\u6237\u53EF\u89C1\u811A\u672C\uFF0C\u4E0D\u4FEE\u6539\u5DE5\u5177\u6216\u63A5\u53E3\u7684JSON\u5B57\u6BB5\u3002",
     "\xB7 \u811A\u672C\u5BA1\u6838\u6807\u9898\u987B\u6982\u62EC\u5F53\u524D\u811A\u672C\u4E3B\u9898\uFF0C\u5728\u7A97\u53E3\u5916\u4F7F\u7528\u7B80\u77ED\u4E3B\u9898\u540D\uFF1B\u7A97\u53E3header\u4E0D\u8D85\u8FC712\u4E2A\u6C49\u5B57\uFF0C\u4F8B\u5982\u201C\u96E8\u591C\u91CD\u9022\xB7\u7B2C2\u7248\u201D\uFF1B\u7981\u6B62\u76F4\u63A5\u4F7F\u7528\u6216\u62FC\u63A5\u7528\u6237\u8F93\u5165\u7684\u5B8C\u6574\u5185\u5BB9\u3002\u6807\u9898\u4EC5\u4F5C\u6982\u62EC\uFF0C\u4E0D\u6539\u52A8\u65B9\u6848\uFF1B\u5B8C\u6574\u811A\u672C\u653E\u5728\u7A97\u53E3\u5916\u7684\u4F1A\u8BDD\u6B63\u6587\u548C\u72EC\u7ACB\u6587\u4EF6\u4E2D\uFF0C\u4ECD\u987B\u5148\u5B8C\u6574\u5C55\u793A\u518D\u5BA1\u6838\u3002\u63D0\u95EE\u5DE5\u5177\u6807\u9898\u957F\u5EA6\u53D7\u9650\u65F6\uFF0C\u7F29\u77ED\u4E3B\u9898\u6216\u4F7F\u7528\u201C\u7B2CN\u7248\u811A\u672C\u5BA1\u6838\u201D\uFF0C\u4E0D\u8981\u622A\u53D6\u957F\u8F93\u5165\u5145\u5F53\u6807\u9898\u3002",
@@ -6096,16 +6196,19 @@ function asDisposer(value) {
 function apply(ctx, config = {}) {
   const deps = {};
   const storyboardReview = createStoryboardReviewGuard();
+  const deliveryOrder = createDeliveryOrderGuard();
   const storyboardObserver = ctx.on("session/event", storyboardReview.observe);
+  const deliveryObserver = ctx.on("session/event", deliveryOrder.observe);
   const register = (tool) => ctx.tools.register(withStageTiming(tool));
   const disposers = [
     ...typeof storyboardObserver === "function" ? [storyboardObserver] : [],
+    ...typeof deliveryObserver === "function" ? [deliveryObserver] : [],
     register(jsonSafeTool(stageTool())),
     register(jsonSafeTool(estimateTool(config))),
     register(jsonSafeTool(submissionTool(config))),
     register(jsonSafeTool(prepareImageTool(config))),
-    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(videoTool(config, deps, ctx), config)), "video_generate", config))),
-    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(extendTool(config, deps, ctx), config)), "video_extend", config))),
+    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(videoTool(config, deps, ctx), config)), "video_generate", config), deliveryOrder.remember)),
+    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(extendTool(config, deps, ctx), config)), "video_extend", config), deliveryOrder.remember)),
     register(withVideoExecution(jsonSafeTool(withActualCost(taskTool(config), config)))),
     register(jsonSafeTool(setupTool(config)))
   ];
@@ -6134,6 +6237,8 @@ function apply(ctx, config = {}) {
     gateCleanup = ctx.on("tools/pre-execute", async (exec, next) => {
       const storyboardGate = await storyboardReview.gate(exec);
       if (storyboardGate) return storyboardGate;
+      const orderGate = await deliveryOrder.gate(exec);
+      if (orderGate) return orderGate;
       if (!GATED_TOOLS.includes(exec.name)) return next();
       try {
         return await preflightGate(ctx, config, exec);

@@ -39,7 +39,7 @@ export function deliveryInstruction(value) {
   if (mergedPath) items.unshift(artifactLink('打开合并视频', mergedPath, ''), `${value.paused || value.partial || value.status !== 'succeeded' ? '已完成部分合并视频' : '合并后完整视频'}：${mergedPath}`);
   else if (completed.length > 1) items.push('合并结果尚未交付：如实说明未合并、合并失败或等待交付，不将最后一段当作完整成片。');
   return ['【交付清单：每个分段与合并结果分别展示】', ...items,
-    linkRule, '请实际使用 present/文件展示工具，先展示合并成片，再按段号依次展示各分段；没有合并结果时只按段号展示分段。每项标明对应段号或合并结果，不只展示最后一段或合并视频。展示工具不可用时，为每项提供可点击文件路径或播放链接。已有文件直接交付，不重新生成。',
+    linkRule, '请实际使用 present/文件展示工具，先展示合并成片，再按段号依次展示各分段；没有合并结果时只按段号展示分段。每项标明对应段号或合并结果，不只展示最后一段或合并视频。展示工具不可用时，为每项提供可点击文件路径或播放链接。已有文件直接交付，不重新生成。present 的 files 数组第一个必须是合并成片，其后才按段号放分段；顺序不对或漏掉成片的 present 会被插件拦下，按提示把成片挪到第一个重发即可，不得因此省略成片或分段。',
   ].join('\n');
 }
 

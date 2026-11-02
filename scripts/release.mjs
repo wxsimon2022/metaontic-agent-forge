@@ -81,6 +81,8 @@ export async function main(argv) {
   for(const f of ['MetaOnticVideo使用说明书.md','MetaOnticVideo使用说明书.pdf'])if(!existsSync(f))throw Error(`缺少${f}`);
   const guide=readFileSync('MetaOnticVideo使用说明书.md','utf8');
   if(/适用版本|发布核对|^#{1,6}.*(?:更新日志|发布说明|版本更新)/m.test(guide))throw Error('使用说明书含发布内容，请移至工程发布记录');
+  // 指南里写死的成品地址必须指向本次版本，否则用户会照旧版本地址安装。
+  for(const match of guide.matchAll(/releases\/download\/v(\d+\.\d+\.\d+)\//g))if(match[1]!==version)throw Error(`使用说明书里的成品地址仍指向 v${match[1]}，请更新为 v${version}`);
   const files=git('ls-files','--cached','--others','--exclude-standard','-z').split('\0').filter(Boolean);
   if(files.some(f=>/(?:价格对比|计费参考|比价视频)|(?:^|\/)\.env(?:$|\.)|(?:^|\/)\.local\//.test(f)))throw Error('待提交文件中存在本地价格资料或环境文件，请先核对忽略规则');
   console.log(`版本：${tag}\nGitHub：${github.web}\nGitee：${gitee.web}\n本地最近标签：${local}\n提交范围：\n${changes||'（无新提交，包含下列工作区改动）'}\n工作区：\n${dirty||'（干净）'}`);

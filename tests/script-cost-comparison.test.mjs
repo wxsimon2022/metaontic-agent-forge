@@ -42,8 +42,13 @@ test('plans match minimum-duration tails, custom segments, and previous segment 
  const a=await tool.execute({...args,duration:16});assert.deepEqual(a.plugin.segments.map(x=>x.seconds),[12,4]);
  const b=await tool.execute({...args,duration:40,segmentSeconds:10});
  assert.deepEqual(b.plugin.segments.map(x=>[x.seconds,x.inputSeconds]),[[15,0],[9,15],[8,9],[8,8]]);
- assert.deepEqual(b.official.segments.map(x=>x.seconds),[30,10]);
- const c=await tool.execute({...args,duration:15});assert.equal(c.official.model,base.model);assert.equal(c.plugin.segments.length,1);
+ // 火山官方参照一段就是30秒：尾段不足30秒也按30秒计，不折半
+ assert.deepEqual(b.official.segments.map(x=>x.seconds),[30,30]);
+ const d45=await tool.execute({...args,duration:45});
+ assert.deepEqual(d45.official.segments.map(x=>[x.kind,x.seconds,x.inputSeconds]),[['generate',30,0],['extend',30,30]]);
+ assert.equal(d45.official.cny,99.792);
+ assert.deepEqual(d45.plugin.segments.map(x=>x.seconds),[15,15,15]);
+ const c=await tool.execute({...args,duration:15});assert.equal(c.official.model,'doubao-seedance-2-5');assert.equal(c.plugin.segments.length,1);
 });
 test('unknown models, unsupported ratios and unresolved resolution fail rather than invent prices',async()=>{
  const tool=setup(base).tool;

@@ -1,7 +1,7 @@
 /** 脚本审核用的只读双方案试算，不调用模型、不查余额、不读取密钥。 */
 import { ref } from '../config.js';
 import { resolveModel, isVolcengine, isMetaontic } from '../providers/connection.js';
-import { resolveTargetPlan, planVideoSegments } from '../workflow/planning.js';
+import { resolveTargetPlan } from '../workflow/planning.js';
 
 const RATES = [
   ['doubao-seedance-2-0-mini', [23, 14]],
@@ -26,10 +26,13 @@ export function compareVideoCosts(config, args) {
   const groupRatio = args?.groupRatio ?? (isVolcengine(config) || isMetaontic(config) ? 1 : ref(config, 'estimateGroupRatio', 0.8));
   if (!Number.isFinite(groupRatio) || groupRatio < 0 || groupRatio > 10) throw new Error('分组倍率须为0–10的有效数字。');
   if (isVolcengine(config) && groupRatio !== 1) throw new Error('火山直连不适用中转分组折扣。');
-  // 超15秒比较2.5制作路线；超过30秒也如实列为多次生成/续拍，不伪称一次直出。
-  const officialModel = duration > 15 ? 'doubao-seedance-2-5' : model;
+  // 火山官方参照一律按 Seedance 2.5 计价，一段就是 30 秒：不足 30 秒的尾段也按 30 秒计，
+  // 不看齐插件自己的 15 秒分段，也不把尾段折成一半；超过 30 秒如实列为多次生成/续拍，不伪称一次直出。
+  const officialModel = 'doubao-seedance-2-5';
   const officialRates = RATES.find(([prefix]) => officialModel.startsWith(prefix))![1];
-  const officialPlan = planVideoSegments(duration, officialModel.startsWith('doubao-seedance-2-5') ? 30 : 15, officialModel.startsWith('doubao-seedance-2-5') ? 30 : 15);
+  const officialPlan = Array.from({ length: Math.ceil(duration / 30) }, (_step, index) => ({
+    kind: index ? 'extend' : 'generate', seconds: 30,
+  }));
   function calculate(id, plan, price, multiplier) {
     const pixels = args.resolution === '720p' ? [1280, 720] : id.startsWith('doubao-seedance-2-5') ? [854, 480] : [864, 496];
     const dimensions = ratio === '9:16' ? [...pixels].reverse() : pixels;
@@ -47,7 +50,7 @@ export function compareVideoCosts(config, args) {
     plugin: calculate(model, planned.plan, rates[1], groupRatio),
     pluginChannel: isVolcengine(config) ? '火山直连（无中转折扣）' : 'MetaOnticVideo中转制作方案',
     sources: ['https://docs.volcengine.com/docs/ark/model-pricing?lang=zh', 'https://ai.bileego.com/pricing'],
-    notes: ['这是视频API基础公式估价，非固定报价；含视频输入的最低用量补足尚未计入，实际以渠道账单为准。', '续拍输入按上一段完整视频时长计入，不按累计成片输入；参考图片不等同参考视频，不使用含视频单价。', '不含图片生成或转换、重试、独立配音及其他额外调用；本地合并不产生视频模型调用费，接缝裁剪会缩短交付时长。', '不同模型的质量与能力有差异；火山官方为API刊例价，不是网页积分或套餐价格。', '中转倍率仅在Key确有对应分组权限且实际使用该分组时成立；价格日期后可能调整，制作前需复核。'],
+    notes: ['这是视频API基础公式估价，非固定报价；含视频输入的最低用量补足尚未计入，实际以渠道账单为准。', '续拍输入按上一段完整视频时长计入，不按累计成片输入；参考图片不等同参考视频，不使用含视频单价。', '不含图片生成或转换、重试、独立配音及其他额外调用；本地合并不产生视频模型调用费，接缝裁剪会缩短交付时长。', '不同模型的质量与能力有差异；火山官方为API刊例价，不是网页积分或套餐价格。', '火山官方方案按每段 30 秒计：不足 30 秒的尾段也按 30 秒计费，不按剩余秒数折半。', '中转倍率仅在Key确有对应分组权限且实际使用该分组时成立；价格日期后可能调整，制作前需复核。'],
   };
 }
 

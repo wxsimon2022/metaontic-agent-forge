@@ -1,4 +1,5 @@
 import { createStoryboardReviewGuard } from './workflow/storyboard-review.js';
+import { createDeliveryOrderGuard } from './workflow/delivery-order.js';
 import { withStageTiming } from './utils/timing.js';
 import { stageTool } from './tools/video-stage.js';
 /** Harness 插件入口：注册工具、动态提示词与可选宿主服务。 */
@@ -37,16 +38,20 @@ export function apply(ctx: DshContext, config: any = {}) {
   // 可选服务的宿主对象（会话工作目录等），拿到就放进来
   const deps: Record<string, any> = {};
   const storyboardReview = createStoryboardReviewGuard();
+  const deliveryOrder = createDeliveryOrderGuard();
   const storyboardObserver = (ctx as any).on('session/event', storyboardReview.observe);
+  // 交付顺序同样只看会话事件：成片本轮是否已经登记过，决定分段能不能单独展示。
+  const deliveryObserver = (ctx as any).on('session/event', deliveryOrder.observe);
   const register = (tool) => ctx.tools.register(withStageTiming(tool));
   const disposers = [
     ...(typeof storyboardObserver === 'function' ? [storyboardObserver] : []),
+    ...(typeof deliveryObserver === 'function' ? [deliveryObserver] : []),
     register(jsonSafeTool(stageTool())),
     register(jsonSafeTool(estimateTool(config))),
     register(jsonSafeTool(submissionTool(config))),
     register(jsonSafeTool(prepareImageTool(config))),
-    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(videoTool(config, deps, ctx), config)), 'video_generate', config))),
-    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(extendTool(config, deps, ctx), config)), 'video_extend', config))),
+    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(videoTool(config, deps, ctx), config)), 'video_generate', config), deliveryOrder.remember)),
+    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(extendTool(config, deps, ctx), config)), 'video_extend', config), deliveryOrder.remember)),
     register(withVideoExecution(jsonSafeTool(withActualCost(taskTool(config), config)))),
     register(jsonSafeTool(setupTool(config))),
   ];
@@ -79,6 +84,8 @@ export function apply(ctx: DshContext, config: any = {}) {
     gateCleanup = ctx.on('tools/pre-execute', async (exec, next) => {
       const storyboardGate = await storyboardReview.gate(exec);
       if (storyboardGate) return storyboardGate;
+      const orderGate = await deliveryOrder.gate(exec);
+      if (orderGate) return orderGate;
       if (!GATED_TOOLS.includes(exec.name)) return next();
       try {
         return await preflightGate(ctx, config, exec);

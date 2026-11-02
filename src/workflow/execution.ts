@@ -25,16 +25,20 @@ export async function appendVideoExecution(exec, phase) {
   }
 }
 
-export function withVideoExecution(tool) {
+export function withVideoExecution(tool, onResult = undefined) {
   return {
     ...tool,
     async execute(args, exec) {
       await appendVideoExecution(exec, 'start');
+      let value;
       try {
-        return await tool.execute(args, exec);
+        value = await tool.execute(args, exec);
       } finally {
         await appendVideoExecution(exec, 'end');
       }
+      // 记下这次真实交付了哪些分段与成片：present 提交前要用它校验成片排第一。
+      try { onResult?.(exec?.agent?.session, value); } catch { /* 记录失败不能影响交付 */ }
+      return value;
     },
   };
 }
