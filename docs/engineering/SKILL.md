@@ -116,3 +116,7 @@ present仅登记文件交付，卡片可能在轮次结束后出现；脚本审�
 Windows首次安装遇ERR_PNPM_GIT_RESOLVE_FAILED时先区分Git传输与供应链检查：供应链通过不代表Git可达。用户安装入口、说明书及配图统一推荐Release的.tgz成品附件或解压后的package目录，不引导全局Git重写、SSH配置或关闭策略；插件代码无法在尚未安装时修复宿主Git传输。保留完整错误核对旧Git来源，不盲目清配置或Key。
 
 角色图真人写实仅用于create_character，characterType=realistic；建议顺序真人写实第一，其后二维动画、卡通、插画。未指定类型保持原stylized行为，不能推断用户同意写实。真人限制转换仍必须非真人，不改变审核/单次重试规则；写实出图被拒就停止并如实报错，不自动去图、换风格、重画或重提视频，另选风格需用户同意及重新费用确认。
+
+Windows解压目录安装在更新时出现空目录/locale缺失：先核对成品中语言文件，再恢复原路径完整package，不清Key；空目录原因未实证时不归因宿主删除。新Windows ZIP包含原始tgz，推荐填写tgz绝对路径安装，由pnpm托管，减少外部目录依赖；保留package作资料和恢复用途。ZIP采用固定时间戳可复现，跨仓及重试使用同一内容，校验文件须对应实际附件。
+
+双平台兼容为默认开发/发版要求，按platform-compatibility.md执行；CI的Windows/macOS成品安装检查必须先于Release上传，覆盖中文空格路径、locale、技能、说明书、入口与安装源移动。桌面GUI/更新实机未覆盖须明确记录，不用自动烟测代替。

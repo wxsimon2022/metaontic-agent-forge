@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  release:
+  prepare:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -34,6 +34,49 @@ jobs:
           python3 scripts/package-windows.py "dist/metaontic-video-$VERSION.tgz" "dist/MetaOnticVideo-Windows-$VERSION.zip"
           git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
           git for-each-ref --format='%(contents)' "refs/tags/$GITHUB_REF_NAME" > dist/release-notes.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-packages
+          path: dist/
+
+  platform-install:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-packages
+          path: dist
+      - name: Install fixed pnpm tooling
+        run: npm install --global pnpm@11.28.5
+      - name: Validate managed package installation
+        shell: bash
+        run: node scripts/check-package-install.mjs dist/*.tgz
+
+  release:
+    needs: [prepare, platform-install]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-packages
+          path: dist
       - name: Upload release package
         env:
           GH_TOKEN: ${{ github.token }}

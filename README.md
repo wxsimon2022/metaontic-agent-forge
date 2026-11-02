@@ -325,6 +325,21 @@ Harness 默认启用 HMR 配置重载，但不监听本地插件源码。对于�
 
 `base` 使用本机插件目录绝对路径，仅配置在本机 profile，不写入插件发布配置。已有 HMR 配置时合并调整，保留其他项目的监听需求。配置由运行中的宿主加载；之后修改 TypeScript 并执行 `npm run build`，宿主入口热替换，客户端通过宿主 Client HMR 更新。构建失败先修复，不通过重启解决语法错误。`package.json` 的依赖或加载入口变化可能仍需按宿主提示重新安装或重启；插件规则变化在现有对话的下一轮请求生效，旧确认窗口需重新发起。正在生成视频时先等任务返回，再构建或更新，避免热替换中断当前调用；已有任务按任务 ID 查询或续做，勿重复提交。
 
+## v3.13.1 更新内容
+
+### 修复
+
+- Windows安装资料ZIP内置原始tgz，改为安装成品文件，由安装器管理插件文件，减少对外部解压目录的依赖。
+
+### 优化
+
+- 补充旧安装目录变空、locale缺失的完整目录恢复步骤，保留Key、配置及任务记录，不先卸载或重置。
+- Windows ZIP采用固定时间戳并附SHA-256校验，重复打包一致，确保跨仓同步使用相同附件。
+
+### 新增
+
+- 建立Windows/macOS兼容开发规范，发布前自动在双平台验证成品安装、中文空格路径、语言资源、技能、指南及源文件移走后的加载。
+
 ## v3.13.0 更新内容
 
 ### 新增
@@ -442,7 +457,7 @@ git show --no-patch "v<版本>"
 
 ### 插件包下载
 
-版本包在 [GitHub Releases](https://github.com/wxsimon2022/metaontic-video/releases) 或 [Gitee Releases](https://gitee.com/hackloop/metaontic-video/releases) 下载，通用插件包为 `metaontic-video-<版本>.tgz`；Windows安装资料包为 `MetaOnticVideo-Windows-<版本>.zip`，附带图文教程、完整PDF及SHA-256校验文件。ZIP解压后选择其中package目录安装，ZIP本身不要粘贴到插件安装框。不再向 npm 注册表发布，无需配置 `NPM_TOKEN` 或 Trusted Publishing。
+版本包在 [GitHub Releases](https://github.com/wxsimon2022/metaontic-video/releases) 或 [Gitee Releases](https://gitee.com/hackloop/metaontic-video/releases) 下载，通用插件包为 `metaontic-video-<版本>.tgz`；Windows安装资料包为 `MetaOnticVideo-Windows-<版本>.zip`，附带图文教程、完整PDF及SHA-256校验文件。ZIP解压后安装其中tgz成品文件，package目录仅作资料及旧目录恢复；ZIP本身不要粘贴到插件安装框。不再向 npm 注册表发布，无需配置 `NPM_TOKEN` 或 Trusted Publishing。
 
 `v*` 标签触发完整构建与测试，通过后使用 GitHub 自动令牌上传插件包，并使用仓库 Actions Secret `GITEE_TOKEN` 创建 Gitee Release 和上传同一插件包。该密钥应具有 `hackloop/metaontic-video` 的发布权限；缺失或上传失败时工作流明确报错，不将单仓成功报告为双仓成功。手动运行工作流时须选择与包版本匹配的标签。
 
@@ -563,3 +578,5 @@ Key 共用规则：MetaOnticVideo 接入固定共用登录下发的 Key，模型
 角色图选择由提交前代码执行：新建无图视频必须取得明确选择；选择直接文生后继续原视频费用审批，选择先出角色图则暂停该次视频提交，先完成出图与审核。跳过、取消、交互失败或记录失败不默认同意。相同会话和脚本规格保留明确选择；已有参考图或断点恢复不重新询问，不重提已有任务。
 
 角色参考图风格建议依次为真人写实、二维动画、卡通、插画；文生角色图可显式设置characterType=realistic生成真人写实。默认沿用非真人类型，真人限制转换仍只用非真人风格；所有出图均需费用同意及结果审核，上游拒绝不自动重画。
+
+开发与发布需遵守[Windows/macOS兼容规范](./docs/engineering/platform-compatibility.md)。上传正式版前必须通过双平台成品安装检查；自动检查不替代桌面GUI实机验证。

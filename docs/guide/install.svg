@@ -12,7 +12,7 @@
 <rect x="32" y="238" width="5" height="140" rx="2" fill="#247bbf"/>
 <text x="54" y="272" class="label">② 发布页 → 复制 .tgz 附件下载链接</text>
 <text x="54" y="307" class="line">GitHub Releases 或 Gitee Releases → 附件</text>
-<text x="54" y="336" class="line">也可下载安装包，解压后安装本地 package 文件夹</text>
+<text x="54" y="336" class="line">Windows 可下载 .tgz，填写文件绝对路径安装</text>
 <rect x="32" y="398" width="976" height="110" rx="8" fill="white" stroke="#dfe3eb"/>
 <rect x="32" y="398" width="5" height="110" rx="2" fill="#247bbf"/>
 <text x="54" y="432" class="label">③ 已安装插件 → MetaOnticVideo → 查看</text>

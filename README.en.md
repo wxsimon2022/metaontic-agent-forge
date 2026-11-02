@@ -64,4 +64,4 @@ If generation stops or a status query fails, check the original task ID or resum
 
 Release packages bundle the required host schema library and do not require external runtime npm dependencies. If a previous local-development setup still points to a deleted source directory, correct that local loading path before installing a release package.
 
-Windows users can also download the `MetaOnticVideo-Windows-<version>.zip` release asset, extract it and install its `package` directory. The ZIP includes an illustrated Chinese installation tutorial and the full PDF guide. Do not paste the ZIP or release page URL into the installer.
+Windows users can also download the `MetaOnticVideo-Windows-<version>.zip` release asset, extract it and install the included `.tgz` file (the `package` directory is for documentation and recovery). The ZIP includes an illustrated Chinese installation tutorial and the full PDF guide. Do not paste the ZIP or release page URL into the installer.

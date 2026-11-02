@@ -59,15 +59,16 @@ github:wxsimon2022/metaontic-video
 
 **使用 Windows ZIP 资料包：**
 
-1. 右键安装 ZIP，选择「全部解压」，放到固定目录。不要在 ZIP 预览窗口内安装。
-2. 打开解压后的目录，先读 `Windows安装教程.html` 或 `先读我-Windows安装教程.txt`。
-3. 找到真正包含 `package.json`、`index.js` 的 **`package` 文件夹**。ZIP 外层可能还有一层目录，以实际解压结果为准。
-4. 在 DeepSeek Harness「插件 → 添加插件」中选择该本地目录；若入口是地址输入框，填入 `package` 的完整路径，例如 `C:\MetaOnticVideo\package`。
-5. 按提示安装、启用，进入设置页配置 Key。
+1. 右键安装 ZIP，选择「全部解压」。不要在 ZIP 预览窗口内安装。
+2. 打开包内安装教程，找到 `metaontic-video-数字版本号.tgz` 成品文件。
+3. 在 DeepSeek Harness「插件 → 添加插件」中填写该 `.tgz` 文件的完整绝对路径，例如 `D:\software\MetaOnticVideo-Windows\metaontic-video-数字版本号.tgz`，文件名须替换为实际文件名。
+4. 按提示安装、启用，进入设置页配置 Key。由安装器管理插件文件，避免直接依赖外部解压目录。
 
-**只有 `.tgz` 文件时：** 用支持 `.tgz` 的解压工具解压；若第一次得到 `.tar`，再解压一次。找到 `package` 文件夹后，按上述第 3–5 步安装。
+若拿到的旧 ZIP 只有 `package` 目录，请从正式发布页另外下载 `.tgz` 成品，填写其完整本地路径安装；不要把 ZIP 或发布页地址填进安装框。
 
-不要选择 ZIP、外层目录或单个 `index.js` 文件。本地目录安装后保留该目录，不要随意删除或移动。
+**只有 `.tgz` 文件时：** 不必解压，直接使用本地文件完整路径安装。
+
+**已有本地目录安装，更新报 `locale` 缺失或目录变空：** 先用完整成品恢复原安装路径下的整个 `package` 目录，确保 `package.json`、`index.js`、`client.js`、`locale` 和 `skills` 等内容齐全。不要只创建空的 `locale` 文件夹，不要重置 Key 或删除任务记录。恢复后核对当前安装与更新状态；迁移成品安装来源时使用软件提供的安装/修复入口，若提示已安装则停止并保留错误，不先卸载。
 
 ### 1.4 Mac 本地安装
 
@@ -90,7 +91,7 @@ dsh plugin --profile desktop add "复制的.tgz附件下载链接"
 Windows PowerShell 本地安装：
 
 ```powershell
-dsh plugin --profile desktop add "C:\MetaOnticVideo\package"
+dsh plugin --profile desktop add "C:\MetaOnticVideo\metaontic-video-数字版本号.tgz"
 ```
 
 Mac 终端本地安装：
@@ -99,7 +100,7 @@ Mac 终端本地安装：
 dsh plugin --profile desktop add "/Users/你的用户名/Applications/MetaOnticVideo/package"
 ```
 
-以上本地路径只是示例，必须替换成自己电脑上 `package` 文件夹的实际位置。
+以上路径与文件名只是示例，Windows替换为实际 `.tgz` 文件路径，Mac目录安装替换为实际 `package` 路径。
 
 ### 1.6 安装是否成功
 
