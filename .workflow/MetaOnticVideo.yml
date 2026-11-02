@@ -11,9 +11,10 @@ triggers:
       precise:
         - master
     tags:
-      # 前缀匹配：推送 v 开头的正式版标签时再跑一次，用于发版前校验
+      # 前缀匹配：v 开头是正式版标签（核对标签与版本一致后出成品），ci- 开头是演练标签（只演练，不做版本强校验）
       prefix:
         - v
+        - ci-
   pr:
     branches:
       precise:
@@ -72,7 +73,7 @@ stages:
           - 'VERSION=${TGZ##*/metaontic-video-}; VERSION=${VERSION%.tgz}'
           - 'echo "成品版本 $VERSION"'
           - 'TAG=$(git describe --tags --exact-match HEAD 2>/dev/null || echo "")'
-          - 'if [ -n "$TAG" ]; then echo "本次由标签 $TAG 触发"; [ "v$VERSION" = "$TAG" ] || { echo "标签 $TAG 与包内版本 v$VERSION 不一致，停止打包：请先按标签更新版本和 releaseNotes 再发"; exit 1; }; else echo "本次不是标签触发，制品仅用于核对"; fi'
+          - 'if [ -n "$TAG" ]; then echo "本次由标签 $TAG 触发"; case "$TAG" in ci-*) echo "演练标签 ${TAG}：跳过标签与包内版本的强校验，本次制品只用于演练，不能作为发布附件";; *) [ "v$VERSION" = "$TAG" ] || { echo "标签 $TAG 与包内版本 v$VERSION 不一致，停止打包：请先按标签更新版本和 releaseNotes 再发"; exit 1; };; esac; else echo "本次不是标签触发，制品仅用于核对"; fi'
           - 'PY=""'
           - 'for c in python3 python3.13 python3.12 python3.11 python3.10 python3.9 python3.8 python3.7 python3.6 python36; do P=$(command -v "$c" 2>/dev/null); [ -n "$P" ] && { PY=$P; break; }; done'
           - '[ -n "$PY" ] || for c in /usr/local/bin/python3* /usr/bin/python3* /opt/*/bin/python3*; do P=$(ls $c 2>/dev/null | head -1); [ -n "$P" ] && { PY=$P; break; }; done'
