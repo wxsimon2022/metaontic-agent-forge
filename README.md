@@ -531,7 +531,7 @@ git show --no-patch "v<版本>"
 
 某次发布只补齐镜像时，手动运行 `sync-gitee` 工作流并填写对应标签；它从 GitHub Release 取回该版本的 `.tgz`、Windows ZIP 及校验文件，逐个补传到 Gitee 发布页并核对大小，不会覆盖或改动已有附件。
 
-Gitee 侧另有一条 Gitee Go 流水线（`.workflow/MetaOnticVideo.yml`）：向 `master` 推送、发起面向 `master` 的 PR 或推送 `v*` 标签时，在 Gitee 构建机上安装依赖、构建并运行单元测试，再校验版本元数据；标签运行时额外把 `npm pack` 产物暂存为该次流水线的制品，方便下载核对。这条流水线只做构建与测试校验，不发布版本：GitHub 与 Gitee 的 Release 成品始终由 `publish` 工作流产出，避免两处各打一份包导致成品不一致。构建机需要 Node 18 及以上（esbuild 要求）；若 Gitee 提示 Node 版本不可用，在流水线里改选列表中最新的 18 及以上版本即可，命令无需修改。
+Gitee 侧另有一条 Gitee Go 流水线（`.workflow/MetaOnticVideo.yml`）：向 `master` 推送、发起面向 `master` 的 PR 或推送 `v*` 标签时，在 Gitee 构建机上安装依赖、构建并运行单元测试，再校验版本元数据；标签运行时额外把 `npm pack` 产物暂存为该次流水线的制品，方便下载核对。这条流水线只做构建与测试校验，不发布版本：GitHub 与 Gitee 的 Release 成品始终由 `publish` 工作流产出，避免两处各打一份包导致成品不一致。流水线不依赖 Gitee 下拉里提供的版本：构建机上没有可用 Node 时，它会自己从 npmmirror 下载 Node 20（按 glibc 自动选择官方构建或 glibc 2.17 兼容版），并缓存到 `~/.local/node`；因此免费构建机即使镜像较旧也能跑通。
 
 本机打包可执行 `npm pack --pack-destination /tmp`。需要目录安装时，将 `.tgz` 解压后使用其中的 `package` 目录：
 
