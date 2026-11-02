@@ -77,7 +77,7 @@ stages:
           - 'for c in python3 python3.13 python3.12 python3.11 python3.10 python3.9 python3.8 python3.7 python3.6 python36; do P=$(command -v "$c" 2>/dev/null); [ -n "$P" ] && { PY=$P; break; }; done'
           - '[ -n "$PY" ] || for c in /usr/local/bin/python3* /usr/bin/python3* /opt/*/bin/python3*; do P=$(ls $c 2>/dev/null | head -1); [ -n "$P" ] && { PY=$P; break; }; done'
           - 'if [ -n "$PY" ] && ! "$PY" -c "import sys; sys.exit(0 if sys.version_info[0] == 3 else 1)" >/dev/null 2>&1; then PY=""; fi'
-          - 'if [ -z "$PY" ]; then echo "构建机没有可用的 Python3，尝试安装"; if command -v yum >/dev/null 2>&1; then yum install -y -q python3 >/dev/null 2>&1 || true; elif command -v dnf >/dev/null 2>&1; then dnf install -y -q python3 >/dev/null 2>&1 || true; elif command -v apt-get >/dev/null 2>&1; then apt-get install -y -qq python3 >/dev/null 2>&1 || true; fi; PY=$(command -v python3 2>/dev/null); fi'
+          - 'if [ -z "$PY" ]; then echo "构建机没有可用的 Python3，尝试安装"; export DEBIAN_FRONTEND=noninteractive; if command -v yum >/dev/null 2>&1; then yum install -y -q python3 || true; elif command -v dnf >/dev/null 2>&1; then dnf install -y -q python3 || true; elif command -v apt-get >/dev/null 2>&1; then apt-get update -qq || true; apt-get install -y -qq python3 || true; fi; PY=$(command -v python3 2>/dev/null); fi'
           - 'if [ -n "$PY" ]; then echo "使用 $PY 打 Windows 成品包"; "$PY" scripts/package-windows.py "$TGZ" "dist/MetaOnticVideo-Windows-$VERSION.zip"; else echo "警告：构建机没有 Python3，本次只留 tgz 成品包；Windows 成品包请以正式发布页的附件和校验文件为准"; fi'
           - 'ls -l dist'
         artifacts:
