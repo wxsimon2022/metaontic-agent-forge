@@ -27,8 +27,9 @@ steps = """MetaOnticVideo Windows 安装教程（先看这里）
 第3步：复制这个文件的完整路径
 右键.tgz文件，使用“复制文件地址”或“复制为路径”（名称以系统为准）。
 如果没有该菜单，可复制文件夹地址，再在最后加上“\\”和.tgz文件名。
-例如：D:\\software\\MetaOnticVideo-Windows\\metaontic-video-VERSION.tgz
-上面只是示例，必须换成你电脑上的实际位置。
+解压后常出现两层同名文件夹，所以完整路径可能是：
+D:\\software\\MetaOnticVideo-Windows-VERSION\\MetaOnticVideo-Windows\\metaontic-video-VERSION.tgz
+上面只是示例，盘符、层级和文件名都必须换成你电脑上的实际位置。
 注意：安装框要的是文件路径，不是文件夹路径。选文件夹会提示“不是有效的插件包”。
 
 第4步：粘贴到插件安装框
@@ -37,6 +38,12 @@ steps = """MetaOnticVideo Windows 安装教程（先看这里）
 如果路径最前和最后有英文双引号，先删掉这两个引号，再点安装。
 不要粘贴ZIP路径或发布网页地址，也不要填MetaOnticVideo-Windows文件夹或package目录。
 若界面提示“不是有效的插件包”，通常是填成了文件夹，请改填第2步的.tgz文件路径。
+不想找本地路径时，也可以直接复制正式发布页里.tgz附件的下载链接粘贴安装，
+本版本现成地址（可直接复制使用）：
+Gitee：https://gitee.com/hackloop/metaontic-video/releases/download/vVERSION/metaontic-video-VERSION.tgz
+GitHub：https://github.com/wxsimon2022/metaontic-video/releases/download/vVERSION/metaontic-video-VERSION.tgz
+两个地址内容相同，Gitee通常国内更快。要粘贴的是这种.tgz附件地址，
+不是发布页网址，也不要选Source code源码包。
 
 第5步：填写Key并保存
 打开 插件 → 已安装插件 → MetaOnticVideo → 查看。

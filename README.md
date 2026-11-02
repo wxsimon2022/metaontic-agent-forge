@@ -63,7 +63,9 @@ Seedance 2.0 系列单次生成上限为 15 秒。MetaOnticVideo 将全片拆为
 
 ### Windows 安装提示「不是有效的插件包」怎么办？
 
-安装框要填的是 `.tgz` 成品**文件**路径，不是文件夹路径。解压 ZIP 后如果把 `MetaOnticVideo-Windows` 外层文件夹或 `package` 资料目录填进去，就会出现这个提示；请改填同目录下 `metaontic-video-数字版本号.tgz` 的完整路径。
+安装框要填的是 `.tgz` 成品**文件**路径，不是文件夹路径。解压 ZIP 后如果把 `MetaOnticVideo-Windows` 外层文件夹或 `package` 资料目录填进去，就会出现这个提示；请改填该 `.tgz` 的完整路径，层级以实际解压位置为准（常见为两层同名文件夹，例如 `D:\software\MetaOnticVideo-Windows-数字版本号\MetaOnticVideo-Windows\metaontic-video-数字版本号.tgz`），建议右键复制文件地址。
+
+不想在本机找路径时，也可以直接粘贴 `.tgz` 附件的下载链接（GitHub 或 Gitee 均可，形如 `https://gitee.com/hackloop/metaontic-video/releases/download/v数字版本号/metaontic-video-数字版本号.tgz`），效果与填写本地文件路径相同。要复制的是附件下载链接，不是发布页网址，也不要选 Source code；Gitee 请打开发布页 `https://gitee.com/hackloop/metaontic-video/releases`，不要用会直接下载源码包的 `/releases/latest`。
 
 ## 使用与开发导航
 
@@ -328,6 +330,20 @@ Harness 默认启用 HMR 配置重载，但不监听本地插件源码。对于�
 ```
 
 `base` 使用本机插件目录绝对路径，仅配置在本机 profile，不写入插件发布配置。已有 HMR 配置时合并调整，保留其他项目的监听需求。配置由运行中的宿主加载；之后修改 TypeScript 并执行 `npm run build`，宿主入口热替换，客户端通过宿主 Client HMR 更新。构建失败先修复，不通过重启解决语法错误。`package.json` 的依赖或加载入口变化可能仍需按宿主提示重新安装或重启；插件规则变化在现有对话的下一轮请求生效，旧确认窗口需重新发起。正在生成视频时先等任务返回，再构建或更新，避免热替换中断当前调用；已有任务按任务 ID 查询或续做，勿重复提交。
+
+## v3.13.5 更新内容
+
+### 新增
+
+- Windows 安装说明新增“直接粘贴成品下载地址”的安装方式，压缩包教程里写出本版本真实的 Gitee 与 GitHub .tgz 附件地址，复制粘贴即可安装，不必先把文件下载到本机。
+
+### 优化
+
+- 安装路径示例按真实解压结果修正（常见为两层同名文件夹），并建议右键 .tgz 选择“复制文件地址”获取完整路径，避免手打后填成文件夹路径。
+
+### 修复
+
+- 安装指引中的下载入口统一为发布页地址，并说明 Gitee 的 releases/latest 会直接下载源码包、Source code 不是插件成品，避免把源码包当成安装文件。
 
 ## v3.13.4 更新内容
 

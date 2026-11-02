@@ -65,12 +65,19 @@ github:wxsimon2022/metaontic-video
 
 1. 右键安装 ZIP，选择「全部解压」。不要在 ZIP 预览窗口内安装。
 2. 打开包内安装教程，找到 `metaontic-video-数字版本号.tgz` 成品文件。
-3. 在 DeepSeek Harness「插件 → 添加插件」中填写该 `.tgz` 文件的完整绝对路径，例如 `D:\software\MetaOnticVideo-Windows\metaontic-video-数字版本号.tgz`，文件名须替换为实际文件名。
+3. 在 DeepSeek Harness「插件 → 添加插件」中填写该 `.tgz` 文件的完整绝对路径。解压后常出现两层同名文件夹，路径形如 `D:\software\MetaOnticVideo-Windows-数字版本号\MetaOnticVideo-Windows\metaontic-video-数字版本号.tgz`；层级和盘符以你电脑上的实际位置为准，建议右键 `.tgz` 选择「复制文件地址」，不要手打。
 4. 按提示安装、启用，进入设置页配置 Key。由安装器管理插件文件，避免直接依赖外部解压目录。
 
 安装框要填的是文件，不是文件夹。如果提示「不是有效的插件包」，通常是填成了文件夹：解压后的 `MetaOnticVideo-Windows` 外层文件夹和 `package` 资料目录都不是安装对象，请改填同目录下 `metaontic-video-数字版本号.tgz` 的完整文件路径。
 
 若拿到的旧 ZIP 只有 `package` 目录，请从正式发布页另外下载 `.tgz` 成品，填写其完整本地路径安装；不要把 ZIP 或发布页地址填进安装框。
+
+**也可以不下载到本地：** 打开发布页，在附件中右键复制 `.tgz` 的下载链接并粘贴到安装框，效果与填写本地文件路径相同。链接形如 `https://gitee.com/hackloop/metaontic-video/releases/download/v数字版本号/metaontic-video-数字版本号.tgz`，把「数字版本号」处替换为页面上的实际版本即可。国内网络可优先使用 Gitee 附件。
+
+- GitHub 正式版下载页：`https://github.com/wxsimon2022/metaontic-video/releases/latest`
+- Gitee 发布页：`https://gitee.com/hackloop/metaontic-video/releases`
+
+粘贴的必须是附件下载链接，不要填发布页网址，也不要选 Source code 源码包。Gitee 请使用上面的发布页地址，不要使用 `gitee.com/.../releases/latest`，该地址会直接下载源码包而不是插件成品。
 
 **只有 `.tgz` 文件时：** 不必解压，直接使用本地文件完整路径安装。
 
