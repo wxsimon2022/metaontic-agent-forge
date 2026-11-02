@@ -37,7 +37,7 @@ stages:
           - 'echo "提交 $(git log -1 --oneline 2>/dev/null)"'
           - 'echo "标签 $(git describe --tags --exact-match HEAD 2>/dev/null || echo 无)"'
           - 'env | grep -iE "^GITEE_|^GO_" | sort'
-          - 'for c in curl wget tar git python3; do printf "%s=%s " "$c" "$(command -v $c || echo 无)"; done; echo'
+          - 'for c in curl wget tar git python3 python yum dnf apt-get; do printf "%s=%s " "$c" "$(command -v $c || echo 无)"; done; echo'
           - 'command -v node >/dev/null 2>&1 || for p in "$HOME"/.local/node/bin/node /opt/*/bin/node /opt/*/*/bin/node /usr/local/*/bin/node /usr/local/lib/nodejs/*/bin/node "$HOME"/.nvm/versions/node/*/bin/node; do [ -x "$p" ] && { export PATH="$(dirname "$p"):$PATH"; break; }; done'
           - 'if ! command -v node >/dev/null 2>&1; then'
           - 'NODE_VERSION=20.19.0'
@@ -73,8 +73,12 @@ stages:
           - 'echo "成品版本 $VERSION"'
           - 'TAG=$(git describe --tags --exact-match HEAD 2>/dev/null || echo "")'
           - 'if [ -n "$TAG" ]; then echo "本次由标签 $TAG 触发"; [ "v$VERSION" = "$TAG" ] || { echo "标签 $TAG 与包内版本 v$VERSION 不一致，停止打包：请先按标签更新版本和 releaseNotes 再发"; exit 1; }; else echo "本次不是标签触发，制品仅用于核对"; fi'
-          - 'command -v python3 >/dev/null 2>&1 || { echo "构建机没有 python3，无法生成 Windows 成品包，请把日志发给维护者"; exit 1; }'
-          - 'python3 scripts/package-windows.py "$TGZ" "dist/MetaOnticVideo-Windows-$VERSION.zip"'
+          - 'PY=""'
+          - 'for c in python3 python3.13 python3.12 python3.11 python3.10 python3.9 python3.8 python3.7 python3.6 python36; do P=$(command -v "$c" 2>/dev/null); [ -n "$P" ] && { PY=$P; break; }; done'
+          - '[ -n "$PY" ] || for c in /usr/local/bin/python3* /usr/bin/python3* /opt/*/bin/python3*; do P=$(ls $c 2>/dev/null | head -1); [ -n "$P" ] && { PY=$P; break; }; done'
+          - 'if [ -n "$PY" ] && ! "$PY" -c "import sys; sys.exit(0 if sys.version_info[0] == 3 else 1)" >/dev/null 2>&1; then PY=""; fi'
+          - 'if [ -z "$PY" ]; then echo "构建机没有可用的 Python3，尝试安装"; if command -v yum >/dev/null 2>&1; then yum install -y -q python3 >/dev/null 2>&1 || true; elif command -v dnf >/dev/null 2>&1; then dnf install -y -q python3 >/dev/null 2>&1 || true; elif command -v apt-get >/dev/null 2>&1; then apt-get install -y -qq python3 >/dev/null 2>&1 || true; fi; PY=$(command -v python3 2>/dev/null); fi'
+          - 'if [ -n "$PY" ]; then echo "使用 $PY 打 Windows 成品包"; "$PY" scripts/package-windows.py "$TGZ" "dist/MetaOnticVideo-Windows-$VERSION.zip"; else echo "警告：构建机没有 Python3，本次只留 tgz 成品包；Windows 成品包请以正式发布页的附件和校验文件为准"; fi'
           - 'ls -l dist'
         artifacts:
           - name: PLUGIN_PACKAGE
