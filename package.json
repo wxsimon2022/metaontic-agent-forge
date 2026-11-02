@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.13.8",
+  "version": "3.13.9",
   "description": "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
   "license": "MIT",
   "type": "module",
@@ -96,14 +96,14 @@
   },
   "dependencies": {},
   "releaseNotes": {
-    "version": "3.13.8",
+    "version": "3.13.9",
     "prerelease": false,
-    "publishedAt": "2026-11-02T12:46:47.138Z",
+    "publishedAt": "2026-11-02T14:00:22.043Z",
     "items": [
-      "修复：多段视频交付时合并成片没有排在第一个位置的问题；现在成片固定排在最前，助手若把分段放在成片前面，插件会拦下这次展示并让他把成片挪到第一位重发，不会因此少给成片或分段。",
-      "优化：费用预估里的“火山官方方案”统一按 Seedance 2.5 计算，一段按 30 秒计，不足 30 秒的尾段也按 30 秒计，不再按剩余秒数折半；超过 30 秒如实按分段列出。",
-      "优化：使用说明书里的成品下载地址更新为本版本，Gitee 与 GitHub 两条 .tgz 地址可直接复制粘贴安装。",
-      "优化：发布流程新增校验，使用说明书里的成品地址必须与本次发布版本一致，不一致直接失败，避免指南长期指向旧版本。"
+      "优化：使用说明书、README 与 Windows 压缩包教程统一写明在线安装只认以 .tgz 结尾的成品附件地址，并给出本版本可直接复制的 Gitee 与 GitHub 地址；MetaOnticVideo-Windows 压缩包、解压出的 package 文件夹、发布页网址和 Source code 只能用于本地安装，粘贴到在线安装框会提示「不是有效的插件包」。",
+      "优化：Windows 压缩包图文教程第 4 步同步补充在线安装地址要求，图文版与文本版内容一致；使用说明书 PDF 重新导出后随包发布。",
+      "修复：安装报 ERR_PNPM_MISSING_TARBALL_INTEGRITY（提示 lockfile 记录缺少 integrity 字段）时，换在线地址、换本地 .tgz 路径或重装旧版本都会一样失败；使用说明书、README 与 Windows 压缩包教程新增处理方法：完全退出 DeepSeek Harness，删除插件安装目录下的 pnpm-lock.yaml 后重新安装，安装器会重建该文件，已保存的插件设置不受影响。",
+      "修复：在线安装填入 ZIP、package 文件夹、发布页网址或 Source code 时只提示「不是有效的插件包」，用户难以判断原因；三处文档现在都写明只认以 .tgz 结尾的附件地址，并给出可直接复制的真实地址。"
     ]
   }
 }

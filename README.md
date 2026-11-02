@@ -65,7 +65,11 @@ Seedance 2.0 系列单次生成上限为 15 秒。MetaOnticVideo 将全片拆为
 
 安装框要填的是 `.tgz` 成品**文件**路径，不是文件夹路径。解压 ZIP 后如果把 `MetaOnticVideo-Windows` 外层文件夹或 `package` 资料目录填进去，就会出现这个提示；请改填该 `.tgz` 的完整路径，层级以实际解压位置为准（常见为两层同名文件夹，例如 `D:\software\MetaOnticVideo-Windows-数字版本号\MetaOnticVideo-Windows\metaontic-video-数字版本号.tgz`），建议右键复制文件地址。
 
-不想在本机找路径时，也可以直接粘贴 `.tgz` 附件的下载链接（GitHub 或 Gitee 均可，形如 `https://gitee.com/hackloop/metaontic-video/releases/download/v数字版本号/metaontic-video-数字版本号.tgz`），效果与填写本地文件路径相同。要复制的是附件下载链接，不是发布页网址，也不要选 Source code；Gitee 请打开发布页 `https://gitee.com/hackloop/metaontic-video/releases`，不要用会直接下载源码包的 `/releases/latest`。
+不想在本机找路径时，也可以直接粘贴 `.tgz` 附件的下载链接（GitHub 或 Gitee 均可，形如 `https://gitee.com/hackloop/metaontic-video/releases/download/v数字版本号/metaontic-video-数字版本号.tgz`），效果与填写本地文件路径相同；这类在线安装地址必须以 `.tgz` 结尾，`.zip` 附件、`package` 文件夹和发布页网址都只能用于本地安装。要复制的是附件下载链接，不是发布页网址，也不要选 Source code；Gitee 请打开发布页 `https://gitee.com/hackloop/metaontic-video/releases`，不要用会直接下载源码包的 `/releases/latest`。
+
+### 安装报 `ERR_PNPM_MISSING_TARBALL_INTEGRITY` 怎么办？
+
+安装日志里出现 `its lockfile entry has no "integrity" field` 时，问题不在插件包，而在 DeepSeek Harness 插件安装目录里遗留的 `pnpm-lock.yaml`：这条 `.tgz` 地址的记录缺少校验值，pnpm 为保证安装内容未被篡改会直接拒绝，换在线地址、换本地 `.tgz` 路径或重装旧版本都会一样失败。完全退出 Harness，删除该目录下的 `pnpm-lock.yaml`（Windows：`C:\Users\<用户名>\.dsh\profiles\desktop\pnpm-lock.yaml`；macOS：`~/.dsh/profiles/desktop/pnpm-lock.yaml`；设置了 `DSH_HOME` 时在其下的 `profiles/desktop`），再重新安装一次即可，安装器会重新生成该文件。只删 `pnpm-lock.yaml`，不要删同目录的 `package.json`。
 
 ## 使用与开发导航
 
@@ -108,7 +112,7 @@ Seedance 2.0 系列单次生成上限为 15 秒。MetaOnticVideo 将全片拆为
 Windows 与 macOS 均推荐安装正式版 `.tgz` 成品包，避免依赖 Git 拉取：
 
 1. 打开 [GitHub 最新正式版](https://github.com/wxsimon2022/metaontic-video/releases/latest) 或 [Gitee 发布页](https://gitee.com/hackloop/metaontic-video/releases)。
-2. 复制附件 `metaontic-video-<版本>.tgz` 的下载链接，在「插件 → 添加插件」中粘贴安装；不要使用 Source code 或仓库地址。
+2. 复制附件 `metaontic-video-<版本>.tgz` 的下载链接，在「插件 → 添加插件」中粘贴安装；**在线安装的地址必须以 `.tgz` 结尾**，不要使用 Source code、仓库地址或 `.zip` 附件。
 3. 也可下载后解压，通过本地目录安装其中的 `package` 文件夹。
 
 终端安装同样使用实际 `.tgz` 附件链接：
@@ -330,6 +334,18 @@ Harness 默认启用 HMR 配置重载，但不监听本地插件源码。对于�
 ```
 
 `base` 使用本机插件目录绝对路径，仅配置在本机 profile，不写入插件发布配置。已有 HMR 配置时合并调整，保留其他项目的监听需求。配置由运行中的宿主加载；之后修改 TypeScript 并执行 `npm run build`，宿主入口热替换，客户端通过宿主 Client HMR 更新。构建失败先修复，不通过重启解决语法错误。`package.json` 的依赖或加载入口变化可能仍需按宿主提示重新安装或重启；插件规则变化在现有对话的下一轮请求生效，旧确认窗口需重新发起。正在生成视频时先等任务返回，再构建或更新，避免热替换中断当前调用；已有任务按任务 ID 查询或续做，勿重复提交。
+
+## v3.13.9 更新内容
+
+### 优化
+
+- 使用说明书、README 与 Windows 压缩包教程统一写明在线安装只认以 .tgz 结尾的成品附件地址，并给出本版本可直接复制的 Gitee 与 GitHub 地址；MetaOnticVideo-Windows 压缩包、解压出的 package 文件夹、发布页网址和 Source code 只能用于本地安装，粘贴到在线安装框会提示「不是有效的插件包」。
+- Windows 压缩包图文教程第 4 步同步补充在线安装地址要求，图文版与文本版内容一致；使用说明书 PDF 重新导出后随包发布。
+
+### 修复
+
+- 安装报 ERR_PNPM_MISSING_TARBALL_INTEGRITY（提示 lockfile 记录缺少 integrity 字段）时，换在线地址、换本地 .tgz 路径或重装旧版本都会一样失败；使用说明书、README 与 Windows 压缩包教程新增处理方法：完全退出 DeepSeek Harness，删除插件安装目录下的 pnpm-lock.yaml 后重新安装，安装器会重建该文件，已保存的插件设置不受影响。
+- 在线安装填入 ZIP、package 文件夹、发布页网址或 Source code 时只提示「不是有效的插件包」，用户难以判断原因；三处文档现在都写明只认以 .tgz 结尾的附件地址，并给出可直接复制的真实地址。
 
 ## v3.13.8 更新内容
 

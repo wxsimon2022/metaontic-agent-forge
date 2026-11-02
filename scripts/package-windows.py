@@ -37,6 +37,8 @@ D:\\software\\MetaOnticVideo-Windows-VERSION\\MetaOnticVideo-Windows\\metaontic-
 把第3步的文件路径粘贴到安装地址输入框，再点击安装。
 如果路径最前和最后有英文双引号，先删掉这两个引号，再点安装。
 不要粘贴ZIP路径或发布网页地址，也不要填MetaOnticVideo-Windows文件夹或package目录。
+在线安装（直接粘贴下载链接）只认以.tgz结尾的地址：本教程下面的两个地址就是.tgz结尾；
+ZIP、package文件夹和发布页网址都不能当在线地址，填了会提示“不是有效的插件包”。
 若界面提示“不是有效的插件包”，通常是填成了文件夹，请改填第2步的.tgz文件路径。
 不想找本地路径时，也可以直接复制正式发布页里.tgz附件的下载链接粘贴安装，
 本版本现成地址（可直接复制使用）：
@@ -69,6 +71,8 @@ GitHub：https://github.com/wxsimon2022/metaontic-video/releases/download/vVERSI
   解压后的MetaOnticVideo-Windows文件夹和package资料目录都不是安装对象。
   请改填同目录下metaontic-video-VERSION.tgz文件的完整路径，注意复制的是文件。
 • ERR_PNPM_GIT_RESOLVE_FAILED？说明仍在使用Git来源，请核对本次填写的是.tgz文件路径。
+• ERR_PNPM_MISSING_TARBALL_INTEGRITY？插件安装目录里旧pnpm-lock.yaml缺少校验值，与成品包无关。
+  完全退出软件，删除C:\\Users\\你的用户名\\.dsh\\profiles\\desktop\\pnpm-lock.yaml，再安装一次。
 • 立即更新后原package目录空了/报locale缺失？先停下，不要反复更新。
   把本包完整package文件夹复制回错误提示的原路径，确保其中有locale/en.json和locale/zh.json。
   不要复制成package/package，不要只新建一个空locale文件夹，不要重置Key或直接卸载。

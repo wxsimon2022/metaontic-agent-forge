@@ -2,6 +2,18 @@
 
 按版本倒序记录更新。较新版本沿用包内更新说明，早期版本依据 Git 标签与提交记录整理；日期为版本提交日期。标签存在不代表 npm 已发布。
 
+## v3.13.9
+
+### 优化
+
+- 使用说明书、README 与 Windows 压缩包教程统一写明在线安装只认以 .tgz 结尾的成品附件地址，并给出本版本可直接复制的 Gitee 与 GitHub 地址；MetaOnticVideo-Windows 压缩包、解压出的 package 文件夹、发布页网址和 Source code 只能用于本地安装，粘贴到在线安装框会提示「不是有效的插件包」。
+- Windows 压缩包图文教程第 4 步同步补充在线安装地址要求，图文版与文本版内容一致；使用说明书 PDF 重新导出后随包发布。
+
+### 修复
+
+- 安装报 ERR_PNPM_MISSING_TARBALL_INTEGRITY（提示 lockfile 记录缺少 integrity 字段）时，换在线地址、换本地 .tgz 路径或重装旧版本都会一样失败；使用说明书、README 与 Windows 压缩包教程新增处理方法：完全退出 DeepSeek Harness，删除插件安装目录下的 pnpm-lock.yaml 后重新安装，安装器会重建该文件，已保存的插件设置不受影响。
+- 在线安装填入 ZIP、package 文件夹、发布页网址或 Source code 时只提示「不是有效的插件包」，用户难以判断原因；三处文档现在都写明只认以 .tgz 结尾的附件地址，并给出可直接复制的真实地址。
+
 ## v3.13.8
 
 ### 优化

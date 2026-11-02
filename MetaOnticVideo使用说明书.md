@@ -47,7 +47,7 @@ github:wxsimon2022/metaontic-video
 
 1. 打开 [GitHub 正式版下载页](https://github.com/wxsimon2022/metaontic-video/releases/latest)，也可打开 [Gitee 发布页](https://gitee.com/hackloop/metaontic-video/releases)。
 2. 在附件中找到 `metaontic-video-数字版本号.tgz`，右键复制该附件的下载链接。不要选择 Source code，也不要复制仓库地址或发布页地址。
-3. 打开 DeepSeek Harness，进入「插件 → 添加插件」，粘贴刚才复制的 `.tgz` 下载链接，按提示安装。
+3. 打开 DeepSeek Harness，进入「插件 → 添加插件」，粘贴刚才复制的 `.tgz` 下载链接，按提示安装。**在线安装的地址必须以 `.tgz` 结尾**；`MetaOnticVideo-Windows-数字版本号.zip`、解压出来的 `package` 文件夹、发布页网址和 Source code 源码包都不是在线安装地址，填进去会提示「不是有效的插件包」。
 4. 安装后按软件提示启用插件，进入「插件 → 已安装插件 → MetaOnticVideo → 查看」，打开设置页。
 5. 继续按第 2、3 节申请 Key、填写并保存，再按第 4 节开始创作。
 
@@ -72,13 +72,13 @@ github:wxsimon2022/metaontic-video
 
 若拿到的旧 ZIP 只有 `package` 目录，请从正式发布页另外下载 `.tgz` 成品，填写其完整本地路径安装；不要把 ZIP 或发布页地址填进安装框。
 
-**也可以不下载到本地，直接粘贴成品地址：** 复制下面这条 Gitee 成品地址，粘贴到 DeepSeek Harness「插件 → 添加插件」即可安装，效果与填写本地文件路径相同，无需安装 Git。国内网络优先使用 Gitee。
+**也可以不下载到本地，直接粘贴成品地址：** 复制下面这条 Gitee 成品地址，粘贴到 DeepSeek Harness「插件 → 添加插件」即可安装，效果与填写本地文件路径相同，无需安装 Git。国内网络优先使用 Gitee。在线安装只认以 `.tgz` 结尾的附件地址；ZIP、`package` 文件夹和发布页网址只能用于本地安装，不能粘贴到在线安装框。
 
 ```text
-https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.8/metaontic-video-3.13.8.tgz
+https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.9/metaontic-video-3.13.9.tgz
 ```
 
-GitHub 同版本地址为 `https://github.com/wxsimon2022/metaontic-video/releases/download/v3.13.8/metaontic-video-3.13.8.tgz`。发布新版本后，把地址中的两处版本号换成发布页上的实际版本；也可以打开发布页，在附件中右键复制 `.tgz` 的下载链接。
+GitHub 同版本地址为 `https://github.com/wxsimon2022/metaontic-video/releases/download/v3.13.9/metaontic-video-3.13.9.tgz`。发布新版本后，把地址中的两处版本号换成发布页上的实际版本；也可以打开发布页，在附件中右键复制 `.tgz` 的下载链接。
 
 - GitHub 正式版下载页：`https://github.com/wxsimon2022/metaontic-video/releases/latest`
 - Gitee 发布页：`https://gitee.com/hackloop/metaontic-video/releases`
@@ -292,12 +292,33 @@ Windows 与 Mac 的更新入口相同。`.tgz` 成品安装或仓库安装可使
 | `Lockfile passes supply-chain policies` 后又报错 | 这句表示供应链检查通过，实际失败原因在后面的错误。保留完整错误信息。 |
 | 找不到本地插件或 `package.json` | 确认已经解压，并选择包含 `package.json`、`index.js` 的 `package` 目录。 |
 | 附件下载失败或超时 | 核对网络，换同一版本的另一个官方发布源；也可通过浏览器下载后本地安装。不要使用 Source code 代替成品包。 |
+| 在线安装提示「不是有效的插件包」 | 在线安装的地址必须以 `.tgz` 结尾，请用 `.tgz` 附件下载链接；`MetaOnticVideo-Windows-数字版本号.zip`、解压后的 `package` 文件夹、发布页网址和 Source code 都不是在线地址，本地安装请另按 1.3 节填写文件路径。 |
+| 在线或本地安装报 `ERR_PNPM_MISSING_TARBALL_INTEGRITY` | 插件安装目录里早先安装留下的 `pnpm-lock.yaml` 缺少校验值，新版 pnpm 会拒绝安装，与插件包本身无关。按本节「安装报 ERR_PNPM_MISSING_TARBALL_INTEGRITY」处理后再装。 |
 | 提示找不到 `dsh` | 使用 DeepSeek Harness 桌面端的插件安装入口。 |
 | 组件启动失败、`ERR_MODULE_NOT_FOUND` 或 Schema 错误 | 保留完整错误及插件版本，确认安装的是成品包；曾配置本地开发加载路径时需核对是否仍覆盖正式安装目录。不要先清除 Key 或任务记录。 |
 | `ERR_PNPM_IGNORED_BUILDS` / esbuild 脚本提示 | 核对是否误用了源码或旧 Git 安装来源，改用成品包；不要关闭供应链检查或直接批准未知构建脚本。 |
 | 更新失败 | 保留现有插件、Key 及已生成文件，记录目标版本与完整错误，检查附件可访问性；不要先卸载或重置。 |
 
 排查时可以提供系统类型、插件版本、安装来源和完整错误文字；不要发送 API Key、登录验证码或包含密钥的配置文件。
+
+### 安装报 `ERR_PNPM_MISSING_TARBALL_INTEGRITY`
+
+报错原文形如：
+
+```text
+Cannot install package "metaontic-video@https://…/metaontic-video-版本号.tgz":
+its lockfile entry has no "integrity" field, so pnpm cannot verify the downloaded tarball.
+```
+
+这条报错与插件包本身无关。DeepSeek Harness 的插件安装目录里保留了早先安装生成的 `pnpm-lock.yaml`，其中这条 `.tgz` 地址的记录没有写入校验值；当前 pnpm 为防安装被篡改会直接拒绝，因此在删掉这条记录之前，换成在线地址、换成本地 `.tgz` 路径或重装旧版本都会同样失败。
+
+处理步骤：
+
+1. 完全退出 DeepSeek Harness。
+2. 删除插件安装目录里的 `pnpm-lock.yaml`。Windows 在文件管理器地址栏输入 `C:\Users\你的用户名\.dsh\profiles\desktop` 打开该目录；Mac 打开 `~/.dsh/profiles/desktop`。设置了 `DSH_HOME` 时改到该目录下的 `profiles/desktop`。
+3. 重新打开 DeepSeek Harness，按 1.2 节或 1.3 节再安装一次。安装器会重新生成 `pnpm-lock.yaml` 并写入校验值。
+
+只删除 `pnpm-lock.yaml`，不要删除同目录的 `package.json`。该文件只记录依赖版本与校验值，删除后重新安装即可，已保存的插件设置不受影响。
 
 ### 本地目录安装点击更新后目录变空
 
