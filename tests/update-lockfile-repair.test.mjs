@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { existsSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import os from 'node:os';
@@ -10,13 +10,13 @@ import { sourceOf } from './source.mjs';
 
 function load() {
   const source = sourceOf('internal/update-lockfile');
-  return vm.runInNewContext(source + '\n({ stripUnverifiableEntries, locateProfileDir, repairUpdateLockfile, startUpdateLockfileRepair })', {
-    path, fileURLToPath, existsSync, readFileSync, writeFileSync, renameSync, statSync, unlinkSync,
+  return vm.runInNewContext(source + '\n({ stripUnverifiableEntries, locateProfileDir, locateLockfiles, locateStagingLockfiles, updateLockfilesToWatch, repairUpdateLockfile, startUpdateLockfileRepair })', {
+    path, fileURLToPath, existsSync, readdirSync, readFileSync, writeFileSync, renameSync, statSync, unlinkSync,
     setInterval, clearInterval, process,
   });
 }
 
-const { stripUnverifiableEntries, locateProfileDir, repairUpdateLockfile, startUpdateLockfileRepair } = load();
+const { stripUnverifiableEntries, locateProfileDir, locateLockfiles, locateStagingLockfiles, updateLockfilesToWatch, repairUpdateLockfile, startUpdateLockfileRepair } = load();
 const URL_OLD = 'https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.10/metaontic-video-3.13.10.tgz';
 const URL_NEW = 'https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.11/metaontic-video-3.13.11.tgz';
 
@@ -152,5 +152,102 @@ test('定期检查只认变化过的锁文件，dispose 后不再动手', async 
     assert.match(await readFile(lockfilePath, 'utf8'), /metaontic-video/);
   } finally {
     await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('只删掉 packages 那条、snapshots 还留着半条时也能清干净', () => {
+  const before = `lockfileVersion: '9.0'
+
+importers:
+
+  .:
+    dependencies:
+      metaontic-video:
+        specifier: ${URL_NEW}
+        version: ${URL_NEW}
+
+packages:
+
+  other-plugin@https://example.com/other-1.0.0.tgz:
+    resolution: {tarball: https://example.com/other-1.0.0.tgz}
+
+snapshots:
+
+  metaontic-video@${URL_NEW}: {}
+  other-plugin@https://example.com/other-1.0.0.tgz: {}
+`;
+  const { text, removed } = stripUnverifiableEntries(before);
+  assert.deepEqual([...removed], [`metaontic-video@${URL_NEW}`]);
+  assert.doesNotMatch(text, /metaontic-video/);
+  assert.match(text, /other-plugin@https:\/\/example\.com\/other-1\.0\.0\.tgz/);
+});
+
+test('integrity 写成 null 或空值同样算不可校验', () => {
+  for (const resolution of ['{integrity: null, tarball: %URL%}', '{integrity: "", tarball: %URL%}']) {
+    const before = lockfile(url => resolution.replace('%URL%', url));
+    const { text, removed } = stripUnverifiableEntries(before);
+    assert.equal(removed.length, 1);
+    assert.doesNotMatch(text, /metaontic-video/);
+  }
+});
+
+test('profile 下 staging 子目录里的锁文件也在扫描范围内', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'meta-profile-'));
+  await writeFile(path.join(root, 'package.json'), '{"name":"desktop"}\n');
+  const staging = path.join(root, '.plugin-manager', 'staging');
+  await mkdir(staging, { recursive: true });
+  await writeFile(path.join(staging, 'pnpm-lock.yaml'), lockfile(url => `{tarball: ${url}}`));
+  const found = Array.from(locateLockfiles(root), file => path.relative(root, file)).sort();
+  assert.deepEqual(found, ['.plugin-manager/staging/pnpm-lock.yaml']);
+  await rm(root, { recursive: true, force: true });
+});
+
+test('Windows 现场那种「旧版本残记录没人引用」也一样清掉，带校验值的那条保留', () => {
+  // 复现的是真实失败：pnpm 校验整份锁文件的 entries，没人引用的旧记录同样让它拒绝安装。
+  const before = `lockfileVersion: '9.0'
+
+importers:
+
+  .:
+    dependencies:
+      metaontic-video:
+        specifier: ${URL_NEW}
+        version: ${URL_NEW}
+
+packages:
+
+  metaontic-video@${URL_NEW}:
+    resolution: {integrity: sha512-CCC=, tarball: ${URL_NEW}}
+    version: 3.13.11
+
+  metaontic-video@https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.12/metaontic-video-3.13.12.tgz:
+    resolution: {tarball: https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.12/metaontic-video-3.13.12.tgz}
+    version: 3.13.12
+
+snapshots:
+
+  metaontic-video@${URL_NEW}: {}
+  metaontic-video@https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.12/metaontic-video-3.13.12.tgz: {}
+`;
+  const { text, removed } = stripUnverifiableEntries(before);
+  assert.deepEqual([...removed], ['metaontic-video@https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.12/metaontic-video-3.13.12.tgz']);
+  assert.doesNotMatch(text, /3\.13\.12/);
+  assert.match(text, /sha512-CCC=/);                              // 正常记录与 importers 声明都留着
+  assert.match(text, new RegExp(`version: ${URL_NEW}`.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+});
+
+test('同级 staging 目录（宿主换 profile 时的临时副本）里的锁文件同样纳入检查', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'meta-profiles-'));
+  const profile = path.join(root, 'desktop');
+  const staging = path.join(root, '.desktop.staging-abcd');
+  await mkdir(path.join(profile, 'node_modules'), { recursive: true });
+  await mkdir(staging, { recursive: true });
+  await writeFile(path.join(staging, 'pnpm-lock.yaml'), lockfile(url => `{tarball: ${url}}`));
+  try {
+    assert.deepEqual(Array.from(locateStagingLockfiles(profile), file => path.relative(root, file)), ['.desktop.staging-abcd/pnpm-lock.yaml']);
+    assert.deepEqual(Array.from(updateLockfilesToWatch(profile), file => path.relative(root, file)), ['.desktop.staging-abcd/pnpm-lock.yaml']);
+    assert.deepEqual(Array.from(locateStagingLockfiles(staging).map(file => path.relative(root, file))), []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
   }
 });

@@ -50,9 +50,10 @@ test('local source block preserves real directory content across repeated clicks
  }finally{await rm(temp,{recursive:true,force:true});}
 });
 
-test('lockfile integrity failure stops immediately instead of retrying or switching mirror',async()=>{
-  const state={calls:0,status:'',message:''};
-  const sandbox=vm.createContext({window:{localStorage:{removeItem(){}}}});
+test('lockfile integrity failure waits for the background cleanup and retries, never switches mirror',async()=>{
+  const state={calls:0,status:'',message:'',waits:0};
+  // 插件的后台清理每 2 秒扫一次锁文件：客户端命中该错误时应当等清理完成再试，而不是让用户自己数秒重按。
+  const sandbox=vm.createContext({window:{localStorage:{removeItem(){}},setTimeout:(fn)=>{state.waits+=1;fn();return 0;}}});
   vm.runInContext(sourceOf('client/updates'),sandbox);
   const diagnostic='ERR_PNPM_MISSING_TARBALL_INTEGRITY Cannot install package "metaontic-video@https://gitee.com/x.tgz": its lockfile entry has no "integrity" field';
   const api={listBundles:async()=>[{name:'metaontic-video',installed:true,source:'https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.10/metaontic-video-3.13.10.tgz'}],
@@ -62,7 +63,8 @@ test('lockfile integrity failure stops immediately instead of retrying or switch
     manager:()=>({manager:api}),isNewerVersion:()=>true,setUpdateConfirm(){},setUpdateLatest(){},
     setUpdateStatus:v=>{state.status=v;},setUpdateMessage:v=>{state.message=v;},setUpdateAt(){},t:key=>key};
   await sandbox.createUpdateActions(context).runOnlineUpdate();
-  assert.equal(state.calls,1);                       // 不重试，也不换 GitHub 地址
+  assert.equal(state.calls,3);                       // 只在同一个 Gitee 地址上等清理后重试，不换 GitHub 地址
+  assert.equal(state.waits,2);                       // 前两次之间各等一次后台清理，第三次才收尾
   assert.equal(state.status,'failed');
   assert.match(state.message,/^versionUpdateLockfile/);
 });

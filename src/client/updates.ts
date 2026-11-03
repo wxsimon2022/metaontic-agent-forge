@@ -251,9 +251,17 @@ async function runOnlineUpdate() {
                 return { outcome: result.value || {} };
             }
             const text = failureText(result);
-            // 安装目录锁文件里有缺 integrity 的记录时，整份锁文件都过不了校验：换镜像地址、换版本、
-            // 原地重试都是同样的失败，直接停下，等插件后台清掉那条记录后再点一次。
-            if (lockfileUnverifiable(text)) return { failure: text, next: false, lockfile: true };
+            // 安装目录锁文件里残留了缺 integrity 的记录时，pnpm 在解析前就会拒绝整份锁文件：换镜像地址、
+            // 换版本、原地重试都是同样的失败。插件每 2 秒会清掉本插件那条坏记录，这里等它清完再重试，
+            // 用户不必自己数着秒再点一次；始终清不掉时才停下并给出针对性提示。
+            if (lockfileUnverifiable(text)) {
+                if (round < context.UPDATE_ATTEMPTS) {
+                    context.setUpdateMessage(context.t('versionUpdateRetry', { attempt: round + 1, total: context.UPDATE_ATTEMPTS }));
+                    await new Promise((resolve) => window.setTimeout(resolve, 5000));
+                    continue;
+                }
+                return { failure: text, next: false, lockfile: true };
+            }
             const transient = worthRetrying(text);
             if (transient && round < context.UPDATE_ATTEMPTS) {
                 context.setUpdateMessage(context.t('versionUpdateRetry', { attempt: round + 1, total: context.UPDATE_ATTEMPTS }));

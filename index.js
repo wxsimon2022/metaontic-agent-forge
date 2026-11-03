@@ -6273,12 +6273,18 @@ function buildPromptGuidance(config) {
 init_config();
 
 // src/internal/update-lockfile.ts
-import { existsSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import path13 from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 var PACKAGE_NAME = "metaontic-video";
 var LOCKFILE = "pnpm-lock.yaml";
+var RELEASE_URL = /^https?:\/\/(?:gitee\.com\/hackloop|github\.com\/wxsimon2022)\/metaontic-video\/releases\/download\//i;
+var SHA = /^sha\d+-[A-Za-z0-9+/=]+$/;
 var indentOf = (line) => line.length - line.trimStart().length;
+function integrityOf(block) {
+  const match = /integrity:\s*([^,\s}]+)/.exec(block);
+  return match ? match[1] : "";
+}
 function remoteEntry(line) {
   const match = /^ {2}(\S+)@(https?:\/\/\S+?):(?:\s.*)?$/.exec(line);
   return match ? { name: match[1], url: match[2] } : null;
@@ -6299,14 +6305,18 @@ function blockEnd(lines, start, indent) {
 function stripUnverifiableEntries(text) {
   const newline = text.includes("\r\n") ? "\r\n" : "\n";
   const lines = text.split(/\r?\n/);
-  const poisoned = /* @__PURE__ */ new Set();
+  const ours = /* @__PURE__ */ new Set();
+  const verified = /* @__PURE__ */ new Set();
   for (let index = 0; index < lines.length; index += 1) {
     const entry = remoteEntry(lines[index]);
     if (!entry || entry.name !== PACKAGE_NAME) continue;
     const end = blockEnd(lines, index, 2);
-    const resolution = lines.slice(index + 1, end).find((line) => /^\s+resolution:/.test(line)) || "";
-    if (/tarball:\s*https?:\/\//.test(resolution) && !/integrity:/.test(resolution)) poisoned.add(entry.url);
+    const block = lines.slice(index, end).join("\n");
+    if (!RELEASE_URL.test(entry.url) && !/tarball:\s*https?:\/\//.test(block)) continue;
+    ours.add(entry.url);
+    if (SHA.test(integrityOf(block))) verified.add(entry.url);
   }
+  const poisoned = new Set([...ours].filter((url) => !verified.has(url)));
   if (!poisoned.size) return { text, removed: [] };
   const removed = /* @__PURE__ */ new Set();
   for (let index = 0; index < lines.length; index += 1) {
@@ -6331,11 +6341,9 @@ function locateProfileDir(moduleUrl) {
   for (let up = 0; up < 3; up += 1) dir = path13.dirname(dir);
   return dir;
 }
-function repairUpdateLockfile(moduleUrl, log = () => {
+function repairLockfileAt(lockfile, log = () => {
 }) {
-  const dir = locateProfileDir(moduleUrl);
-  const lockfile = path13.join(dir, LOCKFILE);
-  if (!existsSync(lockfile) || !existsSync(path13.join(dir, "package.json"))) return { status: "unavailable" };
+  if (!existsSync(lockfile)) return { status: "unavailable" };
   let before = "";
   try {
     before = readFileSync(lockfile, "utf8");
@@ -6360,19 +6368,69 @@ function repairUpdateLockfile(moduleUrl, log = () => {
   log("\u5DF2\u6E05\u7406 " + removed.length + " \u6761\u7F3A\u5C11 integrity \u7684\u9501\u6587\u4EF6\u8BB0\u5F55\uFF08" + removed.join("\u3001") + "\uFF09\uFF0C\u5907\u4EFD\u5728 " + path13.basename(backup) + "\uFF1B\u4E4B\u540E\u53EF\u4EE5\u5728\u7EBF\u66F4\u65B0\u3002");
   return { status: "repaired", lockfile, backup, removed };
 }
-function startUpdateLockfileRepair(moduleUrl, intervalMs = 1e4, log) {
+function locateLockfiles(dir, depth = 2) {
+  const found = [];
+  const walk = (current, level) => {
+    const candidate = path13.join(current, LOCKFILE);
+    try {
+      if (existsSync(candidate)) found.push(candidate);
+    } catch {
+    }
+    if (level <= 0) return;
+    let entries = [];
+    try {
+      entries = readdirSync(current, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory() || entry.name === "node_modules") continue;
+      walk(path13.join(current, entry.name), level - 1);
+    }
+  };
+  walk(dir, depth);
+  return found;
+}
+function locateStagingLockfiles(profileDir) {
+  const parent = path13.dirname(profileDir);
+  let entries = [];
+  try {
+    entries = readdirSync(parent, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const found = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !/staging/i.test(entry.name)) continue;
+    const dir = path13.join(parent, entry.name);
+    if (dir === profileDir) continue;
+    found.push(...locateLockfiles(dir, 1));
+  }
+  return found;
+}
+function updateLockfilesToWatch(profileDir) {
+  return [.../* @__PURE__ */ new Set([...locateLockfiles(profileDir), ...locateStagingLockfiles(profileDir)])];
+}
+function startUpdateLockfileRepair(moduleUrl, intervalMs = 2e3, log) {
   let stopped = false;
-  let last = "";
+  const stamps = /* @__PURE__ */ new Map();
   const check = () => {
     if (stopped) return;
     try {
-      const lockfile = path13.join(locateProfileDir(moduleUrl), LOCKFILE);
-      if (!existsSync(lockfile)) return;
-      const info = statSync(lockfile);
-      const stamp = info.mtimeMs + ":" + info.size;
-      if (stamp === last) return;
-      last = stamp;
-      repairUpdateLockfile(moduleUrl, log);
+      const dir = locateProfileDir(moduleUrl);
+      if (!existsSync(path13.join(dir, "package.json"))) return;
+      for (const lockfile of updateLockfilesToWatch(dir)) {
+        let stamp = "";
+        try {
+          const info = statSync(lockfile);
+          stamp = info.mtimeMs + ":" + info.size;
+        } catch {
+          continue;
+        }
+        if (stamps.get(lockfile) === stamp) continue;
+        stamps.set(lockfile, stamp);
+        repairLockfileAt(lockfile, log);
+      }
     } catch {
     }
   };

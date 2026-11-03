@@ -293,7 +293,7 @@ Windows 与 Mac 的更新入口相同。`.tgz` 成品安装或仓库安装可使
 | 找不到本地插件或 `package.json` | 确认已经解压，并选择包含 `package.json`、`index.js` 的 `package` 目录。 |
 | 附件下载失败或超时 | 核对网络，换同一版本的另一个官方发布源；也可通过浏览器下载后本地安装。不要使用 Source code 代替成品包。 |
 | 在线安装提示「不是有效的插件包」 | 在线安装的地址必须以 `.tgz` 结尾，请用 `.tgz` 附件下载链接；`MetaOnticVideo-Windows-数字版本号.zip`、解压后的 `package` 文件夹、发布页网址和 Source code 都不是在线地址，本地安装请另按 1.3 节填写文件路径。 |
-| 在线或本地安装报 `ERR_PNPM_MISSING_TARBALL_INTEGRITY` | 插件安装目录里早先安装留下的 `pnpm-lock.yaml` 缺少校验值，新版 pnpm 会拒绝安装，与插件包本身无关。插件已安装时会在后台自动清理这条记录，等十几秒再点一次更新；仍不行或还没装上插件时，按本节「安装报 ERR_PNPM_MISSING_TARBALL_INTEGRITY」手动处理后再装。 |
+| 在线或本地安装报 `ERR_PNPM_MISSING_TARBALL_INTEGRITY` | 插件安装目录里早先安装留下的 `pnpm-lock.yaml` 缺少校验值，新版 pnpm 会拒绝安装，与插件包本身无关。插件已安装时会每 2 秒检查一次并自动清理这条记录，更新失败后也会等清理完成自动重试；仍不行或还没装上插件时，按本节「安装报 ERR_PNPM_MISSING_TARBALL_INTEGRITY」手动处理后再装。 |
 | 提示找不到 `dsh` | 使用 DeepSeek Harness 桌面端的插件安装入口。 |
 | 组件启动失败、`ERR_MODULE_NOT_FOUND` 或 Schema 错误 | 保留完整错误及插件版本，确认安装的是成品包；曾配置本地开发加载路径时需核对是否仍覆盖正式安装目录。不要先清除 Key 或任务记录。 |
 | `ERR_PNPM_IGNORED_BUILDS` / esbuild 脚本提示 | 核对是否误用了源码或旧 Git 安装来源，改用成品包；不要关闭供应链检查或直接批准未知构建脚本。 |
@@ -318,7 +318,7 @@ its lockfile entry has no "integrity" field, so pnpm cannot verify the downloade
 2. 删除插件安装目录里的 `pnpm-lock.yaml`。Windows 在文件管理器地址栏输入 `C:\Users\你的用户名\.dsh\profiles\desktop` 打开该目录；Mac 打开 `~/.dsh/profiles/desktop`。设置了 `DSH_HOME` 时改到该目录下的 `profiles/desktop`。
 3. 重新打开 DeepSeek Harness，按 1.2 节或 1.3 节再安装一次。安装器会重新生成 `pnpm-lock.yaml` 并写入校验值。
 
-插件运行期间还会自己检查这个文件：一旦发现里面留着本插件缺少校验值的记录，会自动删掉那一条并把原文件另存为同目录下的 `pnpm-lock.yaml.metaontic-backup-时间`，不需要你手动处理。所以更新时出现这条报错，先等十几秒再点一次「更新到最新正式版」，多数情况下就能继续；只有当插件本身还没装上、后台还没有这个清理动作时，才需要按上面的步骤手动删除。
+插件运行期间还会每 2 秒检查一次这个文件：一旦发现里面留着本插件缺少校验值的记录（包括旧版本留下的、已经没人引用的记录），会自动删掉本插件这条并把原文件另存为同目录下的 `pnpm-lock.yaml.metaontic-backup-时间`，不需要你手动处理。更新时出现这条报错，插件会等清理完成自动重试一次，多数情况下接着就能继续；只有当插件本身还没装上、后台还没有这个清理动作时，才需要按上面的步骤手动删除。
 
 只删除 `pnpm-lock.yaml`，不要删除同目录的 `package.json`。该文件只记录依赖版本与校验值，删除后重新安装即可，已保存的插件设置不受影响。
 

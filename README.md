@@ -69,7 +69,7 @@ Seedance 2.0 系列单次生成上限为 15 秒。MetaOnticVideo 将全片拆为
 
 ### 安装报 `ERR_PNPM_MISSING_TARBALL_INTEGRITY` 怎么办？
 
-安装日志里出现 `its lockfile entry has no "integrity" field` 时，问题不在插件包，而在 DeepSeek Harness 插件安装目录里遗留的 `pnpm-lock.yaml`：这条 `.tgz` 地址的记录缺少校验值，pnpm 为保证安装内容未被篡改会直接拒绝，换在线地址、换本地 `.tgz` 路径或重装旧版本都会一样失败。插件运行时会自动检查该文件，发现本插件这类记录就删掉那一条并留一份 `pnpm-lock.yaml.metaontic-backup-时间` 备份，所以已经装上插件的情况下，等十几秒再点一次更新通常即可。插件还没装上、后台没有这个清理动作时，完全退出 Harness，删除该目录下的 `pnpm-lock.yaml`（Windows：`C:\Users\<用户名>\.dsh\profiles\desktop\pnpm-lock.yaml`；macOS：`~/.dsh/profiles/desktop/pnpm-lock.yaml`；设置了 `DSH_HOME` 时在其下的 `profiles/desktop`），再重新安装一次即可，安装器会重新生成该文件。只删 `pnpm-lock.yaml`，不要删同目录的 `package.json`。
+安装日志里出现 `its lockfile entry has no "integrity" field` 时，问题不在插件包，而在 DeepSeek Harness 插件安装目录里遗留的 `pnpm-lock.yaml`：这条 `.tgz` 地址的记录缺少校验值，pnpm 为保证安装内容未被篡改会直接拒绝，换在线地址、换本地 `.tgz` 路径或重装旧版本都会一样失败。插件运行时会每 2 秒检查该文件，发现本插件这类记录（含旧版本留下的、已经没人引用的残记录）就删掉并留一份 `pnpm-lock.yaml.metaontic-backup-时间` 备份，更新失败后还会等清理完成自动重试，所以已经装上插件的情况下通常无需人工干预。插件还没装上、后台没有这个清理动作时，完全退出 Harness，删除该目录下的 `pnpm-lock.yaml`（Windows：`C:\Users\<用户名>\.dsh\profiles\desktop\pnpm-lock.yaml`；macOS：`~/.dsh/profiles/desktop/pnpm-lock.yaml`；设置了 `DSH_HOME` 时在其下的 `profiles/desktop`），再重新安装一次即可，安装器会重新生成该文件。只删 `pnpm-lock.yaml`，不要删同目录的 `package.json`。
 
 ## 使用与开发导航
 

@@ -514,7 +514,7 @@
       versionUpdateFailed: "\u5728\u7EBF\u66F4\u65B0\u5931\u8D25\uFF1A{message}",
       versionUpdateRemoved: "\u63D2\u4EF6\u5DF2\u5378\u8F7D\uFF0C\u4F46\u91CD\u65B0\u5B89\u88C5\u5931\u8D25\u3002\u8BF7\u5230\u300C\u63D2\u4EF6\u300D\u9875\u91CD\u65B0\u6DFB\u52A0\u3002",
       versionUpdateRateLimited: "Gitee \u8BF7\u6C42\u8FC7\u4E8E\u9891\u7E41\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u3002\u73B0\u6709\u914D\u7F6E\u4E0E\u5BC6\u94A5\u4F1A\u4FDD\u7559\u3002",
-      versionUpdateLockfile: "\u5B89\u88C5\u76EE\u5F55\u7684 pnpm-lock.yaml \u91CC\u6709\u4E00\u6761\u672C\u63D2\u4EF6\u7F3A\u5C11 integrity \u7684\u65E7\u8BB0\u5F55\uFF0Cpnpm \u56E0\u6B64\u62D2\u7EDD\u5B89\u88C5\uFF08ERR_PNPM_MISSING_TARBALL_INTEGRITY\uFF09\u3002\u63D2\u4EF6\u4F1A\u5728\u540E\u53F0\u81EA\u52A8\u6E05\u6389\u8FD9\u6761\u8BB0\u5F55\u5E76\u4FDD\u7559\u5907\u4EFD\uFF0C\u7A0D\u7B49\u5341\u51E0\u79D2\u518D\u70B9\u4E00\u6B21\u66F4\u65B0\uFF1B\u82E5\u4ECD\u7136\u5931\u8D25\uFF0C\u5B8C\u5168\u9000\u51FA Harness \u540E\u624B\u52A8\u5220\u9664\u63D2\u4EF6\u5B89\u88C5\u76EE\u5F55\u4E0B\u7684 pnpm-lock.yaml \u518D\u8BD5\u3002",
+      versionUpdateLockfile: "\u5B89\u88C5\u76EE\u5F55\u7684 pnpm-lock.yaml \u91CC\u6709\u4E00\u6761\u672C\u63D2\u4EF6\u7F3A\u5C11 integrity \u7684\u65E7\u8BB0\u5F55\uFF0Cpnpm \u56E0\u6B64\u62D2\u7EDD\u5B89\u88C5\uFF08ERR_PNPM_MISSING_TARBALL_INTEGRITY\uFF09\u3002\u63D2\u4EF6\u4F1A\u6BCF 2 \u79D2\u68C0\u67E5\u4E00\u6B21\u3001\u81EA\u52A8\u6E05\u6389\u8FD9\u6761\u8BB0\u5F55\u5E76\u4FDD\u7559\u5907\u4EFD\uFF0C\u66F4\u65B0\u5931\u8D25\u540E\u4E5F\u4F1A\u7B49\u6E05\u7406\u5B8C\u6210\u81EA\u52A8\u91CD\u8BD5\uFF1B\u82E5\u4ECD\u7136\u5931\u8D25\uFF0C\u5B8C\u5168\u9000\u51FA Harness \u540E\u624B\u52A8\u5220\u9664\u63D2\u4EF6\u5B89\u88C5\u76EE\u5F55\u4E0B\u7684 pnpm-lock.yaml \u518D\u8BD5\u3002",
       versionUpdateUnavailable: "\u5F53\u524D Harness \u4E0D\u652F\u6301\u5728\u7EBF\u66F4\u65B0\uFF0C\u8BF7\u5230\u300C\u63D2\u4EF6\u300D\u9875\u5378\u8F7D\u540E\u91CD\u65B0\u6DFB\u52A0\u3002",
       versionHint: "\u53EF\u5728\u6B64\u68C0\u67E5\u5E76\u5B89\u88C5\u65B0\u7248\u672C\uFF0C\u73B0\u6709\u914D\u7F6E\u4E0E\u5BC6\u94A5\u4F1A\u4FDD\u7559\u3002",
       versionCheckedAt: "\u68C0\u67E5\u4E8E {time}",
@@ -668,7 +668,7 @@
       versionUpdateFailed: "Online update failed: {message}",
       versionUpdateRemoved: "The plugin was uninstalled but could not be reinstalled. Add it again from the Plugins page.",
       versionUpdateRateLimited: "Gitee is limiting requests. Try again later. Your settings and keys will be kept.",
-      versionUpdateLockfile: "The profile pnpm-lock.yaml still has a metaontic-video entry without integrity, so pnpm refuses to install (ERR_PNPM_MISSING_TARBALL_INTEGRITY). The plugin clears that entry in the background and keeps a backup: wait a few seconds and start the update again. If it still fails, quit Harness and delete pnpm-lock.yaml in the plugin install directory.",
+      versionUpdateLockfile: "The profile pnpm-lock.yaml still has a metaontic-video entry without integrity, so pnpm refuses to install (ERR_PNPM_MISSING_TARBALL_INTEGRITY). The plugin checks every 2 seconds, clears that entry in the background and keeps a backup, and the update retries once the cleanup is done. If it still fails, quit Harness and delete pnpm-lock.yaml in the plugin install directory.",
       versionUpdateUnavailable: "This version of Harness does not support online updates. Uninstall and re-add the plugin from the Plugins page.",
       versionHint: "Check for and install updates here. Your settings and keys will be kept.",
       versionCheckedAt: "checked {time}",
@@ -1065,7 +1065,14 @@
             return { outcome: result.value || {} };
           }
           const text = failureText(result);
-          if (lockfileUnverifiable(text)) return { failure: text, next: false, lockfile: true };
+          if (lockfileUnverifiable(text)) {
+            if (round < context.UPDATE_ATTEMPTS) {
+              context.setUpdateMessage(context.t("versionUpdateRetry", { attempt: round + 1, total: context.UPDATE_ATTEMPTS }));
+              await new Promise((resolve) => window.setTimeout(resolve, 5e3));
+              continue;
+            }
+            return { failure: text, next: false, lockfile: true };
+          }
           const transient = worthRetrying(text);
           if (transient && round < context.UPDATE_ATTEMPTS) {
             context.setUpdateMessage(context.t("versionUpdateRetry", { attempt: round + 1, total: context.UPDATE_ATTEMPTS }));
