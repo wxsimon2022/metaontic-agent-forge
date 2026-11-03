@@ -247,6 +247,15 @@ export function tagCredentialHelper(username) {
   return `!f(){ echo username=${username}; echo password=$GITEE_TOKEN; };f`;
 }
 
+/*
+ * 私人令牌推送必须用干净配置：本机 url.*.insteadOf 之类的重写会把 HTTPS 悄悄换成 SSH，
+ * 表面上成功、CI 里却会因为没有 SSH 密钥而失败。
+ */
+export function isolatedGitEnv() {
+  const empty = process.platform === 'win32' ? 'NUL' : '/dev/null';
+  return { GIT_CONFIG_GLOBAL: empty, GIT_CONFIG_SYSTEM: empty, GIT_TERMINAL_PROMPT: '0' };
+}
+
 function credentialOutput(result) {
   return `${result.stderr || ''}${result.stdout || ''}`.trim();
 }
@@ -302,7 +311,7 @@ export function createGiteeClient({ slug = 'hackloop/metaontic-video', token, re
         '-c', `credential.helper=${tagCredentialHelper(pushAs)}`,
         '-c', 'credential.useHttpPath=true',
         'push', `https://gitee.com/${slug}.git`, `:refs/tags/${tag}`,
-      ]);
+      ], isolatedGitEnv());
       let result = push();
       if (result.status !== 0 && pushAs === 'oauth2' && /40[13]|Authentication failed|Invalid username or password|could not read Username/i.test(credentialOutput(result))) {
         const login = await accountLogin();
@@ -372,9 +381,9 @@ export async function mapPool(items, limit, worker) {
   await Promise.all(runners);
 }
 
-function defaultRun(command, args) {
+function defaultRun(command, args, extraEnv = {}) {
   // 凭据缺失时必须立刻失败，不能挂在交互式提示上；git 一律在仓库根目录执行。
-  const result = spawnSync(command, args, { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } });
+  const result = spawnSync(command, args, { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, env: { ...process.env, GIT_TERMINAL_PROMPT: '0', ...extraEnv } });
   return { status: result.status ?? 1, stdout: result.stdout || '', stderr: result.stderr || result.error?.message || '' };
 }
 

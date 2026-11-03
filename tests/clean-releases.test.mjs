@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compareVersions, parseVersion, matchesPattern, expectedAssets, documentedTags, planCleanup, formatPlan, applyCleanup, parseArgs, mapPool, main, createGiteeClient } from '../scripts/clean-releases.mjs';
+import { compareVersions, parseVersion, matchesPattern, expectedAssets, documentedTags, planCleanup, formatPlan, applyCleanup, parseArgs, mapPool, main, createGiteeClient, isolatedGitEnv } from '../scripts/clean-releases.mjs';
 
 const release = (tag, extra = {}) => ({ id: Number(String(tag).replace(/\D/g, '').slice(0, 6)) || 1, tag, draft: false, prerelease: false, createdAt: '2026-01-01T00:00:00Z', assets: [], ...extra });
 
@@ -120,7 +120,7 @@ test('执行阶段按附件、发行版、标签顺序删除两个仓库并清�
 
 test('Gitee 标签用私人令牌走 HTTPS 推送删除，令牌不进命令行', async () => {
   const calls = [];
-  const run = (command, args) => { calls.push({ command, args }); return { status: 0, stdout: '', stderr: '' }; };
+  const run = (command, args, env) => { calls.push({ command, args, env }); return { status: 0, stdout: '', stderr: '' }; };
   const client = createGiteeClient({ slug: 'owner/repo', token: 'secret-token', run, request: async () => ({ ok: false, status: 403, json: async () => ({}) }) });
   assert.equal(await client.removeTag('v3.2.0'), true);
   assert.equal(calls.length, 1);
@@ -129,6 +129,8 @@ test('Gitee 标签用私人令牌走 HTTPS 推送删除，令牌不进命令行'
   assert.ok(calls[0].args.includes('credential.helper='), '先清空既有凭据助手，避免命中本机旧凭据');
   assert.ok(calls[0].args.some(value => value.includes('echo password=$GITEE_TOKEN')), '令牌从环境变量读');
   assert.ok(!calls[0].args.some(value => value.includes('secret-token')), '令牌不能出现在命令行参数里');
+  assert.deepEqual(calls[0].env, isolatedGitEnv(), '推送要用干净配置，避免本机 url.insteadOf 之类重写把 HTTPS 换成 SSH');
+  assert.equal(calls[0].env.GIT_CONFIG_GLOBAL, process.platform === 'win32' ? 'NUL' : '/dev/null');
 });
 
 test('消息说清 Gitee 标签的真实结局：删过了、真失败都有对应结果', async () => {
