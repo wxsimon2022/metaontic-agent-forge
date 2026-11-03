@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compareVersions, parseVersion, matchesPattern, expectedAssets, documentedTags, planCleanup, formatPlan, applyCleanup, parseArgs, mapPool, main, createGiteeClient, isolatedGitEnv } from '../scripts/clean-releases.mjs';
+import { compareVersions, parseVersion, matchesPattern, expectedAssets, documentedTags, planCleanup, formatPlan, applyCleanup, parseArgs, mapPool, main, createGiteeClient, createGithubClient, isolatedGitEnv } from '../scripts/clean-releases.mjs';
 
 const release = (tag, extra = {}) => ({ id: Number(String(tag).replace(/\D/g, '').slice(0, 6)) || 1, tag, draft: false, prerelease: false, createdAt: '2026-01-01T00:00:00Z', assets: [], ...extra });
 
@@ -116,6 +116,16 @@ test('执行阶段按附件、发行版、标签顺序删除两个仓库并清�
     'gh /repos/owner/repo/releases/99',
   ]);
   assert.ok(output.some(line => line.includes('Gitee 标签 ci-test（远端已不存在）')), '远端已删过的对象要如实说明');
+});
+
+test('远端已经没有的引用按已存在处理，不当作失败', async () => {
+  const ghRun = (command, args) => ({ status: 1, stdout: '{\"message\":\"Reference does not exist\"}', stderr: 'gh: Reference does not exist (HTTP 422)' });
+  const github = createGithubClient({ slug: 'owner/repo', run: ghRun });
+  assert.equal(await github.remove('/repos/owner/repo/git/refs/tags/v3.13.7'), false, '422 只说明远端已经删过了');
+  const notFound = createGithubClient({ slug: 'owner/repo', run: () => ({ status: 1, stdout: '', stderr: 'gh: Not Found (HTTP 404)' }) });
+  assert.equal(await notFound.remove('/repos/owner/repo/releases/1'), false);
+  const real = createGithubClient({ slug: 'owner/repo', run: () => ({ status: 1, stdout: '', stderr: 'gh: Server Error (HTTP 500)' }) });
+  await assert.rejects(real.remove('/repos/owner/repo/releases/1'), /HTTP 500/);
 });
 
 test('Gitee 标签用私人令牌走 HTTPS 推送删除，令牌不进命令行', async () => {

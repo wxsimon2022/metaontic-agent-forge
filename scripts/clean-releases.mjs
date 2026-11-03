@@ -18,7 +18,8 @@ const USAGE = `清理历史标签、发行版及附件（默认演练，加 --ap
   npm run clean:releases                    # 演练：打印保留与待删清单
   npm run clean:releases -- --apply         # 按计划删除
 
-  --keep <n>            保留最近 n 个正式版，默认 1，最小 1
+  --keep <n>            保留最近 n 个正式版发行版，默认 10，最小 1
+  --keep-tags <n>       保留最近 n 个标签，默认与 --keep 相同
   --max-age-days <n>    只清理 n 天以前发布的版本，默认 0（不限）
   --patterns <a,b>      参与清理的标签模式，默认 v*
   --keep-prerelease     额外保留最新的预发布
@@ -91,11 +92,13 @@ export function documentedTags(contents) {
 }
 
 /**
- * 计算清理计划：保留最新的 keep 个正式版、可选的最新预发布、当前 package.json 版本、文档引用的版本，
- * 其余符合 patterns 的标签连同发行版、附件一起删除；maxAgeDays > 0 时跳过太新的版本。
+ * 计算清理计划：发行版与标签各保留最近 keep / keepTags 个，另保留可选的最新预发布、
+ * 当前 package.json 版本和文档引用的版本；其余符合 patterns 的标签连同发行版、附件一起删除，
+ * maxAgeDays > 0 时跳过太新的版本。
  */
-export function planCleanup({ tags = [], releases = {}, keep = 1, keepPrerelease = false, maxAgeDays = 0, patterns = ['v*'], currentVersion = '', protectedTags = [], drafts = true, now = Date.now() } = {}) {
+export function planCleanup({ tags = [], releases = {}, keep = 10, keepTags = keep, keepPrerelease = false, maxAgeDays = 0, patterns = ['v*'], currentVersion = '', protectedTags = [], drafts = true, now = Date.now() } = {}) {
   if (!Number.isInteger(keep) || keep < 1) throw new Error('保留数量必须是不小于 1 的整数，避免删掉最新版本。');
+  if (!Number.isInteger(keepTags) || keepTags < 1) throw new Error('保留标签数量必须是不小于 1 的整数。');
   if (!Number.isInteger(maxAgeDays) || maxAgeDays < 0) throw new Error('--max-age-days 必须是不小于 0 的整数。');
   if (!Array.isArray(patterns) || patterns.length === 0) throw new Error('至少需要一个标签匹配模式。');
 
@@ -127,7 +130,8 @@ export function planCleanup({ tags = [], releases = {}, keep = 1, keepPrerelease
   const kept = new Map();
   const keepEntry = (entry, reason) => { if (!kept.has(entry.tag)) kept.set(entry.tag, { tag: entry.tag, reason }); };
   const stable = sorted.filter(entry => parseVersion(entry.tag) && !parseVersion(entry.tag).prerelease);
-  stable.slice(0, keep).forEach(entry => keepEntry(entry, `最新的 ${keep} 个正式版`));
+  stable.filter(entry => entry.github || entry.gitee).slice(0, keep).forEach(entry => keepEntry(entry, `最近的 ${keep} 个正式版发行版`));
+  stable.slice(0, keepTags).forEach(entry => keepEntry(entry, `最近的 ${keepTags} 个标签`));
   if (keepPrerelease) sorted.filter(entry => parseVersion(entry.tag)?.prerelease).slice(0, 1).forEach(entry => keepEntry(entry, '最新的预发布'));
   if (currentVersion && entries.has(`v${currentVersion}`)) keepEntry(entries.get(`v${currentVersion}`), '当前 package.json 版本');
   for (const tag of protectedTags) if (entries.has(tag)) keepEntry(entries.get(tag), '文档里的下载地址仍在引用');
@@ -236,7 +240,8 @@ export function createGithubClient({ slug, run = defaultRun }) {
       const result = run('gh', ['api', '--method', 'DELETE', path]);
       if (result.status === 0) return true;
       const message = `${result.stderr || ''}${result.stdout || ''}`;
-      if (/HTTP 404|Not Found|no such/i.test(message)) return false;
+      // GitHub 删除不存在的引用返回 422 Reference does not exist（不是 404），同样只说明远端已经没有了。
+      if (/HTTP 404|HTTP 422|Not Found|no such|Reference does not exist/i.test(message)) return false;
       throw new Error(`gh api DELETE ${path} 失败：${message.trim() || `退出码 ${result.status}`}`);
     },
   };
@@ -396,7 +401,7 @@ export function remoteTags(remote, run = defaultRun) {
 
 export function parseArgs(argv) {
   const options = {
-    keep: 1, keepPrerelease: false, maxAgeDays: 0, patterns: ['v*'], hosts: ['github', 'gitee'],
+    keep: 10, keepTags: null, keepPrerelease: false, maxAgeDays: 0, patterns: ['v*'], hosts: ['github', 'gitee'],
     apply: false, pruneAssets: false, keepDrafts: false, json: false, help: false, remote: 'origin',
     github: 'git@github.com:wxsimon2022/metaontic-video.git', gitee: 'git@gitee.com:hackloop/metaontic-video.git',
   };
@@ -412,6 +417,7 @@ export function parseArgs(argv) {
     else if (arg === '--dry-run') options.apply = false;
     else if (arg === '--help' || arg === '-h') options.help = true;
     else if (arg === '--keep') options.keep = Number(value());
+    else if (arg === '--keep-tags') options.keepTags = Number(value());
     else if (arg === '--keep-prerelease') options.keepPrerelease = true;
     else if (arg === '--keep-drafts') options.keepDrafts = true;
     else if (arg === '--max-age-days') options.maxAgeDays = Number(value());
@@ -425,6 +431,8 @@ export function parseArgs(argv) {
     else throw new Error(`无法识别的参数：${arg}`);
   }
   if (!Number.isInteger(options.keep) || options.keep < 1) throw new Error('--keep 必须是不小于 1 的整数。');
+  if (options.keepTags === null) options.keepTags = options.keep;
+  if (!Number.isInteger(options.keepTags) || options.keepTags < 1) throw new Error('--keep-tags 必须是不小于 1 的整数。');
   if (!Number.isInteger(options.maxAgeDays) || options.maxAgeDays < 0) throw new Error('--max-age-days 必须是不小于 0 的整数。');
   if (options.hosts.some(host => host !== 'github' && host !== 'gitee')) throw new Error('--host 只能是 github、gitee 或 all。');
   return options;
@@ -454,7 +462,7 @@ export async function main(argv = process.argv.slice(2), deps = {}) {
   const releases = { github: github ? await github.listReleases() : [], gitee: giteeReleases };
   const plan = planCleanup({
     tags,
-    releases, keep: options.keep, keepPrerelease: options.keepPrerelease, maxAgeDays: options.maxAgeDays,
+    releases, keep: options.keep, keepTags: options.keepTags, keepPrerelease: options.keepPrerelease, maxAgeDays: options.maxAgeDays,
     patterns: options.patterns, currentVersion, drafts: !options.keepDrafts,
     protectedTags: [...documentedTags(DOCUMENTED_FILES.map(name => {
       try { return readFileSync(path.join(root, name), 'utf8'); } catch { return ''; }
