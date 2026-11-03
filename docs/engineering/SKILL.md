@@ -130,3 +130,4 @@ Windows解压目录安装在更新时出现空目录/locale缺失：先核对成
 一键发布使用scripts/release.mjs（npm run release -- X.Y.Z），先准备本地release-plan.json完整条目及指南核对；--dry-run不改文件/版本/标签，不触发发布。脚本从实际最新正式版核对范围，禁止覆盖标签；双仓不全成功时报告失败，同版本--resume续跑。跨平台构建使用scripts/build.mjs的esbuild API，禁止POSIX命令替换使Windows构建失败。编写或测试发布脚本本身不等于获准执行真实发布。
 
 历史版本回收使用scripts/clean-releases.mjs（npm run clean:releases -- --apply）：默认演练，只删计划内对象，最新正式版、当前package.json版本以及README/说明书/CHANGELOG/本文件里.tgz下载地址引用过的版本永不删除；先附件、再发行版、最后标签，GitHub与Gitee同一计划并同步本地标签，演练同时给出预计释放的附件体积；待删标签取远端列表与Gitee标签接口的并集，Gitee开放接口没有删除标签的端点（DELETE /tags只会404），只能用私人令牌走HTTPS推送删引用。定期删除由.github/workflows/clean-releases.yml按周演练，只有仓库变量CLEANUP_APPLY=true或手动勾选apply才真正执行。回收不是发版，但删除不可逆，先看演练输出的保留集与待删清单再执行，不在发布流程中间插入清理。
+回收默认发行版与标签各保留最近10个（--keep / --keep-tags，后者默认跟随前者，两条保留线取并集）；Gitee标签只能用git push删引用，Gitee操作需要GITEE_TOKEN。

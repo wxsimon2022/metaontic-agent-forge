@@ -1,6 +1,6 @@
 name: clean-releases
 
-# 定期清理历史标签、发行版及发行版附件：只保留最新正式版（可调），两个仓库执行同一计划。
+# 定期清理历史标签、发行版及发行版附件：发行版与标签各保留最近 10 个（可调），两个仓库执行同一计划。
 # 默认只演练；把仓库变量 CLEANUP_APPLY 设为 true（或手动运行时勾选 apply）才会真正删除。
 on:
   schedule:
@@ -14,7 +14,11 @@ on:
       keep:
         description: 保留最近几个正式版
         type: string
-        default: '1'
+        default: '10'
+      keep_tags:
+        description: 保留最近几个标签
+        type: string
+        default: ''
 
 concurrency:
   group: clean-releases
@@ -36,12 +40,14 @@ jobs:
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
         run: |
           KEEP='${{ github.event.inputs.keep }}'
-          [ -n "$KEEP" ] || KEEP=1
+          [ -n "$KEEP" ] || KEEP=10
+          KEEP_TAGS='${{ github.event.inputs.keep_tags }}'
+          [ -n "$KEEP_TAGS" ] || KEEP_TAGS="$KEEP"
           APPLY=false
           if [ '${{ github.event.inputs.apply }}' = 'true' ] || [ '${{ vars.CLEANUP_APPLY }}' = 'true' ]; then APPLY=true; fi
           if [ "$APPLY" = 'true' ]; then
-            node scripts/clean-releases.mjs --apply --keep "$KEEP" --patterns 'v*,ci-*' --prune-assets
+            node scripts/clean-releases.mjs --apply --keep "$KEEP" --keep-tags "$KEEP_TAGS" --patterns 'v*,ci-*' --prune-assets
           else
             echo '演练模式：只输出计划。设置仓库变量 CLEANUP_APPLY=true 或手动运行勾选 apply 才会删除。'
-            node scripts/clean-releases.mjs --keep "$KEEP" --patterns 'v*,ci-*' --json
+            node scripts/clean-releases.mjs --keep "$KEEP" --keep-tags "$KEEP_TAGS" --patterns 'v*,ci-*' --json
           fi

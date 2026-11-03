@@ -34,7 +34,7 @@ test('清理计划保留最新正式版，删除历史发行版与预发布', ()
       github: [release('v3.13.11', { assets: [{ id: 1, name: 'metaontic-video-3.13.11.tgz' }] }), release('v3.2.0'), release('v3.10.0-beta.2', { prerelease: true })],
       gitee: [release('v3.13.11'), release('v3.2.0')],
     },
-    currentVersion: '3.13.11',
+    currentVersion: '3.13.11', keep: 1, keepTags: 1,
   });
   assert.deepEqual(plan.keep.map(item => item.tag), ['v3.13.11']);
   assert.deepEqual(plan.remove.map(item => item.tag), ['v3.10.0-beta.2', 'v3.2.0']);
@@ -94,7 +94,7 @@ test('执行阶段按附件、发行版、标签顺序删除两个仓库并清�
       github: [release('v3.13.11', { id: 11 }), release('v3.2.0', { id: 20, assets: [{ id: 21, name: 'metaontic-video-3.2.0.tgz' }] }), { id: 99, tag: '', draft: true, prerelease: false, createdAt: null, assets: [] }],
       gitee: [release('v3.13.11', { id: 11 }), release('v3.2.0', { id: 20, assets: [{ id: 31, name: 'metaontic-video-3.2.0.tgz' }] })],
     },
-    currentVersion: '3.13.11', patterns: ['v*', 'ci-*'],
+    currentVersion: '3.13.11', patterns: ['v*', 'ci-*'], keep: 1, keepTags: 1,
   });
   const calls = [];
   const output = [];
@@ -183,7 +183,7 @@ test('只在 Gitee 存在的标签也会进入清理计划', async () => {
   const previous = process.env.GITEE_TOKEN;
   process.env.GITEE_TOKEN = 'tok';
   try {
-    const plan = await main(['--patterns', 'v*'], { run, log: () => {}, request });
+    const plan = await main(['--patterns', 'v*', '--keep', '1', '--keep-tags', '1'], { run, log: () => {}, request });
     assert.ok(plan.remove.some(item => item.tag === 'v3.9.9'), '只推过 Gitee 的标签必须进待删清单');
   } finally {
     if (previous === undefined) delete process.env.GITEE_TOKEN; else process.env.GITEE_TOKEN = previous;
@@ -194,7 +194,7 @@ test('执行阶段汇总失败项，保留版本的多余附件按当前远端�
   const plan = planCleanup({
     tags: ['v3.13.11', 'v3.2.0'],
     releases: { github: [release('v3.13.11', { id: 11, assets: [{ id: 1, name: 'metaontic-video-3.13.11.tgz' }, { id: 2, name: 'stale.zip' }] }), release('v3.2.0', { id: 20 })] },
-    currentVersion: '3.13.11',
+    currentVersion: '3.13.11', keep: 1, keepTags: 1,
   });
   const calls = [];
   const github = {
@@ -218,11 +218,33 @@ test('文档里写死的下载地址对应版本受保护，不会被回收', ()
   const plan = planCleanup({
     tags: ['v3.13.11', 'v3.13.10'],
     releases: { github: [release('v3.13.11', { id: 11 }), release('v3.13.10', { id: 10 })] },
-    currentVersion: '3.13.11', protectedTags: documentedTags(guide),
+    currentVersion: '3.13.11', protectedTags: documentedTags(guide), keep: 1, keepTags: 1,
   });
   assert.deepEqual(plan.keep.map(item => item.tag), ['v3.13.11', 'v3.13.10']);
   assert.ok(plan.keep.find(item => item.tag === 'v3.13.10').reason.includes('文档'));
   assert.deepEqual(plan.remove, []);
+});
+
+test('发行版与标签各保留最近 10 个，取并集', () => {
+  const versions = Array.from({ length: 12 }, (_, index) => `v1.0.${index}`);
+  const withReleases = versions.slice(-3);
+  const plan = planCleanup({
+    tags: versions,
+    releases: { github: withReleases.map((tag, index) => release(tag, { id: index + 1 })) },
+    currentVersion: '1.0.11',
+  });
+  assert.deepEqual(plan.remove.map(item => item.tag), ['v1.0.1', 'v1.0.0'], '只删掉两条保留线之外的版本');
+  const reasons = Object.fromEntries(plan.keep.map(item => [item.tag, item.reason]));
+  assert.ok(reasons['v1.0.11'].includes('发行版'), '有发行版的按发行版保留');
+  assert.ok(reasons['v1.0.2'].includes('标签'), '没有发行版但仍在最近 10 个标签里的也要保留');
+  const loose = planCleanup({ tags: versions, releases: {}, currentVersion: '1.0.11' });
+  assert.deepEqual(loose.remove.map(item => item.tag), ['v1.0.1', 'v1.0.0']);
+  const tight = planCleanup({
+    tags: versions,
+    releases: { github: withReleases.map((tag, index) => release(tag, { id: index + 1 })) },
+    currentVersion: '1.0.11', keep: 1, keepTags: 1,
+  });
+  assert.deepEqual(tight.keep.map(item => item.tag), ['v1.0.11']);
 });
 
 test('计划统计预计释放的附件体积', () => {
@@ -232,7 +254,7 @@ test('计划统计预计释放的附件体积', () => {
       github: [release('v3.13.11', { id: 11 }), release('v3.2.0', { id: 20, assets: [{ id: 1, name: 'a.zip', size: 1048576 }, { id: 2, name: 'a.zip.sha256', size: 100 }] })],
       gitee: [release('v3.13.11', { id: 11 }), release('v3.2.0', { id: 20, assets: [{ id: 3, name: 'a.zip', size: 2097152 }] })],
     },
-    currentVersion: '3.13.11',
+    currentVersion: '3.13.11', keep: 1, keepTags: 1,
   });
   assert.equal(plan.freedBytes.github, 1048676);
   assert.equal(plan.freedBytes.gitee, 2097152);
@@ -242,11 +264,15 @@ test('计划统计预计释放的附件体积', () => {
 
 test('命令行参数校验默认值并拒绝危险输入', () => {
   const options = parseArgs([]);
-  assert.equal(options.keep, 1);
+  assert.equal(options.keep, 10);
+  assert.equal(options.keepTags, 10, '默认与 --keep 保持一致');
   assert.equal(options.apply, false);
   assert.deepEqual(options.patterns, ['v*']);
   assert.deepEqual(options.hosts, ['github', 'gitee']);
   assert.equal(parseArgs(['--apply', '--keep', '3', '--host', 'gitee', '--max-age-days', '30']).keep, 3);
+  assert.equal(parseArgs(['--keep', '3']).keepTags, 3, '不单独指定时标签跟着发行版数量');
+  assert.equal(parseArgs(['--keep', '3', '--keep-tags', '7']).keepTags, 7);
+  assert.throws(() => parseArgs(['--keep-tags', '0']), /--keep-tags 必须是不小于 1 的整数/);
   assert.equal(parseArgs(['--host', 'gitee']).hosts[0], 'gitee');
   assert.equal(parseArgs(['--help']).help, true);
   assert.throws(() => parseArgs(['--keep', '0']), /不小于 1/);
@@ -279,12 +305,12 @@ test('演练不删除任何东西，加 --apply 才真正下发删除', async ()
   const previous = process.env.GITEE_TOKEN;
   delete process.env.GITEE_TOKEN;
   try {
-    await main(['--patterns', 'v*,ci-*'], deps);
+    await main(['--patterns', 'v*,ci-*', '--keep', '1', '--keep-tags', '1'], deps);
     assert.deepEqual(commands, [], '演练不能下发任何删除');
     assert.ok(output.some(line => line.includes('演练结束')));
     assert.ok(output.some(line => line.includes('v3.2.0')), '演练要列出待删版本');
     output.length = 0;
-    await main(['--patterns', 'v*,ci-*', '--apply', '--host', 'github'], { run, log, request: deps.request });
+    await main(['--patterns', 'v*,ci-*', '--apply', '--host', 'github', '--keep', '1', '--keep-tags', '1'], { run, log, request: deps.request });
     assert.ok(commands.some(line => line.includes('/git/refs/tags/v3.2.0')));
     assert.ok(commands.some(line => line.includes('/git/refs/tags/ci-test')));
     assert.ok(!commands.some(line => line.includes('v3.13.11')), '最新正式版不能删');
