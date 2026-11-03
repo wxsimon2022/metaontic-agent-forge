@@ -128,3 +128,5 @@ Windows解压目录安装在更新时出现空目录/locale缺失：先核对成
 更新安全：runOnlineUpdate先用pluginManager.listBundles读取本插件installed/source（兼容原数组和ok/value回包），本地目录/link一律禁止直接替换；来源未知、接口缺失、元信息异常失败关闭。用户已复现Windows点击立即更新清空外部目录，之前成品首次安装验收遗漏本地链接迁移；不能再以恢复目录代替修复更新动作。记录来源与实际解析路径可能在异常迁移后不同，来源检查不能宣称自动修复既有损坏。双平台烟测需真实旧成品升级并断言原安装文件、配置、任务保留。
 
 一键发布使用scripts/release.mjs（npm run release -- X.Y.Z），先准备本地release-plan.json完整条目及指南核对；--dry-run不改文件/版本/标签，不触发发布。脚本从实际最新正式版核对范围，禁止覆盖标签；双仓不全成功时报告失败，同版本--resume续跑。跨平台构建使用scripts/build.mjs的esbuild API，禁止POSIX命令替换使Windows构建失败。编写或测试发布脚本本身不等于获准执行真实发布。
+
+历史版本回收使用scripts/clean-releases.mjs（npm run clean:releases -- --apply）：默认演练，只删计划内对象，最新正式版、当前package.json版本以及README/说明书/CHANGELOG/本文件里.tgz下载地址引用过的版本永不删除；先附件、再发行版、最后标签，GitHub与Gitee同一计划并同步本地标签，演练同时给出预计释放的附件体积。定期删除由.github/workflows/clean-releases.yml按周演练，只有仓库变量CLEANUP_APPLY=true或手动勾选apply才真正执行。回收不是发版，但删除不可逆，先看演练输出的保留集与待删清单再执行，不在发布流程中间插入清理。

@@ -1,0 +1,47 @@
+name: clean-releases
+
+# 定期清理历史标签、发行版及发行版附件：只保留最新正式版（可调），两个仓库执行同一计划。
+# 默认只演练；把仓库变量 CLEANUP_APPLY 设为 true（或手动运行时勾选 apply）才会真正删除。
+on:
+  schedule:
+    - cron: '17 20 * * 0'
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 确认真的删除（不勾选只输出演练计划）
+        type: boolean
+        default: false
+      keep:
+        description: 保留最近几个正式版
+        type: string
+        default: '1'
+
+concurrency:
+  group: clean-releases
+  cancel-in-progress: false
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Plan or clean history releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+        run: |
+          KEEP='${{ github.event.inputs.keep }}'
+          [ -n "$KEEP" ] || KEEP=1
+          APPLY=false
+          if [ '${{ github.event.inputs.apply }}' = 'true' ] || [ '${{ vars.CLEANUP_APPLY }}' = 'true' ]; then APPLY=true; fi
+          if [ "$APPLY" = 'true' ]; then
+            node scripts/clean-releases.mjs --apply --keep "$KEEP" --patterns 'v*,ci-*' --prune-assets
+          else
+            echo '演练模式：只输出计划。设置仓库变量 CLEANUP_APPLY=true 或手动运行勾选 apply 才会删除。'
+            node scripts/clean-releases.mjs --keep "$KEEP" --patterns 'v*,ci-*' --json
+          fi

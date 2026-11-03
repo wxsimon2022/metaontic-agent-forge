@@ -28,3 +28,5 @@
 7. 用户指南、教程、宣传页涉及的平台操作保持一致；指南不写版本日志，工程验证写入对应release文档。
 
 自动检查入口：scripts/check-package-install.mjs。CI发布检查：.github/workflows/publish.yml。
+
+维护脚本（scripts/release.mjs、scripts/clean-releases.mjs、scripts/pack-test.mjs）只用于开发环境，不进插件成品包；它们通过参数数组调用 node、git、gh，不依赖 POSIX 专有命令，Windows 与 macOS 使用同一入口。clean-releases.mjs 默认只演练，删除不可逆，需人工确认计划（或由仓库变量显式开启的定期工作流）后执行。

@@ -1601,6 +1601,7 @@
       build: "npm run typecheck && node scripts/build.mjs",
       preview: "node scripts/preview.mjs",
       release: "node scripts/release.mjs",
+      "clean:releases": "node scripts/clean-releases.mjs",
       "pack:test": "node scripts/pack-test.mjs"
     },
     dependencies: {},

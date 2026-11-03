@@ -621,6 +621,31 @@ dsh plugin --profile desktop add "/你的绝对路径/metaontic-video-plugin/pac
 只保留本次适用的更新分类。未核实 Release 附件时不能写“插件包上传成功”；部分仓库推送失败时明确列出，不能笼统称全部成功。
 发布前检查工作区差异，确认本次提交范围；完成后报告实际提交号。
 
+### 定期清理历史标签与发行版（维护者）
+
+历史版本会不断累积标签、Release 和发行版附件，插件只对外提供最新正式版，因此可以定期回收旧版本。清理脚本同时处理 GitHub 与 Gitee，先演练、后删除：
+
+```text
+npm run clean:releases
+npm run clean:releases -- --apply
+```
+
+默认只打印清理计划，加 `--apply` 才真正删除；最新正式版始终保留，演练标签等不符合 `v*` 模式的标签默认忽略。常用参数：
+
+- `--keep <n>`：保留最近 n 个正式版，默认 1；小于 1 会被拒绝。
+- `--max-age-days <n>`：只清理 n 天以前发布的版本，新版本本次不动，适合先小步试跑。
+- `--patterns 'v*,ci-*'`：参与清理的标签模式，默认 `v*`；加 `ci-*` 可一并回收演练标签。
+- `--keep-prerelease`：额外保留最新的预发布，默认连同其他预发布一起删除。
+- `--prune-assets`：删除保留版本里不属于该版本的残留附件（例如旧命名或手动上传的文件），执行前会重新读取远端实际列表。
+- `--host github|gitee|all`：只清理其中一个仓库，默认两个都清理。
+- `--json`：以 JSON 输出计划，便于日志归档。
+
+不管参数怎么配，最新正式版、当前 `package.json` 版本、以及 README、使用说明书、CHANGELOG、工程经验里 `.tgz` 下载地址引用过的版本都会保留，避免现成链接失效；演练会同时给出预计释放的附件体积，便于对照 Gitee 配额。
+
+删除顺序是先附件、再 Release、最后标签，两个仓库与本地同名标签同步处理；单个仓库缺发行版时只删标签。脚本读取远端标签（`git ls-remote`）与两仓实际发行版，只删除计划内的对象，失败项会汇总后非零退出，可重复执行。
+
+需要长期无人值守时可启用 `.github/workflows/clean-releases.yml`：它每周运行一次，默认只演练；在仓库变量里设置 `CLEANUP_APPLY=true`（或手动运行工作流并勾选 apply）才会按同一计划删除，`keep` 可在手动运行时指定。Gitee 的读取与删除需要 Actions Secret `GITEE_TOKEN`，GitHub 侧使用工作流自带令牌。
+
 ## 官方资料与反馈
 
 - [创建视频生成任务 API](https://docs.volcengine.com/docs/ark/create-video-generation-task-api?lang=zh)
