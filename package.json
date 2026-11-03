@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.13.12",
+  "version": "3.13.13",
   "description": "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
   "license": "MIT",
   "type": "module",
@@ -98,13 +98,13 @@
   },
   "dependencies": {},
   "releaseNotes": {
-    "version": "3.13.12",
+    "version": "3.13.13",
     "prerelease": false,
-    "publishedAt": "2026-11-03T07:58:38.456Z",
+    "publishedAt": "2026-11-03T10:54:52.809Z",
     "items": [
-      "优化：脚本设计阶段的耗时统计改由插件自动结束——完整脚本保存为 script.md 后自动闭合该段计时并写入 script_saved 日志，不再依赖模型手动调用结束，阶段耗时统计更准确；脚本不是用写文件工具保存时仍按原方式补结束。",
-      "修复：发布时 Gitee 上传成品包偶发 HTTP 400 会让整次发布中断；现在失败会带出服务端返回正文，先复查附件表是否已收完，再按退避自动重试，减少人工重跑。",
-      "优化：新增维护者清理命令 npm run clean:releases（默认只演练），按同一份计划回收两个仓库的历史标签、发行版与发行版附件，最新正式版始终保留；并配套每周演练工作流，只有确认后才真正删除。"
+      "修复：Windows 在线更新反复失败、报 ERR_PNPM_MISSING_TARBALL_INTEGRITY 的问题。安装目录的 pnpm-lock.yaml 里只要留着一条本插件缺少校验值的远程包记录（包括旧版本留下的、已经没人引用的记录），pnpm 就会拒绝整次安装。插件现在按「本插件所有远程记录里哪些拿不到合法校验值」来判断，profile 根目录、下级目录与同级的临时 staging 目录里的锁文件都会检查，检查间隔由 10 秒缩短到 2 秒，坏记录连同依赖声明一起清掉、其他依赖和带校验值的正常记录不动，改前文件另存为 pnpm-lock.yaml.metaontic-backup-时间。",
+      "优化：命中上面这条报错时不再直接放弃——更新会等后台清理完成自动重试，用户不用自己数着秒再点一次；仍然失败才提示手动删除锁文件。中英文提示同步改为「每 2 秒自动清理 + 自动重试」。",
+      "优化：使用说明书、README 与工程规范同步这次排查结论与处理方式：说明该报错与插件包、操作系统无关，不是 Windows 文件占用问题，先等自动清理与重试，仍失败再完全退出 Harness 删除安装目录下的 pnpm-lock.yaml 后重装；说明书配图与 PDF 已随正文重新导出。"
     ]
   }
 }
