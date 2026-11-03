@@ -722,3 +722,15 @@ npm run release -- 3.13.3 --resume
 也可指定 `--notes /你的实际路径/说明.json`、`--branch master`、`--github https://github.com/wxsimon2022/metaontic-video.git`、`--gitee https://gitee.com/hackloop/metaontic-video.git`。默认使用当前双仓 SSH 443 地址；Gitee 目标与当前 CI 镜像配置绑定，修改项目归属前需同步 CI，不会静默发布到其他仓库。
 
 脚本依赖事先写好的完整说明，不能自动判断业务变化或代替指南审核。GitHub 已上传但 Gitee 超时时，会明确报告未全部完成，使用 `--resume` 重试，不要重新递增版本。
+
+### 测试包（发给他人试用，不进发布页）
+
+要验证还没发布的改动时，用测试版版本号打一个包，脚本会自动构建、跑测试、打出 `.tgz`、上传到线上目录，再核对线上包与本地一致：
+
+```text
+npm run pack:test -- 3.13.9-test.1
+```
+
+版本号必须是 `X.Y.Z-后缀` 形式，核心版本号压在当前正式版之下；只改包内版本号，不提交、不打标签、不建 Release，因此不影响其他人的正式版，测试者之后仍会收到下一次正式版的更新提示。脚本结束后会把 `package.json`、锁文件和构建产物还原成正式版本。
+
+上传完成后直接给出安装地址，形如 `https://video.mybfs.cn/test/metaontic-video-3.13.9-test.1.tgz`，发给测试者粘进「插件 → 添加插件」即可；目录页 `https://video.mybfs.cn/test/` 可看到历史测试包。加 `--no-upload` 只出本地包，用 `--out <目录>` 换输出目录；上传目标可用 `PACK_TEST_SERVER`、`PACK_TEST_DIR`、`PACK_TEST_URL` 覆盖。该目录由 moyubang 仓库的 `deploy/nginx/video.mybfs.cn.conf` 提供，刻意放在代码部署目录之外，`deploy.sh` 的 `rsync --delete` 不会清掉已上传的测试包。测试者用正式版 `.tgz` 地址重装即可回到正式版。
