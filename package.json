@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.13.11",
+  "version": "3.13.12",
   "description": "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
   "license": "MIT",
   "type": "module",
@@ -98,13 +98,13 @@
   },
   "dependencies": {},
   "releaseNotes": {
-    "version": "3.13.11",
+    "version": "3.13.12",
     "prerelease": false,
-    "publishedAt": "2026-11-03T04:32:54.491Z",
+    "publishedAt": "2026-11-03T07:58:38.456Z",
     "items": [
-      "修复：在线或本地安装报 ERR_PNPM_MISSING_TARBALL_INTEGRITY（安装目录的 pnpm-lock.yaml 里留着一条缺 integrity 的远程 tgz 记录，pnpm 因此拒绝整次安装）时，插件现在会在后台自己清掉本插件这条坏记录：加载时检查一次、之后每 10 秒复查，改前把原文件另存为同目录下的 pnpm-lock.yaml.metaontic-backup-时间，其他依赖和带校验值的正常记录一律不动，清理后更新即可继续，不再需要用户手动删除该文件。",
-      "优化：更新失败命中这条报错时，不再对同一地址重试三次、也不切换到另一个镜像源（这两种做法实测都同样失败，只会让用户白等），直接给出针对性提示：等待十几秒后再点一次「更新到最新正式版」，仍失败时再按提示手动删除 pnpm-lock.yaml；只有插件还没装上、后台还没有该清理动作时才需要手动处理。",
-      "优化：使用说明书与 README 同步写明自动清理与备份文件的位置，并说明这条报错与插件包、操作系统无关，避免继续把它当成 Windows 文件占用问题去排查。"
+      "优化：脚本设计阶段的耗时统计改由插件自动结束——完整脚本保存为 script.md 后自动闭合该段计时并写入 script_saved 日志，不再依赖模型手动调用结束，阶段耗时统计更准确；脚本不是用写文件工具保存时仍按原方式补结束。",
+      "修复：发布时 Gitee 上传成品包偶发 HTTP 400 会让整次发布中断；现在失败会带出服务端返回正文，先复查附件表是否已收完，再按退避自动重试，减少人工重跑。",
+      "优化：新增维护者清理命令 npm run clean:releases（默认只演练），按同一份计划回收两个仓库的历史标签、发行版与发行版附件，最新正式版始终保留；并配套每周演练工作流，只有确认后才真正删除。"
     ]
   }
 }
