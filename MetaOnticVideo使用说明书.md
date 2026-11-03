@@ -75,10 +75,10 @@ github:wxsimon2022/metaontic-video
 **也可以不下载到本地，直接粘贴成品地址：** 复制下面这条 Gitee 成品地址，粘贴到 DeepSeek Harness「插件 → 添加插件」即可安装，效果与填写本地文件路径相同，无需安装 Git。国内网络优先使用 Gitee。在线安装只认以 `.tgz` 结尾的附件地址；ZIP、`package` 文件夹和发布页网址只能用于本地安装，不能粘贴到在线安装框。
 
 ```text
-https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.9/metaontic-video-3.13.9.tgz
+https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.10/metaontic-video-3.13.10.tgz
 ```
 
-GitHub 同版本地址为 `https://github.com/wxsimon2022/metaontic-video/releases/download/v3.13.9/metaontic-video-3.13.9.tgz`。发布新版本后，把地址中的两处版本号换成发布页上的实际版本；也可以打开发布页，在附件中右键复制 `.tgz` 的下载链接。
+GitHub 同版本地址为 `https://github.com/wxsimon2022/metaontic-video/releases/download/v3.13.10/metaontic-video-3.13.10.tgz`。发布新版本后，把地址中的两处版本号换成发布页上的实际版本；也可以打开发布页，在附件中右键复制 `.tgz` 的下载链接。
 
 - GitHub 正式版下载页：`https://github.com/wxsimon2022/metaontic-video/releases/latest`
 - Gitee 发布页：`https://gitee.com/hackloop/metaontic-video/releases`
