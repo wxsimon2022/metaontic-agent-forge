@@ -151,6 +151,12 @@ test('消息说清 Gitee 标签的真实结局：删过了、真失败都有对�
   assert.ok(calls[1].some(value => value.includes('username=hackloop')));
 });
 
+test('远端标签早已不存在时不算删除成功（git 会返回 0 只给警告）', async () => {
+  const realOutput = 'remote: warning: deleting a non-existent ref\nTo gitee.com:owner/repo.git\n - [deleted]         v3.2.0\n';
+  const client = createGiteeClient({ slug: 'owner/repo', token: 'tok', run: () => ({ status: 0, stdout: '', stderr: realOutput }), request: async () => ({ ok: false, status: 403, json: async () => ({}) }) });
+  assert.equal(await client.removeTag('v3.2.0'), false, '要如实告诉调用方这个标签本来就不在');
+});
+
 test('只在 Gitee 存在的标签也会进入清理计划', async () => {
   const tagLines = ['v3.13.11', 'v3.13.10'].map((tag, index) => `sha${index}\trefs/tags/${tag}`).join('\n');
   const githubReleases = ['v3.13.11', 'v3.13.10'].map((tag, index) => JSON.stringify({ id: index + 1, tag_name: tag, draft: false, prerelease: false, created_at: '2026-01-01T00:00:00Z', assets: [] })).join('\n');

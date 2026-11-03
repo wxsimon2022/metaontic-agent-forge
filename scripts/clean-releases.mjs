@@ -317,8 +317,9 @@ export function createGiteeClient({ slug = 'hackloop/metaontic-video', token, re
         const login = await accountLogin();
         if (login && login !== pushAs) { pushAs = login; result = push(); }
       }
-      if (result.status === 0) return true;
+      // 标签在远端早已不存在时 git 仍然返回成功，只在输出里给警告；这里如实返回“已不存在”。
       if (/remote ref does not exist|deleting a non-existent ref/i.test(credentialOutput(result))) return false;
+      if (result.status === 0) return true;
       throw new Error(`删除 Gitee 标签 ${tag} 失败：${credentialOutput(result) || `退出码 ${result.status}`}`);
     },
     remove: async resource => {
