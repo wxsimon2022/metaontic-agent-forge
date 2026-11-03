@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compareVersions, parseVersion, matchesPattern, expectedAssets, documentedTags, planCleanup, formatPlan, applyCleanup, parseArgs, mapPool, main } from '../scripts/clean-releases.mjs';
+import { compareVersions, parseVersion, matchesPattern, expectedAssets, documentedTags, planCleanup, formatPlan, applyCleanup, parseArgs, mapPool, main, createGiteeClient } from '../scripts/clean-releases.mjs';
 
 const release = (tag, extra = {}) => ({ id: Number(String(tag).replace(/\D/g, '').slice(0, 6)) || 1, tag, draft: false, prerelease: false, createdAt: '2026-01-01T00:00:00Z', assets: [], ...extra });
 
@@ -99,7 +99,7 @@ test('执行阶段按附件、发行版、标签顺序删除两个仓库并清�
   const calls = [];
   const output = [];
   const github = { slug: 'owner/repo', listReleases: async () => [], remove: async path => { calls.push(`gh ${path}`); return true; } };
-  const gitee = { slug: 'owner/repo', listReleases: async () => [], listAttachments: async () => [], remove: async path => { calls.push(`gitee ${path}`); return path === '/tags/ci-test' ? false : true; } };
+  const gitee = { slug: 'owner/repo', listReleases: async () => [], listAttachments: async () => [], remove: async path => { calls.push(`gitee ${path}`); return true; }, removeTag: async tag => { calls.push(`gitee tag ${tag}`); return tag !== 'ci-test'; } };
   const local = { deleteTag: tag => calls.push(`git tag -d ${tag}`) };
   await applyCleanup({ plan, github, gitee, local, log: message => output.push(String(message)) });
   assert.deepEqual(calls, [
@@ -108,14 +108,68 @@ test('执行阶段按附件、发行版、标签顺序删除两个仓库并清�
     'gitee /releases/20/attach_files/31',
     'gitee /releases/20',
     'gh /repos/owner/repo/git/refs/tags/v3.2.0',
-    'gitee /tags/v3.2.0',
+    'gitee tag v3.2.0',
     'git tag -d v3.2.0',
     'gh /repos/owner/repo/git/refs/tags/ci-test',
-    'gitee /tags/ci-test',
+    'gitee tag ci-test',
     'git tag -d ci-test',
     'gh /repos/owner/repo/releases/99',
   ]);
   assert.ok(output.some(line => line.includes('Gitee 标签 ci-test（远端已不存在）')), '远端已删过的对象要如实说明');
+});
+
+test('Gitee 标签用私人令牌走 HTTPS 推送删除，令牌不进命令行', async () => {
+  const calls = [];
+  const run = (command, args) => { calls.push({ command, args }); return { status: 0, stdout: '', stderr: '' }; };
+  const client = createGiteeClient({ slug: 'owner/repo', token: 'secret-token', run, request: async () => ({ ok: false, status: 403, json: async () => ({}) }) });
+  assert.equal(await client.removeTag('v3.2.0'), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].command, 'git');
+  assert.deepEqual(calls[0].args.slice(-3), ['push', 'https://gitee.com/owner/repo.git', ':refs/tags/v3.2.0']);
+  assert.ok(calls[0].args.includes('credential.helper='), '先清空既有凭据助手，避免命中本机旧凭据');
+  assert.ok(calls[0].args.some(value => value.includes('echo password=$GITEE_TOKEN')), '令牌从环境变量读');
+  assert.ok(!calls[0].args.some(value => value.includes('secret-token')), '令牌不能出现在命令行参数里');
+});
+
+test('消息说清 Gitee 标签的真实结局：删过了、真失败都有对应结果', async () => {
+  const returns = [
+    { status: 128, stdout: '', stderr: 'error: failed to push some refs\n ! [remote rejected] (deleting a non-existent ref)' },
+    { status: 128, stdout: '', stderr: 'fatal: Authentication failed for https://gitee.com/owner/repo.git/' },
+  ];
+  const run = () => returns.shift();
+  const client = createGiteeClient({ slug: 'owner/repo', token: 'tok', run, request: async () => ({ ok: true, status: 200, json: async () => ({ login: 'hackloop' }) }) });
+  assert.equal(await client.removeTag('v3.2.0'), false, '远端已经没有这个标签要如实返回，不能算失败');
+  const calls = [];
+  const retryRun = (command, args) => { calls.push(args); return calls.length === 1
+    ? { status: 128, stdout: '', stderr: 'remote: HTTP 403' }
+    : { status: 0, stdout: '', stderr: '' }; };
+  const retry = createGiteeClient({ slug: 'owner/repo', token: 'tok', run: retryRun, request: async () => ({ ok: true, status: 200, json: async () => ({ login: 'hackloop' }) }) });
+  assert.equal(await retry.removeTag('v3.2.0'), true, '认证失败后换成真实登录名重试一次');
+  assert.ok(calls[0].some(value => value.includes('username=oauth2')));
+  assert.ok(calls[1].some(value => value.includes('username=hackloop')));
+});
+
+test('只在 Gitee 存在的标签也会进入清理计划', async () => {
+  const tagLines = ['v3.13.11', 'v3.13.10'].map((tag, index) => `sha${index}\trefs/tags/${tag}`).join('\n');
+  const githubReleases = ['v3.13.11', 'v3.13.10'].map((tag, index) => JSON.stringify({ id: index + 1, tag_name: tag, draft: false, prerelease: false, created_at: '2026-01-01T00:00:00Z', assets: [] })).join('\n');
+  const run = (command, args) => {
+    if (command === 'git' && args[0] === 'ls-remote') return { status: 0, stdout: tagLines, stderr: '' };
+    if (command === 'gh' && args.includes('--paginate')) return { status: 0, stdout: githubReleases, stderr: '' };
+    return { status: 0, stdout: '', stderr: '' };
+  };
+  const request = async target => {
+    const href = String(target);
+    if (href.includes('/tags')) return { ok: true, status: 200, json: async () => [{ name: 'v3.13.11' }, { name: 'v3.13.10' }, { name: 'v3.9.9' }] };
+    return { ok: true, status: 200, json: async () => [] };
+  };
+  const previous = process.env.GITEE_TOKEN;
+  process.env.GITEE_TOKEN = 'tok';
+  try {
+    const plan = await main(['--patterns', 'v*'], { run, log: () => {}, request });
+    assert.ok(plan.remove.some(item => item.tag === 'v3.9.9'), '只推过 Gitee 的标签必须进待删清单');
+  } finally {
+    if (previous === undefined) delete process.env.GITEE_TOKEN; else process.env.GITEE_TOKEN = previous;
+  }
 });
 
 test('执行阶段汇总失败项，保留版本的多余附件按当前远端状态重新核对', async () => {

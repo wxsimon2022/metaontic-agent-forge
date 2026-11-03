@@ -642,9 +642,9 @@ npm run clean:releases -- --apply
 
 不管参数怎么配，最新正式版、当前 `package.json` 版本、以及 README、使用说明书、CHANGELOG、工程经验里 `.tgz` 下载地址引用过的版本都会保留，避免现成链接失效；演练会同时给出预计释放的附件体积，便于对照 Gitee 配额。
 
-删除顺序是先附件、再 Release、最后标签，两个仓库与本地同名标签同步处理；单个仓库缺发行版时只删标签。脚本读取远端标签（`git ls-remote`）与两仓实际发行版，只删除计划内的对象，失败项会汇总后非零退出，可重复执行。
+删除顺序是先附件、再 Release、最后标签，两个仓库与本地同名标签同步处理；单个仓库缺发行版时只删标签。待删标签取远端标签列表（`git ls-remote`）与 Gitee 标签接口的并集，只在 Gitee 推过的标签同样进计划。GitHub 标签用 `gh api` 删除；Gitee 开放接口只有标签的读取与创建、没有删除端点，所以 Gitee 标签靠带 `GITEE_TOKEN` 的 HTTPS 推送删除引用（令牌只从环境变量读取，不进入命令行与日志）。脚本只删除计划内的对象，失败项会汇总后非零退出，可重复执行。
 
-需要长期无人值守时可启用 `.github/workflows/clean-releases.yml`：它每周运行一次，默认只演练；在仓库变量里设置 `CLEANUP_APPLY=true`（或手动运行工作流并勾选 apply）才会按同一计划删除，`keep` 可在手动运行时指定。Gitee 的读取与删除需要 Actions Secret `GITEE_TOKEN`，GitHub 侧使用工作流自带令牌。
+需要长期无人值守时可启用 `.github/workflows/clean-releases.yml`：它每周运行一次，默认只演练；在仓库变量里设置 `CLEANUP_APPLY=true`（或手动运行工作流并勾选 apply）才会按同一计划删除，`keep` 可在手动运行时指定。Gitee 的读取、删除以及标签的 HTTPS 推送删除都需要 Actions Secret `GITEE_TOKEN`，GitHub 侧使用工作流自带令牌。
 
 ## 官方资料与反馈
 

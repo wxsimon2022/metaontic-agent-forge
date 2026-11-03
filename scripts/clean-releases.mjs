@@ -242,14 +242,34 @@ export function createGithubClient({ slug, run = defaultRun }) {
   };
 }
 
-export function createGiteeClient({ slug = 'hackloop/metaontic-video', token, request = fetch }) {
+/** 私人令牌走 HTTPS 推送时的凭据助手：用户名进命令行，令牌只从环境变量读，不落到 argv 与日志里。 */
+export function tagCredentialHelper(username) {
+  return `!f(){ echo username=${username}; echo password=$GITEE_TOKEN; };f`;
+}
+
+function credentialOutput(result) {
+  return `${result.stderr || ''}${result.stdout || ''}`.trim();
+}
+
+export function createGiteeClient({ slug = 'hackloop/metaontic-video', token, request = fetch, run = defaultRun }) {
   if (!token) throw new Error('缺少 GITEE_TOKEN，无法读取或清理 Gitee 发行版。');
-  const url = (resource, params = {}) => {
-    const target = new URL(`https://gitee.com/api/v5/repos/${slug}${resource}`);
+  const endpoint = (path, params = {}) => {
+    const target = new URL(`https://gitee.com/api/v5/${path}`);
     target.searchParams.set('access_token', token);
     for (const [key, value] of Object.entries(params)) target.searchParams.set(key, String(value));
     return target;
   };
+  const url = (resource, params) => endpoint(`repos/${slug}${resource}`, params);
+  // 令牌对应的真实登录名；部分账号不接受 oauth2 这个固定用户名，失败时用它对一次。
+  const accountLogin = async () => {
+    try {
+      const response = await request(endpoint('user'), { signal: AbortSignal.timeout(20000) });
+      if (!response.ok) return '';
+      const data = await response.json();
+      return typeof data?.login === 'string' ? data.login : '';
+    } catch { return ''; }
+  };
+  let pushAs = 'oauth2';
   const list = async (resource, params) => {
     const collected = [];
     for (let page = 1; page <= 50; page += 1) {
@@ -273,6 +293,25 @@ export function createGiteeClient({ slug = 'hackloop/metaontic-video', token, re
       assets: [],
     })),
     listAttachments: async id => (await list(`/releases/${id}/attach_files`)).map(file => ({ id: file.id, name: file.name || file.file_name, size: Number(file.size) })),
+    listTags: async () => (await list('/tags')).map(item => item.name).filter(Boolean),
+    // Gitee 开放接口只有标签的读取与创建，没有删除端点（DELETE /tags 不存在，只会返回 404），
+    // 所以远程标签必须用令牌走 HTTPS 推送删引用，不能用接口。
+    removeTag: async tag => {
+      const push = () => run('git', [
+        '-c', 'credential.helper=',
+        '-c', `credential.helper=${tagCredentialHelper(pushAs)}`,
+        '-c', 'credential.useHttpPath=true',
+        'push', `https://gitee.com/${slug}.git`, `:refs/tags/${tag}`,
+      ]);
+      let result = push();
+      if (result.status !== 0 && pushAs === 'oauth2' && /40[13]|Authentication failed|Invalid username or password|could not read Username/i.test(credentialOutput(result))) {
+        const login = await accountLogin();
+        if (login && login !== pushAs) { pushAs = login; result = push(); }
+      }
+      if (result.status === 0) return true;
+      if (/remote ref does not exist|deleting a non-existent ref/i.test(credentialOutput(result))) return false;
+      throw new Error(`删除 Gitee 标签 ${tag} 失败：${credentialOutput(result) || `退出码 ${result.status}`}`);
+    },
     remove: async resource => {
       const response = await request(url(resource), { method: 'DELETE', signal: AbortSignal.timeout(60000) });
       if (response.status === 404) return false;
@@ -298,7 +337,7 @@ export async function applyCleanup({ plan, github, gitee, local, pruneAssets = f
       await attempt(`删除 Gitee 发行版 ${item.tag}`, () => gitee.remove(`/releases/${item.gitee.id}`));
     }
     if (github) await attempt(`删除 GitHub 标签 ${item.tag}`, () => github.remove(`/repos/${github.slug}/git/refs/tags/${encodeURIComponent(item.tag)}`));
-    if (gitee) await attempt(`删除 Gitee 标签 ${item.tag}`, () => gitee.remove(`/tags/${encodeURIComponent(item.tag)}`));
+    if (gitee) await attempt(`删除 Gitee 标签 ${item.tag}`, () => gitee.removeTag(item.tag));
     if (local) await attempt(`删除本地标签 ${item.tag}`, () => local.deleteTag(item.tag));
   }
   for (const item of plan.drafts) await attempt(`删除 GitHub 草稿发行版 ${item.id}`, () => github.remove(`/repos/${github.slug}/releases/${item.id}`));
@@ -334,7 +373,8 @@ export async function mapPool(items, limit, worker) {
 }
 
 function defaultRun(command, args) {
-  const result = spawnSync(command, args, { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
+  // 凭据缺失时必须立刻失败，不能挂在交互式提示上；git 一律在仓库根目录执行。
+  const result = spawnSync(command, args, { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } });
   return { status: result.status ?? 1, stdout: result.stdout || '', stderr: result.stderr || result.error?.message || '' };
 }
 
@@ -391,17 +431,19 @@ export async function main(argv = process.argv.slice(2), deps = {}) {
   let gitee = null;
   if (options.hosts.includes('gitee')) {
     const slug = parseRepository(options.gitee, 'gitee.com').slug;
-    if (token || options.apply) gitee = createGiteeClient({ slug, token, request: deps.request || fetch });
+    if (token || options.apply) gitee = createGiteeClient({ slug, token, request: deps.request || fetch, run });
     else log('提示：未设置 GITEE_TOKEN，演练只列出本地可见的标签，不读取 Gitee 发行版与附件。');
   }
-  const tags = remoteTags(options.remote, run);
-  if (!tags) log(`警告：读取 ${options.remote} 远端标签失败，改用本地标签列表，结果可能不是最新。`);
+  const listed = remoteTags(options.remote, run);
+  if (!listed) log(`警告：读取 ${options.remote} 远端标签失败，改用本地标签列表，结果可能不是最新。`);
+  // 只在 Gitee 推过的标签不会出现在别的远端列表里，必须合并后再进计划，否则永远清不掉。
+  const tags = [...new Set([...(listed || (run('git', ['tag']).stdout || '').split('\n').filter(Boolean)), ...(gitee ? await gitee.listTags() : [])])];
   const giteeReleases = gitee ? await gitee.listReleases() : [];
   // Gitee 的发行版列表不含附件，逐个补读，计划与删除都以实际附件为准。
   await mapPool(giteeReleases, 5, async release => { release.assets = await gitee.listAttachments(release.id); });
   const releases = { github: github ? await github.listReleases() : [], gitee: giteeReleases };
   const plan = planCleanup({
-    tags: tags || (run('git', ['tag']).stdout || '').split('\n').filter(Boolean),
+    tags,
     releases, keep: options.keep, keepPrerelease: options.keepPrerelease, maxAgeDays: options.maxAgeDays,
     patterns: options.patterns, currentVersion, drafts: !options.keepDrafts,
     protectedTags: [...documentedTags(DOCUMENTED_FILES.map(name => {
