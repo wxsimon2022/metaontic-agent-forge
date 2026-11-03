@@ -55,8 +55,39 @@ test('slow Gitee upload survives a client timeout only when the attachment is ve
       if (options.method === 'PATCH') return { ok: true, json: async () => release };
       return { ok: true, json: async () => release };
     };
-    const args = { token: 'test-token', tag: 'v3.3.0', archive, notes: 'release notes' };
+    const args = { token: 'test-token', tag: 'v3.3.0', archive, notes: 'release notes', retry: { attempts: 3, delayMs: 0 } };
     await assert.rejects(publishGitee({ ...args, request: makeRequest({ stored: false }) }), /aborted due to timeout/);
     assert.ok((await publishGitee({ ...args, request: makeRequest({ stored: true }) })).endsWith('v3.3.0'));
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+test('a transient Gitee upload failure is retried and reports the server body when it keeps failing', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'gitee-retry-'));
+  try {
+    const filename = 'MetaOnticVideo-Windows-3.3.0.zip';
+    const archive = join(dir, filename); await writeFile(archive, 'archive-bytes');
+    const release = { id: 1, body: 'release notes', prerelease: false };
+    const makeRequest = failures => {
+      let attempts = 0; const attachments = [];
+      return async (url, options) => {
+        const path = url.pathname;
+        if (options.method === 'POST' && path.endsWith('/attach_files')) {
+          attempts += 1;
+          if (attempts <= failures) return { ok: false, status: 400, text: async () => '请求超时，请稍后重试' };
+          attachments.push({ name: filename, size: 13 });
+          return { ok: true, json: async () => attachments[0] };
+        }
+        if (path.endsWith('/attach_files')) return { ok: true, json: async () => attachments };
+        if (options.method === 'PATCH') return { ok: true, json: async () => release };
+        return { ok: true, json: async () => release };
+      };
+    };
+    const args = { token: 'test-token', tag: 'v3.3.0', archive, notes: 'release notes', retry: { attempts: 4, delayMs: 0 } };
+    assert.ok((await publishGitee({ ...args, request: makeRequest(2) })).endsWith('v3.3.0'));
+    await assert.rejects(publishGitee({ ...args, request: makeRequest(9) }), error => {
+      assert.match(error.message, /HTTP 400 请求超时/);
+      assert.match(error.message, /重试 4 次仍失败/);
+      return true;
+    });
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
