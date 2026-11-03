@@ -1,0 +1,39 @@
+name: gitee-prune
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 只列出会被删除的发行版，不执行删除
+        type: boolean
+        default: true
+      keep:
+        description: 至少保留最新的发行版个数
+        default: '3'
+      days:
+        description: 只删除创建时间早于该天数的发行版
+        default: '3'
+      delete_tags:
+        description: 同时删除对应的 git 标签（不释放配额，一般不需要）
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prune expired Gitee releases
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          KEEP: ${{ inputs.keep }}
+          DAYS: ${{ inputs.days }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          DELETE_TAGS: ${{ inputs.delete_tags }}
+        run: node scripts/prune-gitee.mjs
