@@ -1927,13 +1927,135 @@ ${order()}` };
   return { remember, observe, gate };
 }
 
-// src/utils/timing.ts
+// src/tools/video-stage.ts
 import { randomUUID } from "node:crypto";
 import { performance } from "node:perf_hooks";
+var STAGES = ["script_design", "storyboard_design", "script_present", "script_review_wait", "production_confirm_wait", "reference_review_wait", "segment_review_wait", "result_present"];
+var pendingStages = /* @__PURE__ */ new Map();
+async function closePendingStage(stage, source) {
+  let target;
+  for (const [spanId, entry2] of pendingStages) if (entry2.stage === stage) target = spanId;
+  if (!target) return null;
+  const entry = pendingStages.get(target);
+  pendingStages.delete(target);
+  const elapsedMs = Math.round((performance.now() - entry.start) * 1e3) / 1e3;
+  await appendRequestLog({
+    event: "stage_finished",
+    stage: entry.stage,
+    spanId: target,
+    startedAt: entry.startedAt,
+    finishedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    elapsedMs,
+    outcome: "success",
+    source
+  });
+  return { spanId: target, elapsedMs };
+}
+function stageTool() {
+  return {
+    name: "video_stage",
+    description: "\u53EA\u8BFB\u8BA1\u65F6\u6807\u8BB0\uFF0C\u4E0D\u751F\u6210\u3001\u4E0D\u6263\u8D39\u3001\u4E0D\u6539\u914D\u7F6E\u3002\u811A\u672C\u8BBE\u8BA1/\u793A\u610F\u56FE/\u5C55\u793A/\u7B49\u5F85\u5BA1\u6838\u7B49\u9636\u6BB5\u5F00\u59CB\u65F6action=start\uFF0C\u7ED3\u675F\u65F6action=finish\u5E76\u4F20\u539FspanId\u3002\u811A\u672C\u8BBE\u8BA1\u4E00\u6BB5\u5728\u811A\u672C\u4FDD\u5B58\u5230script.md\u540E\u7531\u63D2\u4EF6\u81EA\u52A8\u7ED3\u675F\uFF0C\u6B64\u65F6\u4E0D\u5FC5\u518D\u8C03finish\uFF1B\u811A\u672C\u4E0D\u662F\u7528\u5199\u6587\u4EF6\u5DE5\u5177\u4FDD\u5B58\u65F6\u518D\u8865finish\u3002\u8017\u65F6\u662F\u6807\u8BB0\u8FB9\u754C\u95F4\u5899\u949F\u65F6\u95F4\uFF08\u5305\u542B\u5DE5\u5177\u8C03\u5EA6\uFF09\uFF0C\u4E0D\u662F\u6A21\u578B\u7EAF\u63A8\u7406\u8017\u65F6\uFF1B\u7B49\u5F85\u7528\u6237\u5355\u72EC\u8BB0\u9636\u6BB5\u3002\u7F3A\u5931\u5F00\u59CB\u6216\u70ED\u91CD\u8F7D\u4E22\u5931\u6807\u8BB0\u65F6\u8FD4\u56DEunavailable\uFF0C\u4E0D\u731C\u8017\u65F6\u3002",
+    parameters: { type: "object", properties: { action: { type: "string", enum: ["start", "finish"] }, stage: { type: "string", enum: STAGES }, spanId: { type: "string" }, outcome: { type: "string", enum: ["success", "cancelled", "error"] } }, required: ["action", "stage"] },
+    output: { schema: { type: "object", properties: { status: { type: "string" }, spanId: { type: "string" }, elapsedMs: { type: "number" } } }, render(_args, value) {
+      return [{ type: "text", text: JSON.stringify(value) }];
+    } },
+    timeoutMs: 1e4,
+    isConcurrencySafe() {
+      return true;
+    },
+    async execute(args) {
+      if (!STAGES.includes(args?.stage)) throw new Error("\u672A\u77E5\u8BA1\u65F6\u9636\u6BB5");
+      if (args.action === "start") {
+        if (pendingStages.size >= 512) return { status: "unavailable" };
+        const spanId = randomUUID(), startedAt = (/* @__PURE__ */ new Date()).toISOString();
+        pendingStages.set(spanId, { stage: args.stage, startedAt, start: performance.now() });
+        await appendRequestLog({ event: "stage_started", stage: args.stage, spanId, startedAt, source: "assistant_marker" });
+        return { status: "started", spanId };
+      }
+      if (args.action !== "finish") throw new Error("\u672A\u77E5\u8BA1\u65F6\u52A8\u4F5C");
+      const entry = pendingStages.get(args.spanId);
+      if (!entry || entry.stage !== args.stage) return { status: "unavailable" };
+      pendingStages.delete(args.spanId);
+      const elapsedMs = Math.round((performance.now() - entry.start) * 1e3) / 1e3;
+      const outcome = ["success", "cancelled", "error"].includes(args.outcome) ? args.outcome : "success";
+      await appendRequestLog({ event: "stage_finished", stage: entry.stage, spanId: args.spanId, startedAt: entry.startedAt, finishedAt: (/* @__PURE__ */ new Date()).toISOString(), elapsedMs, outcome, source: "assistant_marker" });
+      return { status: "finished", spanId: args.spanId, elapsedMs };
+    }
+  };
+}
+
+// src/workflow/script-tracking.ts
+var SCRIPT_FILE = /^script(?:[-_]?v?\d+)?\.md$/i;
+var WRITE_TOOLS = /* @__PURE__ */ new Set(["write", "edit", "multi_edit", "multiedit", "apply_patch"]);
+var PATCH_FILE_LINE = /^\*\*\* (?:Add|Update|Delete) File: (.+)$/gim;
+function fileBaseName(target) {
+  return String(target ?? "").split(/[\\/]/).pop() || "";
+}
+function isScriptPath(target) {
+  return SCRIPT_FILE.test(fileBaseName(target));
+}
+function toolArguments(value) {
+  if (value && typeof value === "object") return value;
+  if (typeof value !== "string") return {};
+  try {
+    return JSON.parse(value);
+  } catch {
+    return {};
+  }
+}
+function scriptSaveOf(event) {
+  if (event?.type !== "tool/call") return null;
+  const data = event.data || {};
+  const name = String(data.name || "");
+  if (!WRITE_TOOLS.has(name)) return null;
+  const args = toolArguments(data.arguments);
+  const direct = args.file_path || args.path || args.filePath;
+  if (isScriptPath(direct)) return { path: String(direct), tool: name, mode: name === "write" ? "create" : "update" };
+  if (name !== "apply_patch") return null;
+  const text = String(args.patch ?? args.input ?? "");
+  for (const match of text.matchAll(PATCH_FILE_LINE)) {
+    if (isScriptPath(match[1])) return { path: match[1].trim(), tool: name, mode: "update" };
+  }
+  return null;
+}
+function scriptVersion(content) {
+  const match = /版本[:：]\s*(第?\s*\d+\s*版)/.exec(String(content ?? ""));
+  return match ? match[1].replace(/\s+/g, "") : void 0;
+}
+function createScriptTracker({ closeStage = closePendingStage, log = appendRequestLog } = {}) {
+  async function observe(session, event) {
+    if (!session || typeof session !== "object") return;
+    const save2 = scriptSaveOf(event);
+    if (!save2) return;
+    try {
+      const content = toolArguments((event.data || {}).arguments).content;
+      const text = typeof content === "string" ? content : "";
+      const closed = await closeStage("script_design", "script_saved");
+      await log({
+        event: "script_saved",
+        path: save2.path,
+        tool: save2.tool,
+        mode: save2.mode,
+        bytes: text ? Buffer.byteLength(text, "utf8") : void 0,
+        characters: text ? text.length : void 0,
+        version: scriptVersion(text),
+        turn: (event.data || {}).turn,
+        closedSpanId: closed?.spanId,
+        closedElapsedMs: closed?.elapsedMs
+      });
+    } catch {
+    }
+  }
+  return { observe };
+}
+
+// src/utils/timing.ts
+import { randomUUID as randomUUID2 } from "node:crypto";
+import { performance as performance2 } from "node:perf_hooks";
 async function timedStage(stage, operation) {
-  const spanId = randomUUID();
+  const spanId = randomUUID2();
   const startedAt = (/* @__PURE__ */ new Date()).toISOString();
-  const start = performance.now();
+  const start = performance2.now();
   await appendRequestLog({ event: "stage_started", stage, spanId, startedAt });
   let outcome = "error";
   try {
@@ -1950,54 +2072,16 @@ async function timedStage(stage, operation) {
       spanId,
       startedAt,
       finishedAt: (/* @__PURE__ */ new Date()).toISOString(),
-      elapsedMs: Math.round((performance.now() - start) * 1e3) / 1e3,
+      elapsedMs: Math.round((performance2.now() - start) * 1e3) / 1e3,
       outcome
     });
   }
 }
 function withStageTiming(tool) {
   return { ...tool, async execute(args, exec) {
-    const context = { ...requestLogContext.getStore(), callId: exec?.callId || randomUUID(), tool: tool.name };
+    const context = { ...requestLogContext.getStore(), callId: exec?.callId || randomUUID2(), tool: tool.name };
     return requestLogContext.run(context, () => timedStage(`tool:${tool.name}`, () => tool.execute(args, exec)));
   } };
-}
-
-// src/tools/video-stage.ts
-import { randomUUID as randomUUID2 } from "node:crypto";
-import { performance as performance2 } from "node:perf_hooks";
-var STAGES = ["script_design", "storyboard_design", "script_present", "script_review_wait", "production_confirm_wait", "reference_review_wait", "segment_review_wait", "result_present"];
-var pendingStages = /* @__PURE__ */ new Map();
-function stageTool() {
-  return {
-    name: "video_stage",
-    description: "\u53EA\u8BFB\u8BA1\u65F6\u6807\u8BB0\uFF0C\u4E0D\u751F\u6210\u3001\u4E0D\u6263\u8D39\u3001\u4E0D\u6539\u914D\u7F6E\u3002\u811A\u672C\u8BBE\u8BA1/\u793A\u610F\u56FE/\u5C55\u793A/\u7B49\u5F85\u5BA1\u6838\u7B49\u9636\u6BB5\u5F00\u59CB\u65F6action=start\uFF0C\u7ED3\u675F\u65F6action=finish\u5E76\u4F20\u539FspanId\u3002\u8017\u65F6\u662F\u6807\u8BB0\u8FB9\u754C\u95F4\u5899\u949F\u65F6\u95F4\uFF08\u5305\u542B\u5DE5\u5177\u8C03\u5EA6\uFF09\uFF0C\u4E0D\u662F\u6A21\u578B\u7EAF\u63A8\u7406\u8017\u65F6\uFF1B\u7B49\u5F85\u7528\u6237\u5355\u72EC\u8BB0\u9636\u6BB5\u3002\u7F3A\u5931\u5F00\u59CB\u6216\u70ED\u91CD\u8F7D\u4E22\u5931\u6807\u8BB0\u65F6\u8FD4\u56DEunavailable\uFF0C\u4E0D\u731C\u8017\u65F6\u3002",
-    parameters: { type: "object", properties: { action: { type: "string", enum: ["start", "finish"] }, stage: { type: "string", enum: STAGES }, spanId: { type: "string" }, outcome: { type: "string", enum: ["success", "cancelled", "error"] } }, required: ["action", "stage"] },
-    output: { schema: { type: "object", properties: { status: { type: "string" }, spanId: { type: "string" }, elapsedMs: { type: "number" } } }, render(_args, value) {
-      return [{ type: "text", text: JSON.stringify(value) }];
-    } },
-    timeoutMs: 1e4,
-    isConcurrencySafe() {
-      return true;
-    },
-    async execute(args) {
-      if (!STAGES.includes(args?.stage)) throw new Error("\u672A\u77E5\u8BA1\u65F6\u9636\u6BB5");
-      if (args.action === "start") {
-        if (pendingStages.size >= 512) return { status: "unavailable" };
-        const spanId = randomUUID2(), startedAt = (/* @__PURE__ */ new Date()).toISOString();
-        pendingStages.set(spanId, { stage: args.stage, startedAt, start: performance2.now() });
-        await appendRequestLog({ event: "stage_started", stage: args.stage, spanId, startedAt, source: "assistant_marker" });
-        return { status: "started", spanId };
-      }
-      if (args.action !== "finish") throw new Error("\u672A\u77E5\u8BA1\u65F6\u52A8\u4F5C");
-      const entry = pendingStages.get(args.spanId);
-      if (!entry || entry.stage !== args.stage) return { status: "unavailable" };
-      pendingStages.delete(args.spanId);
-      const elapsedMs = Math.round((performance2.now() - entry.start) * 1e3) / 1e3;
-      const outcome = ["success", "cancelled", "error"].includes(args.outcome) ? args.outcome : "success";
-      await appendRequestLog({ event: "stage_finished", stage: entry.stage, spanId: args.spanId, startedAt: entry.startedAt, finishedAt: (/* @__PURE__ */ new Date()).toISOString(), elapsedMs, outcome, source: "assistant_marker" });
-      return { status: "finished", spanId: args.spanId, elapsedMs };
-    }
-  };
 }
 
 // src/workflow/actual-cost.ts
@@ -6151,7 +6235,7 @@ function buildPromptGuidance(config) {
     "\xB7 \u89D2\u8272\u56FE\u9009\u62E9\u5F3A\u5236\u68C0\u67E5\uFF1A\u89D2\u8272\u56FE\u9009\u62E9\u5FC5\u987B\u7531\u63D0\u4EA4\u524D\u4EE3\u7801\u6821\u9A8C\uFF1A\u65B0\u5EFA\u65E0\u56FEvideo_generate\u8C03\u7528\u901A\u8FC7userQuestions\u670D\u52A1\u8BE2\u95EE\u4E24\u9879\u9009\u62E9\uFF0C\u4E0D\u80FD\u4EC5\u9760\u52A9\u624B\u63D0\u793A\u8BCD\u3002\u76F4\u63A5\u6587\u751F\u7684\u660E\u786E\u9009\u62E9\u624D\u8FDB\u5165\u539F\u89C6\u9891\u5236\u4F5C\u5BA1\u6279\uFF1B\u5148\u751F\u6210\u89D2\u8272\u56FE\u5219\u505C\u6B62\u8BE5\u6B21\u89C6\u9891\u63D0\u4EA4\u3001\u63D0\u793A\u5148\u51FA\u56FE\u548C\u5BA1\u6838\uFF0C\u5E26\u56FE\u540E\u518D\u5236\u4F5C\u3002\u672A\u7B54/\u53D6\u6D88/pending/\u4EA4\u4E92\u4E0D\u53EF\u7528/\u8BB0\u5F55\u5931\u8D25\u5747\u505C\u6B62\uFF0C\u4E0D\u9ED8\u8BA4\u6587\u751F\u3002\u6309\u4F1A\u8BDD\u4E0E\u5F53\u524D\u811A\u672C\u89C4\u683C\u8BB0\u5F55\u660E\u786E\u9009\u62E9\uFF0C\u91CD\u8BD5\u76F8\u540C\u4EFB\u52A1\u4E0D\u91CD\u590D\u95EE\uFF1B\u65B0\u9879\u76EE\u91CD\u65B0\u9009\u62E9\u3002\u5DF2\u6709\u56FE\u7247\u6216resume\u7EED\u505A\u4E0D\u91CD\u95EE\u3001\u4E0D\u6539\u53D8\u5DF2\u63D0\u4EA4\u4EFB\u52A1\u3002\u52A9\u624B\u4E0D\u8981\u53E6\u884C\u91CD\u590D\u521B\u5EFA\u540C\u4E00\u89D2\u8272\u56FE\u9009\u62E9\u95EE\u9898\uFF1B\u82E5\u63D0\u4EA4\u524D\u4EA4\u4E92\u88AB\u62E6\u622A\uFF0C\u6309\u8FD4\u56DE\u7684\u771F\u5B9E\u7528\u6237\u9009\u62E9\u63A8\u8FDB\u3002",
     "\xB7 \u7EAF\u6587\u751F\u89D2\u8272\u56FE\uFF1A\u7EAF\u6587\u751F\u89C6\u9891\u89D2\u8272\u56FE\u9009\u62E9\uFF1A\u6709\u9700\u8981\u56FA\u5B9A\u5916\u5F62\u7684\u4EBA\u7269/\u4E3B\u4F53\u4E14\u672A\u63D0\u4F9B\u56FE\u7247\u65F6\uFF0C\u5728\u51C6\u5907\u4EBA\u7269\u4E0E\u98CE\u683C\u540E\u3001\u6700\u7EC8\u811A\u672C\u5BA1\u6838\u4E0E\u89C6\u9891\u5236\u4F5C\u524D\uFF0C\u9009\u62E9\u7531\u63D2\u4EF6\u63D0\u4EA4\u524D\u7684\u5185\u7F6E\u4EA4\u4E92\u53D6\u5F97\uFF0C\u9009\u9879\u4E3A\u201C\u5148\u751F\u6210\u89D2\u8272\u56FE\uFF08\u5355\u72EC\u8BA1\u8D39\uFF09/\u76F4\u63A5\u6587\u751F\u89C6\u9891\u201D\uFF1B\u4E0D\u8981\u53E6\u884C\u91CD\u590D\u5F39\u540C\u4E00\u9009\u62E9\u3002\u672C\u6B21\u5DF2\u660E\u786E\u540C\u610F\u6216\u62D2\u7EDD\u5219\u8BB0\u5F55\u5230\u9879\u76EE\uFF0C\u4E0D\u91CD\u590D\u95EE\uFF1B\u672A\u7B54/\u53D6\u6D88/pending\u4E0D\u8868\u793A\u540C\u610F\uFF0C\u4E0D\u8C03\u7528\u56FE\u7247\u6216\u89C6\u9891\u3002\u7528\u6237\u62D2\u7EDD\u65F6\u4FDD\u7559\u7EAF\u6587\u751F\u65B9\u6848\uFF0C\u4E0D\u81EA\u52A8\u52A0\u56FE\uFF1B\u6CA1\u6709\u56FA\u5B9A\u4E3B\u4F53\u7684\u7A7A\u955C\u4E0D\u5F3A\u52A0\u89D2\u8272\u3002\u7528\u6237\u540C\u610F\u540E\u5148\u660E\u786E\u5916\u5F62\u4E0E\u975E\u771F\u4EBA\u98CE\u683C\uFF08\u5F71\u54CD\u539F\u5B9A\u5199\u5B9E\u98CE\u683C\u65F6\u987B\u8BF4\u660E\u5E76\u786E\u8BA4\uFF09\uFF0C\u8C03\u7528video_prepare_image(operation:create_character,prompt:\u89D2\u8272\u8BBE\u5B9A,style:\u5DF2\u786E\u8BA4\u98CE\u683C)\uFF0C\u9ED8\u8BA4\u4E00\u6B21\u4E00\u5F20\uFF0C\u4E0D\u9700\u8981\u539F\u56FE\u3002\u8BB0\u5F55taskId/imageUrl\uFF1B\u8D85\u65F6\u67E5\u8BE2\u539FtaskId\uFF0C\u4E0D\u91CD\u53D1\uFF1B\u5931\u8D25\u6216\u4E0D\u6EE1\u610F\u5148\u505C\u6B62\uFF0C\u91CD\u753B\u5148\u786E\u8BA4\u65B0\u589E\u8D39\u7528\u3002\u7ED3\u679C\u5728\u6B63\u6587\u5185\u5D4C\u5E76\u7ED9\u539F\u56FE\u94FE\u63A5\uFF0C\u5355\u72EC\u8BE2\u95EE\u201C\u8FD9\u5F20\u89D2\u8272\u56FE\u53EF\u4EE5\u7528\u4E8E\u63A5\u4E0B\u6765\u7684\u89C6\u9891\u5417\uFF1F\u201D\uFF0C\u5F85\u660E\u786E\u8BA4\u53EF\u540E\uFF0C\u5C06imageUrl\u540C\u65F6\u5199\u5165video_generate.referenceImages\u548CcharacterReferenceImages\u3002\u518D\u5C55\u793A\u542B\u89D2\u8272\u56FE\u3001\u811A\u672C\u3001\u5206\u955C\u4E0E\u8D39\u7528\u9884\u4F30\u7684\u672C\u7248\u6750\u6599\u5E76\u5BA1\u6838\uFF0C\u6700\u540E\u5355\u72EC\u786E\u8BA4\u89C6\u9891\u5236\u4F5C\u3002\u811A\u672C\u672B\u5C3E\u6CE8\u660E\u89D2\u8272\u56FE\u5355\u72EC\u8BA1\u8D39\u4E14\u4E0D\u5305\u542B\u5728\u89C6\u9891\u4F30\u4EF7\u4E2D\uFF1B\u9879\u76EE\u8BB0\u5F55\u89D2\u8272\u56FE\u9009\u62E9\u3001\u4EFB\u52A1\u53CA\u5BA1\u6838\u72B6\u6001\uFF0C\u6062\u590D\u540E\u4E0D\u91CD\u590D\u51FA\u56FE\u6216\u91CD\u590D\u95EE\u5DF2\u786E\u8BA4\u9009\u62E9\u3002\u706B\u5C71\u76F4\u8FDE\u65E0\u6B64\u56FE\u7247\u901A\u9053\u65F6\u5148\u8BF4\u660E\u9650\u5236\uFF0C\u53EF\u8BA9\u7528\u6237\u63D0\u4F9B\u89D2\u8272\u56FE\uFF0C\u4E0D\u8C0E\u79F0\u53EF\u4EE3\u753B\u3002",
     "\xB7 \u521D\u59CB\u89D2\u8272\u53C2\u8003\uFF1A\u6700\u521D\u89D2\u8272\u56FE\u6301\u7EED\u53C2\u8003\uFF1A\u6BCF\u6BB5\u7EED\u62CD\u643A\u5E26\u4E0A\u4E00\u6BB5\u89C6\u9891\u4E0E\u540C\u4E00\u5957\u6700\u521D\u5DF2\u5BA1\u6838\u89D2\u8272\u56FE\uFF1BcharacterReferenceImages\u53EF\u660E\u786E\u6307\u5B9A\uFF0C\u672A\u6307\u5B9A\u65F6\u6CBF\u7528\u9996\u6BB5referenceImages\u6216\u9996\u5E27\uFF0C\u9996\u5E27\u5728\u7EED\u62CD\u4E2D\u6539\u4F5Creference_image\u800C\u4E0D\u662Ffirst_frame\u3002\u89D2\u8272\u56FE\u5F52\u4E00\u5316\u540E\u968F\u65AD\u70B9\u4FDD\u5B58\uFF0C\u4E0D\u4F7F\u7528\u540E\u7EED\u6BB5\u843D\u622A\u56FE\u66FF\u4EE3\u521D\u59CB\u89D2\u8272\uFF0C\u4E0D\u81EA\u52A8\u91CD\u753B\uFF1B\u65E0\u521D\u59CB\u56FE\u7247\u65F6\u4ECD\u4E3A\u7EAF\u89C6\u9891\u7EED\u62CD\uFF0C\u4E0D\u865A\u6784\u89D2\u8272\u53C2\u8003\u56FE\u3002\u771F\u4EBA\u9650\u5236\u987B\u5148\u83B7\u8F6C\u6362\u540C\u610F\u3001\u5C55\u793A\u5BA1\u6838\uFF0C\u518D\u5355\u6B21\u89C6\u9891\u91CD\u8BD5\uFF1B\u6210\u529F\u540E\u590D\u7528\u5DF2\u5BA1\u6838\u8F6C\u6362\u56FE\u3002\u539F\u5DF2\u63D0\u4EA4\u4EFB\u52A1\u4FDD\u7559originalBody\uFF0C\u4E0D\u56E0\u52A0\u56FE\u800C\u91CD\u65B0\u63D0\u4EA4\u3002",
-    "\xB7 \u6D41\u7A0B\u8017\u65F6\u65E5\u5FD7\uFF1A\u9636\u6BB5\u8BA1\u65F6\uFF1A\u7F16\u5199\u811A\u672C\u524D\u7528video_stage(stage:script_design,action:start)\uFF0C\u5B8C\u6574\u811A\u672C\u4FDD\u5B58\u540Efinish\u539FspanId\uFF1B\u793A\u610F\u56FE\u7ED8\u5236\u7528storyboard_design\uFF0C\u5C55\u793A\u811A\u672C\u7528script_present\u3002\u5BA1\u6838/\u5236\u4F5C/\u53C2\u8003\u56FE/\u5206\u6BB5\u9884\u89C8\u7B49\u5F85\u5206\u522B\u7528script_review_wait\u3001production_confirm_wait\u3001reference_review_wait\u3001segment_review_wait\uFF0C\u5C55\u793A\u6210\u679C\u7528result_present\u3002\u7528\u6237\u56DE\u590D\u540E\u7ED3\u675F\u5BF9\u5E94\u7B49\u5F85\u6807\u8BB0\uFF1B\u4E0D\u5F97\u628A\u7B49\u5F85\u6DF7\u5165\u811A\u672C\u8BBE\u8BA1\u65F6\u95F4\uFF0C\u4E0D\u4E3A\u8BA1\u65F6\u91CD\u590D\u751F\u6210\u5185\u5BB9\u3002\u6807\u8BB0\u4EC5\u8BB0\u5F55\u8FB9\u754C\u5899\u949F\u8017\u65F6\uFF0C\u4E0D\u7B49\u4E8E\u6A21\u578B\u7EAF\u63A8\u7406\u65F6\u95F4\uFF1B\u6807\u8BB0\u4E0D\u53EF\u7528\u4ECD\u6B63\u5E38\u63A8\u8FDB\uFF0C\u4E0D\u731C\u8017\u65F6\u3002",
+    "\xB7 \u6D41\u7A0B\u8017\u65F6\u65E5\u5FD7\uFF1A\u9636\u6BB5\u8BA1\u65F6\uFF1A\u7F16\u5199\u811A\u672C\u524D\u7528video_stage(stage:script_design,action:start)\uFF0C\u5B8C\u6574\u811A\u672C\u4FDD\u5B58\u4E3Ascript.md\u540E\u8BE5\u6BB5\u7531\u63D2\u4EF6\u81EA\u52A8\u7ED3\u675F\uFF0C\u4E0D\u5FC5\u518D\u8C03finish\uFF08\u811A\u672C\u4E0D\u662F\u7528\u5199\u6587\u4EF6\u5DE5\u5177\u4FDD\u5B58\u65F6\u624D\u8865finish\u539FspanId\uFF09\uFF1B\u793A\u610F\u56FE\u7ED8\u5236\u7528storyboard_design\uFF0C\u5C55\u793A\u811A\u672C\u7528script_present\u3002\u5BA1\u6838/\u5236\u4F5C/\u53C2\u8003\u56FE/\u5206\u6BB5\u9884\u89C8\u7B49\u5F85\u5206\u522B\u7528script_review_wait\u3001production_confirm_wait\u3001reference_review_wait\u3001segment_review_wait\uFF0C\u5C55\u793A\u6210\u679C\u7528result_present\u3002\u7528\u6237\u56DE\u590D\u540E\u7ED3\u675F\u5BF9\u5E94\u7B49\u5F85\u6807\u8BB0\uFF1B\u4E0D\u5F97\u628A\u7B49\u5F85\u6DF7\u5165\u811A\u672C\u8BBE\u8BA1\u65F6\u95F4\uFF0C\u4E0D\u4E3A\u8BA1\u65F6\u91CD\u590D\u751F\u6210\u5185\u5BB9\u3002\u6807\u8BB0\u4EC5\u8BB0\u5F55\u8FB9\u754C\u5899\u949F\u8017\u65F6\uFF0C\u4E0D\u7B49\u4E8E\u6A21\u578B\u7EAF\u63A8\u7406\u65F6\u95F4\uFF1B\u6807\u8BB0\u4E0D\u53EF\u7528\u4ECD\u6B63\u5E38\u63A8\u8FDB\uFF0C\u4E0D\u731C\u8017\u65F6\u3002",
     "\xB7 \u5168\u90E8\u6587\u4EF6\u4EA4\u4ED8\uFF1A\u6240\u6709\u7528\u6237\u4EA4\u4ED8\u7684\u6587\u4EF6\uFF08\u811A\u672C\u3001\u5206\u955C\u793A\u610F\u56FE\u3001\u8F6C\u6362\u56FE\u7247\u3001\u5355\u6BB5/\u7EED\u62CD\u9884\u89C8\u3001\u5408\u5E76\u6210\u7247\u3001\u6062\u590D\u540E\u6210\u679C\u3001\u5BFC\u51FAPDF\u7B49\uFF09\u90FD\u987B\u5728\u7528\u6237\u53EF\u89C1\u6B63\u6587\u7ED9\u51FA\u9010\u9879\u53EF\u70B9\u51FBMarkdown\u94FE\u63A5\uFF0C\u4E0D\u80FD\u53EA\u7ED9\u76EE\u5F55\u3001\u53CD\u5F15\u53F7\u6216\u666E\u901A\u6587\u672C\u8DEF\u5F84\uFF1B\u672C\u5730\u8DEF\u5F84\u5148\u786E\u8BA4\u6587\u4EF6\u5B58\u5728\u5E76\u8F6C\u7EDD\u5BF9\u8DEF\u5F84\uFF0C\u7528\u5C16\u62EC\u53F7\u5305\u88F9\u3002\u56FE\u7247\u53E6\u987B\u5185\u5D4C\uFF0C\u811A\u672C\u53E6\u987B\u5B8C\u6574\u5C55\u793A\u6B63\u6587\uFF1Bpresent\u767B\u8BB0\u6210\u529F\u4ECD\u4FDD\u7559\u94FE\u63A5\uFF0C\u4E0D\u58F0\u79F0\u5361\u7247\u5DF2\u64AD\u653E\u3002\u53EA\u94FE\u63A5\u771F\u5B9E\u8FD4\u56DE\u6216\u5DF2\u6838\u5B9E\u6587\u4EF6\uFF0C\u4E0D\u7F16\u9020\u8DEF\u5F84\uFF0C\u4E0D\u4E3A\u8865\u94FE\u63A5\u91CD\u65B0\u4ED8\u8D39\u751F\u6210\u3002\u6062\u590D\u76EE\u5F55\u3001\u4EFB\u52A1ID\u3001\u914D\u7F6E\u6587\u4EF6\u7B49\u5185\u90E8\u53C2\u6570\u7EE7\u7EED\u6309\u539F\u53C2\u6570\u4F7F\u7528\uFF0C\u4E0D\u5F53\u4F5C\u53EF\u64AD\u653E\u6210\u679C\u3002",
     "\xB7 \u89C6\u9891\u6587\u4EF6\u94FE\u63A5\uFF1A\u89C6\u9891\u4EA4\u4ED8\u6B63\u6587\u5FC5\u987B\u9010\u9879\u9644Markdown\u53EF\u70B9\u51FB\u94FE\u63A5\uFF0C\u4F8B\u5982[\u89C2\u770B\u7B2C\u4E00\u6BB5](<\u7EDD\u5BF9\u6587\u4EF6\u8DEF\u5F84>)\uFF0C\u8DEF\u5F84\u542B\u7A7A\u683C\u4E5F\u7528\u5C16\u62EC\u53F7\u5305\u88F9\uFF1B\u6709present\u4ECD\u987B\u7ED9\u6B63\u6587\u94FE\u63A5\uFF0C\u666E\u901A\u6587\u672C\u6216\u53CD\u5F15\u53F7\u8DEF\u5F84\u4E0D\u7B97\u94FE\u63A5\uFF0C\u672A\u7ECF\u9A8C\u8BC1\u4E0D\u5F97\u8BF4\u4E0A\u65B9\u5361\u7247\u53EF\u76F4\u63A5\u64AD\u653E\u3002\u7F3A\u6587\u4EF6\u5148\u67E5\u539F\u4EFB\u52A1\u548C\u4EA4\u4ED8\u8DEF\u5F84\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u3002",
     "\xB7 \u4EA4\u4ED8\u6587\u4EF6\u6392\u5E8F\uFF1A\u4EA4\u4ED8\u6587\u4EF6\u987A\u5E8F\u7EDF\u4E00\u4E3A\uFF1A\u5408\u5E76\u540E\u7684\u5B8C\u6574\u89C6\u9891\u7B2C\u4E00\uFF0C\u5176\u540E\u4F9D\u6B21\u4E3A\u7B2C\u4E00\u6BB5\u3001\u7B2C\u4E8C\u6BB5\u53CA\u540E\u7EED\u5206\u6BB5\uFF1Bpresent\u8C03\u7528\u3001\u6B63\u6587\u6587\u4EF6\u94FE\u63A5\u548C\u4EA4\u4ED8\u6E05\u5355\u90FD\u9075\u5B88\u6B64\u987A\u5E8F\u3002\u6682\u505C\u65F6\u5DF2\u6709\u7D2F\u8BA1\u5408\u5E76\u89C6\u9891\u6807\u4E3A\u201C\u5DF2\u5B8C\u6210\u90E8\u5206\u5408\u5E76\u89C6\u9891\u201D\uFF0C\u4E0D\u6807\u6210\u5B8C\u6574\u6210\u7247\uFF1B\u5408\u5E76\u5931\u8D25\u6216\u672A\u5408\u5E76\u65F6\u53EA\u6309\u6BB5\u53F7\u4EA4\u4ED8\u771F\u5B9E\u6587\u4EF6\u3002",
@@ -6314,10 +6398,12 @@ function apply(ctx, config = {}) {
   const deliveryOrder = createDeliveryOrderGuard();
   const storyboardObserver = ctx.on("session/event", storyboardReview.observe);
   const deliveryObserver = ctx.on("session/event", deliveryOrder.observe);
+  const scriptObserver = ctx.on("session/event", createScriptTracker().observe);
   const register = (tool) => ctx.tools.register(withStageTiming(tool));
   const disposers = [
     ...typeof storyboardObserver === "function" ? [storyboardObserver] : [],
     ...typeof deliveryObserver === "function" ? [deliveryObserver] : [],
+    ...typeof scriptObserver === "function" ? [scriptObserver] : [],
     register(jsonSafeTool(stageTool())),
     register(jsonSafeTool(estimateTool(config))),
     register(jsonSafeTool(submissionTool(config))),

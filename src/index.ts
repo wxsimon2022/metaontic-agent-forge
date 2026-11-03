@@ -1,5 +1,6 @@
 import { createStoryboardReviewGuard } from './workflow/storyboard-review.js';
 import { createDeliveryOrderGuard } from './workflow/delivery-order.js';
+import { createScriptTracker } from './workflow/script-tracking.js';
 import { withStageTiming } from './utils/timing.js';
 import { stageTool } from './tools/video-stage.js';
 /** Harness 插件入口：注册工具、动态提示词与可选宿主服务。 */
@@ -43,10 +44,13 @@ export function apply(ctx: DshContext, config: any = {}) {
   const storyboardObserver = (ctx as any).on('session/event', storyboardReview.observe);
   // 交付顺序同样只看会话事件：成片本轮是否已经登记过，决定分段能不能单独展示。
   const deliveryObserver = (ctx as any).on('session/event', deliveryOrder.observe);
+  // 脚本落盘就是脚本设计阶段的真实终点：由插件收口，助手不必再补一次计时标记。
+  const scriptObserver = (ctx as any).on('session/event', createScriptTracker().observe);
   const register = (tool) => ctx.tools.register(withStageTiming(tool));
   const disposers = [
     ...(typeof storyboardObserver === 'function' ? [storyboardObserver] : []),
     ...(typeof deliveryObserver === 'function' ? [deliveryObserver] : []),
+    ...(typeof scriptObserver === 'function' ? [scriptObserver] : []),
     register(jsonSafeTool(stageTool())),
     register(jsonSafeTool(estimateTool(config))),
     register(jsonSafeTool(submissionTool(config))),

@@ -302,7 +302,7 @@ ffprobe -version
 | `video_setup` | 检查或经授权安装 ffmpeg |
 | `video_config` | 查看或修改插件配置；服务端领 Key 模式不允许手填该 Key |
 | `media_submission` | 核对提交不明的原任务，避免重复提交 |
-| `video_stage` | 记录脚本、示意图、展示与审核等待的阶段耗时 |
+| `video_stage` | 记录脚本、示意图、展示与审核等待的阶段耗时；脚本保存为 `script.md` 后由插件自动结束脚本设计一段 |
 
 ## 故障排查
 
@@ -687,7 +687,7 @@ Key 共用规则：MetaOnticVideo 接入固定共用登录下发的 Key，模型
 
 ### 阶段耗时
 
-同一日志记录 `stage_started` / `stage_finished`，以 `spanId` 配对，含 `startedAt`、`finishedAt`、`elapsedMs`、`outcome`，工具调用通过 `callId` 关联。自动覆盖插件工具总耗时、视频轮询等待、分段下载/探测、接缝准备、合并与真实费用查询；HTTP请求沿用request日志的elapsedMs。脚本设计、示意图、展示与用户审核等待由助手调用无费用 `video_stage` 标记边界。审核等待单独统计；标记间墙钟耗时包含调度，不等于模型纯推理时间。中断只有开始无结束时按未完成处理；热重载丢失的标记返回unavailable，不伪造耗时。日志不可写不影响生成，不重提任务。
+同一日志记录 `stage_started` / `stage_finished`，以 `spanId` 配对，含 `startedAt`、`finishedAt`、`elapsedMs`、`outcome`，工具调用通过 `callId` 关联。自动覆盖插件工具总耗时、视频轮询等待、分段下载/探测、接缝准备、合并与真实费用查询；HTTP请求沿用request日志的elapsedMs。脚本设计、示意图、展示与用户审核等待由助手调用无费用 `video_stage` 标记边界。脚本设计一段以脚本保存为 `script.md` 为终点：插件监听会话里的写文件调用，落盘即用 `source: script_saved` 收口并另记 `script_saved`（路径、新建或改写、字节数、字数、脚本版本），助手不必再补一次 `video_stage finish`；此后画分镜、看图、提问不再计入脚本设计耗时。审核等待单独统计；标记间墙钟耗时包含调度，不等于模型纯推理时间。中断只有开始无结束时按未完成处理；热重载丢失的标记返回unavailable，不伪造耗时。日志不可写不影响生成，不重提任务。
 
 续拍估价统一口径：首段无视频输入，参考图/首尾帧也不改变此档位；后续续拍有视频输入，用上一段完整视频时长加本段输出时长计token，采用含视频输入单价。脚本末尾逐段展示档位、输入/输出时长、单价及金额；恢复制作确认读取上一段时长，外部输入视频时长未核实时不猜价。
 
