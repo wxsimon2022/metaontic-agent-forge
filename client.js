@@ -514,6 +514,7 @@
       versionUpdateFailed: "\u5728\u7EBF\u66F4\u65B0\u5931\u8D25\uFF1A{message}",
       versionUpdateRemoved: "\u63D2\u4EF6\u5DF2\u5378\u8F7D\uFF0C\u4F46\u91CD\u65B0\u5B89\u88C5\u5931\u8D25\u3002\u8BF7\u5230\u300C\u63D2\u4EF6\u300D\u9875\u91CD\u65B0\u6DFB\u52A0\u3002",
       versionUpdateRateLimited: "Gitee \u8BF7\u6C42\u8FC7\u4E8E\u9891\u7E41\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u3002\u73B0\u6709\u914D\u7F6E\u4E0E\u5BC6\u94A5\u4F1A\u4FDD\u7559\u3002",
+      versionUpdateLockfile: "\u5B89\u88C5\u76EE\u5F55\u7684 pnpm-lock.yaml \u91CC\u6709\u4E00\u6761\u672C\u63D2\u4EF6\u7F3A\u5C11 integrity \u7684\u65E7\u8BB0\u5F55\uFF0Cpnpm \u56E0\u6B64\u62D2\u7EDD\u5B89\u88C5\uFF08ERR_PNPM_MISSING_TARBALL_INTEGRITY\uFF09\u3002\u63D2\u4EF6\u4F1A\u5728\u540E\u53F0\u81EA\u52A8\u6E05\u6389\u8FD9\u6761\u8BB0\u5F55\u5E76\u4FDD\u7559\u5907\u4EFD\uFF0C\u7A0D\u7B49\u5341\u51E0\u79D2\u518D\u70B9\u4E00\u6B21\u66F4\u65B0\uFF1B\u82E5\u4ECD\u7136\u5931\u8D25\uFF0C\u5B8C\u5168\u9000\u51FA Harness \u540E\u624B\u52A8\u5220\u9664\u63D2\u4EF6\u5B89\u88C5\u76EE\u5F55\u4E0B\u7684 pnpm-lock.yaml \u518D\u8BD5\u3002",
       versionUpdateUnavailable: "\u5F53\u524D Harness \u4E0D\u652F\u6301\u5728\u7EBF\u66F4\u65B0\uFF0C\u8BF7\u5230\u300C\u63D2\u4EF6\u300D\u9875\u5378\u8F7D\u540E\u91CD\u65B0\u6DFB\u52A0\u3002",
       versionHint: "\u53EF\u5728\u6B64\u68C0\u67E5\u5E76\u5B89\u88C5\u65B0\u7248\u672C\uFF0C\u73B0\u6709\u914D\u7F6E\u4E0E\u5BC6\u94A5\u4F1A\u4FDD\u7559\u3002",
       versionCheckedAt: "\u68C0\u67E5\u4E8E {time}",
@@ -667,6 +668,7 @@
       versionUpdateFailed: "Online update failed: {message}",
       versionUpdateRemoved: "The plugin was uninstalled but could not be reinstalled. Add it again from the Plugins page.",
       versionUpdateRateLimited: "Gitee is limiting requests. Try again later. Your settings and keys will be kept.",
+      versionUpdateLockfile: "The profile pnpm-lock.yaml still has a metaontic-video entry without integrity, so pnpm refuses to install (ERR_PNPM_MISSING_TARBALL_INTEGRITY). The plugin clears that entry in the background and keeps a backup: wait a few seconds and start the update again. If it still fails, quit Harness and delete pnpm-lock.yaml in the plugin install directory.",
       versionUpdateUnavailable: "This version of Harness does not support online updates. Uninstall and re-add the plugin from the Plugins page.",
       versionHint: "Check for and install updates here. Your settings and keys will be kept.",
       versionCheckedAt: "checked {time}",
@@ -866,7 +868,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.13.10".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.13.11".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1042,6 +1044,7 @@
       };
       const failureText = (result) => String(result?.error?.message ?? result?.value?.error?.diagnostic ?? result?.value?.error?.code ?? "unknown");
       const worthRetrying = (text) => /429|queue overflowed|timed out|timeout|ETIMEDOUT|ECONNRESET|ECONNREFUSED|EAI_AGAIN|socket hang up|unable to access|network|fetch/i.test(text);
+      const lockfileUnverifiable = (text) => /MISSING_TARBALL_INTEGRITY/i.test(text);
       if (!/^\d+\.\d+\.\d+$/.test(context.updateLatest || "") || context.availableVersions && !context.availableVersions.includes(context.updateLatest)) {
         context.setUpdateStatus("failed");
         context.setUpdateMessage(context.t("versionCheckFirst"));
@@ -1062,6 +1065,7 @@
             return { outcome: result.value || {} };
           }
           const text = failureText(result);
+          if (lockfileUnverifiable(text)) return { failure: text, next: false, lockfile: true };
           const transient = worthRetrying(text);
           if (transient && round < context.UPDATE_ATTEMPTS) {
             context.setUpdateMessage(context.t("versionUpdateRetry", { attempt: round + 1, total: context.UPDATE_ATTEMPTS }));
@@ -1087,6 +1091,7 @@
       if (!outcome) {
         context.setUpdateStatus("failed");
         context.setUpdateMessage([
+          lockfileUnverifiable(failure) ? context.t("versionUpdateLockfile") : "",
           context.t("versionUpdateFailed", { message: failure }),
           worthRetrying(failure) || /429|queue overflowed/i.test(failure) ? context.t("versionUpdateRateLimited") : ""
         ].filter(Boolean).join(" "));
@@ -1503,7 +1508,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.13.10",
+    version: "3.13.11",
     description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
     license: "MIT",
     type: "module",
@@ -1600,13 +1605,13 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.13.10",
+      version: "3.13.11",
       prerelease: false,
-      publishedAt: "2026-11-03T00:52:29.659Z",
+      publishedAt: "2026-11-03T04:32:54.491Z",
       items: [
-        "\u65B0\u589E\uFF1A\u65B0\u589E\u6D4B\u8BD5\u5305\u5206\u53D1\u901A\u9053\uFF0C\u5728\u4ED3\u5E93\u6267\u884C `npm run pack:test -- \u7248\u672C\u53F7-\u540E\u7F00` \u5C31\u4F1A\u81EA\u52A8\u6784\u5EFA\u3001\u8FD0\u884C\u5355\u5143\u6D4B\u8BD5\u3001\u6253\u51FA\u6D4B\u8BD5\u7248 `.tgz`\u3001\u4E0A\u4F20\u5230 `https://video.mybfs.cn/test/`\uFF0C\u5E76\u6838\u5BF9\u7EBF\u4E0A\u6587\u4EF6\u4E0E\u672C\u5730 sha256 \u4E00\u81F4\u540E\u8F93\u51FA\u53EF\u76F4\u63A5\u8F6C\u53D1\u7684\u5B89\u88C5\u5730\u5740\uFF0C\u672A\u53D1\u5E03\u7684\u6539\u52A8\u53EF\u4EE5\u5148\u7ED9\u4ED6\u4EBA\u8BD5\u7528\u3002",
-        "\u4F18\u5316\uFF1A\u6D4B\u8BD5\u5305\u4E0D\u5360\u6B63\u5F0F\u53D1\u5E03\u9875\uFF0C\u53EA\u6539\u5305\u5185\u7248\u672C\u53F7\uFF0C\u4E0D\u63D0\u4EA4\u3001\u4E0D\u6253\u6807\u7B7E\u3001\u4E0D\u5EFA Release\uFF0C\u6838\u5FC3\u7248\u672C\u53F7\u538B\u5728\u5F53\u524D\u6B63\u5F0F\u7248\u4E4B\u4E0B\uFF0C\u5176\u4ED6\u4EBA\u4ECD\u4F1A\u6B63\u5E38\u6536\u5230\u6B63\u5F0F\u7248\u66F4\u65B0\u63D0\u793A\uFF1B\u811A\u672C\u7ED3\u675F\u540E\u628A\u5305\u5185\u7248\u672C\u53F7\u4E0E\u6784\u5EFA\u4EA7\u7269\u8FD8\u539F\u4E3A\u6B63\u5F0F\u7248\u672C\uFF0C\u4E0D\u4F1A\u628A\u6D4B\u8BD5\u7248\u672C\u5E26\u8FDB\u6B63\u5F0F\u5305\u3002",
-        "\u4F18\u5316\uFF1AREADME \u53D1\u5E03\u7AE0\u8282\u4E0E\u5DE5\u7A0B\u7EF4\u62A4\u7ECF\u9A8C\u8865\u5145\u6D4B\u8BD5\u5305\u901A\u9053\u7684\u7528\u6CD5\u3001\u7EBF\u4E0A\u76EE\u5F55\u548C\u56DE\u9000\u65B9\u5F0F\uFF1B`/test/` \u76EE\u5F55\u7981\u6B62\u7F13\u5B58\u4E0E\u641C\u7D22\u5F15\u64CE\u6536\u5F55\uFF0C\u6D4B\u8BD5\u8005\u7528\u6B63\u5F0F\u7248 `.tgz` \u5730\u5740\u91CD\u88C5\u5373\u53EF\u56DE\u5230\u6B63\u5F0F\u7248\u3002"
+        "\u4FEE\u590D\uFF1A\u5728\u7EBF\u6216\u672C\u5730\u5B89\u88C5\u62A5 ERR_PNPM_MISSING_TARBALL_INTEGRITY\uFF08\u5B89\u88C5\u76EE\u5F55\u7684 pnpm-lock.yaml \u91CC\u7559\u7740\u4E00\u6761\u7F3A integrity \u7684\u8FDC\u7A0B tgz \u8BB0\u5F55\uFF0Cpnpm \u56E0\u6B64\u62D2\u7EDD\u6574\u6B21\u5B89\u88C5\uFF09\u65F6\uFF0C\u63D2\u4EF6\u73B0\u5728\u4F1A\u5728\u540E\u53F0\u81EA\u5DF1\u6E05\u6389\u672C\u63D2\u4EF6\u8FD9\u6761\u574F\u8BB0\u5F55\uFF1A\u52A0\u8F7D\u65F6\u68C0\u67E5\u4E00\u6B21\u3001\u4E4B\u540E\u6BCF 10 \u79D2\u590D\u67E5\uFF0C\u6539\u524D\u628A\u539F\u6587\u4EF6\u53E6\u5B58\u4E3A\u540C\u76EE\u5F55\u4E0B\u7684 pnpm-lock.yaml.metaontic-backup-\u65F6\u95F4\uFF0C\u5176\u4ED6\u4F9D\u8D56\u548C\u5E26\u6821\u9A8C\u503C\u7684\u6B63\u5E38\u8BB0\u5F55\u4E00\u5F8B\u4E0D\u52A8\uFF0C\u6E05\u7406\u540E\u66F4\u65B0\u5373\u53EF\u7EE7\u7EED\uFF0C\u4E0D\u518D\u9700\u8981\u7528\u6237\u624B\u52A8\u5220\u9664\u8BE5\u6587\u4EF6\u3002",
+        "\u4F18\u5316\uFF1A\u66F4\u65B0\u5931\u8D25\u547D\u4E2D\u8FD9\u6761\u62A5\u9519\u65F6\uFF0C\u4E0D\u518D\u5BF9\u540C\u4E00\u5730\u5740\u91CD\u8BD5\u4E09\u6B21\u3001\u4E5F\u4E0D\u5207\u6362\u5230\u53E6\u4E00\u4E2A\u955C\u50CF\u6E90\uFF08\u8FD9\u4E24\u79CD\u505A\u6CD5\u5B9E\u6D4B\u90FD\u540C\u6837\u5931\u8D25\uFF0C\u53EA\u4F1A\u8BA9\u7528\u6237\u767D\u7B49\uFF09\uFF0C\u76F4\u63A5\u7ED9\u51FA\u9488\u5BF9\u6027\u63D0\u793A\uFF1A\u7B49\u5F85\u5341\u51E0\u79D2\u540E\u518D\u70B9\u4E00\u6B21\u300C\u66F4\u65B0\u5230\u6700\u65B0\u6B63\u5F0F\u7248\u300D\uFF0C\u4ECD\u5931\u8D25\u65F6\u518D\u6309\u63D0\u793A\u624B\u52A8\u5220\u9664 pnpm-lock.yaml\uFF1B\u53EA\u6709\u63D2\u4EF6\u8FD8\u6CA1\u88C5\u4E0A\u3001\u540E\u53F0\u8FD8\u6CA1\u6709\u8BE5\u6E05\u7406\u52A8\u4F5C\u65F6\u624D\u9700\u8981\u624B\u52A8\u5904\u7406\u3002",
+        "\u4F18\u5316\uFF1A\u4F7F\u7528\u8BF4\u660E\u4E66\u4E0E README \u540C\u6B65\u5199\u660E\u81EA\u52A8\u6E05\u7406\u4E0E\u5907\u4EFD\u6587\u4EF6\u7684\u4F4D\u7F6E\uFF0C\u5E76\u8BF4\u660E\u8FD9\u6761\u62A5\u9519\u4E0E\u63D2\u4EF6\u5305\u3001\u64CD\u4F5C\u7CFB\u7EDF\u65E0\u5173\uFF0C\u907F\u514D\u7EE7\u7EED\u628A\u5B83\u5F53\u6210 Windows \u6587\u4EF6\u5360\u7528\u95EE\u9898\u53BB\u6392\u67E5\u3002"
       ]
     }
   };

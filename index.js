@@ -277,17 +277,17 @@ function getInner(value) {
 function extractKeys(data) {
   return filterKeys(data ?? {}, (key) => !key.startsWith("$"));
 }
-function validateVolatileSchema(schema, path13 = [], blocked2 = false, seen = /* @__PURE__ */ new Map()) {
+function validateVolatileSchema(schema, path14 = [], blocked2 = false, seen = /* @__PURE__ */ new Map()) {
   const states = seen.get(schema) ?? /* @__PURE__ */ new Set();
   if (states.has(blocked2)) return;
   states.add(blocked2);
   seen.set(schema, states);
-  if (schema.meta?.volatile && blocked2) throw new ValidationError("volatile fields require a fixed object path without an enclosing volatile field", { path: path13 });
+  if (schema.meta?.volatile && blocked2) throw new ValidationError("volatile fields require a fixed object path without an enclosing volatile field", { path: path14 });
   const nested = blocked2 || !!schema.meta?.volatile;
-  if (schema.dict) for (const [key, child] of Object.entries(schema.dict)) validateVolatileSchema(child, [...path13, key], nested, seen);
-  if (schema.sKey) validateVolatileSchema(schema.sKey, [...path13, "<key>"], true, seen);
-  if (schema.inner && (schema.type !== "lazy" || schema.inner[kSchema])) validateVolatileSchema(schema.inner, [...path13, "*"], true, seen);
-  if (schema.list) for (let index = 0; index < schema.list.length; index++) validateVolatileSchema(schema.list[index], [...path13, String(index)], true, seen);
+  if (schema.dict) for (const [key, child] of Object.entries(schema.dict)) validateVolatileSchema(child, [...path14, key], nested, seen);
+  if (schema.sKey) validateVolatileSchema(schema.sKey, [...path14, "<key>"], true, seen);
+  if (schema.inner && (schema.type !== "lazy" || schema.inner[kSchema])) validateVolatileSchema(schema.inner, [...path14, "*"], true, seen);
+  if (schema.list) for (let index = 0; index < schema.list.length; index++) validateVolatileSchema(schema.list[index], [...path14, String(index)], true, seen);
 }
 function checkWithinRange(data, meta, description, options, skipMin = false) {
   const { max = Infinity, min = -Infinity } = meta;
@@ -1045,7 +1045,7 @@ var init_config = __esm({
     FORWARD_TRANSITION = "\u5411\u524D\u5EF6\u957F\u65F6\uFF0C\u672C\u6BB5\u6700\u540E\u4E00\u5E27\u5FC5\u987B\u7D27\u63A5\u89C6\u98911\u7B2C\u4E00\u5E27\uFF0C\u4FDD\u6301\u540C\u4E00\u6784\u56FE\u3001\u4EBA\u7269\u5927\u5C0F\u3001\u5DE6\u53F3\u4F4D\u7F6E\u3001\u5934\u90E8\u671D\u5411\u3001\u89C6\u7EBF\u3001\u624B\u90E8\u4F4D\u7F6E\u548C\u52A8\u4F5C\u9636\u6BB5\u3002\u52A8\u4F5C\u671D\u5411\u89C6\u98911\u7684\u5F00\u573A\u52A8\u4F5C\u53D1\u5C55\uFF0C\u4E0D\u91CD\u590D\u524D\u6BB5\u52A8\u4F5C\u3001\u4E0D\u5B9A\u683C\u7B49\u5F85\u3001\u4E0D\u4ECE\u753B\u9762\u53E6\u4E00\u4FA7\u91CD\u65B0\u5165\u573A\uFF1B\u4E0D\u64C5\u81EA\u5207\u955C\u6216\u91CD\u65B0\u5C45\u4E2D\u3002";
     CLOSEUP_TRANSITION = "\u955C\u5934\u8854\u63A5\u5EFA\u8BAE\uFF08\u4EC5\u5728\u672C\u6BB5\u672A\u660E\u786E\u6307\u5B9A\u8FD0\u955C\u6216\u5207\u955C\u5B89\u6392\u65F6\u91C7\u7528\uFF09\uFF1A\u5728\u5B8C\u6574\u53F0\u8BCD\u7ED3\u675F\u5904\u81EA\u7136\u5207\u5230\u4E0B\u4E00\u4F4D\u8BF4\u8BDD\u4EBA\u7684\u8FD1\u666F\u6216\u542C\u8BDD\u4EBA\u7684\u53CD\u5E94\u8FD1\u666F\uFF0C\u518D\u7EE7\u7EED\u672C\u6BB5\u5267\u60C5\u3002\u4FDD\u6301\u8F74\u7EBF\u3001\u89C6\u7EBF\u65B9\u5411\u3001\u5DE6\u53F3\u4EBA\u7269\u5173\u7CFB\u3001\u670D\u88C5\u548C\u97F3\u8272\uFF0C\u4E0D\u4EA4\u6362\u89D2\u8272\uFF1B\u53EA\u6539\u53D8\u666F\u522B\uFF0C\u4E0D\u65B0\u589E\u573A\u666F\u3002";
     CONTENT_REJECTION_HINT = "\u53C2\u8003\u89C6\u9891\u88AB\u4E0A\u6E38\u5185\u5BB9\u5BA1\u6838\u62D2\u7EDD\uFF0C\u5EF6\u957F\u5DF2\u505C\u6B62\u3002Seedance \u542B\u4EBA\u8138\u7EED\u62CD\u9700\u4F7F\u7528\u540C\u4E00\u4E0A\u6E38\u8D26\u53F7\u7684\u53D7\u4FE1\u539F\u59CB\u89C6\u9891\u6216\u6388\u6743\u7D20\u6750\uFF1B\u8BF7\u786E\u8BA4\u4E2D\u8F6C\u7AD9\u900F\u4F20\u4E86\u539F\u59CB video_url \u4E0E reference_video\uFF0C\u4E14\u524D\u540E\u8BF7\u6C42\u4F7F\u7528\u540C\u4E00\u4E0A\u6E38\u8D26\u53F7\u3002\u4E0D\u4F1A\u81EA\u52A8\u53BB\u6389\u53C2\u8003\u89C6\u9891\u751F\u6210\uFF0C\u4EE5\u514D\u4EBA\u7269\u4E0D\u4E00\u81F4\u3002";
-    PLUGIN_VERSION = true ? "3.13.10".trim().replace(/^v/i, "") : "";
+    PLUGIN_VERSION = true ? "3.13.11".trim().replace(/^v/i, "") : "";
   }
 });
 
@@ -1105,8 +1105,8 @@ function resolveSubmitPath(config) {
 }
 function resolveQueryPath(config, taskId) {
   if (isVolcengine(config)) return `/api/v3/contents/generations/tasks/${encodeURIComponent(taskId)}`;
-  const path13 = String(ref(config, "queryPath", "")).trim() || relayPreset().queryPath;
-  return path13.replace("{task_id}", encodeURIComponent(taskId));
+  const path14 = String(ref(config, "queryPath", "")).trim() || relayPreset().queryPath;
+  return path14.replace("{task_id}", encodeURIComponent(taskId));
 }
 function resolveModel(config) {
   const preset = relayPreset();
@@ -2034,8 +2034,8 @@ async function fetchActualCost(config, taskIds, signal) {
   const base = resolveBaseUrl(config).replace(/\/v1\/?$/, "");
   if (!key || !base) return pending("\u8D39\u7528\u5F85\u67E5\u8BE2\uFF1A\u539F\u8C03\u7528\u8FDE\u63A5\u4E0D\u53EF\u7528\u3002");
   const requestSignal = signal ? AbortSignal.any([signal, AbortSignal.timeout(8e3)]) : AbortSignal.timeout(8e3);
-  async function get(path13, authenticated) {
-    const response = await fetch(`${base}${path13}`, {
+  async function get(path14, authenticated) {
+    const response = await fetch(`${base}${path14}`, {
       method: "GET",
       redirect: "error",
       signal: requestSignal,
@@ -2627,14 +2627,14 @@ function findKey(payload, keys, depth = Infinity) {
   }
   return void 0;
 }
-function collectUrls(payload, path13 = [], found = []) {
+function collectUrls(payload, path14 = [], found = []) {
   if (typeof payload === "string") {
-    if (/^https?:\/\//i.test(payload)) found.push([path13, payload]);
+    if (/^https?:\/\//i.test(payload)) found.push([path14, payload]);
   } else if (Array.isArray(payload)) {
-    for (const item of payload) collectUrls(item, path13, found);
+    for (const item of payload) collectUrls(item, path14, found);
   } else if (payload && typeof payload === "object") {
     for (const [key, value] of Object.entries(payload)) {
-      collectUrls(value, [...path13, key], found);
+      collectUrls(value, [...path14, key], found);
     }
   }
   return found;
@@ -2652,22 +2652,22 @@ function extractTaskId(payload) {
 }
 function extractVideoUrl(payload) {
   const candidates = collectUrls(payload).filter(
-    ([path13, url]) => !looksLikeImageUrl(url) && !path13.some(isImageKey)
+    ([path14, url]) => !looksLikeImageUrl(url) && !path14.some(isImageKey)
   );
   if (!candidates.length) return void 0;
   for (const wanted of VIDEO_URL_KEYS) {
-    for (const [path13, url] of candidates) {
-      if (path13.length && String(path13.at(-1)).toLowerCase() === wanted) return url;
+    for (const [path14, url] of candidates) {
+      if (path14.length && String(path14.at(-1)).toLowerCase() === wanted) return url;
     }
   }
-  for (const [path13, url] of candidates) {
-    if (path13.length && GENERIC_URL_KEYS.has(String(path13.at(-1)).toLowerCase())) return url;
+  for (const [path14, url] of candidates) {
+    if (path14.length && GENERIC_URL_KEYS.has(String(path14.at(-1)).toLowerCase())) return url;
   }
   return candidates[0][1];
 }
 function extractImageUrl(payload) {
   const found = collectUrls(payload).find(
-    ([path13, url]) => looksLikeImageUrl(url) || path13.some(isImageKey)
+    ([path14, url]) => looksLikeImageUrl(url) || path14.some(isImageKey)
   );
   return found?.[1];
 }
@@ -2724,8 +2724,8 @@ async function relayRequest(config, requestPath, options = {}) {
     throw error;
   }
 }
-async function relayRequestCore(config, path13, { method = "GET", body, signal } = {}, trace = {}) {
-  const url = `${resolveBaseUrl(config)}${path13}`;
+async function relayRequestCore(config, path14, { method = "GET", body, signal } = {}, trace = {}) {
+  const url = `${resolveBaseUrl(config)}${path14}`;
   const timeout = AbortSignal.timeout(RELAY_TIMEOUT_MS);
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
   const serialized = body === void 0 ? void 0 : JSON.stringify(body);
@@ -6187,6 +6187,121 @@ function buildPromptGuidance(config) {
 
 // src/index.ts
 init_config();
+
+// src/internal/update-lockfile.ts
+import { existsSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import path13 from "node:path";
+import { fileURLToPath as fileURLToPath2 } from "node:url";
+var PACKAGE_NAME = "metaontic-video";
+var LOCKFILE = "pnpm-lock.yaml";
+var indentOf = (line) => line.length - line.trimStart().length;
+function remoteEntry(line) {
+  const match = /^ {2}(\S+)@(https?:\/\/\S+?):(?:\s.*)?$/.exec(line);
+  return match ? { name: match[1], url: match[2] } : null;
+}
+function blockEnd(lines, start, indent) {
+  let end = start + 1;
+  while (end < lines.length) {
+    const line = lines[end];
+    if (!line.trim()) {
+      end += 1;
+      continue;
+    }
+    if (indentOf(line) <= indent) break;
+    end += 1;
+  }
+  return end;
+}
+function stripUnverifiableEntries(text) {
+  const newline = text.includes("\r\n") ? "\r\n" : "\n";
+  const lines = text.split(/\r?\n/);
+  const poisoned = /* @__PURE__ */ new Set();
+  for (let index = 0; index < lines.length; index += 1) {
+    const entry = remoteEntry(lines[index]);
+    if (!entry || entry.name !== PACKAGE_NAME) continue;
+    const end = blockEnd(lines, index, 2);
+    const resolution = lines.slice(index + 1, end).find((line) => /^\s+resolution:/.test(line)) || "";
+    if (/tarball:\s*https?:\/\//.test(resolution) && !/integrity:/.test(resolution)) poisoned.add(entry.url);
+  }
+  if (!poisoned.size) return { text, removed: [] };
+  const removed = /* @__PURE__ */ new Set();
+  for (let index = 0; index < lines.length; index += 1) {
+    const entry = remoteEntry(lines[index]);
+    if (!entry || entry.name !== PACKAGE_NAME || !poisoned.has(entry.url)) continue;
+    const end = blockEnd(lines, index, 2);
+    removed.add(entry.name + "@" + entry.url);
+    lines.splice(index, end - index);
+    index -= 1;
+  }
+  for (let index = 0; index < lines.length; index += 1) {
+    if (!/^ {6}metaontic-video:\s*$/.test(lines[index])) continue;
+    const specifier = (/^\s+specifier:\s*(\S+)\s*$/.exec(lines[index + 1] || "") || [])[1] || (/^\s+version:\s*(\S+)\s*$/.exec(lines[index + 2] || "") || [])[1] || "";
+    if (!poisoned.has(specifier)) continue;
+    lines.splice(index, blockEnd(lines, index, 6) - index);
+    index -= 1;
+  }
+  return { text: lines.join(newline), removed: [...removed] };
+}
+function locateProfileDir(moduleUrl) {
+  let dir = fileURLToPath2(moduleUrl);
+  for (let up = 0; up < 3; up += 1) dir = path13.dirname(dir);
+  return dir;
+}
+function repairUpdateLockfile(moduleUrl, log = () => {
+}) {
+  const dir = locateProfileDir(moduleUrl);
+  const lockfile = path13.join(dir, LOCKFILE);
+  if (!existsSync(lockfile) || !existsSync(path13.join(dir, "package.json"))) return { status: "unavailable" };
+  let before = "";
+  try {
+    before = readFileSync(lockfile, "utf8");
+  } catch {
+    return { status: "unavailable" };
+  }
+  const { text, removed } = stripUnverifiableEntries(before);
+  if (!removed.length) return { status: "clean", lockfile };
+  const backup = lockfile + ".metaontic-backup-" + (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-");
+  const temporary = lockfile + ".metaontic-" + process.pid + ".tmp";
+  try {
+    writeFileSync(backup, before);
+    writeFileSync(temporary, text);
+    renameSync(temporary, lockfile);
+  } catch (error) {
+    try {
+      if (existsSync(temporary)) unlinkSync(temporary);
+    } catch {
+    }
+    return { status: "failed", message: error && error.message || String(error) };
+  }
+  log("\u5DF2\u6E05\u7406 " + removed.length + " \u6761\u7F3A\u5C11 integrity \u7684\u9501\u6587\u4EF6\u8BB0\u5F55\uFF08" + removed.join("\u3001") + "\uFF09\uFF0C\u5907\u4EFD\u5728 " + path13.basename(backup) + "\uFF1B\u4E4B\u540E\u53EF\u4EE5\u5728\u7EBF\u66F4\u65B0\u3002");
+  return { status: "repaired", lockfile, backup, removed };
+}
+function startUpdateLockfileRepair(moduleUrl, intervalMs = 1e4, log) {
+  let stopped = false;
+  let last = "";
+  const check = () => {
+    if (stopped) return;
+    try {
+      const lockfile = path13.join(locateProfileDir(moduleUrl), LOCKFILE);
+      if (!existsSync(lockfile)) return;
+      const info = statSync(lockfile);
+      const stamp = info.mtimeMs + ":" + info.size;
+      if (stamp === last) return;
+      last = stamp;
+      repairUpdateLockfile(moduleUrl, log);
+    } catch {
+    }
+  };
+  check();
+  const timer = setInterval(check, intervalMs);
+  if (timer.unref) timer.unref();
+  return () => {
+    stopped = true;
+    clearInterval(timer);
+  };
+}
+
+// src/index.ts
 init_connection();
 init_config();
 var inject = ["tools"];
@@ -6212,6 +6327,16 @@ function apply(ctx, config = {}) {
     register(withVideoExecution(jsonSafeTool(withActualCost(taskTool(config), config)))),
     register(jsonSafeTool(setupTool(config)))
   ];
+  try {
+    const stopLockfileRepair = startUpdateLockfileRepair(
+      import.meta.url,
+      void 0,
+      (message) => ctx.logger?.warn?.(`metaontic-video: ${message}`)
+    );
+    if (typeof stopLockfileRepair === "function") disposers.push(stopLockfileRepair);
+  } catch (error) {
+    ctx.logger?.warn?.(`metaontic-video: \u5B89\u88C5\u76EE\u5F55\u9501\u6587\u4EF6\u81EA\u6108\u672A\u542F\u7528\uFF1A${error?.message || error}`);
+  }
   if (process.env.METAONTIC_VIDEO_INTERNAL_HYPERFRAMES === "1") {
     disposers.push(register(jsonSafeTool(hyperframesTool(config, deps))));
   }

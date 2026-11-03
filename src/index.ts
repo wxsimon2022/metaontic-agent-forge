@@ -20,6 +20,7 @@ import { buildPromptGuidance } from './prompts/guidance.js';
 import { GATED_TOOLS } from './config.js';
 import { preflightGate } from './workflow/approval.js';
 import { ffmpegInstallOptions } from './media/ffmpeg.js';
+import { startUpdateLockfileRepair } from './internal/update-lockfile.js';
 import { isManualKey, connectionLabel } from './providers/connection.js';
 
 export { Config } from './config.js';
@@ -55,6 +56,18 @@ export function apply(ctx: DshContext, config: any = {}) {
     register(withVideoExecution(jsonSafeTool(withActualCost(taskTool(config), config)))),
     register(jsonSafeTool(setupTool(config))),
   ];
+  // 安装目录锁文件里只要留下一条「远程 tgz 但没有 integrity」，pnpm 就会拒绝整次安装，在线更新
+  // 每次都在安装阶段失败。这里加载时先清一遍、之后每 10 秒复查，只动本插件自己的坏记录并留备份。
+  try {
+    const stopLockfileRepair = startUpdateLockfileRepair(
+      import.meta.url,
+      undefined,
+      (message) => ctx.logger?.warn?.(`metaontic-video: ${message}`),
+    );
+    if (typeof stopLockfileRepair === 'function') disposers.push(stopLockfileRepair);
+  } catch (error) {
+    ctx.logger?.warn?.(`metaontic-video: 安装目录锁文件自愈未启用：${error?.message || error}`);
+  }
   // 雪藏功能：默认不注册，不进入对外技能和提示词，仅供内部显式启用。
   if (process.env.METAONTIC_VIDEO_INTERNAL_HYPERFRAMES === '1') {
     disposers.push(register(jsonSafeTool(hyperframesTool(config, deps))));

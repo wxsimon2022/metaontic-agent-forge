@@ -49,3 +49,20 @@ test('local source block preserves real directory content across repeated clicks
   assert.deepEqual(await readdir(temp),['locale']);
  }finally{await rm(temp,{recursive:true,force:true});}
 });
+
+test('lockfile integrity failure stops immediately instead of retrying or switching mirror',async()=>{
+  const state={calls:0,status:'',message:''};
+  const sandbox=vm.createContext({window:{localStorage:{removeItem(){}}}});
+  vm.runInContext(sourceOf('client/updates'),sandbox);
+  const diagnostic='ERR_PNPM_MISSING_TARBALL_INTEGRITY Cannot install package "metaontic-video@https://gitee.com/x.tgz": its lockfile entry has no "integrity" field';
+  const api={listBundles:async()=>[{name:'metaontic-video',installed:true,source:'https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.10/metaontic-video-3.13.10.tgz'}],
+    installBundle:async()=>{state.calls+=1;return {ok:true,value:{application:'failed',error:{code:'operation-error',diagnostic}}};}};
+  const context={updateConfirm:true,PLUGIN_VERSION:'3.13.9',updateLatest:'3.13.10',availableVersions:['3.13.10'],
+    PLUGIN_PACKAGE:'metaontic-video',UPDATE_ATTEMPTS:3,UPDATE_CACHE_KEY:'test',
+    manager:()=>({manager:api}),isNewerVersion:()=>true,setUpdateConfirm(){},setUpdateLatest(){},
+    setUpdateStatus:v=>{state.status=v;},setUpdateMessage:v=>{state.message=v;},setUpdateAt(){},t:key=>key};
+  await sandbox.createUpdateActions(context).runOnlineUpdate();
+  assert.equal(state.calls,1);                       // 不重试，也不换 GitHub 地址
+  assert.equal(state.status,'failed');
+  assert.match(state.message,/^versionUpdateLockfile/);
+});

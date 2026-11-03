@@ -75,6 +75,8 @@ Hyperframes 属于隐藏的内部开发能力，只能放 devDependencies，不�
 
 版本选择与降级入口已移除，只允许更新到更高的最新正式版本。
 
+pnpm 11 安装前会校验整份 `pnpm-lock.yaml`：profile 里只要留下一条「远程 tgz 但缺 `integrity`」的记录，任何地址、任何版本的安装/更新都会以 `ERR_PNPM_MISSING_TARBALL_INTEGRITY` 失败，与插件包和操作系统无关。宿主侧自愈见 `src/internal/update-lockfile.ts`：只清本插件这类记录、改前留 `pnpm-lock.yaml.metaontic-backup-时间`、原子替换，加载时检查一次并每 10 秒复查；客户端命中该错误不再重试或换镜像。该坏记录在 macOS 上无法通过正常路径复现（全新安装、store 命中、安装中途打断、本地 tgz 转在线地址都会保留 integrity），只在 Windows 出现，需现场锁文件与 mtime 才能定性。
+
 长视频交付须逐项展示所有已完成分段及真实合并结果，完成30秒两段时展示第一段、第二段、合并后完整视频；暂停/失败不虚构未完成分段或完整成片。仅单段直出时不为了交付再拆付费任务，沿用已确认生成计划。
 
 ## 续拍过渡与官方提示词

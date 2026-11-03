@@ -69,7 +69,7 @@ Seedance 2.0 系列单次生成上限为 15 秒。MetaOnticVideo 将全片拆为
 
 ### 安装报 `ERR_PNPM_MISSING_TARBALL_INTEGRITY` 怎么办？
 
-安装日志里出现 `its lockfile entry has no "integrity" field` 时，问题不在插件包，而在 DeepSeek Harness 插件安装目录里遗留的 `pnpm-lock.yaml`：这条 `.tgz` 地址的记录缺少校验值，pnpm 为保证安装内容未被篡改会直接拒绝，换在线地址、换本地 `.tgz` 路径或重装旧版本都会一样失败。完全退出 Harness，删除该目录下的 `pnpm-lock.yaml`（Windows：`C:\Users\<用户名>\.dsh\profiles\desktop\pnpm-lock.yaml`；macOS：`~/.dsh/profiles/desktop/pnpm-lock.yaml`；设置了 `DSH_HOME` 时在其下的 `profiles/desktop`），再重新安装一次即可，安装器会重新生成该文件。只删 `pnpm-lock.yaml`，不要删同目录的 `package.json`。
+安装日志里出现 `its lockfile entry has no "integrity" field` 时，问题不在插件包，而在 DeepSeek Harness 插件安装目录里遗留的 `pnpm-lock.yaml`：这条 `.tgz` 地址的记录缺少校验值，pnpm 为保证安装内容未被篡改会直接拒绝，换在线地址、换本地 `.tgz` 路径或重装旧版本都会一样失败。插件运行时会自动检查该文件，发现本插件这类记录就删掉那一条并留一份 `pnpm-lock.yaml.metaontic-backup-时间` 备份，所以已经装上插件的情况下，等十几秒再点一次更新通常即可。插件还没装上、后台没有这个清理动作时，完全退出 Harness，删除该目录下的 `pnpm-lock.yaml`（Windows：`C:\Users\<用户名>\.dsh\profiles\desktop\pnpm-lock.yaml`；macOS：`~/.dsh/profiles/desktop/pnpm-lock.yaml`；设置了 `DSH_HOME` 时在其下的 `profiles/desktop`），再重新安装一次即可，安装器会重新生成该文件。只删 `pnpm-lock.yaml`，不要删同目录的 `package.json`。
 
 ## 使用与开发导航
 
@@ -334,6 +334,17 @@ Harness 默认启用 HMR 配置重载，但不监听本地插件源码。对于�
 ```
 
 `base` 使用本机插件目录绝对路径，仅配置在本机 profile，不写入插件发布配置。已有 HMR 配置时合并调整，保留其他项目的监听需求。配置由运行中的宿主加载；之后修改 TypeScript 并执行 `npm run build`，宿主入口热替换，客户端通过宿主 Client HMR 更新。构建失败先修复，不通过重启解决语法错误。`package.json` 的依赖或加载入口变化可能仍需按宿主提示重新安装或重启；插件规则变化在现有对话的下一轮请求生效，旧确认窗口需重新发起。正在生成视频时先等任务返回，再构建或更新，避免热替换中断当前调用；已有任务按任务 ID 查询或续做，勿重复提交。
+
+## v3.13.11 更新内容
+
+### 优化
+
+- 更新失败命中这条报错时，不再对同一地址重试三次、也不切换到另一个镜像源（这两种做法实测都同样失败，只会让用户白等），直接给出针对性提示：等待十几秒后再点一次「更新到最新正式版」，仍失败时再按提示手动删除 pnpm-lock.yaml；只有插件还没装上、后台还没有该清理动作时才需要手动处理。
+- 使用说明书与 README 同步写明自动清理与备份文件的位置，并说明这条报错与插件包、操作系统无关，避免继续把它当成 Windows 文件占用问题去排查。
+
+### 修复
+
+- 在线或本地安装报 ERR_PNPM_MISSING_TARBALL_INTEGRITY（安装目录的 pnpm-lock.yaml 里留着一条缺 integrity 的远程 tgz 记录，pnpm 因此拒绝整次安装）时，插件现在会在后台自己清掉本插件这条坏记录：加载时检查一次、之后每 10 秒复查，改前把原文件另存为同目录下的 pnpm-lock.yaml.metaontic-backup-时间，其他依赖和带校验值的正常记录一律不动，清理后更新即可继续，不再需要用户手动删除该文件。
 
 ## v3.13.10 更新内容
 

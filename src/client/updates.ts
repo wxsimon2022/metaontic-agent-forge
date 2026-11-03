@@ -224,6 +224,8 @@ async function runOnlineUpdate() {
         ?? 'unknown');
     /** 过一会儿可能就好的失败：Gitee 排队（429）、超时、连接被掐。 */
     const worthRetrying = (text) => /429|queue overflowed|timed out|timeout|ETIMEDOUT|ECONNRESET|ECONNREFUSED|EAI_AGAIN|socket hang up|unable to access|network|fetch/i.test(text);
+    /** 安装目录锁文件里留着缺 integrity 的记录：换地址、换版本都没用，必须先清掉那条记录。 */
+    const lockfileUnverifiable = (text) => /MISSING_TARBALL_INTEGRITY/i.test(text);
     // 安装仅使用所选发布版本的成品包，避免 Git 安装引入构建依赖；禁止回退 master。
     if (!/^\d+\.\d+\.\d+$/.test(context.updateLatest || '')
         || (context.availableVersions && !context.availableVersions.includes(context.updateLatest))) {
@@ -249,6 +251,9 @@ async function runOnlineUpdate() {
                 return { outcome: result.value || {} };
             }
             const text = failureText(result);
+            // 安装目录锁文件里有缺 integrity 的记录时，整份锁文件都过不了校验：换镜像地址、换版本、
+            // 原地重试都是同样的失败，直接停下，等插件后台清掉那条记录后再点一次。
+            if (lockfileUnverifiable(text)) return { failure: text, next: false, lockfile: true };
             const transient = worthRetrying(text);
             if (transient && round < context.UPDATE_ATTEMPTS) {
                 context.setUpdateMessage(context.t('versionUpdateRetry', { attempt: round + 1, total: context.UPDATE_ATTEMPTS }));
@@ -275,6 +280,7 @@ async function runOnlineUpdate() {
     if (!outcome) {
         context.setUpdateStatus('failed');
         context.setUpdateMessage([
+            lockfileUnverifiable(failure) ? context.t('versionUpdateLockfile') : '',
             context.t('versionUpdateFailed', { message: failure }),
             worthRetrying(failure) || /429|queue overflowed/i.test(failure)
                 ? context.t('versionUpdateRateLimited')
