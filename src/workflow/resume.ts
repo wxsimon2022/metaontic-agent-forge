@@ -14,7 +14,7 @@ import { sumStepSeconds, modelMaxSeconds } from './planning.js';
  * 暂停记录文件名。长视频是「先直出、再逐段延长」，每段生成完都先问用户要不要继续；
  * 用户点了「先不继续」就把「已经生成到哪一步」写进这个文件，随时能用 resume 接着做。
  */
-export const PAUSE_FILE = 'paused-plan.json';
+const PAUSE_FILE = 'paused-plan.json';
 
 /** resume 参数：目录路径字符串，或上次结果里那个 resumeDir 对象。 */
 export function resumeDirOf(value) {
@@ -50,17 +50,17 @@ export async function readPauseFile(dir) {
 
 /* ---------------- 暂停目录的「续做锁」：同一份进度只能有一次 resume 在跑 ---------------- */
 
-export const RESUME_LOCK = 'resume.lock';
+const RESUME_LOCK = 'resume.lock';
 
 /** 锁过期时间：0 / 负数表示永不过期（配置成 0 的人就是不想让后来者抢）。 */
-export function resumeLockStaleMs(config) {
+function resumeLockStaleMs(config) {
   const minutes = Number(ref(config, 'resumeLockStaleMinutes', 60));
   if (!Number.isFinite(minutes) || minutes <= 0) return 0;
   return minutes * 60 * 1000;
 }
 
 /** 锁文件是不是「过期残留」（进程被杀 / 宿主放弃调用，没来得及删）：只有过期才允许抢过来。 */
-export async function resumeLockExpired(file, staleMs) {
+async function resumeLockExpired(file, staleMs) {
   const raw = await readFile(file, 'utf8').catch(() => null);
   if (raw === null) return true;              // 刚好被删掉：当成可以重试
   let data;
@@ -76,7 +76,7 @@ export async function resumeLockExpired(file, staleMs) {
 }
 
 /** 读锁文件里「谁拿着」，只用来写一句清楚的报错。 */
-export async function describeResumeLock(file) {
+async function describeResumeLock(file) {
   const raw = await readFile(file, 'utf8').catch(() => null);
   if (!raw) return '';
   try {
@@ -95,7 +95,7 @@ export async function describeResumeLock(file) {
  * 第二个直接报错——否则双方各自把剩下的段提交一遍，同样的段生成两遍、钱花两遍。
  * @returns { file, release } —— release 只删自己写的那把锁（目录可能已经换人用了）。
  */
-export async function acquireResumeLock(dir, { toolName, callId, staleMs }) {
+async function acquireResumeLock(dir, { toolName, callId, staleMs }) {
   const empty = { file: null, async release() {} };
   const file = path.join(dir, RESUME_LOCK);
   const token = uniqueSuffix('lock');
@@ -189,7 +189,7 @@ export function withResumeLock(tool, toolName, config) {
   };
 }
 
-export async function writePauseFile(dir, data) {
+async function writePauseFile(dir, data) {
   await mkdir(dir, { recursive: true, mode: 0o700 });
   const file = path.join(dir, PAUSE_FILE);
   // 先写唯一的临时文件、再原子 rename 顶上：并发读（另一次 resume）不会读到写到一半的 JSON。
@@ -241,7 +241,7 @@ export function pickResumeOptions(args) {
 }
 
 /** 暂停时写进分段目录的记录：接着做时照它恢复计划、进度和最后一段的链接。 */
-export function pauseRecordAt({ stamp, prompt, fullPlan, done, cursor, lastVideoUrl, options, segments }) {
+function pauseRecordAt({ stamp, prompt, fullPlan, done, cursor, lastVideoUrl, options, segments }) {
   return {
     plugin: 'metaontic-video',
     kind: 'paused-plan',
@@ -271,7 +271,7 @@ export function resumeHint(dir, remainingSeconds, toolName = 'video_generate') {
 }
 
 /** Non-secret connection identity. Never copy API keys into progress files. */
-export function progressConnection(config) {
+function progressConnection(config) {
   return {
     provider: isMetaontic(config) ? 'metaontic' : isVolcengine(config) ? 'volcengine' : 'service',
     model: resolveModel(config), baseUrl: resolveBaseUrl(config),

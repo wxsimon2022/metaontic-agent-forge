@@ -102,13 +102,13 @@ present仅登记文件交付，卡片可能在轮次结束后出现；脚本审�
 
 所有用户交付的文件（脚本、分镜示意图、转换图片、单段/续拍预览、合并成片、恢复后成果、导出PDF等）都须在用户可见正文给出逐项可点击Markdown链接，不能只给目录、反引号或普通文本路径；本地路径先确认文件存在并转绝对路径，用尖括号包裹。图片另须内嵌，脚本另须完整展示正文；present登记成功仍保留链接，不声称卡片已播放。只链接真实返回或已核实文件，不编造路径，不为补链接重新付费生成。恢复目录、任务ID、配置文件等内部参数继续按原参数使用，不当作可播放成果。
 
-交付文件顺序统一为：合并后的完整视频第一，其后依次为第一段、第二段及后续分段；present调用、正文文件链接和交付清单都遵守此顺序。该顺序由 workflow/delivery-order 卡口强制：视频工具返回时按 segmentsDir 分组记录真实分段与合并成片，present 提交前校验成片是否排在所有分段及上一版中间合并之前、本轮是否漏掉成片，不合格直接 deny 并给出正确顺序（真实事故：present 传「第一段、第二段、合并成片」导致成片卡片排在最后）。认领交付文件必须逐级降级：绝对路径 → 同名 → 文件字节数；助手交付时经常把成片改名成 final/<项目>-60s.mp4、把分段换成交付目录里的 15s 副本，只比路径会整批漏判、卡口静默失效（曾因此线上一直报「成片没排第一」却没有任何 delivery_order_blocked 记录）。定位这类问题先查插件日志里有没有 delivery_order_blocked，没有就是没认领上，不要先改提示词。暂停时已有累计合并视频标为“已完成部分合并视频”，不标成完整成片；合并失败或未合并时只按段号交付真实文件。
+交付卡片只登记「最终成片 + 各分段」（成片第一，其后按段号），脚本、分镜示意图、参考图、转换图片、单段预览、暂停时的部分合并都只在正文内联/链接交付。原因是宿主交付卡片按本轮首次出现路径顺序排列、按路径去重、第5项起折叠（@deepseek-ai/dsh-client-ui-deliverables 的 COLLAPSED_PRESENTED_COUNT=4，注释写明 in first-seen path order），中途登记过的过程材料会把成片挤到后面，事后补发 present 也挪不回来——2026-11-04 事故：同一轮先 present 脚本+分镜、再 present 15s 部分合并+第一段、最后才 present 30s 成片+两段，卡片渲染出来仍是脚本、分镜、第一段、15s 预览，30s 成片排第 5 被折叠隐藏，而原始 present 参数顺序本身是对的。该约束由 workflow/delivery-order 卡口强制：视频工具返回时按 segmentsDir 分组记录真实分段与合并成片，present 提交前依次校验四件事——这次是否最终交付（status=succeeded 且 merged=true 且无 paused/partial/pendingTaskId，否则 deny run_not_finished）、是否带了中间版本成片（deny intermediate_merge_listed）、成片是否排在所有分段之前（deny merged_not_first）、本轮是否漏掉成片（deny merged_missing；成片本轮已登记过则放行追加的分段）。认领交付文件必须逐级降级：绝对路径 → 同名 → 文件字节数；助手交付时经常把成片改名成 final/<项目>-60s.mp4、把分段换成交付目录里的 15s 副本，只比路径会整批漏判、卡口静默失效（曾因此线上一直报「成片没排第一」却没有任何 delivery_order_blocked 记录）。定位这类问题先查插件日志里有没有 delivery_order_blocked，没有就是没认领上，不要先改提示词。暂停时已有累计合并视频标为“已完成部分合并视频”，不标成完整成片；合并失败或未合并时只按段号交付真实文件。
 
 阶段计时：编写脚本前用video_stage(stage:script_design,action:start)，完整脚本保存后finish原spanId；示意图绘制用storyboard_design，展示脚本用script_present。审核/制作/参考图/分段预览等待分别用script_review_wait、production_confirm_wait、reference_review_wait、segment_review_wait，展示成果用result_present。用户回复后结束对应等待标记；不得把等待混入脚本设计时间，不为计时重复生成内容。标记仅记录边界墙钟耗时，不等于模型纯推理时间；标记不可用仍正常推进，不猜耗时。
 
 估价按真实输入区分档位：首段生成无视频输入（参考图/首尾帧仍为无视频输入），每个续拍段有视频输入，用上一段完整视频时长加本段输出时长计token，切换到含视频输入单价；不把累计成片时长当上一段输入。脚本费用预估逐段列档位、输入/输出时长、单价与金额再合计；制作确认和恢复预检同口径，外部视频时长不明就明确无法可靠估价，不按纯生成费用兜底，不调用付费任务试算。
 
-脚本审核展示防漏：监听session/event，当前视频流程的present分镜图登记后，必须有assistant/message正文text内嵌同一绝对路径的图片，且文件仍存在，才放行脚本审核ask_user_question。reasoning、工具看图及仅present登记不算；新版图重置展示状态，不使用上一轮图。交付卡片在轮次结束后才可见，故先发独立图片正文再提问。只观测事件，不新增已弃用的session同步日志读取。
+脚本审核展示防漏：监听session/event，必须有assistant/message正文text内嵌本版分镜图（绝对路径解析后文件仍存在），才放行脚本审核ask_user_question。present 不再参与分镜展示——交付卡片只登记最终成片，present 登记的分镜图对用户不产生可见展示，只被留作提示；reasoning、工具看图、文字描述都不算。改稿是否发新版按同目录 mtime 判断：目录里存在比内嵌那张更新的分镜图（文件名含 storyboard/分镜/示意）就 deny stale_storyboard_version，避免改稿后仍发旧图。交付卡片在轮次结束后才可见，故先发独立图片正文再提问。只观测事件，不新增已弃用的session同步日志读取。反向漏问（2026-11-04 实例）：正文单独成一条消息且不带任何工具调用时，助手在正文后直接stop结束回合，审核窗不弹。对照同模型成功轮次，正文消息都同时带着video_stage调用（收口script_present/开始script_review_wait）；失败那轮把start script_present提到present之前、提前用掉了这条锚点。因此提示词要求正文消息内必须带收口调用，禁止在present前提前start/finish；守卫在turn/end（或下一轮首个事件）见到已present未提问就记storyboard_review_missing，便于判断修复是否生效。
 
 设置布局：模型按视频/图片分组，共用开关及共用Key在上方，独立Key各在所属模型下；画幅/音频等高排列、窄窗口堆叠。登录入口归接入区，重置在底部。改布局用真实组件模拟三渠道、共用切换、保存、键盘和明暗/窄屏验证，不写实际宿主配置；同步真实指南截图，截图不含版本或真实Key。
 
@@ -138,3 +138,5 @@ Windows解压目录安装在更新时出现空目录/locale缺失：先核对成
 
 历史版本回收使用scripts/clean-releases.mjs（npm run clean:releases -- --apply）：默认演练，只删计划内对象，最新正式版、当前package.json版本以及README/说明书/CHANGELOG/本文件里.tgz下载地址引用过的版本永不删除；先附件、再发行版、最后标签，GitHub与Gitee同一计划并同步本地标签，演练同时给出预计释放的附件体积；待删标签取远端列表与Gitee标签接口的并集，Gitee开放接口没有删除标签的端点（DELETE /tags只会404），只能用私人令牌走HTTPS推送删引用。定期删除由.github/workflows/clean-releases.yml按周演练，只有仓库变量CLEANUP_APPLY=true或手动勾选apply才真正执行。回收不是发版，但删除不可逆，先看演练输出的保留集与待删清单再执行，不在发布流程中间插入清理。
 回收默认发行版与标签各保留最近10个（--keep / --keep-tags，后者默认跟随前者，两条保留线取并集）；Gitee标签只能用git push删引用，Gitee操作需要GITEE_TOKEN。
+
+分段收尾与重复逻辑：video_generate 与 video_extend 的分段循环共用 workflow/segment-run.ts（结果落盘、中断收尾、暂停说明、merge:false、下载合并收尾），结果文案共用 tools/results.ts 的 renderVideoResult/renderResult（同一实现在 RENDER_WORDING 里分工具措辞），改措辞只改一处，不要再各自复制一份。media/merge.ts 的分段下载与 ffprobe 探测并发跑（mapLimit，上限 SEGMENT_TASK_CONCURRENCY=4），跑完仍按段号顺序处理，因为「累计成片」识别依赖 files 的推进顺序；下载失败仍按段号取最靠前的那一段报错。参考图适配缓存在系统临时目录只增不减，写入成功后调 pruneReferenceCache（7 天、上限 200 个，5 分钟内带 .fit- 的临时文件不删）；日志目录按天缓存 mkdir，失败不记缓存以便下次重试。

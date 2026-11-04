@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
  * 给会「接着暂停进度继续」的工具加一层互斥：只有传了 resume 的调用才需要锁，
  * 普通生成 / 延长之间互不影响（本来就是并发安全的）。
  */
-export let progressRecordModule;
+let progressRecordModule;
 
 export async function appendVideoExecution(exec, phase) {
   if (!exec?.agent?.session || !exec.callId) return;

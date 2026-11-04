@@ -20,7 +20,7 @@ export function findKey(payload, keys, depth = Infinity) {
   return undefined;
 }
 
-export function collectUrls(payload, path = [], found = []) {
+function collectUrls(payload, path = [], found = []) {
   if (typeof payload === 'string') {
     if (/^https?:\/\//i.test(payload)) found.push([path, payload]);
   } else if (Array.isArray(payload)) {
@@ -33,12 +33,12 @@ export function collectUrls(payload, path = [], found = []) {
   return found;
 }
 
-export function isImageKey(key) {
+function isImageKey(key) {
   const lowered = String(key || '').toLowerCase();
   return IMAGE_KEY_TOKENS.some((token) => lowered.includes(token));
 }
 
-export function looksLikeImageUrl(url) {
+function looksLikeImageUrl(url) {
   return IMAGE_EXTENSIONS.some((ext) => url.split('?')[0].toLowerCase().endsWith(ext));
 }
 

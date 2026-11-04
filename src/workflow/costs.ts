@@ -7,7 +7,7 @@ import { resolveModel } from '../providers/connection.js';
 /* ---------------- 调用前预检：预估费用 + 人工确认 + 额度是否够 ---------------- */
 
 /** 金额显示与中转站一致：|x| ≥ 1 保留 2 位小数，否则保留 4 位，末尾多余的 0 去掉。 */
-export function formatAmount(value) {
+function formatAmount(value) {
   const number = Number(value);
   if (!Number.isFinite(number)) return '0';
   const text = number.toFixed(Math.abs(number) >= 1 ? 2 : 4);
@@ -19,7 +19,7 @@ export function formatMoney(value, symbol = '¥') {
 }
 
 /** 每 100 万 token 的美元价：仅含视频输入时使用 video 档；参考图和首尾帧仍属无视频输入。 */
-export function estimateRate(model, usesReference) {
+function estimateRate(model, usesReference) {
   const id = String(model || '').toLowerCase();
   const hit = ESTIMATE_RATES.find(([prefix]) => id.startsWith(prefix));
   const table = hit ? hit[1] : ESTIMATE_RATES[0][1];

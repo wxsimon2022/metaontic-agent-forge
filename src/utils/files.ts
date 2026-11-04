@@ -21,7 +21,7 @@ export function formatSeconds(value) {
  * 固定的临时名（`x.mp4.part`、`x.align1.mp4`、`x.work.mp4`）会让并发调用互相踩——
  * 一边还在写、另一边已经 rename/读取，拿到的就是半截文件。所有中间产物都带这个尾巴。
  */
-export let tempSequence = 0;
+let tempSequence = 0;
 
 export function uniqueSuffix(prefix = 'tmp') {
   tempSequence = (tempSequence + 1) % 1000000000;

@@ -2,7 +2,27 @@ import { createAccountActions } from './account.js';
 import { createUpdateActions, renderUpdateNotice, formatReleaseTime } from './updates.js';
 /** 浏览器端 settings：由入口注入宿主 React 与共享依赖。 */
 import packageInfo from '../../package.json';
-export function createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS }: any) {
+/**
+ * 设置页工厂。依赖统一走一个 deps 对象（和 createAccountActions 一样），
+ * 入口在 src/client.ts 装配：宿主 React（React/h）、主题与字段（TOKENS/inputStyle/SELECTS/
+ * optionLabel/FIELD_BY_KEY/SECTIONS/formatMoney/PAGE_CSS）、设置状态（useSnapshot/same/
+ * validateSettings/persistConnection/persistBatch/PLUGIN_OWNED_KEYS）、连接与登录文案
+ * （DEFAULT_REGISTER_API/LOGGED_OUT_KEY/DEFAULT_REGISTER_TOKEN）、版本与更新
+ * （PLUGIN_VERSION、UPDATE_CACHE_KEY、UPDATE_MAX_AGE_MS、fetchLatestVersion、isNewerVersion、
+ * updateBell、PLUGIN_PACKAGE）。
+ * 返回的 makePage({ form, t, manager }) 才是页面组件工厂。
+ */
+export function createSettingsPage(deps: any) {
+  const {
+    useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS,
+    persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION,
+    UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, SELECTS, inputStyle, optionLabel,
+    FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS,
+    isNewerVersion, updateBell, PAGE_CSS,
+  } = deps;
+// A 服务端模式的使用记录暂时影藏：接口未就绪，先不渲染这张卡，也不再轮询。
+// 恢复时把这一项改回 true 即可，额度卡片与其余设置不受影响。
+const SHOW_USAGE_RECORD = false;
 function makePage({ form, t, manager }) {
       return function ConfigPage(props) {
         const snapshot = useSnapshot(form);
@@ -142,7 +162,7 @@ function makePage({ form, t, manager }) {
           syncDeviceIdentity().catch(() => {});
           if (snap.secrets?.apiKey || (snap.value || {}).apiKey) {
             loadQuota().catch(() => {});
-            loadUsage().catch(() => {});
+            if (SHOW_USAGE_RECORD) loadUsage().catch(() => {});
             return;
           }
           lookupOwnKey().catch(() => {});
@@ -150,7 +170,7 @@ function makePage({ form, t, manager }) {
 
         // 页面可见时定时拉取，重新聚焦时立即刷新；火山直连不查询服务端记录。
         React.useEffect(() => {
-          if (!serviceMode || props?.view === 'summary'
+          if (!serviceMode || !SHOW_USAGE_RECORD || props?.view === 'summary'
             || !(snapshot.secrets?.apiKey || value.apiKey)) return;
           const refresh = () => {
             if (window.document?.visibilityState === 'hidden') return;
@@ -643,7 +663,7 @@ function makePage({ form, t, manager }) {
             })}${usage.truncated ? ` · ${t('usageMore', { count: usage.count })}` : ''}`
             : t('usageEmpty'))
           : (usageStatus === 'working' ? t('usageLoading') : t('usageKeyMissing'));
-        const usageBox = serviceMode && keyReady ? h('div', {
+        const usageBox = SHOW_USAGE_RECORD && serviceMode && keyReady ? h('div', {
           key: 'usage',
           'data-field': 'usage',
           className: 'mov-card',

@@ -47,8 +47,22 @@ test('running video card renders progress and a completed success reaches 100 pe
   assert.doesNotMatch(JSON.stringify(running), /max-width:420px/);
   assert.equal(context.VideoTaskProgress({ block: { phase: 'preparing', name: 'video_generate' }, callId: 'a' }), null);
   assert.equal(context.VideoTaskProgress({ block: { phase: 'start', name: 'video_generate' }, callId: 'a' }), null, 'native start is recorded before approval');
+  assert.match(JSON.stringify(running), /🐢/, '执行中进度条上有跟着进度走的小乌龟');
+  assert.match(JSON.stringify(running), /mov-task-turtle/);
+  const runningJson = JSON.stringify(running);
+  const percent = /"aria-valuenow":(\d+)/.exec(runningJson)[1];
+  assert.match(runningJson, new RegExp(`"left":"${percent}%"`), '小乌龟位置跟着当前进度百分比');
+  assert.doesNotMatch(runningJson, /mov-task-bee/);
+  assert.match(runningJson, /\.mov-task-turtle \{[^}]*scaleX\(-1\)/, '乌龟要镜像成头朝右');
+  assert.match(runningJson, /"className":"mov-task mov-task-running"/, '执行中给卡片加上呼吸灯类');
+  assert.match(runningJson, /@keyframes mov-task-breath/, '外边框呼吸灯动画');
   const finished = context.VideoTaskProgress({ block: { kind: 'result', content: [{ type: 'text', text: 'succeeded' }] } });
   assert.match(JSON.stringify(finished), /"aria-valuenow":100/);
+  assert.doesNotMatch(JSON.stringify(finished), /🐢/, '任务返回后不再显示小乌龟');
+  const finishedJson = JSON.stringify(finished);
+  assert.match(finishedJson, /"className":"mov-task","data-field":"video-task-progress"/);
+  assert.doesNotMatch(finishedJson, /"className":"mov-task mov-task-running"/, '任务返回后停止呼吸灯');
+  assert.match(JSON.stringify(context.VideoTaskProgress({ block: { phase: 'start', name: 'video_generate', args: { duration: 15 } }, callId: 'a', startedAt: 1 })), /mov-task-rail/);
 });
 
 test('execution source waits for real execution and clears on settlement or interrupted turns', () => {

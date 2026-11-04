@@ -6,7 +6,7 @@
  * 非纯对象（Error/Date 实例等）或循环引用，整条结果就会被丢弃并报
  * 「value is not lossless JSON」。这里统一清洗成严格 JSON。
  */
-export function toJsonSafe(value, seen = new Set()) {
+function toJsonSafe(value, seen = new Set()) {
   if (value === null) return null;
   const type = typeof value;
   if (type === 'string' || type === 'boolean') return value;

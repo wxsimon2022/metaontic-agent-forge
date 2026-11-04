@@ -9,7 +9,7 @@ const segments=[1,2].map(index=>({index,seconds:15,kind:index===1?'direct':'exte
 for(const name of ['renderResult','renderVideoResult'])test(`${name}: delivers both parts and the final merged video`,()=>{
  const text=ctx[name]({status:'succeeded',mode:'extended',segments,merged:true,videoPath:'/out/final.mp4'}).map(x=>x.text).join('\n');
  assert.match(text,/第一段：\/out\/part-1.mp4/);assert.match(text,/第二段：\/out\/part-2.mp4/);assert.match(text,/合并后完整视频：\/out\/final.mp4/);
- assert.match(text,/先展示合并成片，再按段号依次展示各分段/);
+ assert.match(text,/第一个必须是合并成片，其后才按段号放分段/);
 });
 test('paused first part is delivered without inventing a second part or merged full video',()=>{
  const text=ctx.deliveryInstruction({status:'succeeded',paused:true,remainingSeconds:15,segments:segments.slice(0,1),merged:true,videoPath:segments[0].localPath});
@@ -28,7 +28,7 @@ test('single direct 30s video does not invent split files',()=>{
 test('single video always includes a clickable absolute path even when present exists',()=>{
  const text=ctx.deliveryInstruction({status:'succeeded',segments:[{...segments[0],localPath:'my videos/01.mp4'}]});
  assert.ok(text.includes(`[观看视频](<${resolve('my videos/01.mp4')}>)`));
- assert.match(text,/present成功也不能省略正文链接/);
+ assert.match(text,/正文里每项都要有 Markdown 可点击链接/);
 });
 test('remote-only delivery uses the actual playback URL',()=>{
  const text=ctx.deliveryInstruction({status:'succeeded',videoUrl:'https://media.invalid/one.mp4'});

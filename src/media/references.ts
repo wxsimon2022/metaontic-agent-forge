@@ -6,18 +6,8 @@ import { probeMedia, runProcess, resolveBinary } from './ffmpeg.js';
 import { uniqueSuffix } from '../utils/files.js';
 import { isOmniExtendModel } from '../providers/connection.js';
 
-export function normalizeImageUrl(value, label) {
-  const url = String(value ?? '').trim();
-  if (!url) throw new Error(`${label} 不能为空。`);
-  if (/^asset:\/\/[A-Za-z0-9_-]+$/.test(url)) return url;
-  if (!/^https?:\/\//i.test(url)) {
-    throw new Error(`${label} 必须是 https:// 或 http:// 开头的公网 URL（不能用本地文件路径）。`);
-  }
-  return url;
-}
-
 /** 允许上传的图片类型：扩展名 → MIME。 */
-export const IMAGE_EXT_TO_MIME = {
+const IMAGE_EXT_TO_MIME = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.png': 'image/png',
@@ -29,10 +19,10 @@ export const IMAGE_EXT_TO_MIME = {
 };
 
 /** 单张图片上限：内联成 base64 后请求体会涨约 1/3，压在这个大小比较稳。 */
-export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
 /** 用文件头认图片，避免把改了扩展名的非图片文件读进去发走。 */
-export function sniffImageMime(buffer: Buffer): string | null {
+function sniffImageMime(buffer: Buffer): string | null {
   if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return 'image/jpeg';
   if (buffer.length >= 8 && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'image/png';
   if (buffer.length >= 6 && (buffer.subarray(0, 6).toString('latin1') === 'GIF87a' || buffer.subarray(0, 6).toString('latin1') === 'GIF89a')) return 'image/gif';
@@ -46,7 +36,7 @@ export function sniffImageMime(buffer: Buffer): string | null {
  * 目标画幅的像素尺寸：ratio + 720P 算出来，参考图适配画幅时用。
  * adaptive 表示「让模型按参考图自己决定画幅」，没有固定目标，不参与适配。
  */
-export const CANVAS_SIZES: Record<string, [number, number]> = {
+const CANVAS_SIZES: Record<string, [number, number]> = {
   '16:9': [1280, 720],
   '9:16': [720, 1280],
   '4:3': [960, 720],
@@ -59,7 +49,7 @@ export function canvasSize(ratio) {
 }
 
 /** 适配后的参考图放这里：同一张图反复提交时不必每次重跑 ffmpeg。 */
-export function referenceCacheDir() {
+function referenceCacheDir() {
   return path.join(os.tmpdir(), 'metaontic-video-reference');
 }
 
@@ -78,7 +68,7 @@ export function referenceCacheDir() {
  * （base64 发上去就是坏图）。这里要求文件存在且非空；探得出尺寸时再核对画幅。
  * 没有可用的 ffprobe 时只能按「存在且非空」放行，否则缓存永远命不中。
  */
-export async function isUsableFit(dest, width, height, config, signal) {
+async function isUsableFit(dest, width, height, config, signal) {
   const info = await stat(dest).catch(() => null);
   if (!info?.isFile() || info.size <= 0) return false;
   const media = await probeMedia(dest, config, signal);
@@ -86,10 +76,45 @@ export async function isUsableFit(dest, width, height, config, signal) {
   return media.width === width && media.height === height;
 }
 
-/** 同一张图的适配任务：并发调用共用同一个 Promise，避免同时开 N 个 ffmpeg 写同一个文件。 */
-export const fitInFlight = new Map();
+/**
+ * 参考图适配缓存只增不减：同一张图改一次就多一份 jpg，长期使用会把临时目录堆满。
+ * 写入新缓存时顺手清理：超期的删掉，数量超上限时从最旧的开始删。
+ * 正在被并发适配写入的临时文件（`.fit-…jpg`，5 分钟内）不动，避免删掉别人正在写的文件。
+ */
+const REFERENCE_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const REFERENCE_CACHE_MAX_FILES = 200;
+const REFERENCE_CACHE_FRESH_MS = 5 * 60 * 1000;
+let lastCachePruneAt = 0;
 
-export async function fitImageToCanvas(absPath, size, config, signal) {
+async function pruneReferenceCache(dir, { now = Date.now(), force = false } = {}) {
+  // 每台机器一天适配不了几次，一小时扫一次足够，别让清理变成新的热路径开销。
+  if (!force && now - lastCachePruneAt < 60 * 60 * 1000) return;
+  lastCachePruneAt = now;
+  const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
+  const files = [];
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const file = path.join(dir, entry.name);
+    const info = await stat(file).catch(() => null);
+    if (!info) continue;
+    const inFlight = entry.name.includes('.fit-') && now - info.mtimeMs < REFERENCE_CACHE_FRESH_MS;
+    if (inFlight) continue;
+    files.push({ file, mtimeMs: info.mtimeMs, stale: now - info.mtimeMs > REFERENCE_CACHE_MAX_AGE_MS });
+  }
+  for (const item of files) if (item.stale) await rm(item.file, { force: true }).catch(() => {});
+  const rest = files.filter((item) => !item.stale);
+  if (rest.length <= REFERENCE_CACHE_MAX_FILES) return;
+  rest.sort((a, b) => a.mtimeMs - b.mtimeMs);
+  for (const item of rest.slice(0, rest.length - REFERENCE_CACHE_MAX_FILES)) {
+    if (now - item.mtimeMs <= REFERENCE_CACHE_FRESH_MS) continue;
+    await rm(item.file, { force: true }).catch(() => {});
+  }
+}
+
+/** 同一张图的适配任务：并发调用共用同一个 Promise，避免同时开 N 个 ffmpeg 写同一个文件。 */
+const fitInFlight = new Map();
+
+async function fitImageToCanvas(absPath, size, config, signal) {
   const [width, height] = size;
   const media = await probeMedia(absPath, config, signal);
   if (media?.width === width && media?.height === height) return absPath;
@@ -123,7 +148,10 @@ export async function fitImageToCanvas(absPath, size, config, signal) {
       ], { signal, timeoutMs: 120000 });
       if (code !== 0) return;
       const fitted = await probeMedia(temp, config, signal);
-      if (fitted?.width === width && fitted?.height === height) await rename(temp, dest);
+      if (fitted?.width === width && fitted?.height === height) {
+        await rename(temp, dest);
+        await pruneReferenceCache(referenceCacheDir());
+      }
     } catch {
       // 没装 ffmpeg、或这张图 ffmpeg 处理不了：按原图提交
     } finally {
@@ -140,10 +168,10 @@ export async function fitImageToCanvas(absPath, size, config, signal) {
 }
 
 /** 用户说「我刚上传的那张图」时的简写：latest / latest:2（第 2 新的）等。 */
-export const UPLOAD_ALIAS_PATTERN = /^(?:latest|newest|recent|最近上传(?:的图片)?|最新上传(?:的图片)?|刚上传(?:的图片)?|最新图片|刚拖进来的图片)$/i;
+const UPLOAD_ALIAS_PATTERN = /^(?:latest|newest|recent|最近上传(?:的图片)?|最新上传(?:的图片)?|刚上传(?:的图片)?|最新图片|刚拖进来的图片)$/i;
 
 /** 「最近上传」只看这个时间窗内的附件：窗口太长容易挑到无关的旧图。 */
-export const UPLOAD_WINDOW_MS = 2 * 60 * 60 * 1000;
+const UPLOAD_WINDOW_MS = 2 * 60 * 60 * 1000;
 
 /** DSH 主目录（`DSH_HOME`，默认 `~/.dsh`）。 */
 export function dshHome() {
@@ -152,12 +180,12 @@ export function dshHome() {
 }
 
 /** Harness 的对话附件库：内容寻址存的是原始图片字节（无扩展名）。 */
-export function attachmentObjectsDir() {
+function attachmentObjectsDir() {
   return path.join(dshHome(), 'attachments', 'v1', 'objects');
 }
 
 /** 只读文件头认图片，附件库里的对象没有扩展名，只能靠文件头。 */
-export async function sniffFileImage(file) {
+async function sniffFileImage(file) {
   let handle;
   try {
     handle = await open(file, 'r');
@@ -179,7 +207,7 @@ export async function sniffFileImage(file) {
  * 消息被 `MODEL_DOES_NOT_SUPPORT_IMAGES` 拦下来，文件也已经落盘了**。
  * 所以插件可以直接按时间从这里面取图，用户不必再自己找路径：模型看不看得见图都不影响出片。
  */
-export async function findRecentUploadedImages(windowMs = UPLOAD_WINDOW_MS) {
+async function findRecentUploadedImages(windowMs = UPLOAD_WINDOW_MS) {
   const root = attachmentObjectsDir();
   const shards = await readdir(root, { withFileTypes: true }).catch(() => []);
   const cutoff = Date.now() - windowMs;
@@ -203,7 +231,7 @@ export async function findRecentUploadedImages(windowMs = UPLOAD_WINDOW_MS) {
 /**
  * 报错里回显用户输入时截断：base64 动辄几十万字符，原样带进错误信息会把结果撑爆。
  */
-export function brief(value, limit = 80) {
+function brief(value, limit = 80) {
   const text = String(value ?? '');
   return text.length > limit ? `${text.slice(0, limit)}…（共 ${text.length} 字符）` : text;
 }
@@ -214,7 +242,7 @@ export function brief(value, limit = 80) {
  * - 明显是一大坨 base64 但解出来不是图片 → 直接报错，别退回「当路径」让人一头雾水；
  * - 短的、或不像 base64 的 → 返回 null，交给路径那条分支。
  */
-export function inlineBase64Image(raw, label) {
+function inlineBase64Image(raw, label) {
   const compact = String(raw ?? '').replace(/\s+/g, '');
   if (compact.length < 64 || !/^[A-Za-z0-9+/]+={0,2}$/.test(compact)) return null;
   const buffer = Buffer.from(compact, 'base64');

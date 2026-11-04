@@ -11,7 +11,7 @@ const RATES = [
 ] as const;
 const PRICE_DATE = '2026-11-01';
 
-export function compareVideoCosts(config, args) {
+function compareVideoCosts(config, args) {
   const duration = args?.duration;
   if (!Number.isInteger(duration) || duration < 4 || duration > 120) throw new Error('目标时长须为4–120秒整数。');
   if (!['480p', '720p'].includes(args?.resolution)) throw new Error('请先由用户确认480P或720P，再试算。');

@@ -10,7 +10,7 @@ import { isOmniExtendModel, resolveModel } from '../providers/connection.js';
 import { downloadFile } from './download.js';
 import { appendRequestLog } from '../utils/logging.js';
 
-export function evenNumber(value, fallback) {
+function evenNumber(value, fallback) {
   const number = Number(value);
   if (!Number.isFinite(number) || number <= 0) return fallback;
   const rounded = Math.round(number);
@@ -23,7 +23,7 @@ export function evenNumber(value, fallback) {
  * 把分段合并成一个文件：先试无损拼接，需要时统一重编码（带音频，失败再退回只并视频）。
  */
 /** 分段的音频比视频长出这么多帧时，认为封装补白会在接缝处留下空洞。 */
-export const AUDIO_PADDING_TOLERANCE_FRAMES = 1;
+const AUDIO_PADDING_TOLERANCE_FRAMES = 1;
 
 /**
  * 上游分段的音频常比视频长几十毫秒（封装补白）：concat 会按容器时长偏移，
@@ -31,7 +31,7 @@ export const AUDIO_PADDING_TOLERANCE_FRAMES = 1;
  * 这里把「非末段」的音频裁到与视频等长：视频轨保持 -c copy，只重编音频。
  * @returns 对齐后的文件列表、需要清理的临时文件、被裁齐的分段信息。
  */
-export async function alignSegmentAudio(
+async function alignSegmentAudio(
   config,
   files,
   probed,
@@ -229,6 +229,29 @@ export async function prepareSeamTrims(config, files, outPath, { signal }: RunOp
   }
 }
 
+/** 分段下载/探测的并发上限：够快，又不至于一次对上游和磁盘同时开太多连接。 */
+const SEGMENT_TASK_CONCURRENCY = 4;
+
+/** 简易并发闸：最多同时跑 limit 个任务，按原下标返回结果；有任务抛错就整体抛出（其余任务停跑）。 */
+async function mapLimit(items, limit, worker) {
+  const results = new Array(items.length);
+  let cursor = 0;
+  let failure;
+  const runner = async () => {
+    while (cursor < items.length && !failure) {
+      const index = cursor++;
+      try {
+        results[index] = await worker(items[index], index);
+      } catch (error) {
+        failure ??= error;
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, runner));
+  if (failure) throw failure;
+  return results;
+}
+
 /**
  * 下载分段 + 合并成一条成片（video_generate 与 video_extend 共用）。
  * 只负责「把已经生成好的段落盘、再拼成一条」；暂停 / 保留分段 / 写暂停记录这些策略由调用方决定。
@@ -248,27 +271,50 @@ export async function downloadSegmentsAndMerge(config, {
   const ffmpegReady = segments.length > 1 ? await hasFfmpeg(config, signal) : true;
   let probeWarned = false;
 
-  for (const [index, segment] of segments.entries()) {
-    const dest = path.join(
-      segmentsDir,
-      `${String(segment.index).padStart(2, '0')}-${segment.kind}.mp4`,
-    );
+  const destOf = (segment) => path.join(
+    segmentsDir,
+    `${String(segment.index).padStart(2, '0')}-${segment.kind}.mp4`,
+  );
+
+  // 各段文件互相独立，下载与探测都可以并发：串行时 4 段要等 4 轮「下载完成 + ffprobe 完成」，
+  // 长视频的收尾时间几乎都花在这里。并发跑完后再按段号顺序处理结果，保证下面的判定语义不变。
+  const downloaded = await mapLimit(segments, SEGMENT_TASK_CONCURRENCY, async (segment) => {
+    const dest = destOf(segment);
     try {
       // 已经下过的分段（接着做时复用）直接用现成文件：上游链接可能已经过期。
       if (!(await exists(dest))) {
         await timedStage('segment_download', () => downloadFile(segment.videoUrl, dest, { signal }));
       }
+      return { dest };
     } catch (failure) {
       if (failure?.code === 'ABORTED') throw failure;
-      const reason = `分段已生成，但下载失败：${failure?.message || failure}`;
-      notes.push(reason);
-      return { files, segmentsDir, deliveredSeconds, error: reason };
+      return { failure };
     }
+  });
+  // mapLimit 按原下标返回，取到的就是段号最靠前的失败，报错内容和串行时一致。
+  const failed = downloaded.find((item) => item.failure);
+  if (failed) {
+    // 已经下好的分段照样记进结果（正文里能显示本地文件），只是这次交付没完成。
+    for (const [index, item] of downloaded.entries()) {
+      if (!item?.dest) continue;
+      segments[index].localPath = item.dest;
+      files.push(item.dest);
+    }
+    const reason = `分段已生成，但下载失败：${failed.failure?.message || failed.failure}`;
+    notes.push(reason);
+    return { files, segmentsDir, deliveredSeconds, error: reason };
+  }
+  const dests = downloaded.map((item) => item.dest);
+  const probed = await mapLimit(dests, SEGMENT_TASK_CONCURRENCY,
+    (dest) => timedStage('segment_probe', () => probeMedia(dest, config, signal)));
+
+  for (const [index, segment] of segments.entries()) {
+    const dest = dests[index];
     segment.localPath = dest;
     await appendRequestLog({ event: 'segment_saved', index: segment.index, taskId: segment.taskId, path: dest,
       bytes: (await stat(dest)).size });
 
-    const media = await timedStage('segment_probe', () => probeMedia(dest, config, signal));
+    const media = probed[index];
     if (media?.durationSeconds) {
       segment.durationSeconds = Number(media.durationSeconds.toFixed(2));
       const cumulative = segments.slice(0, index + 1)

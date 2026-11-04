@@ -9,7 +9,7 @@ import { createWriteStream } from 'node:fs';
 import { abortError } from '../utils/errors.js';
 
 /** 单段下载的超时（毫秒）：成片也就几十 MB，卡住的连接不该一直挂着。 */
-export const DOWNLOAD_TIMEOUT_MS = 15 * 60 * 1000;
+const DOWNLOAD_TIMEOUT_MS = 15 * 60 * 1000;
 
 export async function downloadFile(url: string, destPath: string, { signal }: RunOptions = {}) {
   await mkdir(path.dirname(destPath), { recursive: true });

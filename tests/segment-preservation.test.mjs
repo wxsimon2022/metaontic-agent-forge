@@ -32,7 +32,9 @@ for (const cumulative of [false, true]) for (const cuts of [false, true]) {
           return {mode:'copy'};
         },
       });
-      const start = source.indexOf('async function downloadSegmentsAndMerge(');
+      // 从并发闸（mapLimit）开始切：downloadSegmentsAndMerge 依赖它，单切函数体会缺定义。
+      const start = source.indexOf('const SEGMENT_TASK_CONCURRENCY');
+      assert.ok(start > 0, '并发闸前的标记没找到');
       vm.runInContext(source.slice(start), context);
       const result = await context.downloadSegmentsAndMerge({ mergeMode: 'reencode', keepSegments: false, seamTrimSeconds: cuts ? '0.5' : '0' }, {
         segments: [{index:1,kind:'generate',seconds:15},{index:2,kind:'extend',seconds:15}],

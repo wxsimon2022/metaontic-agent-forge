@@ -24,7 +24,7 @@ export function resolveSegmentSeconds(config, requested = undefined) {
  * 本次配置能排出的最长时长：120 秒与「首段上限 + 每段上限 ×（最大段数-1）」取小。
  * 注意用的是**本次每段秒数**：每段上限调小时，能排出的总长也跟着变短。
  */
-export function maxTargetSeconds(singleMax, segmentSeconds) {
+function maxTargetSeconds(singleMax, segmentSeconds) {
   return Math.min(MAX_TOTAL_SECONDS, singleMax + (MAX_SEGMENTS - 1) * segmentSeconds);
 }
 

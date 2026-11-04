@@ -102,7 +102,7 @@ export function buildGenerationPrompt({ prompt, seconds, model = '' }) {
 }
 
 /** 把用户给的剧情描述接成完整句子时补个句号，避免两句粘在一起。 */
-export function endWithPunctuation(text) {
+function endWithPunctuation(text) {
   const value = String(text ?? '').trim();
   if (!value) return '';
   return /[。．.!！?？;；~～:：,，]$/.test(value) ? value : `${value}。`;

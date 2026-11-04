@@ -181,24 +181,28 @@
       const progress = estimatedVideoProgress(elapsed, succeeded, duration);
       const waitingDots = ".".repeat(elapsed % 3 + 1);
       const title = toolName === "video_extend" ? "\u89C6\u9891\u7EED\u62CD" : toolName === "video_status" ? "\u67E5\u8BE2\u89C6\u9891\u72B6\u6001" : "\u89C6\u9891\u751F\u6210";
-      return h("div", { className: "mov-task", "data-field": "video-task-progress" }, [
+      return h("div", { className: `mov-task${!done ? " mov-task-running" : ""}`, "data-field": "video-task-progress" }, [
         h("style", { key: "style" }, `
           @keyframes mov-task-spin { to { transform: rotate(360deg); } }
           @keyframes mov-task-flow { from { background-position:0 0; } to { background-position:32px 0; } }
           @keyframes mov-task-shimmer { from { transform:translateX(-120%); } to { transform:translateX(420%); } }
           @keyframes mov-task-pulse { 0%,100% { opacity:.45; } 50% { opacity:1; } }
+          @keyframes mov-task-breath { 0%,100% { border-color:${TOKENS.border}; box-shadow:0 0 0 0 transparent; } 50% { border-color:${TOKENS.primaryFill}; box-shadow:0 0 12px 0 ${TOKENS.primaryFill}; } }
           .mov-task { box-sizing:border-box; min-width:0; width:100%; border:1px solid ${TOKENS.border}; border-radius:10px; padding:10px 12px; color:${TOKENS.text}; margin:6px 0; overflow-wrap:anywhere; }
+          .mov-task-running { animation:mov-task-breath 2.4s ease-in-out infinite; }
           .mov-task-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:13px; }
           .mov-task-spinner { width:14px; height:14px; border:2px solid ${TOKENS.border}; border-top-color:${TOKENS.primaryFill}; border-radius:50%; animation:mov-task-spin .9s linear infinite; }
           .mov-task-note { font-size:12px; color:${TOKENS.muted}; margin-top:8px; }
-          .mov-task-track { height:5px; border-radius:999px; overflow:hidden; background:${TOKENS.border}; margin-top:10px; }
+          .mov-task-rail { position:relative; margin-top:20px; }
+          .mov-task-track { height:5px; border-radius:999px; overflow:hidden; background:${TOKENS.border}; }
+          .mov-task-turtle { position:absolute; top:-14px; transform:translateX(-50%) scaleX(-1); font-size:12px; line-height:1; transition:left 1s ease; }
           .mov-task-fill { height:100%; border-radius:999px; background:${TOKENS.primaryFill}; transition:width 1s ease; position:relative; overflow:hidden; }
           .mov-task-active .mov-task-fill { background-image:repeating-linear-gradient(110deg,transparent 0px,transparent 12px,rgba(255,255,255,.22) 12px,rgba(255,255,255,.22) 22px,transparent 22px,transparent 32px); background-size:32px 100%; animation:mov-task-flow 1s linear infinite; }
           .mov-task-active .mov-task-fill::after { content:''; position:absolute; inset:0; width:30%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent); animation:mov-task-shimmer 2s linear infinite; }
           .mov-task-live { display:inline-block; width:6px; height:6px; border-radius:50%; background:${TOKENS.primaryFill}; margin-right:6px; animation:mov-task-pulse 1.4s ease-in-out infinite; }
           .mov-task-dots { display:inline-block; width:18px; text-align:left; }
           .mov-task-output { white-space:pre-wrap; overflow-wrap:anywhere; font-size:12px; max-height:320px; overflow:auto; }
-          @media(prefers-reduced-motion:reduce) { .mov-task-spinner, .mov-task-live, .mov-task-active .mov-task-fill, .mov-task-active .mov-task-fill::after { animation:none; } }
+          @media(prefers-reduced-motion:reduce) { .mov-task-spinner, .mov-task-live, .mov-task-active .mov-task-fill, .mov-task-active .mov-task-fill::after { animation:none; } .mov-task-turtle { transition:none; } .mov-task-running { animation:none; } }
         `),
         h("div", { key: "head", className: "mov-task-head" }, [
           !done ? h("span", { key: "spinner", className: "mov-task-spinner", "aria-hidden": true }) : null,
@@ -210,11 +214,15 @@
             `\u5DF2\u7B49\u5F85 ${Math.floor(elapsed / 60)}\u5206${String(elapsed % 60).padStart(2, "0")}\u79D2`
           ) : null
         ]),
-        h(
-          "div",
-          { key: "progress", className: `mov-task-track${!done ? " mov-task-active" : ""}`, role: "progressbar", "aria-label": "\u4F30\u7B97\u8FDB\u5EA6", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": progress },
-          h("div", { className: "mov-task-fill", style: { width: `${progress}%`, background: failed ? TOKENS.error : void 0 } })
-        ),
+        h("div", { key: "progress", className: "mov-task-rail" }, [
+          h(
+            "div",
+            { className: `mov-task-track${!done ? " mov-task-active" : ""}`, role: "progressbar", "aria-label": "\u4F30\u7B97\u8FDB\u5EA6", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": progress },
+            h("div", { className: "mov-task-fill", style: { width: `${progress}%`, background: failed ? TOKENS.error : void 0 } })
+          ),
+          // 装饰用的小乌龟：跟着进度条填充的右端一起从左往右爬，只表示「还在忙」，不代表真实进度；屏幕阅读器不读它。
+          !done ? h("span", { key: "turtle", className: "mov-task-turtle", style: { left: `${progress}%` }, "aria-hidden": true }, "\u{1F422}") : null
+        ]),
         h("div", { key: "percent", className: "mov-task-note" }, `${progress}%${succeeded ? " \xB7 \u672C\u6B21\u751F\u6210\u5B8C\u6210" : " \xB7 \u4F30\u7B97\u8FDB\u5EA6"}${failed ? " \xB7 \u6267\u884C\u5931\u8D25\u6216\u5DF2\u505C\u6B62" : ""}`),
         !done ? h(
           "div",
@@ -868,7 +876,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.13.15".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.13.16".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1515,7 +1523,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.13.15",
+    version: "3.13.16",
     description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
     license: "MIT",
     type: "module",
@@ -1613,19 +1621,56 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.13.15",
+      version: "3.13.16",
       prerelease: false,
-      publishedAt: "2026-11-04T01:08:02.710Z",
+      publishedAt: "2026-11-04T05:40:47.538Z",
       items: [
-        "\u4FEE\u590D\uFF1A\u6210\u7247\u88AB\u6539\u540D\u6216\u6362\u76EE\u5F55\u540E\u4EA4\u4ED8\u987A\u5E8F\u5361\u53E3\u5931\u6548\u2014\u2014\u52A9\u624B\u628A\u6210\u7247\u53E6\u5B58\u6210\u522B\u7684\u6587\u4EF6\u540D\uFF08\u4F8B\u5982 final/<\u9879\u76EE\u540D>-60s.mp4\uFF09\u3001\u6216\u628A\u5206\u6BB5\u6362\u6210\u4EA4\u4ED8\u76EE\u5F55\u91CC\u7684 15 \u79D2\u526F\u672C\u65F6\uFF0C\u63D2\u4EF6\u8BA4\u4E0D\u51FA\u8FD9\u4E24\u7C7B\u6587\u4EF6\uFF0C\u5206\u6BB5\u5C31\u6392\u5230\u4E86\u6210\u7247\u524D\u9762\uFF1B\u73B0\u5728\u6309\u7EDD\u5BF9\u8DEF\u5F84\u3001\u540C\u540D\u3001\u6587\u4EF6\u5B57\u8282\u6570\u9010\u7EA7\u8BA4\u9886\uFF0C\u6210\u7247\u6392\u5728\u5206\u6BB5\u6216\u4E0A\u4E00\u7248\u4E2D\u95F4\u5408\u5E76\u89C6\u9891\u4E4B\u540E\u4E00\u5F8B\u62E6\u4E0B\u5E76\u8981\u6C42\u628A\u6210\u7247\u653E\u7B2C\u4E00\u4F4D\u91CD\u53D1\u3002",
-        "\u4F18\u5316\uFF1A\u751F\u6210\u7ED3\u679C\u91CC\u6210\u7247\u884C\u6392\u5728\u5206\u6BB5\u9010\u6761\u5217\u8868\u4E4B\u524D\uFF0C\u5DE5\u5177\u7ED3\u679C\u5361\u7247\u4E0E\u4EA4\u4ED8\u6E05\u5355\u7EDF\u4E00\u5148\u770B\u6210\u7247\u3001\u518D\u770B\u5206\u6BB5\u3002",
-        "\u4F18\u5316\uFF1A\u6B63\u5F0F\u7248\u4EE5 Gitee \u53D1\u5E03\u9875\u4E3A\u4E3B\uFF0C\u6210\u54C1\u5728\u672C\u5730\u6253\u5305\u540E\u76F4\u63A5\u4E0A\u4F20\uFF0C\u53D1\u7248\u4E0D\u518D\u7B49 GitHub Actions \u56DE\u4F20\uFF1B\u5728\u7EBF\u5B89\u88C5\u4E0E\u5728\u7EBF\u66F4\u65B0\u7EE7\u7EED\u540C\u65F6\u67E5\u8BE2 Gitee \u4E0E GitHub\uFF0C\u4E24\u8FB9\u53D1\u5E03\u4E0D\u540C\u6B65\u65F6\u4E5F\u80FD\u53D6\u5230\u65B0\u7248\u672C\u3002"
+        "\u65B0\u589E\uFF1A\u751F\u6210\u8FDB\u5EA6\u5361\u7247\u65B0\u589E\u88C5\u9970\u52A8\u6548\u2014\u2014\u8FDB\u5EA6\u6761\u4E0A\u6709\u4E00\u6761\u8DDF\u7740\u8FDB\u5EA6\u4ECE\u5DE6\u5F80\u53F3\u722C\u7684\u5C0F\u4E4C\u9F9F\uFF08\u5934\u671D\u53F3\uFF09\uFF0C\u6267\u884C\u4E2D\u8FDB\u5EA6\u6846\u5E26\u547C\u5438\u706F\u8FB9\u6846\uFF1B\u4E24\u8005\u53EA\u8868\u793A\u201C\u8FD8\u5728\u751F\u6210\u201D\uFF0C\u4E0D\u4EE3\u8868\u4E0A\u6E38\u771F\u5B9E\u5B8C\u6210\u6BD4\u4F8B\u3002",
+        "\u4F18\u5316\uFF1A\u5206\u6BB5\u4E0B\u8F7D\u4E0E\u5206\u6BB5\u63A2\u6D4B\u6539\u4E3A\u5E76\u53D1\u6267\u884C\uFF08\u4E0A\u9650 4 \u8DEF\uFF09\uFF0C\u957F\u89C6\u9891\u6536\u5C3E\u66F4\u5FEB\uFF1B\u7ED3\u679C\u4ECD\u6309\u6BB5\u53F7\u987A\u5E8F\u5904\u7406\uFF0C\u4E0B\u8F7D\u5931\u8D25\u4ECD\u6309\u6700\u9760\u524D\u7684\u90A3\u4E00\u6BB5\u62A5\u9519\uFF0C\u5DF2\u4E0B\u597D\u7684\u5206\u6BB5\u7167\u6837\u8BB0\u8FDB\u7ED3\u679C\u3002",
+        "\u4F18\u5316\uFF1A\u670D\u52A1\u7AEF\u6A21\u5F0F\u7684\u4F7F\u7528\u8BB0\u5F55\u5361\u7247\u6682\u65F6\u9690\u85CF\u2014\u2014\u8BBE\u7F6E\u9875\u4E0D\u518D\u663E\u793A\u300C\u4F7F\u7528\u8BB0\u5F55\u300D\uFF0C\u540E\u53F0\u4E5F\u4E0D\u518D\u8F6E\u8BE2\u8BB0\u5F55\u63A5\u53E3\uFF0C\u989D\u5EA6\u5361\u7247\u4E0E\u5176\u4F59\u8BBE\u7F6E\u4E0D\u53D7\u5F71\u54CD\uFF0C\u6062\u590D\u65F6\u6539\u4E00\u4E2A\u5F00\u5173\u5373\u53EF\u3002",
+        "\u4F18\u5316\uFF1A\u53C2\u8003\u56FE\u9002\u914D\u7F13\u5B58\u81EA\u52A8\u6E05\u7406\uFF08\u8D85\u8FC7 7 \u5929\u6216\u8D85\u8FC7 200 \u4E2A\u65F6\u4ECE\u6700\u65E7\u7684\u5220\u8D77\uFF0C\u6B63\u5728\u5199\u5165\u7684\u4E34\u65F6\u6587\u4EF6\u4E0D\u52A8\uFF09\uFF0C\u957F\u65F6\u95F4\u4F7F\u7528\u4E0D\u518D\u628A\u7CFB\u7EDF\u4E34\u65F6\u76EE\u5F55\u6491\u6EE1\u3002",
+        "\u4F18\u5316\uFF1Avideo_generate \u4E0E video_extend \u7684\u5206\u6BB5\u6536\u5C3E\uFF08\u7ED3\u679C\u843D\u76D8\u3001\u4E2D\u65AD\u6536\u5C3E\u3001\u6682\u505C\u63D0\u793A\u3001merge:false\u3001\u4E0B\u8F7D\u5408\u5E76\u4EA4\u4ED8\uFF09\u5408\u5E76\u6210\u540C\u4E00\u5957\u5B9E\u73B0\uFF0C\u4E24\u5904\u63AA\u8F9E\u53EA\u7EF4\u62A4\u4E00\u4EFD\uFF1B\u6682\u505C\u65F6\u300C\u8FD8\u5269\u591A\u5C11\u79D2\u300D\u7EDF\u4E00\u6309\u8BA1\u5212\u603B\u65F6\u957F\u6263\u51CF\u5DF2\u5B8C\u6210\u5206\u6BB5\u3002",
+        "\u4F18\u5316\uFF1A\u65E5\u5FD7\u76EE\u5F55\u6309\u5929\u7F13\u5B58\u521B\u5EFA\u7ED3\u679C\uFF0C\u521B\u5EFA\u5931\u8D25\u4E0D\u7F13\u5B58\u4EE5\u4FBF\u4E0B\u6B21\u91CD\u8BD5\uFF1B\u6E05\u7406\u53EA\u5728\u672C\u6A21\u5757\u5185\u4F7F\u7528\u7684\u5185\u90E8\u5BFC\u51FA\uFF0C\u63D2\u4EF6\u5BF9\u5916\u63A5\u53E3\u66F4\u6536\u655B\u3002",
+        "\u4FEE\u590D\uFF1A15 \u79D2\u4EE5\u4E0A\u89C6\u9891\u4EA4\u4ED8\u65F6\u6210\u7247\u6CA1\u6709\u6392\u5728\u7B2C\u4E00\u4F4D\u2014\u2014\u5BBF\u4E3B\u4EA4\u4ED8\u5361\u7247\u6309\u672C\u8F6E\u6587\u4EF6\u9996\u6B21\u51FA\u73B0\u7684\u987A\u5E8F\u6392\u5217\u3001\u6309\u8DEF\u5F84\u53BB\u91CD\u3001\u8D85\u8FC7 4 \u6761\u8FD8\u4F1A\u6298\u53E0\uFF0C\u4E2D\u9014\u767B\u8BB0\u7684\u811A\u672C\u3001\u5206\u955C\u56FE\u3001\u53C2\u8003\u56FE\u3001\u5355\u6BB5\u9884\u89C8\u548C\u90E8\u5206\u5408\u5E76\u90FD\u4F1A\u628A\u6210\u7247\u6324\u5230\u540E\u9762\uFF0C\u4E8B\u540E\u8865\u53D1\u4E5F\u632A\u4E0D\u56DE\u6765\uFF1B\u73B0\u5728\u4EA4\u4ED8\u5361\u7247\u53EA\u767B\u8BB0\u300C\u6700\u7EC8\u6210\u7247 + \u5404\u5206\u6BB5\u300D\uFF0C\u6210\u7247\u56FA\u5B9A\u5728\u7B2C\u4E00\u4E2A\u4F4D\u7F6E\uFF0C\u6682\u505C\u3001\u90E8\u5206\u4EA4\u4ED8\u6216\u8FD8\u5728\u7B49\u5F85\u67E5\u8BE2\u65F6\u4E0D\u518D\u767B\u8BB0\u5361\u7247\uFF0C\u6210\u7247\u6392\u5728\u5206\u6BB5\u4E4B\u540E\u3001\u6F0F\u6389\u6210\u7247\u6216\u5E26\u4E0A\u4E2D\u95F4\u7248\u672C\u6210\u7247\u90FD\u4F1A\u88AB\u62E6\u4E0B\u5E76\u6309\u63D0\u793A\u91CD\u53D1\u3002",
+        "\u4FEE\u590D\uFF1A\u811A\u672C\u5BA1\u6838\u7A97\u53E3\u5076\u53D1\u4E0D\u5F39\u2014\u2014\u52A9\u624B\u628A\u5C55\u793A\u811A\u672C\u7684\u6B63\u6587\u5355\u72EC\u53D1\u6210\u4E00\u6761\u6D88\u606F\u540E\u76F4\u63A5\u7ED3\u675F\u672C\u8F6E\uFF0C\u5BA1\u6838\u63D0\u95EE\u6CA1\u6709\u53D1\u51FA\uFF1B\u73B0\u5728\u6B63\u6587\u5C55\u793A\u4E0E\u5BA1\u6838\u63D0\u95EE\u4E0D\u518D\u62C6\u6210\u4E24\u8F6E\uFF0C\u811A\u672C\u4FDD\u5B58\u4E3A script.md \u65F6\u63D2\u4EF6\u81EA\u52A8\u6536\u53E3\u811A\u672C\u8BBE\u8BA1\u8017\u65F6\uFF0C\u5C55\u793A\u5B8C\u6B63\u6587\u7D27\u63A5\u7740\u63D0\u95EE\uFF0C\u4ECD\u5728\u5C55\u793A\u540E\u7ED3\u675F\u56DE\u5408\u4F1A\u8BB0\u5F55\u7559\u75D5\u4EE5\u4FBF\u5B9A\u4F4D\u3002",
+        "\u4FEE\u590D\uFF1A\u5206\u955C\u56FE\u5BA1\u6838\u53EA\u8BA4\u6B63\u6587\u5185\u5D4C\u2014\u2014present \u767B\u8BB0\u4E0D\u518D\u7B97\u7528\u6237\u770B\u5230\u4E86\u56FE\uFF0C\u6A21\u578B\u770B\u56FE\u4E0E\u6587\u5B57\u63CF\u8FF0\u4E5F\u4E0D\u7B97\uFF1B\u6539\u7A3F\u540E\u540C\u76EE\u5F55\u91CC\u8FD8\u6709\u6BD4\u5DF2\u5185\u5D4C\u90A3\u5F20\u66F4\u65B0\u7684\u5206\u955C\u56FE\u65F6\u540C\u6837\u62E6\u4E0B\u5E76\u63D0\u793A\u8865\u5C55\u793A\u672C\u7248\u56FE\u7247\u3002"
       ]
     }
   };
 
   // src/client/settings.ts
-  function createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS }) {
+  function createSettingsPage(deps) {
+    const {
+      useSnapshot,
+      React,
+      h,
+      TOKENS,
+      same,
+      validateSettings,
+      persistConnection,
+      PLUGIN_OWNED_KEYS,
+      persistBatch,
+      DEFAULT_REGISTER_API,
+      LOGGED_OUT_KEY,
+      DEFAULT_REGISTER_TOKEN,
+      PLUGIN_VERSION,
+      UPDATE_CACHE_KEY,
+      UPDATE_MAX_AGE_MS,
+      fetchLatestVersion,
+      SELECTS,
+      inputStyle,
+      optionLabel,
+      FIELD_BY_KEY,
+      SECTIONS,
+      formatMoney,
+      PLUGIN_PACKAGE,
+      UPDATE_SPEC,
+      UPDATE_ATTEMPTS,
+      isNewerVersion,
+      updateBell,
+      PAGE_CSS
+    } = deps;
+    const SHOW_USAGE_RECORD = false;
     function makePage({ form, t, manager }) {
       return function ConfigPage(props) {
         const snapshot = useSnapshot(form);
@@ -1859,7 +1904,7 @@
           if (snap.secrets?.apiKey || (snap.value || {}).apiKey) {
             loadQuota().catch(() => {
             });
-            loadUsage().catch(() => {
+            if (SHOW_USAGE_RECORD) loadUsage().catch(() => {
             });
             return;
           }
@@ -1867,7 +1912,7 @@
           });
         }, []);
         React.useEffect(() => {
-          if (!serviceMode || props?.view === "summary" || !(snapshot.secrets?.apiKey || value.apiKey)) return;
+          if (!serviceMode || !SHOW_USAGE_RECORD || props?.view === "summary" || !(snapshot.secrets?.apiKey || value.apiKey)) return;
           const refresh = () => {
             if (window.document?.visibilityState === "hidden") return;
             loadUsage().catch(() => {
@@ -2293,7 +2338,7 @@
           count: usage.count,
           amount: `${usageSymbol}${formatMoney(usage.amount_sum)}`
         })}${usage.truncated ? ` \xB7 ${t("usageMore", { count: usage.count })}` : ""}` : t("usageEmpty") : usageStatus === "working" ? t("usageLoading") : t("usageKeyMissing");
-        const usageBox = serviceMode && keyReady ? h("div", {
+        const usageBox = SHOW_USAGE_RECORD && serviceMode && keyReady ? h("div", {
           key: "usage",
           "data-field": "usage",
           className: "mov-card"

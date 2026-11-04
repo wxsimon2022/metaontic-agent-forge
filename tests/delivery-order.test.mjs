@@ -43,7 +43,7 @@ test('只展示分段、成片还没展示时会被拦下',async()=>{
  const h=await setup();
  const decision=await h.guard.gate(h.present(segments[0],segments[1]));
  assert.equal(decision.kind,'deny');
- assert.match(decision.reason,/成片要排在第一个位置/);
+ assert.match(decision.reason,/成片必须排在第一个位置/);
 });
 
 test('本轮已经展示过成片时，再单独展示分段放行',async()=>{
@@ -86,7 +86,7 @@ test('成片与分段被改名到交付目录后，按文件字节数认领并�
  assert.equal(await h.guard.gate(h.present('/w/final/naiman-60s.mp4',...copies)),null);
 });
 
-test('中间产物（上一版合并视频）也不能排在最终成片之前',async()=>{
+test('暂停时只有部分合并也不能登记卡片，改用正文交付',async()=>{
  const earlier='/w/20261102-201600-30s.mp4';
  sizes.set(earlier,700);sizes.set(merged,900);sizes.set(segments[0],300);sizes.set(segments[1],301);
  const guard=ctx.createDeliveryOrderGuard();
@@ -94,10 +94,41 @@ test('中间产物（上一版合并视频）也不能排在最终成片之前',
  const present=(...paths)=>({name:'present',agent:{session},arguments:{files:paths.map(p=>({path:p}))}});
  const parts=[{index:1,status:'succeeded',localPath:segments[0]},{index:2,status:'succeeded',localPath:segments[1]}];
  await guard.remember(session,{status:'succeeded',paused:true,merged:true,videoPath:earlier,segmentsDir:'/w/segments/20261102-201600',segments:parts});
- assert.equal(await guard.gate(present(earlier,segments[0])),null);
- await guard.remember(session,{status:'succeeded',merged:true,videoPath:merged,segmentsDir:'/w/segments/20261102-201600',segments:parts});
- const decision=await guard.gate(present(earlier,merged,segments[0],segments[1]));
+ const paused=await guard.gate(present(earlier,segments[0]));
+ assert.equal(paused.kind,'deny');
+ assert.match(paused.reason,/还不是最终交付/);
+});
+
+test('部分交付（有分段失败）时不许登记卡片',async()=>{
+ sizes.set(merged,900);sizes.set(segments[0],300);
+ const guard=ctx.createDeliveryOrderGuard();
+ const session={header:{cwd:'/w'}};
+ await guard.remember(session,{status:'succeeded',partial:true,merged:true,videoPath:merged,segmentsDir:'/w/segments/20261102-201600',segments:[{index:1,status:'succeeded',localPath:segments[0]}]});
+ const decision=await guard.gate({name:'present',agent:{session},arguments:{files:[{path:merged},{path:segments[0]}]}});
  assert.equal(decision.kind,'deny');
+ assert.match(decision.reason,/还不是最终交付/);
+});
+
+test('待查询（pendingTaskId）时不许登记卡片',async()=>{
+ sizes.set(merged,900);sizes.set(segments[0],300);
+ const guard=ctx.createDeliveryOrderGuard();
+ const session={header:{cwd:'/w'}};
+ await guard.remember(session,{status:'succeeded',merged:true,pendingTaskId:'task-x',videoPath:merged,segmentsDir:'/w/segments/20261102-201600',segments:[{index:1,status:'succeeded',localPath:segments[0]}]});
+ assert.match((await guard.gate({name:'present',agent:{session},arguments:{files:[{path:merged},{path:segments[0]}]}})).reason,/还不是最终交付/);
+});
+
+test('登记里带中间版本的成片会被拦下',async()=>{
+ const earlier='/w/20261102-201600-30s.mp4';
+ sizes.set(earlier,700);sizes.set(merged,900);sizes.set(segments[0],300);sizes.set(segments[1],301);
+ const guard=ctx.createDeliveryOrderGuard();
+ const session={header:{cwd:'/w'}};
+ const present=(...paths)=>({name:'present',agent:{session},arguments:{files:paths.map(p=>({path:p}))}});
+ const parts=[{index:1,status:'succeeded',localPath:segments[0]},{index:2,status:'succeeded',localPath:segments[1]}];
+ await guard.remember(session,{status:'succeeded',paused:true,merged:true,videoPath:earlier,segmentsDir:'/w/segments/20261102-201600',segments:parts});
+ await guard.remember(session,{status:'succeeded',merged:true,videoPath:merged,segmentsDir:'/w/segments/20261102-201600',segments:parts});
+ const decision=await guard.gate(present(merged,segments[0],segments[1],earlier));
+ assert.equal(decision.kind,'deny');
+ assert.match(decision.reason,/中间版本/);
  assert.ok(decision.reason.includes(merged));
 });
 
@@ -110,13 +141,12 @@ test('没有合并成片（合并失败）时不拦分段交付',async()=>{
  assert.equal(await guard.gate(exec),null);
 });
 
-test('暂停时只有一段预览不会被误拦，其他会话互不影响',async()=>{
+test('单段暂停时成片就是这一段本身，只有一条记录不涉及顺序；其他会话互不影响',async()=>{
  const guard=ctx.createDeliveryOrderGuard();
  const paused={header:{cwd:'/w'}};
  await guard.remember(paused,{status:'succeeded',paused:true,merged:true,videoPath:'/w/pause/01.mp4',segments:[{index:1,status:'succeeded',localPath:'/w/pause/01.mp4'}]});
  const one=async paths=>guard.gate({name:'present',agent:{session:paused},arguments:{files:paths.map(p=>({path:p}))}});
  assert.equal(await one(['/w/pause/01.mp4']),null);
- assert.equal(await one(['/w/pause/01.mp4','/w/pause/02.mp4']),null);
  const other={header:{cwd:'/w'}};
  assert.equal(await guard.gate({name:'present',agent:{session:other},arguments:{files:[{path:merged},{path:segments[0]}]}}),null);
 });

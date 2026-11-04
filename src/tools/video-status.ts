@@ -48,7 +48,7 @@ export function taskTool(liveConfig) {
                 `任务 ID：${taskId}`,
                 `模型：${model || '-'}`,
                 `视频链接（约 24 小时内有效）：${artifactLink('观看视频', '', videoUrl) || '（无）'}`,
-                '正文须保留上述可点击链接，有present卡片也不能省略；查询不会重新生成视频。',
+                '正文须保留上述可点击链接，有卡片也不能省略；查询不会重新生成视频。',
               ].join('\n'),
             },
           ];

@@ -10,22 +10,22 @@ const WRITE_TOOLS = new Set(['write', 'edit', 'multi_edit', 'multiedit', 'apply_
 const PATCH_FILE_LINE = /^\*\*\* (?:Add|Update|Delete) File: (.+)$/gim;
 
 /** Windows 会话事件给的是反斜杠路径，两平台都要取到文件名。 */
-export function fileBaseName(target) {
+function fileBaseName(target) {
   return String(target ?? '').split(/[\\/]/).pop() || '';
 }
 
-export function isScriptPath(target) {
+function isScriptPath(target) {
   return SCRIPT_FILE.test(fileBaseName(target));
 }
 
-export function toolArguments(value) {
+function toolArguments(value) {
   if (value && typeof value === 'object') return value;
   if (typeof value !== 'string') return {};
   try { return JSON.parse(value); } catch { return {}; }
 }
 
 /** 返回本次工具调用是否保存了脚本，以及它是新建还是改写。 */
-export function scriptSaveOf(event) {
+function scriptSaveOf(event) {
   if (event?.type !== 'tool/call') return null;
   const data = event.data || {};
   const name = String(data.name || '');
@@ -42,7 +42,7 @@ export function scriptSaveOf(event) {
 }
 
 /** 脚本头里的版本标记只作日志参考，取不到就不写这条字段。 */
-export function scriptVersion(content) {
+function scriptVersion(content) {
   const match = /版本[:：]\s*(第?\s*\d+\s*版)/.exec(String(content ?? ''));
   return match ? match[1].replace(/\s+/g, '') : undefined;
 }

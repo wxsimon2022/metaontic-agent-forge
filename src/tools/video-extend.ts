@@ -3,16 +3,18 @@ import { initialCharacterReferences, approvedCharacterReferences } from '../work
 import { modelMaxSeconds } from '../workflow/planning.js';
 import { SEGMENT_OUTPUT_SCHEMA, renderResult } from './results.js';
 import { snapshotConfig, resolveApiKey, assertConfigured } from '../providers/connection.js';
-import { assertResumeConnection, saveProgress, resumeDirOf, readPauseFile, pickResumeOptions, resumeHint } from '../workflow/resume.js';
+import { assertResumeConnection, saveProgress, resumeDirOf, readPauseFile, pickResumeOptions } from '../workflow/resume.js';
 import { clampInteger } from '../utils/validation.js';
-import { MAX_SEGMENTS, MIN_SECONDS, CONTENT_REJECTION_HINT, resolveResolution } from '../config.js';
+import { MAX_SEGMENTS, MIN_SECONDS, resolveResolution } from '../config.js';
 import { getTask } from '../providers/transport.js';
 import { extractVideoUrl, extractStatus } from '../providers/response.js';
 import { normalizeReferenceUrl, buildRequestBody, runTask } from '../providers/seedance.js';
 import { abortError } from '../utils/errors.js';
 import { formatSeconds, resolveOutputDir, fileStamp, allocateStamp } from '../utils/files.js';
-import { downloadSegmentsAndMerge } from '../media/merge.js';
-import { appendRequestLog } from '../utils/logging.js';
+import {
+  SEGMENT_PAUSE_NOTE, absorbSegmentInterruption, describeIncompleteRun,
+  recordSegmentResult, runSegmentDelivery, skipMergeDelivery,
+} from '../workflow/segment-run.js';
 
 export function extendTool(liveConfig, deps, ctx) {
   const config = liveConfig;
@@ -320,33 +322,15 @@ export function extendTool(liveConfig, deps, ctx) {
           characterReferences = approvedCharacterReferences(characterReferences, operationState[position]);
           await checkpoint();
         }
-        if (final.submissionId) submissionId = final.submissionId;
-        if (final.convertedReferences) convertedReferences = final.convertedReferences;
-        pendingTask = ['unknown', 'timeout'].includes(final.status)
-          ? { taskId: final.taskId, index: position + 1, kind: step.kind, seconds } : null;
-        const taskId = final.taskId;
-
-        segments.push({
-          index: position + 1,
-          kind: 'extend',
-          seconds,
-          taskId,
-          status: final.status,
-          videoUrl: final.videoUrl,
-          error:
-            final.errorCode === 'content_rejected'
-              ? `${CONTENT_REJECTION_HINT}上游详情：${final.error || ''}`
-              : final.error,
+        const outcome = recordSegmentResult({
+          final, segments, segment: { index: position + 1, kind: 'extend', seconds }, submissionId, convertedReferences,
         });
-
-        if (final.status !== 'succeeded' || !final.videoUrl) {
+        ({ submissionId, convertedReferences, pendingTask } = outcome);
+        if (!outcome.ok) {
           await checkpoint();
-          status = final.status;
-          errorCode = final.errorCode;
-          error =
-            final.errorCode === 'content_rejected'
-              ? `${CONTENT_REJECTION_HINT}上游详情：${final.error || ''}`
-              : final.error;
+          status = outcome.status;
+          errorCode = outcome.errorCode;
+          error = outcome.error;
           break;
         }
         referenceUrl = normalizeReferenceUrl(final.videoUrl);
@@ -361,19 +345,20 @@ export function extendTool(liveConfig, deps, ctx) {
         // 工具内部阻塞在审批框时，宿主尚拿不到输出，无法展示刚完成的分段。
         if (plan[offset + 1]) {
           paused = true;
-          notes.push('本段已完成：请先展示本次视频成果，让用户预览；用户确认继续后再用 resume 接着生成下一段。');
+          notes.push(SEGMENT_PAUSE_NOTE);
           break;
         }
       }
       } catch (failure) {
-        const doneYet = segments.some((segment) => segment.status === 'succeeded' && segment.videoUrl);
-        if (failure?.code !== 'ABORTED' || !doneYet) throw failure;
+        absorbSegmentInterruption(failure, {
+          segments,
+          notes,
+          message:
+            '这次调用被中断了（用户点了停止，或者等超时了）：已经延长好的部分会先下载、合并、交付，'
+            + '剩下的段不用重头再来——用 resume 就能接着做。',
+        });
         interrupted = true;
         paused = true;
-        notes.push(
-          '这次调用被中断了（用户点了停止，或者等超时了）：已经延长好的部分会先下载、合并、交付，'
-          + '剩下的段不用重头再来——用 resume 就能接着做。',
-        );
       }
 
       const completed = segments.filter((segment) => segment.status === 'succeeded' && segment.videoUrl);
@@ -384,15 +369,17 @@ export function extendTool(liveConfig, deps, ctx) {
         errorCode,
         submissionId,
         convertedReferences,
-        ...(convertedReferences ? { nextAction: 'present_reference_images_then_wait_for_user' } : {}),
+        ...(convertedReferences ? { nextAction: 'show_reference_images_then_wait_for_user' } : {}),
         segments,
         videoUrl: completed.at(-1)?.videoUrl,
         totalSeconds: deliveredSeconds,
       };
       if (resume?.deliveryPending && doneBefore < fullPlan.length) paused = true;
+      // 延长没有「目标总时长」这一层，计划总长就是剩下的秒数口径。
+      const remainingSeconds = Math.max(0, fullPlan.reduce((sum, step) => sum + step.seconds, 0) - deliveredSeconds);
       if (paused) {
         result.paused = true;
-        result.remainingSeconds = Math.max(0, fullPlan.reduce((sum, step) => sum + step.seconds, 0) - completed.reduce((sum, step) => sum + step.seconds, 0));
+        result.remainingSeconds = remainingSeconds;
       }
       result.resumeDir = segmentsDir;
       result.segmentsDir = segmentsDir;
@@ -401,13 +388,14 @@ export function extendTool(liveConfig, deps, ctx) {
         result.note = '任务已提交，请用 resume 查询并接回原进度，或用 video_status 查询；不要重复提交。';
       }
 
-      if (!completed.length) {
+      if (!completed.length && status === 'succeeded') {
+        // 没有可交付的分段（例如只是重试交付）：直接返回，不触发合并。
         if (notes.length) result.note = notes.join('\n');
         return result;
       }
-      if (status !== 'succeeded') {
-        notes.push(`已把成功的 ${completed.length} 段（${deliveredSeconds} 秒）交付，可作为残片使用。`);
-        result.partial = true;
+      if (describeIncompleteRun({ result, status, segments, notes, completed, deliveredSeconds })) {
+        result.note = notes.join('\n');
+        return result;
       }
       if (resume) {
         notes.push(
@@ -417,72 +405,15 @@ export function extendTool(liveConfig, deps, ctx) {
       }
 
       if (args?.merge === false) {
-        if (paused) {
-          result.paused = true;
-          result.remainingSeconds = Math.max(0, fullPlan.reduce((sum, step) => sum + step.seconds, 0) - deliveredSeconds);
-          result.nextAction = 'present_video_then_wait_for_user';
-          notes.push(resumeHint(segmentsDir, result.remainingSeconds, TOOL_NAME));
-        }
-        result.note = [...notes, '按参数要求只返回上游链接，没有下载合并。'].join('\n');
-        return result;
+        return skipMergeDelivery({ result, paused, remainingSeconds, notes, segmentsDir, toolName: TOOL_NAME });
       }
-      const delivery = await downloadSegmentsAndMerge(config, {
-        segments: completed,
-        segmentsDir,
-        outDir,
-        stamp,
-        notes,
-        keepSingleFile: paused,
-        // 被中断时请求信号已经 abort：收尾（下载 + 合并）不能被它打断，否则等于白生成。
-        signal: interrupted || exec?.signal?.aborted ? undefined : exec?.signal,
+      return runSegmentDelivery({
+        config, exec, interrupted, completed, segments, segmentsDir, outDir, stamp, notes, result,
+        paused,
+        remainingSeconds,
+        pauseNote: `已交付的成片是到第 ${segments.length} 段，分段仍保留在 ${segmentsDir}。`,
+        toolName: TOOL_NAME,
       });
-      if (delivery.error) {
-        result.deliveryError = delivery.error;
-        if (delivery.ffmpegMissing) { result.ffmpegMissing = true; result.installHint = delivery.installHint; }
-        result.nextAction = 'resume_delivery_without_regeneration';
-        result.segmentsDir = delivery.segmentsDir;
-        result.note = notes.join('\n');
-        return result;
-      }
-      if (delivery.ffmpegMissing) {
-        result.segmentsDir = delivery.segmentsDir;
-        result.merged = false;
-        result.ffmpegMissing = true;
-        result.installHint = delivery.installHint;
-        result.note = notes.join('\n');
-        return result;
-      }
-      if (!delivery.files.length) {
-        result.note = notes.join('\n');
-        return result;
-      }
-      if (delivery.merged) {
-        result.merged = true;
-        result.videoPath = delivery.videoPath;
-        result.mergeMode = delivery.mergeMode;
-        if (delivery.actualSeconds) result.actualSeconds = delivery.actualSeconds;
-        if (delivery.seamCuts?.length) result.seamCuts = delivery.seamCuts;
-      }
-
-      if (paused) {
-        // 暂停：延长好的分段留着（接着做时要复用），并写下「延长到哪一步」的记录
-        result.segmentsDir = segmentsDir;
-        result.resumeDir = segmentsDir;
-        result.paused = true;
-        result.nextAction = 'present_video_then_wait_for_user';
-        result.previewPath = completed.at(-1)?.localPath || result.videoPath;
-        await appendRequestLog({ event: 'preview_required', previewPath: result.previewPath, resumeDir: result.resumeDir });
-        result.remainingSeconds = Math.max(0, fullPlan.reduce((sum, step) => sum + step.seconds, 0) - deliveredSeconds);
-        notes.push(`已交付的成片是到第 ${segments.length} 段，分段仍保留在 ${segmentsDir}。`);
-        notes.push(resumeHint(segmentsDir, result.remainingSeconds, TOOL_NAME));
-        result.note = notes.join('\n');
-        return result;
-      }
-
-      // 所有生成分段永久保留；合并、裁剪仅使用副本。
-      result.segmentsDir = segmentsDir;
-      if (notes.length) result.note = notes.join('\n');
-      return result;
     },
   };
 }

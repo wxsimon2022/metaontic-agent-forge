@@ -84,7 +84,7 @@ export function actualCostText(cost, partialVideo = false) {
   return lines.join('\n');
 }
 
-export const ACTUAL_COST_SCHEMA = { type: 'object', properties: {
+const ACTUAL_COST_SCHEMA = { type: 'object', properties: {
   status: { type: 'string', enum: ['pending', 'partial', 'settled'] }, source: { type: 'string' },
   quota: { type: 'number' }, amount: { oneOf: [{ type: 'number' }, { type: 'null' }] }, currency: { oneOf: [{ type: 'string' }, { type: 'null' }] },
   reason: { type: 'string' }, conversion: { oneOf: [{ type: 'object' }, { type: 'null' }] },

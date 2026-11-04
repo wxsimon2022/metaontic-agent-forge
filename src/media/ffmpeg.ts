@@ -82,7 +82,7 @@ export async function hasFfmpeg(config, signal) {
 }
 
 /** 本机操作系统名，只用来挑安装命令；取不到就按 Linux 处理。 */
-export function currentPlatform(): string {
+function currentPlatform(): string {
   try {
     return (typeof process !== 'undefined' && process.platform) || 'linux';
   } catch {
@@ -91,7 +91,7 @@ export function currentPlatform(): string {
 }
 
 /** macOS 上连 Homebrew 都没有时的第一步。 */
-export const HOMEBREW_BOOTSTRAP = '/bin/bash -c "$(curl -fsSL '
+const HOMEBREW_BOOTSTRAP = '/bin/bash -c "$(curl -fsSL '
   + 'https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"';
 
 /**
@@ -138,7 +138,7 @@ export function ffmpegInstallOptions(platform = currentPlatform()) {
 }
 
 /** ffmpeg 装完常常不立刻进 PATH；这几个常见位置也找一遍，好让用户直接填进 ffmpegBinary。 */
-export function commonFfmpegPaths(platform = currentPlatform()) {
+function commonFfmpegPaths(platform = currentPlatform()) {
   if (platform === 'darwin') return ['/opt/homebrew/bin/ffmpeg', '/usr/local/bin/ffmpeg'];
   if (platform === 'win32') return [];
   return ['/usr/bin/ffmpeg', '/usr/local/bin/ffmpeg', '/snap/bin/ffmpeg'];

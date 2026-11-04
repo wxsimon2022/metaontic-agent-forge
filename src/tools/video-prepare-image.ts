@@ -5,7 +5,7 @@ import { assertConfigured, resolveApiKey, isVolcengine, imageConfig } from '../p
 import { resolveImageInput } from '../media/references.js';
 import { generateSeedreamImage } from '../providers/seedream.js';
 
-export const IMAGE_MODELS = ['doubao-seedream-5-0-260128', 'doubao-seedream-5-0-pro-260628'];
+const IMAGE_MODELS = ['doubao-seedream-5-0-260128', 'doubao-seedream-5-0-pro-260628'];
 
 export function prepareImageTool(liveConfig, progress = {}) {
   return {
@@ -26,7 +26,7 @@ export function prepareImageTool(liveConfig, progress = {}) {
     },
     output: {
       schema: { type: 'object', properties: { taskId: { type: 'string' }, imageUrl: { type: 'string' }, model: { type: 'string' }, reviewRequired: { type: 'boolean' } } },
-      render(_args, value) { return [{ type: 'text', text: `角色参考图：${artifactLink('打开参考图', '', value.imageUrl)}\n图片模型：${value.model}\n请在正文内嵌图片并保留可点击原图链接，再核对风格与角色；有present卡片也不能省略链接。明确确认后再用于视频，不自动重画。` }]; },
+      render(_args, value) { return [{ type: 'text', text: `角色参考图：${artifactLink('打开参考图', '', value.imageUrl)}\n图片模型：${value.model}\n请在正文内嵌图片并保留可点击原图链接，再核对风格与角色；参考图属于过程材料，不要登记进交付卡片（卡片只放最终成片）。明确确认后再用于视频，不自动重画。` }]; },
     },
     timeoutMs: 480000,
     isConcurrencySafe() { return true; },

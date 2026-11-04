@@ -1,7 +1,7 @@
 /** utils/errors：从宿主入口拆出的独立职责模块。 */
 import { QUOTA_HINTS, CONTENT_HINTS, PRICE_HINTS } from '../config.js';
 
-export function upstreamMessage(data) {
+function upstreamMessage(data) {
   if (data && typeof data === 'object') {
     const error = data.error;
     if (error && typeof error === 'object') {
@@ -20,7 +20,7 @@ export function upstreamMessage(data) {
   return text || '上游未返回错误详情';
 }
 
-export function quotaDetail(text) {
+function quotaDetail(text) {
   const parts = [];
   const remain = /(?:remain(?:ing)? quota|剩余额度)\D{0,6}([¥$]?\d[\d.,]*)/i.exec(text);
   const need = /(?:need quota|需要预扣费额度|需要额度)\D{0,6}([¥$]?\d[\d.,]*)/i.exec(text);
@@ -30,7 +30,7 @@ export function quotaDetail(text) {
 }
 
 /** 仅匹配明确的真人/人脸限制，普通内容审核失败不触发改图。 */
-export function isRealPersonRejection(value) {
+function isRealPersonRejection(value) {
   const text = String(value || '');
   return /真人|real[ _-]?person|real[ _-]?human|photorealistic[ _-]?(?:person|human)|human[ _.-]?face|realperson|humanface/i.test(text);
 }

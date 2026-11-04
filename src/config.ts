@@ -147,7 +147,7 @@ export const Config = z.object({
     .volatile(),
 });
 
-export const DEFAULT_MODEL = 'doubao-seedance-2-0-mini-260615';
+const DEFAULT_MODEL = 'doubao-seedance-2-0-mini-260615';
 
 export const MAX_SEGMENTS = 10;
 
@@ -157,9 +157,6 @@ export const MIN_SEGMENT_SECONDS = 4;
 
 /** 单段延长（续拍）的秒数上限：Seedance 原生延长只接受 4 至模型上限（2.0 为 15、2.5 为 30） 秒。 */
 export const MAX_SEGMENT_SECONDS = 15;
-
-/** Seedance 单段上限由模型决定（2.0 为 15 秒、2.5 为 30 秒）：不超过它一次直出，超过它才需要延长。 */
-export const MAX_DIRECT_SECONDS = 15;
 
 /**
  * 单条成片的目标时长上限：段数上限内排得出来的最长时长，先按 120 秒卡住。

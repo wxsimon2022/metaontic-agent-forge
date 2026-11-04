@@ -1,16 +1,18 @@
 import { initialCharacterReferences, approvedCharacterReferences } from '../workflow/character-references.js';
 /** tools/video-generate：从宿主入口拆出的独立职责模块。 */
-import { MAX_TOTAL_SECONDS, MAX_SEGMENTS, CONTENT_REJECTION_HINT, resolveResolution } from '../config.js';
+import { MAX_TOTAL_SECONDS, MAX_SEGMENTS, resolveResolution } from '../config.js';
 import { modelMaxSeconds, resolveTargetPlan, resolveSegmentPrompts } from '../workflow/planning.js';
-import { VIDEO_SEGMENT_OUTPUT_SCHEMA, renderVideoResult } from './results.js';
+import { SEGMENT_OUTPUT_SCHEMA, renderVideoResult } from './results.js';
 import { snapshotConfig, resolveApiKey, assertConfigured, isOmniExtendModel, resolveModel } from '../providers/connection.js';
-import { assertResumeConnection, saveProgress, resumeDirOf, readPauseFile, resumePlanFrom, pickResumeOptions, resumeHint } from '../workflow/resume.js';
+import { assertResumeConnection, saveProgress, resumeDirOf, readPauseFile, resumePlanFrom, pickResumeOptions } from '../workflow/resume.js';
 import { abortError } from '../utils/errors.js';
 import { buildSegmentExecutionPrompt } from '../prompts/generation.js';
 import { buildGenerationBody, buildRequestBody, runTask, normalizeReferenceUrl } from '../providers/seedance.js';
 import { resolveOutputDir, allocateStamp, fileStamp } from '../utils/files.js';
-import { appendRequestLog } from '../utils/logging.js';
-import { downloadSegmentsAndMerge } from '../media/merge.js';
+import {
+  SEGMENT_PAUSE_NOTE, absorbSegmentInterruption, describeIncompleteRun,
+  recordSegmentResult, runSegmentDelivery, skipMergeDelivery,
+} from '../workflow/segment-run.js';
 
 export function videoTool(liveConfig, deps, ctx) {
   const config = liveConfig;
@@ -182,7 +184,7 @@ export function videoTool(liveConfig, deps, ctx) {
           errorCode: { type: 'string' },
           submissionId: { type: 'string' },
           convertedReferences: { type: 'array', items: { type: 'object', properties: { role: { type: 'string' }, imageUrl: { type: 'string' } } } },
-          segments: { type: 'array', items: VIDEO_SEGMENT_OUTPUT_SCHEMA },
+          segments: { type: 'array', items: SEGMENT_OUTPUT_SCHEMA },
         },
       },
       render(_args, value) {
@@ -355,29 +357,15 @@ export function videoTool(liveConfig, deps, ctx) {
           characterReferences = approvedCharacterReferences(characterReferences, operationState[position]);
           await checkpoint();
         }
-        if (final.submissionId) submissionId = final.submissionId;
-        if (final.convertedReferences) convertedReferences = final.convertedReferences;
-        pendingTask = ['unknown', 'timeout'].includes(final.status)
-          ? { taskId: final.taskId, index: position + 1, kind: step.kind, seconds } : null;
-        const detail = final.errorCode === 'content_rejected'
-          ? `${CONTENT_REJECTION_HINT}上游详情：${final.error || ''}`
-          : final.error;
-
-        segments.push({
-          index: position + 1,
-          kind: step.kind,
-          seconds,
-          taskId: final.taskId,
-          status: final.status,
-          videoUrl: final.videoUrl,
-          error: detail,
+        const outcome = recordSegmentResult({
+          final, segments, segment: { index: position + 1, kind: step.kind, seconds }, submissionId, convertedReferences,
         });
-
-        if (final.status !== 'succeeded' || !final.videoUrl) {
+        ({ submissionId, convertedReferences, pendingTask } = outcome);
+        if (!outcome.ok) {
           await checkpoint();
-          status = final.status;
-          errorCode = final.errorCode;
-          error = detail;
+          status = outcome.status;
+          errorCode = outcome.errorCode;
+          error = outcome.error;
           break;
         }
         referenceUrl = normalizeReferenceUrl(final.videoUrl);
@@ -389,41 +377,46 @@ export function videoTool(liveConfig, deps, ctx) {
         // 工具内部阻塞在审批框时，宿主尚拿不到输出，无法展示刚完成的分段。
         if (plan[offset + 1]) {
           paused = true;
-          notes.push('本段已完成：请先展示本次视频成果，让用户预览；用户确认继续后再用 resume 接着生成下一段。');
+          notes.push(SEGMENT_PAUSE_NOTE);
           break;
         }
       }
       } catch (failure) {
-        const doneYet = segments.some((segment) => segment.status === 'succeeded' && segment.videoUrl);
-        if (failure?.code !== 'ABORTED' || !doneYet) throw failure;
+        absorbSegmentInterruption(failure, {
+          segments,
+          notes,
+          message:
+            '这次调用被中断了（用户点了停止，或者等超时了）：已经生成好的部分会先下载、合并、交付，'
+            + '剩下的秒数不用重头再来——用 resume 就能接着做。',
+        });
         // 中断/超时：已经生成的部分照常下载合并交付，剩下的交给 resume。
         interrupted = true;
         paused = true;
-        notes.push(
-          '这次调用被中断了（用户点了停止，或者等超时了）：已经生成好的部分会先下载、合并、交付，'
-          + '剩下的秒数不用重头再来——用 resume 就能接着做。',
-        );
       }
 
       const completed = segments.filter((segment) => segment.status === 'succeeded' && segment.videoUrl);
+      const deliveredSeconds = completed.reduce((sum, segment) => sum + (segment.seconds || 0), 0);
       // 结果字段随流程追加（合并信息、备注等），显式声明成可扩展对象
       const result: Record<string, any> = {
         status,
         mode: fullPlan.length > 1 ? 'extended' : 'direct',
         plannedSeconds: restarted ? total : plannedTotal,
-        totalSeconds: completed.reduce((sum, segment) => sum + segment.seconds, 0),
+        totalSeconds: deliveredSeconds,
         segments,
         videoUrl: completed.at(-1)?.videoUrl,
         error,
         errorCode,
         submissionId,
         convertedReferences,
-        ...(convertedReferences ? { nextAction: 'present_reference_images_then_wait_for_user' } : {}),
+        ...(convertedReferences ? { nextAction: 'show_reference_images_then_wait_for_user' } : {}),
       };
       if (resume?.deliveryPending && doneBefore < fullPlan.length) paused = true;
+      // 「还剩多少秒」按计划口径（fullPlan）算，交付阶段再按目标 total 收敛，两者口径不同、都要保留。
+      const plannedRemainingSeconds = Math.max(0, fullPlan.reduce((sum, step) => sum + step.seconds, 0) - deliveredSeconds);
+      const remainingSeconds = Math.max(0, total - deliveredSeconds);
       if (paused) {
         result.paused = true;
-        result.remainingSeconds = Math.max(0, fullPlan.reduce((sum, step) => sum + step.seconds, 0) - completed.reduce((sum, step) => sum + step.seconds, 0));
+        result.remainingSeconds = plannedRemainingSeconds;
       }
       result.resumeDir = segmentsDir;
       result.segmentsDir = segmentsDir;
@@ -446,98 +439,22 @@ export function videoTool(liveConfig, deps, ctx) {
         }));
       }
 
-      const deliveredSeconds = completed.reduce((sum, segment) => sum + segment.seconds, 0);
-      // 没成功的那一段：区分「确实失败」和「只是没查到」。后者任务已经提交、大概率还在生成，
-      // 必须把任务 ID 交给用户/模型，用 video_status 事后补拉，而不是当成没生成。
-      if (status !== 'succeeded') {
-        const last = segments.at(-1) || {};
-        if (status === 'unknown' || status === 'timeout') {
-          result.pendingTaskId = last.taskId;
-          notes.push(
-            `第 ${last.index ?? segments.length} 段的查询没拿到结果（${status}），但任务已提交：`
-            + `${last.taskId || '（无任务 ID）'}。它可能仍在生成——用 video_status 按这个 ID 复查，`
-            + '拿到链接就能补上这一段，不用重新提交、不会重复扣费。',
-          );
-        } else {
-          notes.push(`第 ${last.index ?? segments.length} 段没有成功（${status}）。`);
-        }
-        if (completed.length) {
-          notes.push(
-            `已把成功的 ${completed.length} 段（${deliveredSeconds} 秒）下载并合并交付，可作为残片使用。`,
-          );
-          result.partial = true;
-        } else {
-          result.note = notes.join('\n');
-          return result;
-        }
+      // 没成功的那一段：区分「确实失败」和「只是没查到」，后者任务已提交、要用 video_status 补拉。
+      if (describeIncompleteRun({ result, status, segments, notes, completed, deliveredSeconds })) {
+        result.note = notes.join('\n');
+        return result;
       }
 
       if (args?.merge === false) {
-        if (paused) {
-          result.paused = true;
-          result.nextAction = 'present_video_then_wait_for_user';
-          result.remainingSeconds = Math.max(0, total - deliveredSeconds);
-          notes.push(resumeHint(segmentsDir, result.remainingSeconds, TOOL_NAME));
-        }
-        result.note = [...notes, '按参数要求只返回上游链接，没有下载合并。'].join('\n');
-        return result;
+        return skipMergeDelivery({ result, paused, remainingSeconds, notes, segmentsDir, toolName: TOOL_NAME });
       }
-
-      const delivery = await downloadSegmentsAndMerge(config, {
-        segments: completed,
-        segmentsDir,
-        outDir,
-        stamp,
-        notes,
-        // 暂停时只有一段的话，这一段的文件要留在分段目录里给之后续做用。
-        keepSingleFile: paused,
-        // 被中断时请求信号已经 abort：收尾（下载 + 合并）不能被它打断，否则等于白生成。
-        signal: interrupted || exec?.signal?.aborted ? undefined : exec?.signal,
+      return runSegmentDelivery({
+        config, exec, interrupted, completed, segments, segmentsDir, outDir, stamp, notes, result,
+        paused,
+        remainingSeconds,
+        pauseNote: `已交付的成片是从头到第 ${segments.length} 段，分段仍保留在 ${segmentsDir}。`,
+        toolName: TOOL_NAME,
       });
-      if (delivery.error) {
-        result.deliveryError = delivery.error;
-        if (delivery.ffmpegMissing) { result.ffmpegMissing = true; result.installHint = delivery.installHint; }
-        result.nextAction = 'resume_delivery_without_regeneration';
-        result.segmentsDir = delivery.segmentsDir;
-        result.note = [...notes, delivery.error].join('\n');
-        return result;
-      }
-      if (delivery.ffmpegMissing) {
-        result.segmentsDir = delivery.segmentsDir;
-        result.merged = false;
-        result.ffmpegMissing = true;
-        result.installHint = delivery.installHint;
-        result.note = notes.join('\n');
-        return result;
-      }
-      if (!delivery.files.length) return result;
-      if (delivery.merged) {
-        result.merged = true;
-        result.videoPath = delivery.videoPath;
-        result.mergeMode = delivery.mergeMode;
-        if (delivery.actualSeconds) result.actualSeconds = delivery.actualSeconds;
-        if (delivery.seamCuts?.length) result.seamCuts = delivery.seamCuts;
-      }
-
-      if (paused) {
-        // 暂停：分段要留着（接着做时当前几段用），并写下「生成到哪一步」的暂停记录。
-        result.segmentsDir = segmentsDir;
-        result.resumeDir = segmentsDir;
-        result.paused = true;
-        result.nextAction = 'present_video_then_wait_for_user';
-        result.previewPath = completed.at(-1)?.localPath || result.videoPath;
-        await appendRequestLog({ event: 'preview_required', previewPath: result.previewPath, resumeDir: result.resumeDir });
-        result.remainingSeconds = Math.max(0, total - deliveredSeconds);
-        notes.push(`已交付的成片是从头到第 ${segments.length} 段，分段仍保留在 ${segmentsDir}。`);
-        notes.push(resumeHint(segmentsDir, result.remainingSeconds, TOOL_NAME));
-        result.note = notes.join('\n');
-        return result;
-      }
-
-      // 所有生成分段永久保留；合并、裁剪仅使用副本。
-      result.segmentsDir = segmentsDir;
-      if (notes.length) result.note = notes.join('\n');
-      return result;
     },
   };
 }

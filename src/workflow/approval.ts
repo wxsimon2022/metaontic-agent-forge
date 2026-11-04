@@ -128,7 +128,7 @@ export function planSummary(estimate) {
  * 装 ffmpeg 前的确认：安装命令要在本机跑，必须让用户先看清楚是什么、再决定装不装。
  * （只检查不安装的调用直接放行，不用打扰用户。）
  */
-export function setupGate(ctx, exec) {
+function setupGate(ctx, exec) {
   const args = exec.arguments && typeof exec.arguments === 'object' ? exec.arguments : {};
   if (args?.install !== true) return { kind: 'allow' };
 
