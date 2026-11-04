@@ -73,9 +73,8 @@ const zh = {
       quotaUnlimited: '不限额度',
       quotaLoading: '读取额度中…',
       quotaRefresh: '刷新额度',
-      // 余额（钱包）：生成优先扣余额，不够再提示充值 / 单次付款
+      // 余额（钱包）：生成优先扣余额，不够再提示充值
       walletBalance: '余额',
-      walletBalanceTip: '生成视频优先从余额扣（每次 {price}）；余额不够时会提示充值或单次付款。',
       walletRecharge: '充值',
       walletRechargeTitle: '充值余额',
       walletRechargeAmount: '充值金额（元）',
@@ -268,7 +267,6 @@ const zh = {
       quotaLoading: 'Reading quota…',
       quotaRefresh: 'Refresh quota',
       walletBalance: 'Balance',
-      walletBalanceTip: 'Video generation uses your balance first ({price} each); if it runs out you can top up or pay per use.',
       walletRecharge: 'Top up',
       walletRechargeTitle: 'Top up balance',
       walletRechargeAmount: 'Amount (CNY)',

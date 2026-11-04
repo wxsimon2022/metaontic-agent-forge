@@ -634,12 +634,6 @@ function makePage({ form, t, manager }) {
             : null,
           quotaMessage ? h('span', { key: 'message', className: 'mov-hint' }, quotaMessage) : null,
           walletMessage ? h('span', { key: 'wallet-message', className: 'mov-hint' }, walletMessage) : null,
-          walletReady
-            ? h('span', { key: 'wallet-tip', className: 'mov-foot-note' },
-              t('walletBalanceTip', {
-                price: `${walletSymbol}${formatMoney(Number(wallet.price) || 0)}`,
-              }))
-            : null,
           h('div', { key: 'actions', className: 'mov-quota-actions mov-trailing' }, [
             h('button', {
               key: 'refresh', 'data-action': 'quota-refresh', type: 'button',
