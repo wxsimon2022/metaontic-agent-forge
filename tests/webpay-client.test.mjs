@@ -21,15 +21,17 @@ function harness(responses) {
   };
   // config.ts 里的配置模型只在插件启动时用，这里给个最简替身让源码能跑起来
   const schema = new Proxy({}, { get: () => () => schema });
+  const remembered = [];
   const context = vm.createContext({
     METAONTIC_BASE_URL: 'https://ai.bileego.com',
     z: schema,
     AbortSignal,
     fetch,
     __PLUGIN_VERSION__: '3.13.16',
+    rememberWebpayStatus: async (api, status) => { remembered.push({ api, ...status }); },
   });
   vm.runInContext(source, context);
-  return { context, calls };
+  return { context, calls, remembered };
 }
 
 const CONFIG = { connectionMode: 'service', deviceId: 'dev-1', deviceSecret: 'secret-1' };
@@ -57,13 +59,30 @@ test('收款接口说得清价格和标题', async () => {
   assert.equal(calls[0].init.headers['X-Register-Token'], 'metaontic-video-register-v1');
 });
 
-test('收款接口不可用时返回 null，不把生成堵死', async () => {
+test('收款接口不可用时回「问不到」，而不是「不收钱」', async () => {
   const { context } = harness([
     { status: 404, body: { code: 404, message: '没有这个接口' } },
     new Error('offline'),
   ]);
-  assert.equal(await context.fetchWebpayStatus(CONFIG), null);
-  assert.equal(await context.fetchWebpayStatus(CONFIG), null);
+  const missing = await context.fetchWebpayStatus(CONFIG);
+  assert.equal(missing.enabled, false);
+  assert.equal(missing.offline, true);
+  const offline = await context.fetchWebpayStatus(CONFIG);
+  assert.equal(offline.enabled, false);
+  assert.equal(offline.offline, true);
+  assert.match(offline.reason, /offline/);
+});
+
+test('问到的结论留一份，供连不上时兜底', async () => {
+  const { context, remembered } = harness([
+    { body: { code: 0, data: { enabled: true, amount: '9.90' } } },
+    { status: 503, body: { code: 503, message: '服务端打盹' } },
+  ]);
+  await context.fetchWebpayStatus(CONFIG);
+  await context.fetchWebpayStatus(CONFIG);
+  assert.equal(remembered.length, 1);
+  assert.equal(remembered[0].api, 'https://video.mybfs.cn');
+  assert.equal(remembered[0].enabled, true);
 });
 
 test('下单带设备凭据，回包直接当订单用', async () => {

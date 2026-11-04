@@ -277,17 +277,17 @@ function getInner(value) {
 function extractKeys(data) {
   return filterKeys(data ?? {}, (key) => !key.startsWith("$"));
 }
-function validateVolatileSchema(schema, path14 = [], blocked2 = false, seen = /* @__PURE__ */ new Map()) {
+function validateVolatileSchema(schema, path15 = [], blocked2 = false, seen = /* @__PURE__ */ new Map()) {
   const states = seen.get(schema) ?? /* @__PURE__ */ new Set();
   if (states.has(blocked2)) return;
   states.add(blocked2);
   seen.set(schema, states);
-  if (schema.meta?.volatile && blocked2) throw new ValidationError("volatile fields require a fixed object path without an enclosing volatile field", { path: path14 });
+  if (schema.meta?.volatile && blocked2) throw new ValidationError("volatile fields require a fixed object path without an enclosing volatile field", { path: path15 });
   const nested = blocked2 || !!schema.meta?.volatile;
-  if (schema.dict) for (const [key, child] of Object.entries(schema.dict)) validateVolatileSchema(child, [...path14, key], nested, seen);
-  if (schema.sKey) validateVolatileSchema(schema.sKey, [...path14, "<key>"], true, seen);
-  if (schema.inner && (schema.type !== "lazy" || schema.inner[kSchema])) validateVolatileSchema(schema.inner, [...path14, "*"], true, seen);
-  if (schema.list) for (let index = 0; index < schema.list.length; index++) validateVolatileSchema(schema.list[index], [...path14, String(index)], true, seen);
+  if (schema.dict) for (const [key, child] of Object.entries(schema.dict)) validateVolatileSchema(child, [...path15, key], nested, seen);
+  if (schema.sKey) validateVolatileSchema(schema.sKey, [...path15, "<key>"], true, seen);
+  if (schema.inner && (schema.type !== "lazy" || schema.inner[kSchema])) validateVolatileSchema(schema.inner, [...path15, "*"], true, seen);
+  if (schema.list) for (let index = 0; index < schema.list.length; index++) validateVolatileSchema(schema.list[index], [...path15, String(index)], true, seen);
 }
 function checkWithinRange(data, meta, description, options, skipMin = false) {
   const { max = Infinity, min = -Infinity } = meta;
@@ -1105,8 +1105,8 @@ function resolveSubmitPath(config) {
 }
 function resolveQueryPath(config, taskId) {
   if (isVolcengine(config)) return `/api/v3/contents/generations/tasks/${encodeURIComponent(taskId)}`;
-  const path14 = String(ref(config, "queryPath", "")).trim() || relayPreset().queryPath;
-  return path14.replace("{task_id}", encodeURIComponent(taskId));
+  const path15 = String(ref(config, "queryPath", "")).trim() || relayPreset().queryPath;
+  return path15.replace("{task_id}", encodeURIComponent(taskId));
 }
 function resolveModel(config) {
   const preset = relayPreset();
@@ -2257,8 +2257,8 @@ async function fetchActualCost(config, taskIds, signal) {
   const base = resolveBaseUrl(config).replace(/\/v1\/?$/, "");
   if (!key || !base) return pending("\u8D39\u7528\u5F85\u67E5\u8BE2\uFF1A\u539F\u8C03\u7528\u8FDE\u63A5\u4E0D\u53EF\u7528\u3002");
   const requestSignal = signal ? AbortSignal.any([signal, AbortSignal.timeout(8e3)]) : AbortSignal.timeout(8e3);
-  async function get(path14, authenticated) {
-    const response = await fetch(`${base}${path14}`, {
+  async function get(path15, authenticated) {
+    const response = await fetch(`${base}${path15}`, {
       method: "GET",
       redirect: "error",
       signal: requestSignal,
@@ -2850,14 +2850,14 @@ function findKey(payload, keys, depth = Infinity) {
   }
   return void 0;
 }
-function collectUrls(payload, path14 = [], found = []) {
+function collectUrls(payload, path15 = [], found = []) {
   if (typeof payload === "string") {
-    if (/^https?:\/\//i.test(payload)) found.push([path14, payload]);
+    if (/^https?:\/\//i.test(payload)) found.push([path15, payload]);
   } else if (Array.isArray(payload)) {
-    for (const item of payload) collectUrls(item, path14, found);
+    for (const item of payload) collectUrls(item, path15, found);
   } else if (payload && typeof payload === "object") {
     for (const [key, value] of Object.entries(payload)) {
-      collectUrls(value, [...path14, key], found);
+      collectUrls(value, [...path15, key], found);
     }
   }
   return found;
@@ -2875,22 +2875,22 @@ function extractTaskId(payload) {
 }
 function extractVideoUrl(payload) {
   const candidates = collectUrls(payload).filter(
-    ([path14, url]) => !looksLikeImageUrl(url) && !path14.some(isImageKey)
+    ([path15, url]) => !looksLikeImageUrl(url) && !path15.some(isImageKey)
   );
   if (!candidates.length) return void 0;
   for (const wanted of VIDEO_URL_KEYS) {
-    for (const [path14, url] of candidates) {
-      if (path14.length && String(path14.at(-1)).toLowerCase() === wanted) return url;
+    for (const [path15, url] of candidates) {
+      if (path15.length && String(path15.at(-1)).toLowerCase() === wanted) return url;
     }
   }
-  for (const [path14, url] of candidates) {
-    if (path14.length && GENERIC_URL_KEYS.has(String(path14.at(-1)).toLowerCase())) return url;
+  for (const [path15, url] of candidates) {
+    if (path15.length && GENERIC_URL_KEYS.has(String(path15.at(-1)).toLowerCase())) return url;
   }
   return candidates[0][1];
 }
 function extractImageUrl(payload) {
   const found = collectUrls(payload).find(
-    ([path14, url]) => looksLikeImageUrl(url) || path14.some(isImageKey)
+    ([path15, url]) => looksLikeImageUrl(url) || path15.some(isImageKey)
   );
   return found?.[1];
 }
@@ -2947,8 +2947,8 @@ async function relayRequest(config, requestPath, options = {}) {
     throw error;
   }
 }
-async function relayRequestCore(config, path14, { method = "GET", body, signal } = {}, trace = {}) {
-  const url = `${resolveBaseUrl(config)}${path14}`;
+async function relayRequestCore(config, path15, { method = "GET", body, signal } = {}, trace = {}) {
+  const url = `${resolveBaseUrl(config)}${path15}`;
   const timeout = AbortSignal.timeout(RELAY_TIMEOUT_MS);
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
   const serialized = body === void 0 ? void 0 : JSON.stringify(body);
@@ -3639,13 +3639,6 @@ function endWithPunctuation(text) {
   return /[。．.!！?？;；~～:：,，]$/.test(value) ? value : `${value}\u3002`;
 }
 
-// src/providers/seedance.ts
-init_connection();
-init_config();
-
-// src/workflow/real-person.ts
-import { createHash as createHash3 } from "node:crypto";
-
 // src/workflow/character-choice.ts
 import { createHash as createHash2 } from "node:crypto";
 import { mkdir as mkdir6, readFile as readFile4, writeFile as writeFile3, rename as rename4, rm as rm4 } from "node:fs/promises";
@@ -3816,6 +3809,52 @@ init_config();
 // src/payment/webpay.ts
 init_config();
 init_connection();
+
+// src/payment/webpay-state.ts
+import path10 from "node:path";
+import { mkdir as mkdir7, readFile as readFile5, writeFile as writeFile4 } from "node:fs/promises";
+var STATE_FILE = "webpay-state.json";
+var FRESH_DAYS = 30;
+function stateFile() {
+  return path10.join(dshHome(), "metaontic-video", STATE_FILE);
+}
+function normalizeBase(api) {
+  return String(api || "").trim().replace(/\/+$/, "");
+}
+async function rememberWebpayStatus(api, status) {
+  const base = normalizeBase(api);
+  if (!base) return;
+  try {
+    const file = stateFile();
+    let payload;
+    try {
+      payload = JSON.parse(await readFile5(file, "utf8"));
+    } catch {
+      payload = null;
+    }
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) payload = {};
+    payload[base] = { enabled: status?.enabled === true, enabledAt: (/* @__PURE__ */ new Date()).toISOString() };
+    await mkdir7(path10.dirname(file), { recursive: true, mode: 448 });
+    await writeFile4(file, JSON.stringify(payload), { mode: 384 });
+  } catch {
+  }
+}
+async function lastWebpayEnabled(api, now = Date.now()) {
+  const base = normalizeBase(api);
+  if (!base) return false;
+  try {
+    const payload = JSON.parse(await readFile5(stateFile(), "utf8"));
+    const record = payload && typeof payload === "object" ? payload[base] : null;
+    if (!record || record.enabled !== true) return false;
+    const at = Date.parse(String(record.enabledAt || ""));
+    if (!Number.isFinite(at)) return false;
+    return now - at <= FRESH_DAYS * 24 * 60 * 60 * 1e3;
+  } catch {
+    return false;
+  }
+}
+
+// src/payment/webpay.ts
 function webpayHeaders(config) {
   return {
     accept: "application/json",
@@ -3831,12 +3870,12 @@ function deviceBody(config) {
     plugin_version: PLUGIN_VERSION || void 0
   };
 }
-async function callWebpay(config, path14, init = {}) {
+async function callWebpay(config, path15, init = {}) {
   const api = resolveRegisterApi(config);
   const timeout = AbortSignal.timeout(15e3);
   const requestSignal = init.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
   try {
-    const response = await fetch(`${api}/api/v1/webpay${path14}`, {
+    const response = await fetch(`${api}/api/v1/webpay${path15}`, {
       method: init.method || "GET",
       headers: webpayHeaders(config),
       ...init.body === void 0 ? {} : { body: JSON.stringify(init.body) },
@@ -3865,14 +3904,19 @@ async function callWebpay(config, path14, init = {}) {
 }
 async function fetchWebpayStatus(config, signal) {
   if (isManualKey(config)) return null;
+  const api = resolveRegisterApi(config);
   const result = await callWebpay(config, "/status", { signal });
-  if (result.status !== "ok") return null;
-  return {
+  if (result.status !== "ok") {
+    return { enabled: false, offline: true, reason: result.reason || "\u670D\u52A1\u7AEF\u6CA1\u6709\u54CD\u5E94" };
+  }
+  const status = {
     enabled: result.data?.enabled === true,
     amount: result.data?.amount,
     currency: result.data?.currency,
     subject: result.data?.subject
   };
+  await rememberWebpayStatus(api, status);
+  return status;
 }
 async function createWebpayOrder(config, signal) {
   const result = await callWebpay(config, "/orders", { method: "POST", body: deviceBody(config), signal });
@@ -3972,6 +4016,36 @@ function paymentInstruction(order, toolName, subject, money, what) {
     `\u7528\u6237\u786E\u8BA4\u4ED8\u5B8C\u6B3E\u540E\uFF0C\u7528\u540C\u6837\u7684\u53C2\u6570\u91CD\u65B0\u8C03\u7528 ${toolName}\uFF1A\u63D2\u4EF6\u4F1A\u81EA\u5DF1\u8DDF\u670D\u52A1\u7AEF\u6838\u5BF9\u8FD9\u7B14\u8BA2\u5355\uFF0C\u6838\u5BF9\u5230\u5DF2\u652F\u4ED8\u5C31\u5151\u6362\u51ED\u636E\u5E76\u76F4\u63A5\u8C03\u7528\u6A21\u578B\uFF1B\u6CA1\u6838\u5BF9\u5230\u8FD8\u4F1A\u8FD4\u56DE\u8FD9\u6761\u8BF4\u660E\uFF0C\u4E0D\u8981\u7ED5\u8FC7\u5B83\u3002`
   ].join("\n");
 }
+var paidOrders = /* @__PURE__ */ new WeakMap();
+function rememberPaidOrder(exec, info) {
+  try {
+    if (exec) paidOrders.set(exec, info);
+  } catch {
+  }
+}
+function paymentMoment(paidAt) {
+  const text = String(paidAt || "").trim();
+  if (!text) return "";
+  const iso = text.includes("T") ? text : text.replace(" ", "T");
+  const utc = /([Zz]|[+-]\d{2}:?\d{2})$/.test(iso) ? iso : `${iso}Z`;
+  const stamp = Date.parse(utc);
+  if (!Number.isFinite(stamp)) return "";
+  const at = new Date(stamp);
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())} ${pad(at.getHours())}:${pad(at.getMinutes())}`;
+}
+function takePaidNote(exec) {
+  let info = null;
+  try {
+    info = exec ? paidOrders.get(exec) : null;
+    if (info) paidOrders.delete(exec);
+  } catch {
+    info = null;
+  }
+  if (!info) return "";
+  const moment = paymentMoment(info.paidAt);
+  return `\u672C\u6B21\u751F\u6210\u7528\u7684\u662F\u6B64\u524D\u5DF2\u7ECF\u4ED8\u8FC7\u6B3E\u7684\u8BA2\u5355 ${info.outTradeNo}\uFF08${info.subject} ${info.money}${moment ? `\uFF0C\u4ED8\u6B3E\u65F6\u95F4 ${moment}` : ""}\uFF09\uFF1A\u8FD9\u6B21\u4E0D\u518D\u91CD\u590D\u6536\u8D39\uFF0C\u4E5F\u4E0D\u518D\u6709\u989D\u5916\u7684\u786E\u8BA4\u6B65\u9AA4\u3002`;
+}
 async function paymentGate(config, exec) {
   if (exec.name !== "video_generate" && exec.name !== "video_extend") return null;
   if (isManualKey(config)) return null;
@@ -3981,7 +4055,21 @@ async function paymentGate(config, exec) {
   } catch {
     status = null;
   }
-  if (!status?.enabled) return null;
+  if (!status) return null;
+  if (!status.enabled) {
+    if (!status.offline) return null;
+    let known = false;
+    try {
+      known = await lastWebpayEnabled(resolveRegisterApi(config));
+    } catch {
+      known = false;
+    }
+    if (!known) return null;
+    return {
+      kind: "deny",
+      reason: `\u6536\u6B3E\u670D\u52A1\u8FDE\u4E0D\u4E0A\uFF08${status.reason || "\u670D\u52A1\u7AEF\u6CA1\u6709\u54CD\u5E94"}\uFF09\uFF0C\u5DF2\u505C\u6B62\u8C03\u7528\uFF1A\u8FD9\u6B21\u6CA1\u6709\u8C03\u7528\u6A21\u578B\u3001\u6CA1\u6709\u4EA7\u751F\u8D39\u7528\u3002\u8BF7\u786E\u8BA4\u8FD9\u53F0\u673A\u5668\u80FD\u8BBF\u95EE\u63D2\u4EF6\u670D\u52A1\uFF08\u8BBE\u7F6E\u9875\u91CC\u7684\u670D\u52A1\u5730\u5740\uFF09\u540E\u91CD\u8BD5\uFF1B\u5982\u679C\u670D\u52A1\u7AEF\u5DF2\u7ECF\u5173\u6389\u7F51\u7AD9\u652F\u4ED8\u6536\u6B3E\uFF0C\u8FD9\u6B21\u62E6\u622A\u53EF\u4EE5\u5FFD\u7565\uFF0C\u4F46\u4ECD\u9700\u5148\u6062\u590D\u7F51\u7EDC\u3002`
+    };
+  }
   const symbol = String(status.currency || "CNY").toUpperCase() === "CNY" ? "\xA5" : `${status.currency} `;
   const subject = status.subject || "AI \u89C6\u9891\u751F\u6210";
   let order = null;
@@ -4000,6 +4088,7 @@ async function paymentGate(config, exec) {
   if (order.status === "PAID") {
     const consumed = await consumeWebpayOrder(config, order.out_trade_no, exec.signal);
     if (consumed.status === "ok") {
+      rememberPaidOrder(exec, { outTradeNo: order.out_trade_no, subject, money, paidAt: order.paid_at });
       return { kind: "paid", outTradeNo: order.out_trade_no, subject, money };
     }
     return {
@@ -4241,7 +4330,12 @@ async function preflightGate(ctx, config, exec) {
   };
 }
 
+// src/providers/seedance.ts
+init_connection();
+init_config();
+
 // src/workflow/real-person.ts
+import { createHash as createHash3 } from "node:crypto";
 async function recoverRealPersonImages(config, body, ctx, exec, final, state = {}, saveState = async () => {
 }) {
   const images = (body.content || []).filter((item) => item.type === "image_url" && item.image_url?.url);
@@ -4527,18 +4621,18 @@ init_config();
 // src/media/merge.ts
 init_config();
 init_connection();
-import { rm as rm6, mkdir as mkdir8, writeFile as writeFile4, rename as rename6, stat as stat5, copyFile } from "node:fs/promises";
-import path11 from "node:path";
+import { rm as rm6, mkdir as mkdir9, writeFile as writeFile5, rename as rename6, stat as stat5, copyFile } from "node:fs/promises";
+import path12 from "node:path";
 
 // src/media/download.ts
-import { mkdir as mkdir7, rename as rename5, rm as rm5 } from "node:fs/promises";
-import path10 from "node:path";
+import { mkdir as mkdir8, rename as rename5, rm as rm5 } from "node:fs/promises";
+import path11 from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import { createWriteStream } from "node:fs";
 var DOWNLOAD_TIMEOUT_MS = 15 * 60 * 1e3;
 async function downloadFile(url, destPath, { signal } = {}) {
-  await mkdir7(path10.dirname(destPath), { recursive: true });
+  await mkdir8(path11.dirname(destPath), { recursive: true });
   const partial = `${destPath}.${uniqueSuffix("part")}`;
   const timeout = AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS);
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
@@ -4631,7 +4725,7 @@ async function cleanupSegmentTemps(temps) {
 }
 async function mergeClips(config, files, outPath, { signal } = {}) {
   const binary = resolveBinary(config, "ffmpegBinary", "ffmpeg");
-  await mkdir8(path11.dirname(outPath), { recursive: true });
+  await mkdir9(path12.dirname(outPath), { recursive: true });
   await rm6(outPath, { force: true });
   const work = `${outPath}.${uniqueSuffix("work")}.mp4`;
   let copyError = "";
@@ -4653,7 +4747,7 @@ async function mergeClips(config, files, outPath, { signal } = {}) {
     if (mergeMode !== "reencode" && paramsMatch) {
       const listPath = `${work}.concat.txt`;
       const lines = files.map((file) => `file '${file.replace(/'/g, "'\\''")}'`).join("\n");
-      await writeFile4(listPath, `${lines}
+      await writeFile5(listPath, `${lines}
 `, "utf8");
       try {
         const { code: code2, stderr: stderr2 } = await runProcess(binary, [
@@ -4813,7 +4907,7 @@ async function downloadSegmentsAndMerge(config, {
   const deliveredSeconds = segments.reduce((sum, item) => sum + (item.seconds || 0), 0);
   const ffmpegReady = segments.length > 1 ? await hasFfmpeg(config, signal) : true;
   let probeWarned = false;
-  const destOf = (segment) => path11.join(
+  const destOf = (segment) => path12.join(
     segmentsDir,
     `${String(segment.index).padStart(2, "0")}-${segment.kind}.mp4`
   );
@@ -4892,13 +4986,13 @@ async function downloadSegmentsAndMerge(config, {
       installHint: guide.hint
     };
   }
-  const finalPath = path11.join(outDir, `${stamp}-${deliveredSeconds}s.mp4`);
+  const finalPath = path12.join(outDir, `${stamp}-${deliveredSeconds}s.mp4`);
   try {
     if (files.length === 1 && keepSingleFile) {
       return { files, segmentsDir, deliveredSeconds, merged: true, mergeMode: "segment", videoPath: files[0] };
     }
     if (files.length === 1) {
-      await mkdir8(path11.dirname(finalPath), { recursive: true });
+      await mkdir9(path12.dirname(finalPath), { recursive: true });
       await rm6(finalPath, { force: true });
       await copyFile(files[0], finalPath);
       await appendRequestLog({ event: "delivery_copied", sourcePath: files[0], videoPath: finalPath });
@@ -5235,6 +5329,8 @@ function videoTool(liveConfig, deps, ctx) {
       const doneBefore = restarted ? Number(resume.done) || 0 : 0;
       const plannedTotal = plan.reduce((sum, step) => sum + step.seconds, 0);
       const notes = [];
+      const paidNote = takePaidNote(exec);
+      if (paidNote) notes.push(paidNote);
       if (restarted) {
         notes.push(
           `\u63A5\u7740\u4E0A\u4E00\u6B21\u6682\u505C\u7684\u8FDB\u5EA6\u7EE7\u7EED\uFF1A\u524D\u9762 ${doneBefore} \u6BB5\uFF08${restarted.cursor} \u79D2\uFF09\u4E0D\u91CD\u65B0\u751F\u6210\uFF0C\u8FD9\u6B21\u8FD8\u8981\u751F\u6210 ${plan.length} \u6BB5\u5171 ${plannedTotal} \u79D2\u3002`
@@ -5644,6 +5740,8 @@ function extendTool(liveConfig, deps, ctx) {
       const plannedSeconds = plan.reduce((sum, step) => sum + step.seconds, 0);
       let cursor = resume ? resume.cursor ?? null : args?.startAt == null ? null : Math.max(0, Math.round(Number(args.startAt)));
       const notes = [];
+      const paidNote = takePaidNote(exec);
+      if (paidNote) notes.push(paidNote);
       const segments = [];
       if (resume) {
         for (const step of resume.steps || []) {
@@ -6088,9 +6186,9 @@ function setupTool(config) {
 
 // src/internal/hyperframes.ts
 import { spawn as spawn2 } from "node:child_process";
-import path12 from "node:path";
+import path13 from "node:path";
 import { createRequire as createRequire2 } from "node:module";
-import { stat as stat6, mkdir as mkdir9 } from "node:fs/promises";
+import { stat as stat6, mkdir as mkdir10 } from "node:fs/promises";
 function runHyperframes(cli, args, cwd, config, signal) {
   return new Promise((resolve3, reject) => {
     if (signal?.aborted) return reject(new Error("Hyperframes \u5DF2\u53D6\u6D88\u3002"));
@@ -6105,7 +6203,7 @@ function runHyperframes(cli, args, cwd, config, signal) {
         ...Object.fromEntries([
           ["HYPERFRAMES_FFMPEG_PATH", resolveBinary(config, "ffmpegBinary", "ffmpeg")],
           ["HYPERFRAMES_FFPROBE_PATH", resolveBinary(config, "ffprobeBinary", "ffprobe")]
-        ].filter(([, binary]) => path12.isAbsolute(binary)))
+        ].filter(([, binary]) => path13.isAbsolute(binary)))
       },
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true
@@ -6185,16 +6283,16 @@ function hyperframesTool(config, deps) {
       let cli;
       try {
         const require2 = createRequire2(import.meta.url);
-        cli = path12.join(path12.dirname(require2.resolve("hyperframes/package.json")), "bin/hyperframes.mjs");
+        cli = path13.join(path13.dirname(require2.resolve("hyperframes/package.json")), "bin/hyperframes.mjs");
       } catch {
         return { status: "dependency_missing", note: "Hyperframes \u4E3A\u5185\u90E8\u5F00\u53D1\u80FD\u529B\uFF0C\u516C\u5F00\u63D2\u4EF6\u5305\u4E0D\u5305\u542B\u8BE5\u4F9D\u8D56\uFF1B\u9700\u5728\u5F00\u53D1\u73AF\u5883\u5355\u72EC\u51C6\u5907\u3002" };
       }
       let cwd = process.cwd();
       if (deps.workdir && exec?.agent) cwd = await deps.workdir.ensure(exec.agent, exec.signal) || cwd;
-      const project = path12.resolve(cwd, args.projectDir || ".");
+      const project = path13.resolve(cwd, args.projectDir || ".");
       if (action !== "check") {
         if (!args.projectDir) throw new Error("lint/render \u5FC5\u987B\u6307\u5B9A projectDir\u3002");
-        if (!(await stat6(path12.join(project, "index.html"))).isFile()) throw new Error("\u9879\u76EE\u7F3A\u5C11 index.html\u3002");
+        if (!(await stat6(path13.join(project, "index.html"))).isFile()) throw new Error("\u9879\u76EE\u7F3A\u5C11 index.html\u3002");
       }
       let videoPath;
       let command = ["doctor", "--json"];
@@ -6202,9 +6300,9 @@ function hyperframesTool(config, deps) {
       if (action === "render") {
         if (args.fps !== void 0 && ![24, 25, 30, 50, 60].includes(args.fps)) throw new Error("\u4E0D\u652F\u6301\u7684\u5E27\u7387\u3002");
         const output = args.output || `renders/output-${Date.now()}.mp4`;
-        videoPath = path12.resolve(project, output);
-        const relative = path12.relative(project, videoPath);
-        if (!relative || relative === ".." || relative.startsWith(`..${path12.sep}`) || path12.isAbsolute(relative) || path12.extname(videoPath).toLowerCase() !== ".mp4") {
+        videoPath = path13.resolve(project, output);
+        const relative = path13.relative(project, videoPath);
+        if (!relative || relative === ".." || relative.startsWith(`..${path13.sep}`) || path13.isAbsolute(relative) || path13.extname(videoPath).toLowerCase() !== ".mp4") {
           throw new Error("\u8F93\u51FA\u5FC5\u987B\u662F\u9879\u76EE\u76EE\u5F55\u5185\u7684 .mp4 \u6587\u4EF6\u3002");
         }
         try {
@@ -6213,7 +6311,7 @@ function hyperframesTool(config, deps) {
         } catch (error) {
           if (error.code !== "ENOENT") throw error;
         }
-        await mkdir9(path12.dirname(videoPath), { recursive: true });
+        await mkdir10(path13.dirname(videoPath), { recursive: true });
         command = ["render", project, "--output", videoPath, "--fps", String(args.fps || 30), "--workers", "1", "--strict"];
       }
       const result = await runHyperframes(cli, command, action === "check" ? cwd : project, config, exec?.signal);
@@ -6594,7 +6692,7 @@ init_config();
 
 // src/internal/update-lockfile.ts
 import { existsSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
-import path13 from "node:path";
+import path14 from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 var PACKAGE_NAME = "metaontic-video";
 var LOCKFILE = "pnpm-lock.yaml";
@@ -6658,7 +6756,7 @@ function stripUnverifiableEntries(text) {
 }
 function locateProfileDir(moduleUrl) {
   let dir = fileURLToPath2(moduleUrl);
-  for (let up = 0; up < 3; up += 1) dir = path13.dirname(dir);
+  for (let up = 0; up < 3; up += 1) dir = path14.dirname(dir);
   return dir;
 }
 function repairLockfileAt(lockfile, log = () => {
@@ -6685,13 +6783,13 @@ function repairLockfileAt(lockfile, log = () => {
     }
     return { status: "failed", message: error && error.message || String(error) };
   }
-  log("\u5DF2\u6E05\u7406 " + removed.length + " \u6761\u7F3A\u5C11 integrity \u7684\u9501\u6587\u4EF6\u8BB0\u5F55\uFF08" + removed.join("\u3001") + "\uFF09\uFF0C\u5907\u4EFD\u5728 " + path13.basename(backup) + "\uFF1B\u4E4B\u540E\u53EF\u4EE5\u5728\u7EBF\u66F4\u65B0\u3002");
+  log("\u5DF2\u6E05\u7406 " + removed.length + " \u6761\u7F3A\u5C11 integrity \u7684\u9501\u6587\u4EF6\u8BB0\u5F55\uFF08" + removed.join("\u3001") + "\uFF09\uFF0C\u5907\u4EFD\u5728 " + path14.basename(backup) + "\uFF1B\u4E4B\u540E\u53EF\u4EE5\u5728\u7EBF\u66F4\u65B0\u3002");
   return { status: "repaired", lockfile, backup, removed };
 }
 function locateLockfiles(dir, depth = 2) {
   const found = [];
   const walk = (current, level) => {
-    const candidate = path13.join(current, LOCKFILE);
+    const candidate = path14.join(current, LOCKFILE);
     try {
       if (existsSync(candidate)) found.push(candidate);
     } catch {
@@ -6705,14 +6803,14 @@ function locateLockfiles(dir, depth = 2) {
     }
     for (const entry of entries) {
       if (!entry.isDirectory() || entry.name === "node_modules") continue;
-      walk(path13.join(current, entry.name), level - 1);
+      walk(path14.join(current, entry.name), level - 1);
     }
   };
   walk(dir, depth);
   return found;
 }
 function locateStagingLockfiles(profileDir) {
-  const parent = path13.dirname(profileDir);
+  const parent = path14.dirname(profileDir);
   let entries = [];
   try {
     entries = readdirSync(parent, { withFileTypes: true });
@@ -6722,7 +6820,7 @@ function locateStagingLockfiles(profileDir) {
   const found = [];
   for (const entry of entries) {
     if (!entry.isDirectory() || !/staging/i.test(entry.name)) continue;
-    const dir = path13.join(parent, entry.name);
+    const dir = path14.join(parent, entry.name);
     if (dir === profileDir) continue;
     found.push(...locateLockfiles(dir, 1));
   }
@@ -6738,7 +6836,7 @@ function startUpdateLockfileRepair(moduleUrl, intervalMs = 2e3, log) {
     if (stopped) return;
     try {
       const dir = locateProfileDir(moduleUrl);
-      if (!existsSync(path13.join(dir, "package.json"))) return;
+      if (!existsSync(path14.join(dir, "package.json"))) return;
       for (const lockfile of updateLockfilesToWatch(dir)) {
         let stamp = "";
         try {
