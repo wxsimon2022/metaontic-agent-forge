@@ -55,3 +55,16 @@ for (const connectionMode of ['metaontic', 'volcengine']) test(`${connectionMode
     assert.doesNotMatch(gate.displayReason.en, /estimate|balance/i);
   }
 });
+
+test('service 模式付过款就直接放行，不再弹一次费用确认', async () => {
+  const h = harness(), config = { connectionMode: 'service', apiKey: 'sk-service' };
+  h.paymentGate = async () => ({ kind: 'paid', outTradeNo: 'WP123456', money: '¥9.90' });
+  const gate = await h.preflightGate({}, config, { name: 'video_generate', arguments: {} });
+  assert.equal(gate.kind, 'allow');
+
+  // 没付款时仍然退回付款说明，不放行
+  h.paymentGate = async () => ({ kind: 'deny', reason: '本次生成需要先付款' });
+  const denied = await h.preflightGate({}, config, { name: 'video_generate', arguments: {} });
+  assert.equal(denied.kind, 'deny');
+  assert.match(denied.reason, /需要先付款/);
+});

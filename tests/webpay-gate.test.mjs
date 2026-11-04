@@ -88,13 +88,16 @@ test('续拍段的付款说明指向 video_extend', async () => {
   assert.match(gate.reason, /重新调用 video_extend/);
 });
 
-test('已支付且凭据兑换成功才放行到人工确认', async () => {
+test('已支付且凭据兑换成功时回「已付款」，由预检直接放行', async () => {
   const h = harness({
     status: async () => ({ enabled: true }),
     create: async () => ({ ...order, status: 'PAID' }),
     consume: async () => ({ status: 'ok', data: { ticket_status: 'USED' } }),
   });
-  assert.equal(await h.paymentGate({}, { name: 'video_generate', arguments: {} }), null);
+  const gate = await h.paymentGate({}, { name: 'video_generate', arguments: {} });
+  assert.equal(gate.kind, 'paid');
+  assert.equal(gate.outTradeNo, 'WP123456');
+  assert.equal(gate.money, '¥9.90');
 });
 
 test('兑换不到凭据时停下，不让用户白付也没生成', async () => {
