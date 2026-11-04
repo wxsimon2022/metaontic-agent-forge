@@ -478,6 +478,23 @@
       quotaUnlimited: "\u4E0D\u9650\u989D\u5EA6",
       quotaLoading: "\u8BFB\u53D6\u989D\u5EA6\u4E2D\u2026",
       quotaRefresh: "\u5237\u65B0\u989D\u5EA6",
+      // 余额（钱包）：生成优先扣余额，不够再提示充值 / 单次付款
+      walletBalance: "\u4F59\u989D",
+      walletBalanceTip: "\u751F\u6210\u89C6\u9891\u4F18\u5148\u4ECE\u4F59\u989D\u6263\uFF08\u6BCF\u6B21 {price}\uFF09\uFF1B\u4F59\u989D\u4E0D\u591F\u65F6\u4F1A\u63D0\u793A\u5145\u503C\u6216\u5355\u6B21\u4ED8\u6B3E\u3002",
+      walletRecharge: "\u5145\u503C",
+      walletRechargeTitle: "\u5145\u503C\u4F59\u989D",
+      walletRechargeAmount: "\u5145\u503C\u91D1\u989D\uFF08\u5143\uFF09",
+      walletRechargeRange: "\u5355\u6B21\u53EF\u5145 {min} ~ {max} \u5143\uFF0C\u4ED8\u6B3E\u6210\u529F\u5373\u65F6\u5230\u8D26\u3002",
+      walletRechargeConfirm: "\u786E\u8BA4\u5145\u503C",
+      walletRechargeCancel: "\u53D6\u6D88",
+      walletRechargeWorking: "\u6B63\u5728\u4E0B\u5355\uFF0C\u8BF7\u7A0D\u5019\u2026",
+      walletRechargeOpening: "\u5DF2\u6253\u5F00\u652F\u4ED8\u5B9D\u6536\u94F6\u53F0\uFF1A\u8BF7\u5728\u6D4F\u89C8\u5668\u91CC\u5B8C\u6210\u4ED8\u6B3E\uFF0C\u5230\u8D26\u540E\u4F59\u989D\u4F1A\u81EA\u52A8\u66F4\u65B0\u3002",
+      walletRechargePending: "\u7B49\u5F85\u4ED8\u6B3E\u5230\u8D26\u2026\uFF08\u4ED8\u6B3E\u5B8C\u6210\u540E\u4F59\u989D\u4F1A\u81EA\u52A8\u5237\u65B0\uFF0C\u4E5F\u53EF\u4EE5\u76F4\u63A5\u5173\u6389\u8FD9\u4E2A\u7A97\u53E3\uFF09",
+      walletRechargeDone: "\u5145\u503C\u5230\u8D26\uFF1A\u5F53\u524D\u4F59\u989D {balance}",
+      walletRechargeTimeout: "\u8FD8\u6CA1\u67E5\u5230\u4ED8\u6B3E\u7ED3\u679C\uFF1A\u4ED8\u6B3E\u5B8C\u6210\u540E\u56DE\u5230\u8FD9\u91CC\u70B9\u300C\u5237\u65B0\u989D\u5EA6\u300D\u5373\u53EF\u786E\u8BA4\u3002",
+      walletRechargeFailed: "\u5145\u503C\u672A\u5B8C\u6210\uFF1A{message}",
+      walletRechargeBadAmount: "\u8BF7\u8F93\u5165\u6B63\u786E\u7684\u91D1\u989D\uFF0C\u6BD4\u5982 30\u3002",
+      walletRechargeLink: "\u6CA1\u5F39\u51FA\u6536\u94F6\u53F0\uFF1F\u70B9\u8FD9\u91CC\u6253\u5F00",
       supportRecharge: "\u4EBA\u5DE5\u5145\u503C",
       supportClose: "\u5173\u95ED",
       supportScan: "\u8BF7\u7528\u5FAE\u4FE1\u626B\u63CF\u4E8C\u7EF4\u7801\uFF0C\u8054\u7CFB\u4EBA\u5DE5\u5145\u503C\u3002\u9875\u9762\u672A\u52A0\u8F7D\u65F6\u53EF\u70B9\u51FB\u4E0B\u65B9\u94FE\u63A5\u3002",
@@ -647,6 +664,22 @@
       quotaUnlimited: "Unlimited",
       quotaLoading: "Reading quota\u2026",
       quotaRefresh: "Refresh quota",
+      walletBalance: "Balance",
+      walletBalanceTip: "Video generation uses your balance first ({price} each); if it runs out you can top up or pay per use.",
+      walletRecharge: "Top up",
+      walletRechargeTitle: "Top up balance",
+      walletRechargeAmount: "Amount (CNY)",
+      walletRechargeRange: "{min} ~ {max} CNY per top-up. The balance updates right after payment.",
+      walletRechargeConfirm: "Confirm",
+      walletRechargeCancel: "Cancel",
+      walletRechargeWorking: "Creating the order\u2026",
+      walletRechargeOpening: "Alipay checkout opened: finish the payment in your browser. The balance updates automatically.",
+      walletRechargePending: "Waiting for the payment\u2026 (the balance refreshes automatically; you can close this dialog)",
+      walletRechargeDone: "Top-up credited: balance {balance}",
+      walletRechargeTimeout: 'No payment result yet: click "Refresh quota" here once the payment is done.',
+      walletRechargeFailed: "Top-up failed: {message}",
+      walletRechargeBadAmount: "Enter a valid amount, e.g. 30.",
+      walletRechargeLink: "Checkout did not open? Click here",
       supportRecharge: "Manual recharge",
       supportClose: "Close",
       supportScan: "Scan the QR code with WeChat to contact recharge support. If it does not load, use the link below.",
@@ -1489,6 +1522,71 @@
         throw error;
       }
     }
+    async function loadWallet() {
+      if (!context.serviceMode || !context.serviceActive())
+        return;
+      const device = deviceIdentity();
+      context.setWalletStatus("working");
+      try {
+        const result = await callRegister(`${registerApiRoot()}/api/v1/wallet/status`, {
+          method: "POST",
+          headers: { "content-type": "application/json", accept: "application/json" },
+          body: JSON.stringify({ device_id: device.id, device_secret: device.secret })
+        });
+        if (!context.serviceActive())
+          return;
+        context.setWallet(result);
+        context.setWalletStatus("ok");
+        return result;
+      } catch (error) {
+        context.setWallet(null);
+        context.setWalletStatus(error?.status === 404 ? "off" : "failed");
+        if (error?.status !== 404)
+          context.setWalletMessage(context.t("quotaFailed", { message: error?.message || String(error) }));
+        return null;
+      }
+    }
+    async function startRecharge(amount) {
+      const device = deviceIdentity();
+      return callRegister(`${registerApiRoot()}/api/v1/wallet/recharge`, {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify({
+          device_id: device.id,
+          device_secret: device.secret,
+          amount: String(amount)
+        })
+      });
+    }
+    async function fetchRecharge(outTradeNo) {
+      const device = deviceIdentity();
+      return callRegister(`${registerApiRoot()}/api/v1/wallet/recharge/status`, {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify({
+          device_id: device.id,
+          device_secret: device.secret,
+          out_trade_no: outTradeNo
+        })
+      });
+    }
+    async function waitRecharge(outTradeNo, { tries = 40, intervalMs = 3e3 } = {}) {
+      for (let index = 0; index < tries; index += 1) {
+        const result = await fetchRecharge(outTradeNo).catch(() => null);
+        if (result && result.credited) {
+          await loadWallet().catch(() => {
+          });
+          await loadQuota().catch(() => {
+          });
+          return result;
+        }
+        if (result && result.status === "CLOSED") return result;
+        await new Promise((resolve) => {
+          window.setTimeout(resolve, intervalMs);
+        });
+      }
+      return null;
+    }
     async function loadUsage() {
       if (!context.serviceMode || !context.serviceActive() || context.usageInFlight.current)
         return;
@@ -1520,7 +1618,7 @@
         context.usageInFlight.current = false;
       }
     }
-    return { registerApiRoot, loggedOut, setLoggedOut, clearLoggedOut, forgetDevice, deviceIdentity, deviceFingerprint, deviceLabel, deviceWrites, syncDeviceIdentity, callRegister, applyRegistration, lookupOwnKey, startCooldown, sendEmailCode, register, loadQuota, loadUsage };
+    return { registerApiRoot, loggedOut, setLoggedOut, clearLoggedOut, forgetDevice, deviceIdentity, deviceFingerprint, deviceLabel, deviceWrites, syncDeviceIdentity, callRegister, applyRegistration, lookupOwnKey, startCooldown, sendEmailCode, register, loadQuota, loadUsage, loadWallet, startRecharge, waitRecharge };
   }
 
   // package.json
@@ -1717,6 +1815,21 @@
         const [quotaStatus, setQuotaStatus] = React.useState("idle");
         const [quotaMessage, setQuotaMessage] = React.useState("");
         const [quotaAt, setQuotaAt] = React.useState("");
+        const [wallet, setWallet] = React.useState(null);
+        const [walletStatus, setWalletStatus] = React.useState("idle");
+        const [walletMessage, setWalletMessage] = React.useState("");
+        const [rechargeOpen, setRechargeOpen] = React.useState(false);
+        const [rechargeAmount, setRechargeAmount] = React.useState("30");
+        const [rechargeState, setRechargeState] = React.useState("idle");
+        const [rechargeMessage, setRechargeMessage] = React.useState("");
+        const [rechargeLink, setRechargeLink] = React.useState("");
+        const rechargeDialog = React.useRef(null);
+        React.useEffect(() => {
+          if (rechargeOpen && rechargeDialog.current && !rechargeDialog.current.open) rechargeDialog.current.showModal();
+        }, [rechargeOpen]);
+        React.useEffect(() => {
+          setRechargeOpen(false);
+        }, [selectedMode]);
         const [usage, setUsage] = React.useState(null);
         const [usageStatus, setUsageStatus] = React.useState("idle");
         const [usageMessage, setUsageMessage] = React.useState("");
@@ -1738,7 +1851,7 @@
             return "";
           }
         });
-        const { registerApiRoot, loggedOut, setLoggedOut, clearLoggedOut, forgetDevice, deviceIdentity, deviceFingerprint, deviceLabel, deviceWrites, syncDeviceIdentity, callRegister, applyRegistration, lookupOwnKey, startCooldown, sendEmailCode, register, loadQuota, loadUsage } = createAccountActions({
+        const { registerApiRoot, loggedOut, setLoggedOut, clearLoggedOut, forgetDevice, deviceIdentity, deviceFingerprint, deviceLabel, deviceWrites, syncDeviceIdentity, callRegister, applyRegistration, lookupOwnKey, startCooldown, sendEmailCode, register, loadQuota, loadUsage, loadWallet, startRecharge, waitRecharge } = createAccountActions({
           get value() {
             return value;
           },
@@ -1816,6 +1929,15 @@
           },
           get setQuotaAt() {
             return setQuotaAt;
+          },
+          get setWallet() {
+            return setWallet;
+          },
+          get setWalletStatus() {
+            return setWalletStatus;
+          },
+          get setWalletMessage() {
+            return setWalletMessage;
           },
           get usageInFlight() {
             return usageInFlight;
@@ -1906,6 +2028,8 @@
           });
           if (snap.secrets?.apiKey || (snap.value || {}).apiKey) {
             loadQuota().catch(() => {
+            });
+            loadWallet().catch(() => {
             });
             if (SHOW_USAGE_RECORD) loadUsage().catch(() => {
             });
@@ -2250,6 +2374,14 @@
         const money = (field) => `${quotaSymbol}${formatMoney(quota ? quota[field] : 0)}`;
         const quotaReady = quotaStatus === "ok" && quota;
         const quotaFallback = keyReady ? t("quotaLoading") : t("quotaNoKey");
+        const walletReady = walletStatus === "ok" && wallet && wallet.enabled;
+        const walletSymbol = wallet && wallet.currency_symbol ? wallet.currency_symbol : quotaSymbol;
+        const walletStats = walletReady ? [{
+          key: "balance",
+          label: t("walletBalance"),
+          value: `${walletSymbol}${formatMoney(Number(wallet.balance) || 0)}`,
+          color: TOKENS.primaryFill
+        }] : [];
         const quotaStats = quotaReady ? [
           {
             key: "remain",
@@ -2268,10 +2400,10 @@
           h("div", { key: "head", className: "mov-card-head" }, [
             h("span", { key: "title", className: "mov-card-title" }, t("quotaTitle"))
           ]),
-          quotaStats ? h(
+          walletStats.length || quotaStats ? h(
             "div",
             { key: "text", "data-field": "quotaValue", className: "mov-stats" },
-            quotaStats.map((item) => h("div", { key: item.key, className: "mov-stat" }, [
+            [...walletStats, ...quotaStats || []].map((item) => h("div", { key: item.key, className: "mov-stat" }, [
               h("span", { key: "label", className: "mov-stat-label" }, item.label),
               h("span", {
                 key: "value",
@@ -2286,6 +2418,14 @@
           }, quotaFallback),
           quotaReady ? h("span", { key: "at", className: "mov-foot-note" }, t("quotaUpdatedAt", { time: quotaAt })) : null,
           quotaMessage ? h("span", { key: "message", className: "mov-hint" }, quotaMessage) : null,
+          walletMessage ? h("span", { key: "wallet-message", className: "mov-hint" }, walletMessage) : null,
+          walletReady ? h(
+            "span",
+            { key: "wallet-tip", className: "mov-foot-note" },
+            t("walletBalanceTip", {
+              price: `${walletSymbol}${formatMoney(Number(wallet.price) || 0)}`
+            })
+          ) : null,
           h("div", { key: "actions", className: "mov-quota-actions mov-trailing" }, [
             h("button", {
               key: "refresh",
@@ -2296,8 +2436,28 @@
               onClick: () => {
                 loadQuota().catch(() => {
                 });
+                loadWallet().catch(() => {
+                });
               }
             }, t("quotaRefresh")),
+            walletReady ? h("button", {
+              key: "recharge",
+              "data-action": "wallet-recharge",
+              type: "button",
+              className: "mov-btn mov-btn-sm mov-btn-primary",
+              "aria-haspopup": "dialog",
+              onClick: () => {
+                setRechargeState("idle");
+                setRechargeMessage("");
+                setRechargeLink("");
+                if (wallet && wallet.recharge_min) {
+                  const current = Number(rechargeAmount);
+                  const min = Number(wallet.recharge_min);
+                  if (!Number.isFinite(current) || current < min) setRechargeAmount(String(min));
+                }
+                setRechargeOpen(true);
+              }
+            }, t("walletRecharge")) : null,
             h("button", {
               key: "support",
               "data-action": "support-recharge",
@@ -2308,6 +2468,43 @@
             }, t("supportRecharge"))
           ])
         ]) : null;
+        async function submitRecharge() {
+          const amount = Number(String(rechargeAmount).trim());
+          if (!Number.isFinite(amount) || amount <= 0) {
+            setRechargeState("failed");
+            setRechargeMessage(t("walletRechargeBadAmount"));
+            return;
+          }
+          setRechargeState("working");
+          setRechargeMessage("");
+          setRechargeLink("");
+          try {
+            const order = await startRecharge(amount);
+            const link = order && order.pay_url ? String(order.pay_url) : "";
+            setRechargeLink(link);
+            if (link) {
+              try {
+                window.open(link, "_blank", "noopener");
+              } catch {
+              }
+            }
+            setRechargeState("pending");
+            setRechargeMessage(t("walletRechargeOpening"));
+            const done = await waitRecharge(String(order && order.out_trade_no));
+            if (done && done.credited) {
+              setRechargeState("ok");
+              setRechargeMessage(t("walletRechargeDone", {
+                balance: `${walletSymbol}${formatMoney(Number(done.balance) || 0)}`
+              }));
+            } else {
+              setRechargeState("failed");
+              setRechargeMessage(t("walletRechargeTimeout"));
+            }
+          } catch (error) {
+            setRechargeState("failed");
+            setRechargeMessage(t("walletRechargeFailed", { message: error?.message || String(error) }));
+          }
+        }
         function copyText(text, mark) {
           try {
             const result = window.navigator?.clipboard?.writeText(text);
@@ -2599,6 +2796,57 @@
           notice ? h("p", { key: "notice", className: "mov-notice" }, notice) : null,
           ...notice && !snapshot.value ? [] : settingsRows(),
           ...blobs,
+          rechargeOpen ? h("dialog", {
+            key: "recharge-dialog",
+            ref: rechargeDialog,
+            className: "mov-support-dialog",
+            "aria-labelledby": "mov-recharge-title",
+            onCancel: () => setRechargeOpen(false),
+            onClose: () => setRechargeOpen(false),
+            onClick: (event) => {
+              if (event.target === event.currentTarget) {
+                const rect = event.currentTarget.getBoundingClientRect();
+                if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) setRechargeOpen(false);
+              }
+            }
+          }, h("div", { className: "mov-support-content" }, [
+            h("div", { key: "heading", className: "mov-card-head" }, [
+              h("strong", { key: "title", id: "mov-recharge-title" }, t("walletRechargeTitle")),
+              h("button", { key: "close", type: "button", className: "mov-btn mov-btn-sm mov-trailing", "aria-label": t("walletRechargeCancel"), onClick: () => setRechargeOpen(false) }, t("walletRechargeCancel"))
+            ]),
+            h("p", { key: "hint", className: "mov-hint" }, walletReady ? t("walletRechargeRange", {
+              min: walletSymbol + formatMoney(Number(wallet.recharge_min) || 0),
+              max: walletSymbol + formatMoney(Number(wallet.recharge_max) || 0)
+            }) : ""),
+            h("div", { key: "form", style: { display: "flex", gap: 8, alignItems: "center" } }, [
+              h("input", {
+                key: "amount",
+                "data-field": "rechargeAmount",
+                type: "text",
+                inputMode: "decimal",
+                className: "mov-input",
+                value: rechargeAmount,
+                placeholder: t("walletRechargeAmount"),
+                "aria-label": t("walletRechargeAmount"),
+                disabled: rechargeState === "working" || rechargeState === "pending",
+                onChange: (event) => setRechargeAmount(event.target.value),
+                style: { ...inputStyle, flex: "1 1 auto" }
+              }),
+              h("button", {
+                key: "confirm",
+                "data-action": "wallet-recharge-confirm",
+                type: "button",
+                className: "mov-btn mov-btn-primary",
+                disabled: rechargeState === "working" || rechargeState === "pending" || !String(rechargeAmount).trim(),
+                onClick: () => {
+                  submitRecharge().catch(() => {
+                  });
+                }
+              }, rechargeState === "working" ? t("walletRechargeWorking") : t("walletRechargeConfirm"))
+            ]),
+            rechargeMessage ? h("p", { key: "message", className: "mov-hint" }, rechargeMessage) : null,
+            rechargeLink ? h("a", { key: "link", href: rechargeLink, target: "_blank", rel: "noopener noreferrer" }, t("walletRechargeLink")) : null
+          ])) : null,
           supportOpen ? h("dialog", {
             key: "support-dialog",
             ref: supportDialog,

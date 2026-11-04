@@ -3870,12 +3870,12 @@ function deviceBody(config) {
     plugin_version: PLUGIN_VERSION || void 0
   };
 }
-async function callWebpay(config, path15, init = {}) {
+async function callApi(config, base, path15, init = {}) {
   const api = resolveRegisterApi(config);
   const timeout = AbortSignal.timeout(15e3);
   const requestSignal = init.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
   try {
-    const response = await fetch(`${api}/api/v1/webpay${path15}`, {
+    const response = await fetch(`${api}/api/v1${base}${path15}`, {
       method: init.method || "GET",
       headers: webpayHeaders(config),
       ...init.body === void 0 ? {} : { body: JSON.stringify(init.body) },
@@ -3902,6 +3902,12 @@ async function callWebpay(config, path15, init = {}) {
     return { status: "unknown", reason: error?.message || String(error) };
   }
 }
+async function callWebpay(config, path15, init = {}) {
+  return callApi(config, "/webpay", path15, init);
+}
+async function callWallet(config, path15, init = {}) {
+  return callApi(config, "/wallet", path15, init);
+}
 async function fetchWebpayStatus(config, signal) {
   if (isManualKey(config)) return null;
   const api = resolveRegisterApi(config);
@@ -3923,10 +3929,33 @@ async function createWebpayOrder(config, signal) {
   if (result.status !== "ok" || !result.data?.out_trade_no) return null;
   return result.data;
 }
+async function fulfillWebpayOrder(config, outTradeNo, taskId, signal) {
+  const id = String(taskId || "").trim();
+  if (!id) return { status: "unknown", reason: "\u7F3A\u5C11\u4EFB\u52A1 ID" };
+  return callWebpay(config, `/orders/${encodeURIComponent(outTradeNo)}/fulfill`, {
+    method: "POST",
+    body: { ...deviceBody(config), task_id: id },
+    signal
+  });
+}
 async function consumeWebpayOrder(config, outTradeNo, signal) {
   return callWebpay(config, `/orders/${encodeURIComponent(outTradeNo)}/consume`, {
     method: "POST",
     body: { device_id: String(ref(config, "deviceId", "")).trim() },
+    signal
+  });
+}
+async function fetchWalletStatus(config, signal) {
+  if (isManualKey(config)) return { status: "unknown", reason: "\u81EA\u5E26 Key \u7684\u63A5\u5165\u65B9\u5F0F\u4E0D\u8D70\u672C\u670D\u52A1\u4F59\u989D" };
+  return callWallet(config, "/status", { method: "POST", body: deviceBody(config), signal });
+}
+async function consumeWalletForGeneration(config, signal) {
+  return callWallet(config, "/consume", { method: "POST", body: deviceBody(config), signal });
+}
+async function releaseWebpayOrder(config, outTradeNo, signal) {
+  return callWebpay(config, `/orders/${encodeURIComponent(outTradeNo)}/release`, {
+    method: "POST",
+    body: deviceBody(config),
     signal
   });
 }
@@ -3942,14 +3971,14 @@ async function remainingCostText(config, exec, remainingSteps, inputVideoSeconds
     );
     const groupRatio = finiteNumber(ref(config, "estimateGroupRatio", 0.8)) ?? 1;
     const usd = estimated.segments.reduce((sum, item) => sum + item.usd, 0) * groupRatio;
-    const quota = await fetchDeviceQuota(config, exec?.signal);
-    const data = quota.status === "ok" ? quota.data : {};
+    const quota = isManualKey(config) ? await fetchDeviceQuota(config, exec?.signal) : null;
+    const data = quota?.status === "ok" ? quota.data : {};
     const symbol = String(data.currency_symbol || "\xA5");
     const exchange = finiteNumber(data.usd_exchange_rate) ?? DEFAULT_USD_EXCHANGE_RATE;
     const remainAmount = finiteNumber(data.remain_amount);
     return {
       cost: `\u9884\u4F30 ${formatMoney(usd * exchange, symbol)}`,
-      remain: remainAmount === null ? "" : `\u672C\u673A Key \u5269\u4F59 ${formatMoney(remainAmount, symbol)}`
+      remain: quota === null || remainAmount === null ? "" : `\u672C\u673A Key \u5269\u4F59 ${formatMoney(remainAmount, symbol)}`
     };
   } catch (error) {
     return { cost: `\u9884\u4F30\u8D39\u7528\u6CA1\u7B97\u51FA\u6765\uFF08${error?.message || error}\uFF09`, remain: "" };
@@ -4038,13 +4067,58 @@ function takePaidNote(exec) {
   let info = null;
   try {
     info = exec ? paidOrders.get(exec) : null;
-    if (info) paidOrders.delete(exec);
+    if (info?.noted) return "";
+    if (info) info.noted = true;
   } catch {
     info = null;
   }
   if (!info) return "";
+  if (info.fromBalance) {
+    return `\u672C\u6B21\u751F\u6210\u4ECE\u8D26\u6237\u4F59\u989D\u91CC\u6263\u4E86 ${info.money}\uFF08${info.subject}\uFF0C\u8BA2\u5355 ${info.outTradeNo}${info.balanceBefore ? `\uFF0C\u6263\u524D\u4F59\u989D ${info.balanceBefore}` : ""}\uFF09\uFF1A\u4E0D\u7528\u518D\u4ED8\u6B3E\uFF0C\u4E5F\u4E0D\u4F1A\u6709\u989D\u5916\u7684\u786E\u8BA4\u6B65\u9AA4\u3002`;
+  }
   const moment = paymentMoment(info.paidAt);
   return `\u672C\u6B21\u751F\u6210\u7528\u7684\u662F\u6B64\u524D\u5DF2\u7ECF\u4ED8\u8FC7\u6B3E\u7684\u8BA2\u5355 ${info.outTradeNo}\uFF08${info.subject} ${info.money}${moment ? `\uFF0C\u4ED8\u6B3E\u65F6\u95F4 ${moment}` : ""}\uFF09\uFF1A\u8FD9\u6B21\u4E0D\u518D\u91CD\u590D\u6536\u8D39\uFF0C\u4E5F\u4E0D\u518D\u6709\u989D\u5916\u7684\u786E\u8BA4\u6B65\u9AA4\u3002`;
+}
+async function readWallet(config, exec) {
+  try {
+    const result = await fetchWalletStatus(config, exec?.signal);
+    if (result.status !== "ok" || !result.data || result.data.enabled !== true) return null;
+    return result.data;
+  } catch {
+    return null;
+  }
+}
+async function releasePaidTicket(config, exec) {
+  let info = null;
+  try {
+    info = exec ? paidOrders.get(exec) : null;
+  } catch {
+    info = null;
+  }
+  if (!info || info.released || info.taskId) return;
+  info.released = true;
+  try {
+    await releaseWebpayOrder(config, info.outTradeNo, exec?.signal);
+  } catch {
+  }
+}
+async function reportPaidTaskId(config, exec, taskId) {
+  const id = String(taskId || "").trim();
+  if (!id) return;
+  let info = null;
+  try {
+    info = exec ? paidOrders.get(exec) : null;
+  } catch {
+    info = null;
+  }
+  if (!info || info.taskId === id) return;
+  info.taskId = id;
+  try {
+    const result = await fulfillWebpayOrder(config, info.outTradeNo, id, exec?.signal);
+    if (result.status !== "ok") info.taskId = "";
+  } catch {
+    info.taskId = "";
+  }
 }
 async function paymentGate(config, exec) {
   if (exec.name !== "video_generate" && exec.name !== "video_extend") return null;
@@ -4072,6 +4146,31 @@ async function paymentGate(config, exec) {
   }
   const symbol = String(status.currency || "CNY").toUpperCase() === "CNY" ? "\xA5" : `${status.currency} `;
   const subject = status.subject || "AI \u89C6\u9891\u751F\u6210";
+  const wallet = await readWallet(config, exec);
+  if (wallet && wallet.enabled) {
+    const price = Number(wallet.price || status.amount || 0);
+    const balance = Number(wallet.balance || 0);
+    const priceText = formatMoney(price, wallet.currency_symbol || symbol);
+    if (balance >= price) {
+      const consumed = await consumeWalletForGeneration(config, exec.signal);
+      if (consumed.status === "ok" && consumed.data?.out_trade_no) {
+        rememberPaidOrder(exec, {
+          outTradeNo: consumed.data.out_trade_no,
+          subject,
+          money: priceText,
+          paidAt: consumed.data.paid_at,
+          fromBalance: true,
+          balanceBefore: formatMoney(balance, wallet.currency_symbol || symbol)
+        });
+        return { kind: "paid", outTradeNo: consumed.data.out_trade_no, subject, money: priceText };
+      }
+    } else {
+      return {
+        kind: "deny",
+        reason: `\u4F59\u989D\u4E0D\u8DB3\uFF1A\u5F53\u524D ${formatMoney(balance, wallet.currency_symbol || symbol)}\uFF0C\u672C\u6B21\u751F\u6210\u9700\u8981 ${priceText}\u3002\u8BF7\u5728\u63D2\u4EF6\u8BBE\u7F6E\u9875\u7684\u989D\u5EA6\u533A\u70B9\u300C\u5145\u503C\u300D\uFF0C\u628A\u91D1\u989D\u5145\u4E0A\u540E\u91CD\u8BD5\uFF1B\uFF08\u4E5F\u53EF\u4EE5\u9009\u62E9\u5355\u6B21\u76F4\u4ED8\uFF1A\u5145\u503C\u4E0D\u53EF\u7528\u65F6\u6309\u63D0\u793A\u91CD\u65B0\u53D1\u8D77\u4E00\u6B21\u751F\u6210\u3002\uFF09`
+      };
+    }
+  }
   let order = null;
   try {
     order = await createWebpayOrder(config, exec.signal);
@@ -4305,8 +4404,9 @@ async function preflightGate(ctx, config, exec) {
   } catch {
     estimate = null;
   }
-  const quota = await fetchDeviceQuota(config, exec.signal);
-  const data = quota.status === "ok" ? quota.data : {};
+  const showsQuota = isManualKey(config);
+  const quota = showsQuota ? await fetchDeviceQuota(config, exec.signal) : null;
+  const data = quota?.status === "ok" ? quota.data : {};
   const symbol = String(data.currency_symbol || "\xA5");
   const perUnit = finiteNumber(data.quota_per_unit) ?? DEFAULT_QUOTA_PER_UNIT;
   const exchange = finiteNumber(data.usd_exchange_rate) ?? DEFAULT_USD_EXCHANGE_RATE;
@@ -4316,13 +4416,13 @@ async function preflightGate(ctx, config, exec) {
   const remainAmount = finiteNumber(data.remain_amount);
   const costText = needMoney === null ? "\u8FD9\u6B21\u8C03\u7528\u7684\u8D39\u7528\u6CA1\u6CD5\u9884\u4F30" : `\u9884\u4F30 ${needMoney}`;
   const remainMoneyText = `${formatMoney(remainAmount === null ? 0 : remainAmount, symbol)}`;
-  const remainZh = remainQuota === null ? `\u672C\u673A Key \u7684\u989D\u5EA6\u8BFB\u4E0D\u5230\uFF08${quota.reason || "\u670D\u52A1\u7AEF\u6CA1\u56DE\u989D\u5EA6"}\uFF09` : `\u672C\u673A Key \u5269\u4F59 ${remainMoneyText}`;
-  const remainEn = remainQuota === null ? `this key's quota could not be read (${quota.reason || "the service returned none"})` : `this key has ${remainMoneyText} left`;
+  const remainZh = !showsQuota ? "\u8D39\u7528\u6309\u63D2\u4EF6\u670D\u52A1\u7684\u652F\u4ED8\u4E0E\u7528\u91CF\u7ED3\u7B97" : remainQuota === null ? `\u672C\u673A Key \u7684\u989D\u5EA6\u8BFB\u4E0D\u5230\uFF08${quota.reason || "\u670D\u52A1\u7AEF\u6CA1\u56DE\u989D\u5EA6"}\uFF09` : `\u672C\u673A Key \u5269\u4F59 ${remainMoneyText}`;
+  const remainEn = !showsQuota ? "billing follows the plugin service payment and usage" : remainQuota === null ? `this key's quota could not be read (${quota.reason || "the service returned none"})` : `this key has ${remainMoneyText} left`;
   const total = estimate ? `${estimate.model} \xB7 ${estimate.resolution} \xB7 ${planSummary(estimate)}` : `${resolveModel(config)} \xB7 ${resolveResolution(config, effectiveArgs)}`;
-  const auditTax = estimate ? `\u9884\u4F30\u6D88\u8017 ${estimate.tokens.toLocaleString("en-US")} token \u2248 ${needMoney ?? "\u65E0\u6CD5\u9884\u4F30"}\uFF08${needQuota === null ? "\u989D\u5EA6\u672A\u77E5" : `${needQuota.toLocaleString("en-US")} \u989D\u5EA6`}\uFF09` : "\u8FD9\u6B21\u8C03\u7528\u7684\u8D39\u7528\u65E0\u6CD5\u9884\u4F30";
+  const auditTax = estimate ? `\u9884\u4F30\u6D88\u8017 ${estimate.tokens.toLocaleString("en-US")} token \u2248 ${needMoney ?? "\u65E0\u6CD5\u9884\u4F30"}\uFF08${!showsQuota ? "MetaOnticVideo \u63A5\u5165\u4E0D\u770B\u989D\u5EA6" : needQuota === null ? "\u989D\u5EA6\u672A\u77E5" : `${needQuota.toLocaleString("en-US")} \u989D\u5EA6`}\uFF09` : "\u8FD9\u6B21\u8C03\u7528\u7684\u8D39\u7528\u65E0\u6CD5\u9884\u4F30";
   return {
     kind: "ask",
-    reason: `${resumeLead ? resumeLead.zh : ""}\u4EBA\u5DE5\u786E\u8BA4\uFF1A\u8C03\u7528\u89C6\u9891\u6A21\u578B\uFF08${total}\uFF09\u3002${auditTax}\uFF1B\u672C\u673A Key \u5269\u4F59 ${remainQuota === null ? "\u989D\u5EA6\u8BFB\u4E0D\u5230" : `${remainMoneyText} / ${remainQuota.toLocaleString("en-US")} \u989D\u5EA6`}\u3002`,
+    reason: `${resumeLead ? resumeLead.zh : ""}\u4EBA\u5DE5\u786E\u8BA4\uFF1A\u8C03\u7528\u89C6\u9891\u6A21\u578B\uFF08${total}\uFF09\u3002${auditTax}\uFF1B` + (showsQuota ? `\u672C\u673A Key \u5269\u4F59 ${remainQuota === null ? "\u989D\u5EA6\u8BFB\u4E0D\u5230" : `${remainMoneyText} / ${remainQuota.toLocaleString("en-US")} \u989D\u5EA6`}\u3002` : "\u8D39\u7528\u6309\u63D2\u4EF6\u670D\u52A1\u7AEF\u7684\u652F\u4ED8\u4E0E\u7528\u91CF\u7ED3\u7B97\u3002"),
     displayReason: {
       zh: `${resumeLead ? resumeLead.zh : ""}\u672C\u6B21\u4F1A\u8C03\u7528\u89C6\u9891\u6A21\u578B\uFF1A${total}\uFF1B${costText}\uFF0C${remainZh}\u3002\u70B9\u4E86\u300C\u5141\u8BB8\u300D\u624D\u4F1A\u771F\u6B63\u8C03\u7528\u3002${resumeLead ? resumeLead.tailZh : ""}`,
       en: `${resumeLead ? resumeLead.en : ""}This will call the video model: ${total}. Estimated cost ${needMoney === null ? "unknown" : needMoney}; ${remainEn}. The call runs only after you allow it.` + (resumeLead ? resumeLead.tailEn : "")
@@ -5444,6 +5544,7 @@ function videoTool(liveConfig, deps, ctx) {
             onCreated: async (taskId) => {
               pendingTask = { taskId, index: position + 1, kind: step.kind, seconds };
               await checkpoint();
+              await reportPaidTaskId(config2, exec, taskId);
             }
           });
           if (final.status === "succeeded") {
@@ -5482,6 +5583,9 @@ function videoTool(liveConfig, deps, ctx) {
         });
         interrupted = true;
         paused = true;
+      }
+      if (!segments.some((segment) => segment.taskId)) {
+        await releasePaidTicket(config2, exec);
       }
       const completed = segments.filter((segment) => segment.status === "succeeded" && segment.videoUrl);
       const deliveredSeconds = completed.reduce((sum, segment) => sum + (segment.seconds || 0), 0);
@@ -5811,6 +5915,7 @@ function extendTool(liveConfig, deps, ctx) {
             onCreated: async (taskId) => {
               pendingTask = { taskId, index: position + 1, kind: step.kind, seconds };
               await checkpoint();
+              await reportPaidTaskId(config2, exec, taskId);
             }
           });
           if (final.status === "succeeded") {
@@ -5852,6 +5957,9 @@ function extendTool(liveConfig, deps, ctx) {
         });
         interrupted = true;
         paused = true;
+      }
+      if (!segments.some((segment) => segment.taskId)) {
+        await releasePaidTicket(config2, exec);
       }
       const completed = segments.filter((segment) => segment.status === "succeeded" && segment.videoUrl);
       const deliveredSeconds = completed.reduce((sum, segment) => sum + (segment.seconds || 0), 0);

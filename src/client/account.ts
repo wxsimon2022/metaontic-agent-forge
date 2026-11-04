@@ -396,6 +396,83 @@ async function loadQuota() {
 }
 
 /**
+ * 余额（钱包）：生成视频优先从余额扣。服务端按设备凭据认账号（邮箱），
+ * 换设备重新登录后余额还在；服务端没开钱包（404）时这条链路整体不存在。
+ */
+async function loadWallet() {
+    if (!context.serviceMode || !context.serviceActive())
+        return;
+    const device = deviceIdentity();
+    context.setWalletStatus('working');
+    try {
+        const result = await callRegister(`${registerApiRoot()}/api/v1/wallet/status`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', accept: 'application/json' },
+            body: JSON.stringify({ device_id: device.id, device_secret: device.secret }),
+        });
+        if (!context.serviceActive())
+            return;
+        context.setWallet(result);
+        context.setWalletStatus('ok');
+        return result;
+    }
+    catch (error) {
+        context.setWallet(null);
+        // 404 = 服务端没开钱包：不是错误，页面上不显示余额这一栏
+        context.setWalletStatus(error?.status === 404 ? 'off' : 'failed');
+        if (error?.status !== 404)
+            context.setWalletMessage(context.t('quotaFailed', { message: error?.message || String(error) }));
+        return null;
+    }
+}
+
+/** 充值下单：金额由用户填，拿回收银台链接（服务端只认设备凭据对应的账号）。 */
+async function startRecharge(amount) {
+    const device = deviceIdentity();
+    return callRegister(`${registerApiRoot()}/api/v1/wallet/recharge`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({
+            device_id: device.id,
+            device_secret: device.secret,
+            amount: String(amount),
+        }),
+    });
+}
+
+/** 查充值订单：`credited=true` 表示钱已经进余额。 */
+async function fetchRecharge(outTradeNo) {
+    const device = deviceIdentity();
+    return callRegister(`${registerApiRoot()}/api/v1/wallet/recharge/status`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', accept: 'application/json' },
+        body: JSON.stringify({
+            device_id: device.id,
+            device_secret: device.secret,
+            out_trade_no: outTradeNo,
+        }),
+    });
+}
+
+/**
+ * 等付款到账：每 3 秒查一次，最多约 2 分钟；到账就顺手刷新余额与额度。
+ * 查询失败不抛错——付款本身在支付宝那边，这里只是「到账没有」的提示。
+ */
+async function waitRecharge(outTradeNo, { tries = 40, intervalMs = 3000 } = {}) {
+    for (let index = 0; index < tries; index += 1) {
+        const result = await fetchRecharge(outTradeNo).catch(() => null);
+        if (result && result.credited) {
+            await loadWallet().catch(() => { });
+            await loadQuota().catch(() => { });
+            return result;
+        }
+        if (result && result.status === 'CLOSED') return result;
+        await new Promise((resolve) => { window.setTimeout(resolve, intervalMs); });
+    }
+    return null;
+}
+
+/**
  * 使用记录：服务端按「设备标识 + 设备密钥」认出是本机那把 Key，
  * 再去读它的调用日志（谁什么时候出了片、消耗多少），一次任务只显示一行。
  */
@@ -434,5 +511,5 @@ async function loadUsage() {
         context.usageInFlight.current = false;
     }
 }
-  return { registerApiRoot, loggedOut, setLoggedOut, clearLoggedOut, forgetDevice, deviceIdentity, deviceFingerprint, deviceLabel, deviceWrites, syncDeviceIdentity, callRegister, applyRegistration, lookupOwnKey, startCooldown, sendEmailCode, register, loadQuota, loadUsage };
+  return { registerApiRoot, loggedOut, setLoggedOut, clearLoggedOut, forgetDevice, deviceIdentity, deviceFingerprint, deviceLabel, deviceWrites, syncDeviceIdentity, callRegister, applyRegistration, lookupOwnKey, startCooldown, sendEmailCode, register, loadQuota, loadUsage, loadWallet, startRecharge, waitRecharge };
 }
