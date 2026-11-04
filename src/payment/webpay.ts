@@ -4,7 +4,8 @@
  * 「生成视频前先付钱」这条链路插件只做三步：
  *  1. 问服务端这次生成要不要先付款（服务端关掉收款时这一步就返回未开启）；
  *  2. 要付就先下单，把收银台链接交给用户，让他在浏览器里付款；
- *  3. 用户付完回来重试时，兑换那张「已支付票据」——兑不成就不放行生成。
+ *  3. 用户付完回来重试时，兑换那张「已支付票据」——兑不成就不放行生成；
+ *  4. 拿到视频任务 ID 后回写订单（履约凭证），对账时能看出这次付款产出了哪个任务。
  *
  * 付款成功与否只看服务端（异步通知 / 交易查询），插件不在本地判断金额、验签或
  * 状态；一次付款只能兑换一张票据，所以「一次付款 = 一次生成」由服务端保证。
@@ -129,6 +130,20 @@ export async function createWebpayOrder(config, signal?): Promise<WebpayOrder | 
   const result = await callWebpay(config, '/orders', { method: 'POST', body: deviceBody(config), signal });
   if (result.status !== 'ok' || !result.data?.out_trade_no) return null;
   return result.data as WebpayOrder;
+}
+
+/**
+ * 履约回写：把视频任务 ID 交给服务端记到这笔订单上，代表「这次付款真的产出了任务」。
+ * 只作凭证与对账，回写失败不影响用户已经拿到的视频（调用方自己决定重试）。
+ */
+export async function fulfillWebpayOrder(config, outTradeNo: string, taskId: string, signal?): Promise<WebpayCall> {
+  const id = String(taskId || '').trim();
+  if (!id) return { status: 'unknown', reason: '缺少任务 ID' };
+  return callWebpay(config, `/orders/${encodeURIComponent(outTradeNo)}/fulfill`, {
+    method: 'POST',
+    body: { ...deviceBody(config), task_id: id },
+    signal,
+  });
 }
 
 /** 兑换已支付票据：只有服务端确认「已支付且没兑过」时才返回 ok。 */

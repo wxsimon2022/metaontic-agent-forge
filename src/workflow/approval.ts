@@ -7,7 +7,9 @@ import { ref, DEFAULT_USD_EXCHANGE_RATE, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION,
 import { sumStepSeconds, resolveSegmentSeconds, modelMaxSeconds } from './planning.js';
 import { ffmpegInstallOptions, hasFfmpeg, resolveBinary } from '../media/ffmpeg.js';
 import { resumeDirOf, readPauseFile, resumePlanFrom, assertResumeConnection } from './resume.js';
-import { consumeWebpayOrder, createWebpayOrder, fetchWebpayStatus } from '../payment/webpay.js';
+import {
+  consumeWebpayOrder, createWebpayOrder, fetchWebpayStatus, fulfillWebpayOrder,
+} from '../payment/webpay.js';
 import { lastWebpayEnabled } from '../payment/webpay-state.js';
 
 /** 剩下这几段的预估费用文案（确认框里给用户看钱）。 */
@@ -148,12 +150,13 @@ export function paymentMoment(paidAt) {
   return `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())} ${pad(at.getHours())}:${pad(at.getMinutes())}`;
 }
 
-/** 取回并清掉这句说明：一次生成只说一次。返回空串表示这次生成没用到已付款订单。 */
+/** 取回这句说明：一次生成只说一次（记录留着，任务 ID 回写还要用）。 */
 export function takePaidNote(exec) {
   let info = null;
   try {
     info = exec ? paidOrders.get(exec) : null;
-    if (info) paidOrders.delete(exec);
+    if (info?.noted) return '';
+    if (info) info.noted = true;
   } catch {
     info = null;
   }
@@ -161,6 +164,32 @@ export function takePaidNote(exec) {
   const moment = paymentMoment(info.paidAt);
   return `本次生成用的是此前已经付过款的订单 ${info.outTradeNo}（${info.subject} ${info.money}`
     + `${moment ? `，付款时间 ${moment}` : ''}）：这次不再重复收费，也不再有额外的确认步骤。`;
+}
+
+/**
+ * 拿到视频任务 ID 后回写订单：服务端据此判定这次付款已经履约，控制台也按它对着任务查。
+ *
+ * 长视频分多段会产生多个任务 ID，每段的 ID 都会回写一次（服务端去重、追加）。
+ * 回写失败不抛错：用户已经拿到视频，这里只影响对账；下一次分段还会再试一次。
+ */
+export async function reportPaidTaskId(config, exec, taskId) {
+  const id = String(taskId || '').trim();
+  if (!id) return;
+  let info = null;
+  try {
+    info = exec ? paidOrders.get(exec) : null;
+  } catch {
+    info = null;
+  }
+  if (!info || info.taskId === id) return;
+  info.taskId = id;
+  try {
+    const result = await fulfillWebpayOrder(config, info.outTradeNo, id, exec?.signal);
+    // 回写没成功就把标记让出来：后面的分段、或者下一次生成还能补上这条履约。
+    if (result.status !== 'ok') info.taskId = '';
+  } catch {
+    info.taskId = '';
+  }
 }
 
 /**

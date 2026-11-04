@@ -15,7 +15,7 @@ import {
   SEGMENT_PAUSE_NOTE, absorbSegmentInterruption, describeIncompleteRun,
   recordSegmentResult, runSegmentDelivery, skipMergeDelivery,
 } from '../workflow/segment-run.js';
-import { takePaidNote } from '../workflow/approval.js';
+import { reportPaidTaskId, takePaidNote } from '../workflow/approval.js';
 
 export function extendTool(liveConfig, deps, ctx) {
   const config = liveConfig;
@@ -320,6 +320,8 @@ export function extendTool(liveConfig, deps, ctx) {
           onCreated: async (taskId) => {
             pendingTask = { taskId, index: position + 1, kind: step.kind, seconds };
             await checkpoint();
+            // 拿到任务 ID 就回写订单（履约凭证）：付了款、也确实产出了任务
+            await reportPaidTaskId(config, exec, taskId);
           },
         });
         if (final.status === 'succeeded') {

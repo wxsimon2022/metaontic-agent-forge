@@ -7,7 +7,7 @@ import { snapshotConfig, resolveApiKey, assertConfigured, isOmniExtendModel, res
 import { assertResumeConnection, saveProgress, resumeDirOf, readPauseFile, resumePlanFrom, pickResumeOptions } from '../workflow/resume.js';
 import { abortError } from '../utils/errors.js';
 import { buildSegmentExecutionPrompt } from '../prompts/generation.js';
-import { takePaidNote } from '../workflow/approval.js';
+import { reportPaidTaskId, takePaidNote } from '../workflow/approval.js';
 import { buildGenerationBody, buildRequestBody, runTask, normalizeReferenceUrl } from '../providers/seedance.js';
 import { resolveOutputDir, allocateStamp, fileStamp } from '../utils/files.js';
 import {
@@ -355,6 +355,8 @@ export function videoTool(liveConfig, deps, ctx) {
           onCreated: async (taskId) => {
             pendingTask = { taskId, index: position + 1, kind: step.kind, seconds };
             await checkpoint();
+            // 拿到任务 ID 就回写订单（履约凭证）：付了款、也确实产出了任务
+            await reportPaidTaskId(config, exec, taskId);
           },
         });
         if (final.status === 'succeeded') {
