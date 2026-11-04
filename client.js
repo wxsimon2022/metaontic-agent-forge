@@ -105,9 +105,9 @@
       .mov-support-frame { width: 100%; height: min(480px, 62vh); border: 0; border-radius: 8px; background: white; }
       .mov-trailing { margin-left: auto; }
       /* \u989D\u5EA6\uFF1A\u4E09\u4E2A\u6570\u5B57\u5757\uFF0C\u4E00\u773C\u5206\u6E05\u5269\u4F59 / \u5DF2\u7528 / \u603B\u989D\u5EA6 */
-      .mov-quota-compact { padding: 8px 12px; gap: 14px; flex-direction: row; align-items: center; flex-wrap: nowrap; overflow-x: auto; }
+      .mov-quota-compact { padding: 8px 12px; gap: 10px 14px; flex-direction: row; align-items: center; flex-wrap: wrap; }
       .mov-quota-compact .mov-card-head { min-height: 24px; flex: 0 0 auto; gap: 8px; }
-      .mov-quota-compact .mov-stats { display: flex; flex: 1 0 auto; gap: 16px; }
+      .mov-quota-compact .mov-stats { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 8px 16px; min-width: 0; }
       .mov-quota-compact .mov-stat { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 6px; padding: 0; border: 0; border-radius: 0; white-space: nowrap; }
       .mov-quota-compact .mov-stat-label { font-size: 11px; white-space: nowrap; }
       .mov-quota-compact .mov-stat-value { font-size: 14px; }
@@ -478,9 +478,8 @@
       quotaUnlimited: "\u4E0D\u9650\u989D\u5EA6",
       quotaLoading: "\u8BFB\u53D6\u989D\u5EA6\u4E2D\u2026",
       quotaRefresh: "\u5237\u65B0\u989D\u5EA6",
-      // 余额（钱包）：生成优先扣余额，不够再提示充值 / 单次付款
+      // 余额（钱包）：生成优先扣余额，不够再提示充值
       walletBalance: "\u4F59\u989D",
-      walletBalanceTip: "\u751F\u6210\u89C6\u9891\u4F18\u5148\u4ECE\u4F59\u989D\u6263\uFF08\u6BCF\u6B21 {price}\uFF09\uFF1B\u4F59\u989D\u4E0D\u591F\u65F6\u4F1A\u63D0\u793A\u5145\u503C\u6216\u5355\u6B21\u4ED8\u6B3E\u3002",
       walletRecharge: "\u5145\u503C",
       walletRechargeTitle: "\u5145\u503C\u4F59\u989D",
       walletRechargeAmount: "\u5145\u503C\u91D1\u989D\uFF08\u5143\uFF09",
@@ -495,9 +494,9 @@
       walletRechargeFailed: "\u5145\u503C\u672A\u5B8C\u6210\uFF1A{message}",
       walletRechargeBadAmount: "\u8BF7\u8F93\u5165\u6B63\u786E\u7684\u91D1\u989D\uFF0C\u6BD4\u5982 30\u3002",
       walletRechargeLink: "\u6CA1\u5F39\u51FA\u6536\u94F6\u53F0\uFF1F\u70B9\u8FD9\u91CC\u6253\u5F00",
-      supportRecharge: "\u4EBA\u5DE5\u5145\u503C",
+      supportRecharge: "\u5BA2\u670D",
       supportClose: "\u5173\u95ED",
-      supportScan: "\u8BF7\u7528\u5FAE\u4FE1\u626B\u63CF\u4E8C\u7EF4\u7801\uFF0C\u8054\u7CFB\u4EBA\u5DE5\u5145\u503C\u3002\u9875\u9762\u672A\u52A0\u8F7D\u65F6\u53EF\u70B9\u51FB\u4E0B\u65B9\u94FE\u63A5\u3002",
+      supportScan: "\u8BF7\u7528\u5FAE\u4FE1\u626B\u63CF\u4E8C\u7EF4\u7801\uFF0C\u8054\u7CFB\u5BA2\u670D\u5145\u503C\u3002\u9875\u9762\u672A\u52A0\u8F7D\u65F6\u53EF\u70B9\u51FB\u4E0B\u65B9\u94FE\u63A5\u3002",
       supportOpenPage: "\u6253\u5F00\u5BA2\u670D\u9875\u9762",
       quotaNoKey: "\u767B\u5F55\u540E\u53EF\u67E5\u770B\u5269\u4F59\u989D\u5EA6\u4E0E\u5DF2\u7528\u989D\u5EA6\u3002",
       quotaNotRegistered: "\u672A\u627E\u5230\u672C\u673A\u7684\u767B\u5F55\u8BB0\u5F55\uFF0C\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u5904\u7406\u540E\u91CD\u65B0\u767B\u5F55\u3002",
@@ -665,7 +664,6 @@
       quotaLoading: "Reading quota\u2026",
       quotaRefresh: "Refresh quota",
       walletBalance: "Balance",
-      walletBalanceTip: "Video generation uses your balance first ({price} each); if it runs out you can top up or pay per use.",
       walletRecharge: "Top up",
       walletRechargeTitle: "Top up balance",
       walletRechargeAmount: "Amount (CNY)",
@@ -680,9 +678,9 @@
       walletRechargeFailed: "Top-up failed: {message}",
       walletRechargeBadAmount: "Enter a valid amount, e.g. 30.",
       walletRechargeLink: "Checkout did not open? Click here",
-      supportRecharge: "Manual recharge",
+      supportRecharge: "Support",
       supportClose: "Close",
-      supportScan: "Scan the QR code with WeChat to contact recharge support. If it does not load, use the link below.",
+      supportScan: "Scan the QR code with WeChat to contact support for a top-up. If it does not load, use the link below.",
       supportOpenPage: "Open support page",
       quotaNoKey: "Log in to view remaining and used quota.",
       quotaNotRegistered: "No login record found for this device. Contact an administrator before logging in again.",
@@ -2419,13 +2417,6 @@
           quotaReady ? h("span", { key: "at", className: "mov-foot-note" }, t("quotaUpdatedAt", { time: quotaAt })) : null,
           quotaMessage ? h("span", { key: "message", className: "mov-hint" }, quotaMessage) : null,
           walletMessage ? h("span", { key: "wallet-message", className: "mov-hint" }, walletMessage) : null,
-          walletReady ? h(
-            "span",
-            { key: "wallet-tip", className: "mov-foot-note" },
-            t("walletBalanceTip", {
-              price: `${walletSymbol}${formatMoney(Number(wallet.price) || 0)}`
-            })
-          ) : null,
           h("div", { key: "actions", className: "mov-quota-actions mov-trailing" }, [
             h("button", {
               key: "refresh",
