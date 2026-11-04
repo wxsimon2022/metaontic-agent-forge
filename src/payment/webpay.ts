@@ -63,12 +63,17 @@ function deviceBody(config) {
  * 插件服务端的支付接口调用：任何异常都收敛成 `unknown`，由调用方决定放行还是拦。
  * 不收钱的操作（查状态）失败时不能把生成堵死；收钱的操作用 `ok` 判断，失败一律不生成。
  */
-async function callWebpay(config, path: string, init: { method?: string; body?: unknown; signal?: AbortSignal } = {}): Promise<WebpayCall> {
+async function callApi(
+  config,
+  base: string,
+  path: string,
+  init: { method?: string; body?: unknown; signal?: AbortSignal } = {},
+): Promise<WebpayCall> {
   const api = resolveRegisterApi(config);
   const timeout = AbortSignal.timeout(15000);
   const requestSignal = init.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
   try {
-    const response = await fetch(`${api}/api/v1/webpay${path}`, {
+    const response = await fetch(`${api}/api/v1${base}${path}`, {
       method: init.method || 'GET',
       headers: webpayHeaders(config),
       ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }),
@@ -94,6 +99,14 @@ async function callWebpay(config, path: string, init: { method?: string; body?: 
   } catch (error) {
     return { status: 'unknown', reason: error?.message || String(error) };
   }
+}
+
+async function callWebpay(config, path: string, init: { method?: string; body?: unknown; signal?: AbortSignal } = {}): Promise<WebpayCall> {
+  return callApi(config, '/webpay', path, init);
+}
+
+async function callWallet(config, path: string, init: { method?: string; body?: unknown; signal?: AbortSignal } = {}): Promise<WebpayCall> {
+  return callApi(config, '/wallet', path, init);
 }
 
 /**
@@ -151,6 +164,58 @@ export async function consumeWebpayOrder(config, outTradeNo: string, signal?): P
   return callWebpay(config, `/orders/${encodeURIComponent(outTradeNo)}/consume`, {
     method: 'POST',
     body: { device_id: String(ref(config, 'deviceId', '')).trim() },
+    signal,
+  });
+}
+
+/** 账户余额（钱包）：生成前先看余额够不够，够就不用跳浏览器付款。 */
+export interface WalletStatus {
+  enabled: boolean;
+  email?: string | null;
+  /** 余额与每次生成的价格（元，两位小数字符串） */
+  balance: string;
+  price: string;
+  currency: string;
+  currency_symbol: string;
+  subject?: string;
+  recharge_min: string;
+  recharge_max: string;
+}
+
+/** 余额状态：自带 Key 的接入方式没有余额可查，返回 unknown。 */
+export async function fetchWalletStatus(config, signal?): Promise<WebpayCall> {
+  if (isManualKey(config)) return { status: 'unknown', reason: '自带 Key 的接入方式不走本服务余额' };
+  return callWallet(config, '/status', { method: 'POST', body: deviceBody(config), signal });
+}
+
+/** 扣余额生成：服务端扣一次并直接给一张「已支付」订单，不用浏览器付款。 */
+export async function consumeWalletForGeneration(config, signal?): Promise<WebpayCall> {
+  return callWallet(config, '/consume', { method: 'POST', body: deviceBody(config), signal });
+}
+
+/** 充值下单：金额由用户在设置页填，返回收银台链接。 */
+export async function createRechargeOrder(config, amount: string | number, signal?): Promise<WebpayCall> {
+  return callWallet(config, '/recharge', {
+    method: 'POST',
+    body: { ...deviceBody(config), amount: String(amount) },
+    signal,
+  });
+}
+
+/** 充值状态：轮询到 `credited=true` 就是余额已经到账。 */
+export async function fetchRechargeOrder(config, outTradeNo: string, signal?): Promise<WebpayCall> {
+  return callWallet(config, '/recharge/status', {
+    method: 'POST',
+    body: { ...deviceBody(config), out_trade_no: outTradeNo },
+    signal,
+  });
+}
+
+/** 释放凭据：一段都没生成成时把这次的凭据还回去（余额扣减的会把钱退回余额）。 */
+export async function releaseWebpayOrder(config, outTradeNo: string, signal?): Promise<WebpayCall> {
+  return callWebpay(config, `/orders/${encodeURIComponent(outTradeNo)}/release`, {
+    method: 'POST',
+    body: deviceBody(config),
     signal,
   });
 }

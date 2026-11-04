@@ -14,6 +14,9 @@ function harness(webpay) {
     fetchWebpayStatus: webpay.status,
     createWebpayOrder: webpay.create,
     consumeWebpayOrder: webpay.consume || (async () => ({ status: 'unknown' })),
+    // 余额这条路：默认「服务端没开钱包」，老用例照旧走直付
+    fetchWalletStatus: webpay.wallet || (async () => ({ status: 'ok', data: { enabled: false } })),
+    consumeWalletForGeneration: webpay.consumeWallet || (async () => ({ status: 'unknown' })),
     resolveModel: () => 'doubao-seedance-2-0-mini-260615',
     resolveResolution: () => '480p',
     // 卡口进程内的两个外部依赖：上次问到的收款开关（兜底）与插件服务地址。
@@ -21,7 +24,7 @@ function harness(webpay) {
     resolveRegisterApi: () => 'https://video.mybfs.cn',
     paidOrders: new WeakMap(),
   });
-  for (const name of ['isVolcengine', 'isMetaontic', 'isManualKey', 'paymentInstruction', 'paymentMoment', 'rememberPaidOrder', 'takePaidNote', 'paymentGate']) {
+  for (const name of ['isVolcengine', 'isMetaontic', 'isManualKey', 'paymentInstruction', 'paymentMoment', 'rememberPaidOrder', 'takePaidNote', 'readWallet', 'paymentGate']) {
     const start = source.search(new RegExp(`(?:async )?function ${name}\\(`));
     assert.ok(start >= 0, name);
     vm.runInContext(source.slice(start, source.indexOf('\n}', start) + 2), context);
@@ -182,4 +185,56 @@ test('下单抛异常也不能变成放行', async () => {
   });
   const gate = await h.paymentGate({}, { name: 'video_generate', arguments: {} });
   assert.equal(gate.kind, 'deny');
+});
+
+test('余额够时直接扣余额放行，不把用户甩到浏览器付款', async () => {
+  let created = 0;
+  const h = harness({
+    status: async () => ({ enabled: true, amount: '9.90', currency: 'CNY' }),
+    create: async () => { created++; return order; },
+    wallet: async () => ({
+      status: 'ok',
+      data: { enabled: true, balance: '30.00', price: '9.90', currency_symbol: '¥' },
+    }),
+    consumeWallet: async () => ({ status: 'ok', data: { out_trade_no: 'WD123456', paid_at: '2026-11-05T06:00:00' } }),
+  });
+  const exec = { name: 'video_generate', arguments: {} };
+  const gate = await h.paymentGate({}, exec);
+  assert.equal(gate.kind, 'paid');
+  assert.equal(gate.outTradeNo, 'WD123456');
+  assert.equal(created, 0);
+  assert.match(h.takePaidNote(exec) || '', /余额/, '应说明这次是从余额扣的');
+});
+
+test('余额不够时停下并提示去设置页充值', async () => {
+  let consumed = 0;
+  const h = harness({
+    status: async () => ({ enabled: true, amount: '9.90', currency: 'CNY' }),
+    create: async () => { throw new Error('must not create an order'); },
+    wallet: async () => ({
+      status: 'ok',
+      data: { enabled: true, balance: '1.00', price: '9.90', currency_symbol: '¥' },
+    }),
+    consumeWallet: async () => { consumed++; return { status: 'unknown' }; },
+  });
+  const gate = await h.paymentGate({}, { name: 'video_generate', arguments: {} });
+  assert.equal(gate.kind, 'deny');
+  assert.match(gate.reason, /余额不足/);
+  assert.match(gate.reason, /充值/);
+  assert.equal(consumed, 0);
+});
+
+test('余额扣减失败（刚好被用掉）时退回直付，而不是把生成堵死', async () => {
+  const h = harness({
+    status: async () => ({ enabled: true, amount: '9.90', currency: 'CNY' }),
+    create: async () => order,
+    wallet: async () => ({
+      status: 'ok',
+      data: { enabled: true, balance: '30.00', price: '9.90', currency_symbol: '¥' },
+    }),
+    consumeWallet: async () => ({ status: 'unknown', reason: '余额不足' }),
+  });
+  const gate = await h.paymentGate({}, { name: 'video_generate', arguments: {} });
+  assert.equal(gate.kind, 'deny');
+  assert.match(gate.reason, /WP123456/, '应给出这张直付订单的收银台链接');
 });

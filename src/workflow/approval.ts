@@ -8,7 +8,8 @@ import { sumStepSeconds, resolveSegmentSeconds, modelMaxSeconds } from './planni
 import { ffmpegInstallOptions, hasFfmpeg, resolveBinary } from '../media/ffmpeg.js';
 import { resumeDirOf, readPauseFile, resumePlanFrom, assertResumeConnection } from './resume.js';
 import {
-  consumeWebpayOrder, createWebpayOrder, fetchWebpayStatus, fulfillWebpayOrder,
+  consumeWebpayOrder, consumeWalletForGeneration, createWebpayOrder, fetchWebpayStatus,
+  fetchWalletStatus, fulfillWebpayOrder, releaseWebpayOrder,
 } from '../payment/webpay.js';
 import { lastWebpayEnabled } from '../payment/webpay-state.js';
 
@@ -161,9 +162,44 @@ export function takePaidNote(exec) {
     info = null;
   }
   if (!info) return '';
+  if (info.fromBalance) {
+    return `本次生成从账户余额里扣了 ${info.money}（${info.subject}，订单 ${info.outTradeNo}`
+      + `${info.balanceBefore ? `，扣前余额 ${info.balanceBefore}` : ''}）：不用再付款，也不会有额外的确认步骤。`;
+  }
   const moment = paymentMoment(info.paidAt);
   return `本次生成用的是此前已经付过款的订单 ${info.outTradeNo}（${info.subject} ${info.money}`
     + `${moment ? `，付款时间 ${moment}` : ''}）：这次不再重复收费，也不再有额外的确认步骤。`;
+}
+
+/** 读一次余额：读不到（老服务端没有钱包接口 / 网络不通）就当没有余额这条路。 */
+async function readWallet(config, exec) {
+  try {
+    const result = await fetchWalletStatus(config, exec?.signal);
+    if (result.status !== 'ok' || !result.data || result.data.enabled !== true) return null;
+    return result.data;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 一段都没生成成时把凭据还回去：余额扣减的会把钱退回余额，直付的留着下次重试用。
+ * 只做一次（同一次执行里多段失败不重复调用），失败也不抛——用户已经拿到视频了。
+ */
+export async function releasePaidTicket(config, exec) {
+  let info = null;
+  try {
+    info = exec ? paidOrders.get(exec) : null;
+  } catch {
+    info = null;
+  }
+  if (!info || info.released || info.taskId) return;
+  info.released = true;
+  try {
+    await releaseWebpayOrder(config, info.outTradeNo, exec?.signal);
+  } catch {
+    // 还回去失败只影响对账，不影响已经交付的视频
+  }
 }
 
 /**
@@ -236,6 +272,35 @@ export async function paymentGate(config, exec) {
 
   const symbol = String(status.currency || 'CNY').toUpperCase() === 'CNY' ? '¥' : `${status.currency} `;
   const subject = status.subject || 'AI 视频生成';
+  // 先看余额：够就直接扣一次，不用把用户甩到浏览器里付款
+  const wallet = await readWallet(config, exec);
+  if (wallet && wallet.enabled) {
+    const price = Number(wallet.price || status.amount || 0);
+    const balance = Number(wallet.balance || 0);
+    const priceText = formatMoney(price, wallet.currency_symbol || symbol);
+    if (balance >= price) {
+      const consumed = await consumeWalletForGeneration(config, exec.signal);
+      if (consumed.status === 'ok' && consumed.data?.out_trade_no) {
+        rememberPaidOrder(exec, {
+          outTradeNo: consumed.data.out_trade_no,
+          subject,
+          money: priceText,
+          paidAt: consumed.data.paid_at,
+          fromBalance: true,
+          balanceBefore: formatMoney(balance, wallet.currency_symbol || symbol),
+        });
+        return { kind: 'paid', outTradeNo: consumed.data.out_trade_no, subject, money: priceText };
+      }
+      // 余额刚好被别人用掉/扣减失败：往下走直付，不能让这次生成白等
+    } else {
+      return {
+        kind: 'deny',
+        reason: `余额不足：当前 ${formatMoney(balance, wallet.currency_symbol || symbol)}，`
+          + `本次生成需要 ${priceText}。请在插件设置页的额度区点「充值」，把金额充上后重试；`
+          + '（也可以选择单次直付：充值不可用时按提示重新发起一次生成。）',
+      };
+    }
+  }
   let order = null;
   try {
     order = await createWebpayOrder(config, exec.signal);

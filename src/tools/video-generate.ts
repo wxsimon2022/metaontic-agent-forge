@@ -7,7 +7,7 @@ import { snapshotConfig, resolveApiKey, assertConfigured, isOmniExtendModel, res
 import { assertResumeConnection, saveProgress, resumeDirOf, readPauseFile, resumePlanFrom, pickResumeOptions } from '../workflow/resume.js';
 import { abortError } from '../utils/errors.js';
 import { buildSegmentExecutionPrompt } from '../prompts/generation.js';
-import { reportPaidTaskId, takePaidNote } from '../workflow/approval.js';
+import { releasePaidTicket, reportPaidTaskId, takePaidNote } from '../workflow/approval.js';
 import { buildGenerationBody, buildRequestBody, runTask, normalizeReferenceUrl } from '../providers/seedance.js';
 import { resolveOutputDir, allocateStamp, fileStamp } from '../utils/files.js';
 import {
@@ -398,6 +398,12 @@ export function videoTool(liveConfig, deps, ctx) {
         // 中断/超时：已经生成的部分照常下载合并交付，剩下的交给 resume。
         interrupted = true;
         paused = true;
+      }
+
+      // 一段任务都没提交成功（上游直接拦回 / 中途停止）：把这次的付款凭据还回去，
+      // 用户不用为「没生成成的这次」再付一次钱（余额扣减的会退回余额）。
+      if (!segments.some((segment) => segment.taskId)) {
+        await releasePaidTicket(config, exec);
       }
 
       const completed = segments.filter((segment) => segment.status === 'succeeded' && segment.videoUrl);
