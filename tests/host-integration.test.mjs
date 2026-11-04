@@ -95,6 +95,24 @@ for (const mode of ['service', 'metaontic', 'volcengine']) test(`${mode}: bundle
     assert.equal(submissions.length, 2);
     const record = JSON.parse(await readFile(path.join(first.resumeDir, 'paused-plan.json'), 'utf8'));
     assert.equal(record.done, 1);
+    // 每段确认接在 resume 入口：点「继续」后、提交下一段前，由代码弹一次说得清的确认，
+    // 而不是只靠提示词让模型自己问。
+    const resumeGate = await host.gate({
+      name: 'video_generate',
+      arguments: { resume: first.resumeDir, merge: false, referenceImages: ['https://media.invalid/approved.png'] },
+    });
+    assert.equal(resumeGate.kind, 'ask');
+    assert.match(resumeGate.displayReason.zh, /第 1 段（15 秒）已经生成好/);
+    assert.match(resumeGate.displayReason.zh, /接下来生成第 2 段（5 秒）/);
+    assert.match(resumeGate.displayReason.zh, /整条还差 5 秒/);
+    assert.match(resumeGate.displayReason.zh, /拒绝/);
+    // 不是续做的调用不该出现续做说明
+    const freshGate = await host.gate({
+      name: 'video_generate',
+      arguments: { duration: 5, referenceImages: ['https://media.invalid/approved.png'] },
+    });
+    assert.equal(freshGate.kind, 'ask');
+    assert.doesNotMatch(freshGate.displayReason.zh, /已经生成好/);
     const continued = await host.tools.get('video_generate').execute({ resume: first.resumeDir, merge: false }, exec);
     assert.equal(continued.status, 'succeeded');
     assert.equal(continued.paused, undefined);

@@ -13,13 +13,15 @@ function harness() {
     readPauseFile: async () => ({ operationState: {} }),
     FIXED_RESOLUTION: '720p',
     estimateArgsFor: async (_config, _tool, args) => ({ ...args, remainingPlan: [{ kind: 'extend', seconds: 5 }] }),
+    // 续做入口的确认要报「整条还差多少秒」，算的是剩下的分段时长。
+    sumStepSeconds: steps => steps.reduce((total, step) => total + (step.seconds || 0), 0),
     approvalPolicy: () => 'ask', ffmpegConsentGate: async () => null,
     resolveModel: () => 'seedance',
     estimateUsage: () => { throw new Error('must not estimate'); },
     resolveRegisterApi: () => { throw new Error('must not query service'); },
     isServerIssuedKey: () => false,
   });
-  for (const name of ['resolveResolution', 'isVolcengine', 'isMetaontic', 'isManualKey', 'connectionLabel', 'resolveApiKey', 'resolveBaseUrl', 'resolveSubmitPath', 'resolveQueryPath', 'assertConfigured', 'fetchDeviceQuota', 'remainingCostText', 'preflightGate']) {
+  for (const name of ['resolveResolution', 'isVolcengine', 'isMetaontic', 'isManualKey', 'connectionLabel', 'resolveApiKey', 'resolveBaseUrl', 'resolveSubmitPath', 'resolveQueryPath', 'assertConfigured', 'fetchDeviceQuota', 'remainingCostText', 'segmentContinueLine', 'preflightGate']) {
     const start = source.search(new RegExp(`(?:async )?function ${name}\\(`));
     assert.ok(start >= 0, name);
     vm.runInContext(source.slice(start, source.indexOf('\n}', start) + 2), context);

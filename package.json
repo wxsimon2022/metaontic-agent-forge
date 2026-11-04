@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.13.13",
+  "version": "3.13.14",
   "description": "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
   "license": "MIT",
   "type": "module",
@@ -98,13 +98,11 @@
   },
   "dependencies": {},
   "releaseNotes": {
-    "version": "3.13.13",
+    "version": "3.13.14",
     "prerelease": false,
-    "publishedAt": "2026-11-03T10:54:52.809Z",
+    "publishedAt": "2026-11-04T00:04:45.580Z",
     "items": [
-      "修复：Windows 在线更新反复失败、报 ERR_PNPM_MISSING_TARBALL_INTEGRITY 的问题。安装目录的 pnpm-lock.yaml 里只要留着一条本插件缺少校验值的远程包记录（包括旧版本留下的、已经没人引用的记录），pnpm 就会拒绝整次安装。插件现在按「本插件所有远程记录里哪些拿不到合法校验值」来判断，profile 根目录、下级目录与同级的临时 staging 目录里的锁文件都会检查，检查间隔由 10 秒缩短到 2 秒，坏记录连同依赖声明一起清掉、其他依赖和带校验值的正常记录不动，改前文件另存为 pnpm-lock.yaml.metaontic-backup-时间。",
-      "优化：命中上面这条报错时不再直接放弃——更新会等后台清理完成自动重试，用户不用自己数着秒再点一次；仍然失败才提示手动删除锁文件。中英文提示同步改为「每 2 秒自动清理 + 自动重试」。",
-      "优化：使用说明书、README 与工程规范同步这次排查结论与处理方式：说明该报错与插件包、操作系统无关，不是 Windows 文件占用问题，先等自动清理与重试，仍失败再完全退出 Harness 删除安装目录下的 pnpm-lock.yaml 后重装；说明书配图与 PDF 已随正文重新导出。"
+      "修复：每段生成后的“继续确认”接回续做入口——点“继续”后、提交下一段之前由插件弹一次确认框，写明第几段已经生成好、接下来做第几段、整条还差多少秒和剩余分段的预估费用，同一份进度始终只弹一个确认框。“拒绝”即停止并保留已完成分段，之后仍可用 resume 续做；此前这一步只在提示词里要求助手自己询问，助手不问就会继续往下生成，插件拦不住。"
     ]
   }
 }

@@ -34,49 +34,21 @@ export async function remainingCostText(config, exec, remainingSteps, inputVideo
 }
 
 /**
- * 分段之间的人工确认：拿到第 N 段的结果后，先问用户要不要继续生成第 N+1 段。
- * 结果口径：
- *   allowed-once —— 用户同意，继续生成；
- *   rejected / cancelled —— 用户先不继续：停下来，把已经生成的部分交付，之后可以 resume；
- *   unavailable —— 没有可用的确认通道（没有审批服务 / 没有会话 / 提问失败）：
- *     这次调用在动手前已经确认过费用，就不把生成堵在这里，按继续处理并在 note 里说明。
+ * 续做入口（用户点「继续」之后、提交下一段之前）确认框里的「第几段 / 还差多少」说明。
+ *
+ * 每段生成完停下、等用户确认再 resume，是插件的既定时序；所以每段确认挂在 resume 入口，
+ * 由 preflightGate 统一弹一次（同一份进度只出现一个确认框）。不在生成循环中间阻塞：
+ * 工具内部卡在审批框时宿主拿不到工具输出，没法先把刚生成好的分段展示给用户，
+ * 那样用户是「没看到成果就先被问要不要继续」。
  */
-export async function confirmNextSegment(ctx, config, exec, {
-  done, finished, nextSeconds, remainingSteps, toolName = 'video_generate',
-}) {
-  const approval = ctx?.get?.('approval');
-  const agent = exec?.agent;
-  if (!approval || typeof approval.request !== 'function' || !agent) {
-    return { outcome: 'unavailable', reason: '没有可用的审批服务' };
-  }
-  if (approvalPolicy(ctx, exec) === 'never') {
-    return { outcome: 'unavailable', reason: '当前权限模式关闭了审批提示' };
-  }
-  const rest = sumStepSeconds(remainingSteps);
-  const lastSeconds = finished?.[done - 1]?.durationSeconds ?? finished?.[done - 1]?.seconds ?? 0;
-  const { cost, remain } = await remainingCostText(config, exec, remainingSteps, lastSeconds);
-  const alreadyDone = `第 ${done} 段（${lastSeconds} 秒）已经生成好`;
-  try {
-    const outcome = await approval.request({
-      agent,
-      toolName,
-      ...(exec?.callId ? { callId: exec.callId } : {}),
-      ...(exec?.signal ? { signal: exec.signal } : {}),
-      reason: `人工确认：继续生成第 ${done + 1} 段视频（${nextSeconds} 秒）。`
-        + `${alreadyDone}，整条还差 ${rest} 秒（${cost}${remain ? `；${remain}` : ''}）。`,
-      displayReason: {
-        zh: `${alreadyDone}。接下来生成第 ${done + 1} 段（${nextSeconds} 秒），整条还差 ${rest} 秒，`
-          + `${cost}${remain ? `，${remain}` : ''}。`
-          + '点「允许」继续往下生成；点「拒绝」就先把已经生成的部分交付给你，之后随时可以接着做（不用重头再来）。',
-        en: `Segment ${done} (${lastSeconds}s) is ready. Next up: segment ${done + 1} `
-          + `(${nextSeconds}s); ${rest}s left in total, ${cost}${remain ? `, ${remain}` : ''}. `
-          + 'Allow to keep generating; reject to receive what is already done and continue later.',
-      },
-    });
-    return { outcome: String(outcome) };
-  } catch (error) {
-    return { outcome: 'unavailable', reason: error?.message || String(error) };
-  }
+export function segmentContinueLine({ toolName = 'video_generate', done, lastSeconds, nextSeconds }) {
+  const action = toolName === 'video_extend' ? '延长' : '生成';
+  const finished = done > 0 ? `第 ${done} 段（${lastSeconds} 秒）已经生成好` : '还没有生成任何分段';
+  return {
+    zh: `${finished}。接下来${action}第 ${done + 1} 段（${nextSeconds} 秒）`,
+    en: `${done > 0 ? `Segment ${done} (${lastSeconds}s) is done. ` : ''}Next up: `
+      + `${toolName === 'video_extend' ? 'extend' : 'generate'} segment ${done + 1} (${nextSeconds}s)`,
+  };
 }
 
 /**
@@ -303,6 +275,8 @@ export async function preflightGate(ctx, config, exec) {
 
   const rawArgs = exec.arguments && typeof exec.arguments === 'object' ? exec.arguments : {};
   let effectiveArgs = rawArgs;
+  // 续做入口就是「每段确认」那一关：这一步拿到暂停记录里的进度，确认框才说得清是第几段。
+  let resumeSegment = null;
   if (resumeDirOf(rawArgs.resume)) {
     try {
       const saved = await readPauseFile(resumeDirOf(rawArgs.resume));
@@ -313,8 +287,37 @@ export async function preflightGate(ctx, config, exec) {
       }
 
       effectiveArgs = await estimateArgsFor(config, exec.name, rawArgs);
-      if (effectiveArgs.remainingPlan?.length === 0) return { kind: 'allow' };
+      const remaining = effectiveArgs.remainingPlan;
+      if (remaining?.length === 0) return { kind: 'allow' };
+      const lastStep = (saved.steps || []).at(-1);
+      resumeSegment = {
+        toolName: exec.name,
+        done: Number(saved.done) || 0,
+        lastSeconds: lastStep?.durationSeconds ?? lastStep?.seconds ?? 0,
+        nextSeconds: remaining?.[0]?.seconds ?? 0,
+        remainingSeconds: sumStepSeconds(remaining || []),
+        remainingSteps: remaining || [],
+        inputVideoSeconds: Number(effectiveArgs.inputVideoSeconds) || undefined,
+      };
     } catch (error) { return { kind: 'deny', reason: error?.message || String(error) }; }
+  }
+
+  // 续做确认框的前半句：第几段做完了、接下来第几段、整条还差多少、还要花多少。
+  // 算不出钱就只报秒数，确认框照常弹（不能让估价失败挡住已经确认过的续做）。
+  let resumeLead = null;
+  if (resumeSegment) {
+    const line = segmentContinueLine(resumeSegment);
+    let rest = `整条还差 ${resumeSegment.remainingSeconds} 秒`;
+    try {
+      const measured = await remainingCostText(config, exec, resumeSegment.remainingSteps, resumeSegment.inputVideoSeconds);
+      rest += `（${measured.cost}${measured.remain ? `；${measured.remain}` : ''}）`;
+    } catch { /* 估价失败不影响确认框 */ }
+    resumeLead = {
+      zh: `${line.zh}，${rest}。`,
+      en: `${line.en}; about ${resumeSegment.remainingSeconds}s left in the whole video. `,
+      tailZh: '点「允许」继续往下做；点「拒绝」就先不继续，已经生成好的分段不用重做，之后随时能接着做（不用重头再来）。',
+      tailEn: ' Allow to continue; reject to stop here — the segments already generated are kept and you can continue later.',
+    };
   }
 
   if (approvalPolicy(ctx, exec) === 'never') {
@@ -337,8 +340,11 @@ export async function preflightGate(ctx, config, exec) {
     assertConfigured(config, resolveApiKey(config));
     return {
       kind: 'ask',
-      reason: `调用${connectionLabel(config)} ${resolveModel(config)} · ${resolveResolution(config, effectiveArgs)}，按渠道账户实际用量计费。`,
-      displayReason: { zh: `本次将通过${connectionLabel(config)}生成 ${resolveResolution(config, effectiveArgs)} 视频，按渠道账户实际用量计费。确认后开始。`, en: `Generate ${resolveResolution(config, effectiveArgs)} video via ${connectionLabel(config)}, billed to your channel account. Confirm to continue.` },
+      reason: `${resumeLead ? resumeLead.zh : ''}调用${connectionLabel(config)} ${resolveModel(config)} · ${resolveResolution(config, effectiveArgs)}，按渠道账户实际用量计费。`,
+      displayReason: {
+        zh: `${resumeLead ? resumeLead.zh : ''}本次将通过${connectionLabel(config)}生成 ${resolveResolution(config, effectiveArgs)} 视频，按渠道账户实际用量计费。确认后开始。${resumeLead ? resumeLead.tailZh : ''}`,
+        en: `${resumeLead ? resumeLead.en : ''}Generate ${resolveResolution(config, effectiveArgs)} video via ${connectionLabel(config)}, billed to your channel account. Confirm to continue.${resumeLead ? resumeLead.tailEn : ''}`,
+      },
     };
   }
   let estimate = null;
@@ -392,14 +398,14 @@ export async function preflightGate(ctx, config, exec) {
     : '这次调用的费用无法预估';
   return {
     kind: 'ask',
-    reason: `人工确认：调用视频模型（${total}）。${auditTax}；本机 Key 剩余 `
+    reason: `${resumeLead ? resumeLead.zh : ''}人工确认：调用视频模型（${total}）。${auditTax}；本机 Key 剩余 `
       + `${remainQuota === null ? '额度读不到' : `${remainMoneyText} / `
         + `${remainQuota.toLocaleString('en-US')} 额度`}。`,
     displayReason: {
-      zh: `本次会调用视频模型：${total}；${costText}，${remainZh}。点了「允许」才会真正调用。`,
-      en: `This will call the video model: ${total}. Estimated cost `
+      zh: `${resumeLead ? resumeLead.zh : ''}本次会调用视频模型：${total}；${costText}，${remainZh}。点了「允许」才会真正调用。${resumeLead ? resumeLead.tailZh : ''}`,
+      en: `${resumeLead ? resumeLead.en : ''}This will call the video model: ${total}. Estimated cost `
         + `${needMoney === null ? 'unknown' : needMoney}; ${remainEn}. `
-        + 'The call runs only after you allow it.',
+        + 'The call runs only after you allow it.' + (resumeLead ? resumeLead.tailEn : ''),
     },
   };
 }

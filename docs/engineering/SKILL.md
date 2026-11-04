@@ -87,6 +87,10 @@ pnpm 11 安装前会校验整份 `pnpm-lock.yaml` 的所有 entries：只要留�
 
 续拍方式由已审核脚本决定，设置页和 video_config 移除 mode。旧 Config.mode 仅兼容读取，不再控制新请求；本次调用按 args.mode 或默认 continuous，写入断点；已记录的 resume.mode 与原请求优先，过渡描述仍覆盖默认衔接限制。
 
+## 分段确认与续做入口
+
+每段生成完先结束本次调用交付成果、由助手询问、用户确认后再 resume，是既定交互；所以“每段确认”的代码卡口必须挂在续做入口（preflightGate 的 resume 分支），不能在生成循环中间阻塞——工具内部卡在审批框时宿主拿不到工具输出，用户还没看到刚生成的分段就被问要不要继续。v2.13–2.14 的 confirmNextSegment 曾在循环里直接调 approval.request，v2.15 删掉调用点后遗留成未使用的导出。现改为 segmentContinueLine 只产出“第几段做完、接下来第几段、整条还差多少”文案，连同 remainingCostText 的整条预估并入 preflightGate 已有的那次 ask，同一份进度始终只弹一个确认框，不重复提问；拒绝即停止、已完成分段保留且不影响 resume。
+
 ## 示意图实际展示
 
 present仅登记文件交付，卡片可能在轮次结束后出现；脚本审核前需先检查图文件存在、present成功，再在正文输出Markdown内嵌SVG/PNG与打开原图链接，然后才问审核。read_image供模型查看，不证明用户看到。优先PNG/SVG，HTML作附加；格式不支持时用已有工具渲染，不擅自付费或安装。用户反馈未见图，先找对应项目文件补展示，不空口重复已画好。

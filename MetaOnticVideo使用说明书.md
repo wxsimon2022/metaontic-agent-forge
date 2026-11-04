@@ -75,10 +75,10 @@ github:wxsimon2022/metaontic-video
 **也可以不下载到本地，直接粘贴成品地址：** 复制下面这条 Gitee 成品地址，粘贴到 DeepSeek Harness「插件 → 添加插件」即可安装，效果与填写本地文件路径相同，无需安装 Git。国内网络优先使用 Gitee。在线安装只认以 `.tgz` 结尾的附件地址；ZIP、`package` 文件夹和发布页网址只能用于本地安装，不能粘贴到在线安装框。
 
 ```text
-https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.13/metaontic-video-3.13.13.tgz
+https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.14/metaontic-video-3.13.14.tgz
 ```
 
-GitHub 同版本地址为 `https://github.com/wxsimon2022/metaontic-video/releases/download/v3.13.13/metaontic-video-3.13.13.tgz`。发布新版本后，把地址中的两处版本号换成发布页上的实际版本；也可以打开发布页，在附件中右键复制 `.tgz` 的下载链接。
+GitHub 同版本地址为 `https://github.com/wxsimon2022/metaontic-video/releases/download/v3.13.14/metaontic-video-3.13.14.tgz`。发布新版本后，把地址中的两处版本号换成发布页上的实际版本；也可以打开发布页，在附件中右键复制 `.tgz` 的下载链接。
 
 - GitHub 正式版下载页：`https://github.com/wxsimon2022/metaontic-video/releases/latest`
 - Gitee 发布页：`https://gitee.com/hackloop/metaontic-video/releases`
@@ -228,6 +228,8 @@ Key 只填写在插件密钥输入框内，不要放进脚本或发到聊天中�
 
 超过模型单次上限时，插件分段制作。每段完成先展示视频，你确认后再继续下一段。Seedance 2.0 单次 4–15 秒；2.5 保留兼容，但设置页暂不提供新候选。
 
+说“继续”后、提交下一段之前，会先弹一次确认框，写明第几段已经生成好、接下来做第几段、整条还差多少秒和大概还要花多少。点“允许”才继续；点“拒绝”就先停在这里，已经生成好的分段不用重做，之后随时能接着做。
+
 暂停后可说“接着刚才的进度继续，不要重做已完成片段”。超时、断网不一定表示生成失败，先查原任务，避免重新提交。
 
 提交结果不明时插件会阻止重复提交。保留返回的任务或提交记录，让助手协助核对渠道记录；找到原任务则继续查询，只有你在渠道确认没有创建任务后才能解锁。不要通过修改参数或清除记录绕过防重。
@@ -261,7 +263,7 @@ Windows 与 Mac 的更新入口相同。`.tgz` 成品安装或仓库安装可使
 | 图片提示缺少 Key | MetaOntic AI 关闭共用后必须填写图片模型 Key 并保存 |
 | 提示无权调用模型或鉴权失败 | 检查对应模型的 Key 是否正确、是否开通模型权限，修改后保存 |
 | 提示额度不足 | 到申请 Key 的平台核对对应账户额度并按平台指引充值 |
-| 只生成第一段 | 先预览，再确认从暂停进度继续 |
+| 只生成第一段 | 先预览本次成果，再在确认框里点“允许”从暂停进度继续 |
 | 超时、网络失败或提交结果不明 | 保留原任务与记录，先查询或核对，不直接重新生成 |
 | 只给脚本文件就要求审核 | 要求先完整展示当前版脚本和镜头示意图，再重新审核 |
 | 没有清晰度选项 | 清晰度在对话里的脚本阶段确认，支持 480P / 720P |
