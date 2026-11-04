@@ -7,6 +7,7 @@ import { ref, DEFAULT_USD_EXCHANGE_RATE, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION,
 import { sumStepSeconds, resolveSegmentSeconds, modelMaxSeconds } from './planning.js';
 import { ffmpegInstallOptions, hasFfmpeg, resolveBinary } from '../media/ffmpeg.js';
 import { resumeDirOf, readPauseFile, resumePlanFrom, assertResumeConnection } from './resume.js';
+import { consumeWebpayOrder, createWebpayOrder, fetchWebpayStatus } from '../payment/webpay.js';
 
 /** 剩下这几段的预估费用文案（确认框里给用户看钱）。 */
 export async function remainingCostText(config, exec, remainingSteps, inputVideoSeconds = undefined) {
@@ -100,6 +101,75 @@ export async function fetchDeviceQuota(config, signal) {
   } catch (error) {
     return { status: 'unknown', reason: error?.message || String(error) };
   }
+}
+
+/** 收银台链接 + 付款说明：这条正文要退给模型，让模型转达用户去付款。 */
+function paymentInstruction(order, toolName, subject, money) {
+  return [
+    `本次生成需要先付款：${subject} ${money}（订单号 ${order.out_trade_no}）。`,
+    '请把下面这条收银台链接原样发给用户，并说明：在浏览器里打开、用支付宝完成付款，'
+      + '付完回来回复一声就能继续生成。不要代替用户跳过付款，也不要改用别的方式调用模型。',
+    order.pay_url || '（收银台链接没拿到，请让用户在插件设置页点一次「登录」后重试）',
+    `用户确认付完款后，用同样的参数重新调用 ${toolName}：插件会自己跟服务端核对这笔订单，`
+      + '核对到已支付就先兑换凭据再弹人工确认；没核对到还会返回这条说明，不要绕过它。',
+  ].join('\n');
+}
+
+/**
+ * 「确认生成视频的时候先付款」的卡口。
+ *
+ * 只对接入方式 A（服务端领 Key，也就是 MetaOnticVideo 这条接入方式）生效：
+ * B MetaOntic AI / C 火山引擎用的是用户自己的 Key，不经过本服务，也就不收钱。
+ * 收款由服务端开关控制：没开、或服务端没有这套接口时这里什么都不做，生成流程和以前完全一样。
+ * 开着的时候只有两种结果：
+ * - 服务端确认这笔已经付过、凭据还没兑换 -> 兑换掉，放行到后面的人工确认；
+ * - 还没付 -> 下单（服务端会复用同一设备那笔未付款订单）并把收银台链接退回给模型；
+ *   没有兑换到凭据就绝不调用模型。
+ */
+export async function paymentGate(config, exec) {
+  if (exec.name !== 'video_generate' && exec.name !== 'video_extend') return null;
+  // 自带 Key 的接入方式（B / C）不走本服务，也就没有收款这回事。
+  if (isManualKey(config)) return null;
+  let status = null;
+  try {
+    status = await fetchWebpayStatus(config, exec.signal);
+  } catch {
+    status = null;
+  }
+  // 问不到「要不要收钱」时按不收钱处理：老服务端没有这套接口，不能把生成堵死。
+  if (!status?.enabled) return null;
+
+  const symbol = String(status.currency || 'CNY').toUpperCase() === 'CNY' ? '¥' : `${status.currency} `;
+  const subject = status.subject || 'AI 视频生成';
+  let order = null;
+  try {
+    order = await createWebpayOrder(config, exec.signal);
+  } catch (error) {
+    order = null;
+  }
+  if (!order) {
+    return {
+      kind: 'deny',
+      reason: '收款服务暂时不可用，已停止调用：请稍后重试；如果一直不可用，'
+        + '请检查服务端网站支付配置（WEBPAY_*）与网络。这次没有调用模型、没有产生费用。',
+    };
+  }
+  const money = formatMoney(Number(order.amount ?? status.amount ?? 0), symbol);
+  if (order.status === 'PAID') {
+    const consumed = await consumeWebpayOrder(config, order.out_trade_no, exec.signal);
+    if (consumed.status === 'ok') return null;
+    return {
+      kind: 'deny',
+      reason: `这笔订单的支付凭据没能兑换（${consumed.reason || '服务端没有确认'}），已停止调用，`
+        + `没有调用模型、没有产生费用。订单号 ${order.out_trade_no}：请把这条原因告诉用户，`
+        + '让用户在插件设置页点一次「登录」后重试；同一笔付款只能兑换一次，不要重复付款。',
+    };
+  }
+  return {
+    kind: 'deny',
+    reason: paymentInstruction(order, exec.name, subject, money),
+    info: { webpayPending: true, out_trade_no: order.out_trade_no, pay_url: order.pay_url },
+  };
 }
 
 /** 宿主当前的审批策略：never 表示「审批提示被关掉」，这时候没法人工确认。 */
@@ -217,11 +287,10 @@ export async function ffmpegConsentGate(config, exec, args) {
 }
 
 /**
- * 真正调用模型前的卡口：先人工确认，再确认额度够不够。
+ * 真正调用模型前的卡口：只做人工确认，余额仅用于展示，不再阻断调用。
  *
  * - 审批提示被关掉（完全访问模式）：拒绝，并说明怎么打开；
- * - 预估费用超过这把 Key 的剩余额度：直接拒绝，不去调用（避免白扣 / 报错）；
- * - 读不到剩余额度：照常弹确认框，但把「读不到额度」的原因写清楚；
+ * - 读不到剩余额度：照常弹确认框，把「读不到额度」的原因写清楚；
  * - 其余情况：返回 ask，宿主弹审批面板给用户看预估费用，点「允许」才会执行。
  */
 /**
@@ -336,6 +405,9 @@ export async function preflightGate(ctx, config, exec) {
   // 让模型在对话框里问用户「要不要授权我装 ffmpeg」，而不是闷头生成再丢一堆分段。
   const consent = await ffmpegConsentGate(config, exec, args);
   if (consent) return consent;
+  // 服务端开着网站支付时，先收钱再谈别的：没拿到已支付凭据就不调用模型。
+  const payment = await paymentGate(config, exec);
+  if (payment) return payment;
   if (isManualKey(config)) {
     assertConfigured(config, resolveApiKey(config));
     return {
@@ -378,15 +450,6 @@ export async function preflightGate(ctx, config, exec) {
   const remainEn = remainQuota === null
     ? `this key's quota could not be read (${quota.reason || 'the service returned none'})`
     : `this key has ${remainMoneyText} left`;
-
-  // 额度不够就别调用：中转站也会拒，但那样只会白等一轮还看不到原因。
-  if (needQuota !== null && remainQuota !== null && remainQuota < needQuota) {
-    return {
-      kind: 'deny',
-      reason: `额度不足，已停止调用：本次预估需要 ${needMoney ?? '无法预估'}，这把 Key 只剩 `
-        + `${remainMoneyText}。请充值或找管理员换一把额度够的 Key 后重试。`,
-    };
-  }
 
   const total = estimate
     ? `${estimate.model} · ${estimate.resolution} · ${planSummary(estimate)}`

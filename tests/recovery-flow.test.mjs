@@ -158,7 +158,7 @@ for (const name of ['video_generate', 'video_extend']) test(`${name}: final-segm
 test('service preflight estimates only the segment that this call will execute', async () => {
   const calls = [];
   const context = vm.createContext({ characterChoiceGate: async () => null,
-    resumeDirOf: value => value || '', approvalPolicy: () => 'ask', ffmpegConsentGate: async () => null,
+    resumeDirOf: value => value || '', approvalPolicy: () => 'ask', ffmpegConsentGate: async () => null, paymentGate: async () => null,
     isManualKey: () => false, estimateArgsFor: async () => ({ remainingPlan: [{ kind: 'extend', seconds: 7 }, { kind: 'extend', seconds: 12 }] }),
     estimatePlan: () => { throw new Error('must use saved plan'); },
     estimateUsage: (_config, _name, _args, plan) => { calls.push(plan); return { usd: 1, tokens: 100, model: 'test', resolution: '720p', segments: plan }; },

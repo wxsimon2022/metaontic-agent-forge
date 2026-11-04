@@ -104,9 +104,10 @@ function deviceLabel(info) {
 /**
  * 设备凭据（设备标识 + 设备密钥）要同步进插件配置。
  *
- * 生成视频前，主进程那侧的工具会拿它去服务端查这把 Key 的剩余额度
- * （额度不够就禁止调用），而设备凭据平时只存在浏览器 localStorage 里，
- * 主进程读不到，所以这里写一份到配置里。值与配置一致时不重复写。
+ * 生成视频前，主进程那侧的工具会拿它去服务端查这把 Key 的剩余额度，
+ * 只在人工确认框里展示余额（余额不足不再阻断调用）；设备凭据平时只存在
+ * 浏览器 localStorage 里，主进程读不到，所以这里写一份到配置里。
+ * 值与配置一致时不重复写。
  */
 function deviceWrites(device = undefined) {
     const identity = device || deviceIdentity();
@@ -192,8 +193,11 @@ async function callRegister(url: string, init: RequestInit = {}) {
 async function applyRegistration(result, fallbackBase, device) {
     // keyOrigin 是给宿主那侧看的标记：只有带这个标记（或早期版本的设备凭据 + 邮箱）
     // 的 Key 才被当成「服务端下发的」，手填的一律拒绝调用。
-    if (!context.serviceActive())
-        return;
+    if (context.connectionBusy.current) {
+        if (!context.connectionBusy.pending)
+            throw new Error(context.settingsError('settingsUnavailable'));
+        await context.connectionBusy.pending;
+    }
     const writes = [
         ['apiKey', result.api_key],
         ['keyOrigin', 'register'],
@@ -207,8 +211,8 @@ async function applyRegistration(result, fallbackBase, device) {
         writes.push(['registerEmail', account]);
     if (result.model)
         writes.push(['model', result.model]);
-    if (!context.serviceActive())
-        return false;
+    if (context.connectionBusy.current)
+        throw new Error(context.settingsError('settingsUnavailable'));
     context.connectionBusy.current = true;
     try {
         const pending = context.persistConnection(context.form, writes, 'service');

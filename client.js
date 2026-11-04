@@ -1310,8 +1310,11 @@
       return payload || {};
     }
     async function applyRegistration(result, fallbackBase, device) {
-      if (!context.serviceActive())
-        return;
+      if (context.connectionBusy.current) {
+        if (!context.connectionBusy.pending)
+          throw new Error(context.settingsError("settingsUnavailable"));
+        await context.connectionBusy.pending;
+      }
       const writes = [
         ["apiKey", result.api_key],
         ["keyOrigin", "register"],
@@ -1323,8 +1326,8 @@
         writes.push(["registerEmail", account]);
       if (result.model)
         writes.push(["model", result.model]);
-      if (!context.serviceActive())
-        return false;
+      if (context.connectionBusy.current)
+        throw new Error(context.settingsError("settingsUnavailable"));
       context.connectionBusy.current = true;
       try {
         const pending = context.persistConnection(context.form, writes, "service");

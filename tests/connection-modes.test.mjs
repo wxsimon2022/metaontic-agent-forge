@@ -15,7 +15,7 @@ function harness() {
     estimateArgsFor: async (_config, _tool, args) => ({ ...args, remainingPlan: [{ kind: 'extend', seconds: 5 }] }),
     // 续做入口的确认要报「整条还差多少秒」，算的是剩下的分段时长。
     sumStepSeconds: steps => steps.reduce((total, step) => total + (step.seconds || 0), 0),
-    approvalPolicy: () => 'ask', ffmpegConsentGate: async () => null,
+    approvalPolicy: () => 'ask', ffmpegConsentGate: async () => null, paymentGate: async () => null,
     resolveModel: () => 'seedance',
     estimateUsage: () => { throw new Error('must not estimate'); },
     resolveRegisterApi: () => { throw new Error('must not query service'); },

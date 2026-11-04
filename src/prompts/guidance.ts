@@ -90,6 +90,11 @@ export function buildPromptGuidance(config) {
       + '并默认下载分段在本机合并成一条成片（缺 ffmpeg 会先拦下来问）；'
       + '用户点「拒绝」或中途被停止时，已经延长好的部分照样先交付（paused=true + resumeDir），'
       + '之后把 resumeDir 传给 video_extend 的 resume 参数接着做即可，不重复生成、不重复扣费。',
+    '· 服务端开着网站支付时，「生成视频」会先要求付款：video_generate / video_extend 会被插件退回一条'
+      + '收银台链接和订单号。把整条链接原样发给用户，说明在浏览器里用支付宝付完再回复一声；'
+      + '用户说付好了，就按原参数重新调用同一个工具，插件会自己跟服务端核对支付结果'
+      + '（已支付会先兑换凭据、再弹人工确认）。不要跳过付款、不要改用别的工具或渠道去调模型，也不要重复付款；'
+      + '只有接入方式是「服务端领 Key」（MetaOnticVideo）时才有这一步，B MetaOntic AI / C 火山引擎不受影响。',
     '· 生成通常要几分钟：单次调用返回 timeout 不等于失败，优先用原工具加 resume 查询并接回进度，也可用 video_status 加 taskId 继续查'
       + '（上游链接约 24 小时内有效），不要重复提交同一段。下载或合并失败时使用原resume重试交付，不新建生成任务。模型或接入渠道变化时先说明并取得用户明确确认，才传resumeWithCurrentConfig:true；还有待查询任务时必须恢复原配置。',
     '· 环境有问题（缺 ffmpeg 装不上、想确认能不能合并）用 video_setup：默认只检查，'
