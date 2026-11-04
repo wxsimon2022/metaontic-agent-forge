@@ -43,6 +43,7 @@ window.fetch = async (input) => {
     if (scenario === 'error' && /quota|usage/.test(url)) return new Response(JSON.stringify({ message: '预览：模拟服务暂时不可用' }), { status: 503 });
     if (url.includes('/register/status')) data = { enabled: true, base_url: 'https://preview.invalid' };
     else if (url.includes('/register/quota')) data = { currency_symbol: '¥', remain_amount: 86.5, used_amount: 13.5, total_amount: 100 };
+    else if (url.includes('/wallet/status')) data = { enabled: true, balance: 26.4, currency_symbol: '¥', price: 0.01, recharge_min: 1, recharge_max: 1000 };
     else if (url.includes('/usage/list')) data = { window_days: 7, currency_symbol: '¥', count: 3, amount_sum: 13.5, items: ['succeeded', 'succeeded', 'failed'].map((status, i) => ({ id: i, created_at: new Date(Date.now()-i*3600000).toISOString(), kind_label: i ? '视频延长' : '视频生成', model: value.model, amount: i === 2 ? 0 : 6.75, status })) };
     else data = { api_key: 'preview-service-key', email: 'preview@example.com', base_url: 'https://preview.invalid', model: value.model };
     return new Response(JSON.stringify({ code: 0, data }), { status: 200 });
