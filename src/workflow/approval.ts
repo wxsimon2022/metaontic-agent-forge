@@ -21,14 +21,16 @@ export async function remainingCostText(config, exec, remainingSteps, inputVideo
     );
     const groupRatio = finiteNumber(ref(config, 'estimateGroupRatio', 0.8)) ?? 1;
     const usd = estimated.segments.reduce((sum, item) => sum + item.usd, 0) * groupRatio;
-    const quota = await fetchDeviceQuota(config, exec?.signal);
-    const data = quota.status === 'ok' ? quota.data : {};
+    // MetaOnticVideo（服务端领 Key）这条接入方式不读额度：这次能不能做只由服务端的
+    // 支付结果决定，余额是中转站自己的事，不该出现在确认框里、更不该挡生成。
+    const quota = isManualKey(config) ? await fetchDeviceQuota(config, exec?.signal) : null;
+    const data = quota?.status === 'ok' ? quota.data : {};
     const symbol = String(data.currency_symbol || '¥');
     const exchange = finiteNumber(data.usd_exchange_rate) ?? DEFAULT_USD_EXCHANGE_RATE;
     const remainAmount = finiteNumber(data.remain_amount);
     return {
       cost: `预估 ${formatMoney(usd * exchange, symbol)}`,
-      remain: remainAmount === null ? '' : `本机 Key 剩余 ${formatMoney(remainAmount, symbol)}`,
+      remain: quota === null || remainAmount === null ? '' : `本机 Key 剩余 ${formatMoney(remainAmount, symbol)}`,
     };
   } catch (error) {
     return { cost: `预估费用没算出来（${error?.message || error}）`, remain: '' };
@@ -504,8 +506,10 @@ export async function preflightGate(ctx, config, exec) {
     estimate = null;
   }
 
-  const quota = await fetchDeviceQuota(config, exec.signal);
-  const data = quota.status === 'ok' ? quota.data : {};
+  // 自带 Key 的接入方式才显示额度；MetaOnticVideo 接入不查余额（见上）。
+  const showsQuota = isManualKey(config);
+  const quota = showsQuota ? await fetchDeviceQuota(config, exec.signal) : null;
+  const data = quota?.status === 'ok' ? quota.data : {};
   const symbol = String(data.currency_symbol || '¥');
   const perUnit = finiteNumber(data.quota_per_unit) ?? DEFAULT_QUOTA_PER_UNIT;
   const exchange = finiteNumber(data.usd_exchange_rate) ?? DEFAULT_USD_EXCHANGE_RATE;
@@ -520,12 +524,16 @@ export async function preflightGate(ctx, config, exec) {
   const costText = needMoney === null ? '这次调用的费用没法预估' : `预估 ${needMoney}`;
   const remainMoneyText = `${formatMoney(remainAmount === null ? 0 : remainAmount, symbol)}`;
   // 用户看的只有钱；额度数字只留在下面那条审计文本里
-  const remainZh = remainQuota === null
-    ? `本机 Key 的额度读不到（${quota.reason || '服务端没回额度'}）`
-    : `本机 Key 剩余 ${remainMoneyText}`;
-  const remainEn = remainQuota === null
-    ? `this key's quota could not be read (${quota.reason || 'the service returned none'})`
-    : `this key has ${remainMoneyText} left`;
+  const remainZh = !showsQuota
+    ? '费用按插件服务的支付与用量结算'
+    : remainQuota === null
+      ? `本机 Key 的额度读不到（${quota.reason || '服务端没回额度'}）`
+      : `本机 Key 剩余 ${remainMoneyText}`;
+  const remainEn = !showsQuota
+    ? 'billing follows the plugin service payment and usage'
+    : remainQuota === null
+      ? `this key's quota could not be read (${quota.reason || 'the service returned none'})`
+      : `this key has ${remainMoneyText} left`;
 
   const total = estimate
     ? `${estimate.model} · ${estimate.resolution} · ${planSummary(estimate)}`
@@ -533,13 +541,14 @@ export async function preflightGate(ctx, config, exec) {
   // 审计那条（模型看）保留 token / 额度这类内部口径，方便对着中转站日志核对
   const auditTax = estimate
     ? `预估消耗 ${estimate.tokens.toLocaleString('en-US')} token ≈ ${needMoney ?? '无法预估'}`
-      + `（${needQuota === null ? '额度未知' : `${needQuota.toLocaleString('en-US')} 额度`}）`
+      + `（${!showsQuota ? 'MetaOnticVideo 接入不看额度' : needQuota === null ? '额度未知' : `${needQuota.toLocaleString('en-US')} 额度`}）`
     : '这次调用的费用无法预估';
   return {
     kind: 'ask',
-    reason: `${resumeLead ? resumeLead.zh : ''}人工确认：调用视频模型（${total}）。${auditTax}；本机 Key 剩余 `
-      + `${remainQuota === null ? '额度读不到' : `${remainMoneyText} / `
-        + `${remainQuota.toLocaleString('en-US')} 额度`}。`,
+    reason: `${resumeLead ? resumeLead.zh : ''}人工确认：调用视频模型（${total}）。${auditTax}；`
+      + (showsQuota
+        ? `本机 Key 剩余 ${remainQuota === null ? '额度读不到' : `${remainMoneyText} / ${remainQuota.toLocaleString('en-US')} 额度`}。`
+        : '费用按插件服务端的支付与用量结算。'),
     displayReason: {
       zh: `${resumeLead ? resumeLead.zh : ''}本次会调用视频模型：${total}；${costText}，${remainZh}。点了「允许」才会真正调用。${resumeLead ? resumeLead.tailZh : ''}`,
       en: `${resumeLead ? resumeLead.en : ''}This will call the video model: ${total}. Estimated cost `

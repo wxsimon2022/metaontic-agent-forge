@@ -17,6 +17,11 @@ function harness() {
     sumStepSeconds: steps => steps.reduce((total, step) => total + (step.seconds || 0), 0),
     approvalPolicy: () => 'ask', ffmpegConsentGate: async () => null, paymentGate: async () => null,
     resolveModel: () => 'seedance',
+    // 预检确认框里的费用口径（钱包数字格式化 + 额度/汇率兜底）
+    finiteNumber: value => (Number.isFinite(Number(value)) ? Number(value) : null),
+    formatMoney: (value, symbol = '¥') => `${symbol}${Number(value).toFixed(2)}`,
+    DEFAULT_QUOTA_PER_UNIT: 500000,
+    DEFAULT_USD_EXCHANGE_RATE: 7.3,
     estimateUsage: () => { throw new Error('must not estimate'); },
     resolveRegisterApi: () => { throw new Error('must not query service'); },
     isServerIssuedKey: () => false,
@@ -54,6 +59,17 @@ for (const connectionMode of ['metaontic', 'volcengine']) test(`${connectionMode
     assert.doesNotMatch(gate.displayReason.zh, /预估|核对|额度/);
     assert.doesNotMatch(gate.displayReason.en, /estimate|balance/i);
   }
+});
+
+test('service 模式不读也不提额度：能不能开始只看服务端支付结果', async () => {
+  const h = harness(), config = { connectionMode: 'service', apiKey: 'sk-service' };
+  let asked = 0;
+  h.fetchDeviceQuota = async () => { asked += 1; throw new Error('must not read quota'); };
+  const gate = await h.preflightGate({}, config, { name: 'video_generate', arguments: {} });
+  assert.equal(gate.kind, 'ask');
+  assert.equal(asked, 0, 'MetaOnticVideo 接入不该去读中转站额度');
+  assert.match(gate.displayReason.zh, /按插件服务的支付与用量结算/);
+  assert.doesNotMatch(gate.displayReason.zh, /额度|剩余/);
 });
 
 test('service 模式付过款就直接放行，不再弹一次费用确认', async () => {
