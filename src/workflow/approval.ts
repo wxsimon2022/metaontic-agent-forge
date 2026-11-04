@@ -122,7 +122,7 @@ function paymentInstruction(order, toolName, subject, money) {
  * B MetaOntic AI / C 火山引擎用的是用户自己的 Key，不经过本服务，也就不收钱。
  * 收款由服务端开关控制：没开、或服务端没有这套接口时这里什么都不做，生成流程和以前完全一样。
  * 开着的时候只有两种结果：
- * - 服务端确认这笔已经付过、凭据还没兑换 -> 兑换掉，放行到后面的人工确认；
+ * - 服务端确认这笔已经付过、凭据还没兑换 -> 兑换掉，返回「已付款」标记，调用方直接放行；
  * - 还没付 -> 下单（服务端会复用同一设备那笔未付款订单）并把收银台链接退回给模型；
  *   没有兑换到凭据就绝不调用模型。
  */
@@ -157,7 +157,10 @@ export async function paymentGate(config, exec) {
   const money = formatMoney(Number(order.amount ?? status.amount ?? 0), symbol);
   if (order.status === 'PAID') {
     const consumed = await consumeWebpayOrder(config, order.out_trade_no, exec.signal);
-    if (consumed.status === 'ok') return null;
+    // 付过款就是这次调用的人工确认：调用方据此直接放行，不再弹一次费用确认框。
+    if (consumed.status === 'ok') {
+      return { kind: 'paid', outTradeNo: order.out_trade_no, subject, money };
+    }
     return {
       kind: 'deny',
       reason: `这笔订单的支付凭据没能兑换（${consumed.reason || '服务端没有确认'}），已停止调用，`
@@ -407,7 +410,9 @@ export async function preflightGate(ctx, config, exec) {
   if (consent) return consent;
   // 服务端开着网站支付时，先收钱再谈别的：没拿到已支付凭据就不调用模型。
   const payment = await paymentGate(config, exec);
-  if (payment) return payment;
+  if (payment && payment.kind !== 'paid') return payment;
+  // 已经付过这次生成的钱：付款本身就是这次调用的人工确认，不再弹一次费用确认框。
+  if (payment) return { kind: 'allow' };
   if (isManualKey(config)) {
     assertConfigured(config, resolveApiKey(config));
     return {
