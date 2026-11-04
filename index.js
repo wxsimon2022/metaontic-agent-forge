@@ -3964,12 +3964,12 @@ async function fetchDeviceQuota(config, signal) {
     return { status: "unknown", reason: error?.message || String(error) };
   }
 }
-function paymentInstruction(order, toolName, subject, money) {
+function paymentInstruction(order, toolName, subject, money, what) {
   return [
-    `\u672C\u6B21\u751F\u6210\u9700\u8981\u5148\u4ED8\u6B3E\uFF1A${subject} ${money}\uFF08\u8BA2\u5355\u53F7 ${order.out_trade_no}\uFF09\u3002`,
+    `\u672C\u6B21\u751F\u6210\u9700\u8981\u5148\u4ED8\u6B3E\uFF1A${subject} ${money}\uFF08\u8BA2\u5355\u53F7 ${order.out_trade_no}\uFF09\u3002` + (what ? `\u8FD9\u6B21\u8981\u8C03\u7528\uFF1A${what}\uFF0C\u4ED8\u8FC7\u6B3E\u5C31\u4E0D\u518D\u53E6\u5F39\u786E\u8BA4\u6846\uFF0C\u76F4\u63A5\u8C03\u7528\u3002` : ""),
     "\u8BF7\u628A\u4E0B\u9762\u8FD9\u6761\u6536\u94F6\u53F0\u94FE\u63A5\u539F\u6837\u53D1\u7ED9\u7528\u6237\uFF0C\u5E76\u8BF4\u660E\uFF1A\u5728\u6D4F\u89C8\u5668\u91CC\u6253\u5F00\u3001\u7528\u652F\u4ED8\u5B9D\u5B8C\u6210\u4ED8\u6B3E\uFF0C\u4ED8\u5B8C\u56DE\u6765\u56DE\u590D\u4E00\u58F0\u5C31\u80FD\u7EE7\u7EED\u751F\u6210\u3002\u4E0D\u8981\u4EE3\u66FF\u7528\u6237\u8DF3\u8FC7\u4ED8\u6B3E\uFF0C\u4E5F\u4E0D\u8981\u6539\u7528\u522B\u7684\u65B9\u5F0F\u8C03\u7528\u6A21\u578B\u3002",
     order.pay_url || "\uFF08\u6536\u94F6\u53F0\u94FE\u63A5\u6CA1\u62FF\u5230\uFF0C\u8BF7\u8BA9\u7528\u6237\u5728\u63D2\u4EF6\u8BBE\u7F6E\u9875\u70B9\u4E00\u6B21\u300C\u767B\u5F55\u300D\u540E\u91CD\u8BD5\uFF09",
-    `\u7528\u6237\u786E\u8BA4\u4ED8\u5B8C\u6B3E\u540E\uFF0C\u7528\u540C\u6837\u7684\u53C2\u6570\u91CD\u65B0\u8C03\u7528 ${toolName}\uFF1A\u63D2\u4EF6\u4F1A\u81EA\u5DF1\u8DDF\u670D\u52A1\u7AEF\u6838\u5BF9\u8FD9\u7B14\u8BA2\u5355\uFF0C\u6838\u5BF9\u5230\u5DF2\u652F\u4ED8\u5C31\u5148\u5151\u6362\u51ED\u636E\u518D\u5F39\u4EBA\u5DE5\u786E\u8BA4\uFF1B\u6CA1\u6838\u5BF9\u5230\u8FD8\u4F1A\u8FD4\u56DE\u8FD9\u6761\u8BF4\u660E\uFF0C\u4E0D\u8981\u7ED5\u8FC7\u5B83\u3002`
+    `\u7528\u6237\u786E\u8BA4\u4ED8\u5B8C\u6B3E\u540E\uFF0C\u7528\u540C\u6837\u7684\u53C2\u6570\u91CD\u65B0\u8C03\u7528 ${toolName}\uFF1A\u63D2\u4EF6\u4F1A\u81EA\u5DF1\u8DDF\u670D\u52A1\u7AEF\u6838\u5BF9\u8FD9\u7B14\u8BA2\u5355\uFF0C\u6838\u5BF9\u5230\u5DF2\u652F\u4ED8\u5C31\u5151\u6362\u51ED\u636E\u5E76\u76F4\u63A5\u8C03\u7528\u6A21\u578B\uFF1B\u6CA1\u6838\u5BF9\u5230\u8FD8\u4F1A\u8FD4\u56DE\u8FD9\u6761\u8BF4\u660E\uFF0C\u4E0D\u8981\u7ED5\u8FC7\u5B83\u3002`
   ].join("\n");
 }
 async function paymentGate(config, exec) {
@@ -3999,7 +3999,9 @@ async function paymentGate(config, exec) {
   const money = formatMoney(Number(order.amount ?? status.amount ?? 0), symbol);
   if (order.status === "PAID") {
     const consumed = await consumeWebpayOrder(config, order.out_trade_no, exec.signal);
-    if (consumed.status === "ok") return null;
+    if (consumed.status === "ok") {
+      return { kind: "paid", outTradeNo: order.out_trade_no, subject, money };
+    }
     return {
       kind: "deny",
       reason: `\u8FD9\u7B14\u8BA2\u5355\u7684\u652F\u4ED8\u51ED\u636E\u6CA1\u80FD\u5151\u6362\uFF08${consumed.reason || "\u670D\u52A1\u7AEF\u6CA1\u6709\u786E\u8BA4"}\uFF09\uFF0C\u5DF2\u505C\u6B62\u8C03\u7528\uFF0C\u6CA1\u6709\u8C03\u7528\u6A21\u578B\u3001\u6CA1\u6709\u4EA7\u751F\u8D39\u7528\u3002\u8BA2\u5355\u53F7 ${order.out_trade_no}\uFF1A\u8BF7\u628A\u8FD9\u6761\u539F\u56E0\u544A\u8BC9\u7528\u6237\uFF0C\u8BA9\u7528\u6237\u5728\u63D2\u4EF6\u8BBE\u7F6E\u9875\u70B9\u4E00\u6B21\u300C\u767B\u5F55\u300D\u540E\u91CD\u8BD5\uFF1B\u540C\u4E00\u7B14\u4ED8\u6B3E\u53EA\u80FD\u5151\u6362\u4E00\u6B21\uFF0C\u4E0D\u8981\u91CD\u590D\u4ED8\u6B3E\u3002`
@@ -4007,7 +4009,13 @@ async function paymentGate(config, exec) {
   }
   return {
     kind: "deny",
-    reason: paymentInstruction(order, exec.name, subject, money),
+    reason: paymentInstruction(
+      order,
+      exec.name,
+      subject,
+      money,
+      `${resolveModel(config)} \xB7 ${resolveResolution(config, exec.arguments || {})}`
+    ),
     info: { webpayPending: true, out_trade_no: order.out_trade_no, pay_url: order.pay_url }
   };
 }
@@ -4187,7 +4195,8 @@ async function preflightGate(ctx, config, exec) {
   const consent = await ffmpegConsentGate(config, exec, args);
   if (consent) return consent;
   const payment = await paymentGate(config, exec);
-  if (payment) return payment;
+  if (payment && payment.kind !== "paid") return payment;
+  if (payment) return { kind: "allow" };
   if (isManualKey(config)) {
     assertConfigured(config, resolveApiKey(config));
     return {

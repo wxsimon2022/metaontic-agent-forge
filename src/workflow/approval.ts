@@ -104,14 +104,15 @@ export async function fetchDeviceQuota(config, signal) {
 }
 
 /** 收银台链接 + 付款说明：这条正文要退给模型，让模型转达用户去付款。 */
-function paymentInstruction(order, toolName, subject, money) {
+function paymentInstruction(order, toolName, subject, money, what) {
   return [
-    `本次生成需要先付款：${subject} ${money}（订单号 ${order.out_trade_no}）。`,
+    `本次生成需要先付款：${subject} ${money}（订单号 ${order.out_trade_no}）。`
+      + (what ? `这次要调用：${what}，付过款就不再另弹确认框，直接调用。` : ''),
     '请把下面这条收银台链接原样发给用户，并说明：在浏览器里打开、用支付宝完成付款，'
       + '付完回来回复一声就能继续生成。不要代替用户跳过付款，也不要改用别的方式调用模型。',
     order.pay_url || '（收银台链接没拿到，请让用户在插件设置页点一次「登录」后重试）',
     `用户确认付完款后，用同样的参数重新调用 ${toolName}：插件会自己跟服务端核对这笔订单，`
-      + '核对到已支付就先兑换凭据再弹人工确认；没核对到还会返回这条说明，不要绕过它。',
+      + '核对到已支付就兑换凭据并直接调用模型；没核对到还会返回这条说明，不要绕过它。',
   ].join('\n');
 }
 
@@ -170,7 +171,13 @@ export async function paymentGate(config, exec) {
   }
   return {
     kind: 'deny',
-    reason: paymentInstruction(order, exec.name, subject, money),
+    reason: paymentInstruction(
+      order,
+      exec.name,
+      subject,
+      money,
+      `${resolveModel(config)} · ${resolveResolution(config, exec.arguments || {})}`,
+    ),
     info: { webpayPending: true, out_trade_no: order.out_trade_no, pay_url: order.pay_url },
   };
 }

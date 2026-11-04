@@ -14,6 +14,8 @@ function harness(webpay) {
     fetchWebpayStatus: webpay.status,
     createWebpayOrder: webpay.create,
     consumeWebpayOrder: webpay.consume || (async () => ({ status: 'unknown' })),
+    resolveModel: () => 'doubao-seedance-2-0-mini-260615',
+    resolveResolution: () => '480p',
   });
   for (const name of ['isVolcengine', 'isMetaontic', 'isManualKey', 'paymentInstruction', 'paymentGate']) {
     const start = source.search(new RegExp(`(?:async )?function ${name}\\(`));
@@ -79,6 +81,9 @@ test('还没付款时把收银台链接和订单号退给模型', async () => {
   assert.match(gate.reason, /重新调用 video_generate/);
   assert.equal(gate.info.webpayPending, true);
   assert.equal(gate.info.out_trade_no, 'WP123456');
+  // 付款前要说清这次付的是什么：模型与清晰度。
+  assert.match(gate.reason, /doubao-seedance-2-0-mini-260615 · 480p/);
+  assert.match(gate.reason, /付过款就不再另弹确认框/);
 });
 
 test('续拍段的付款说明指向 video_extend', async () => {
