@@ -75,10 +75,10 @@ github:wxsimon2022/metaontic-video
 **也可以不下载到本地，直接粘贴成品地址：** 复制下面这条 Gitee 成品地址，粘贴到 DeepSeek Harness「插件 → 添加插件」即可安装，效果与填写本地文件路径相同，无需安装 Git。国内网络优先使用 Gitee。在线安装只认以 `.tgz` 结尾的附件地址；ZIP、`package` 文件夹和发布页网址只能用于本地安装，不能粘贴到在线安装框。
 
 ```text
-https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.14/metaontic-video-3.13.14.tgz
+https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.15/metaontic-video-3.13.15.tgz
 ```
 
-GitHub 同版本地址为 `https://github.com/wxsimon2022/metaontic-video/releases/download/v3.13.14/metaontic-video-3.13.14.tgz`。发布新版本后，把地址中的两处版本号换成发布页上的实际版本；也可以打开发布页，在附件中右键复制 `.tgz` 的下载链接。
+GitHub 同名地址为 `https://github.com/wxsimon2022/metaontic-video/releases/download/v3.13.15/metaontic-video-3.13.15.tgz`。正式版以 Gitee 发布页为主，GitHub 的同步可能晚一些；GitHub 上还没有该版本时用上面的 Gitee 地址。发布新版本后，把地址中的两处版本号换成发布页上的实际版本；也可以打开发布页，在附件中右键复制 `.tgz` 的下载链接。
 
 - GitHub 正式版下载页：`https://github.com/wxsimon2022/metaontic-video/releases/latest`
 - Gitee 发布页：`https://gitee.com/hackloop/metaontic-video/releases`
@@ -251,7 +251,7 @@ Windows 与 Mac 的更新入口相同。`.tgz` 成品安装或仓库安装可使
 
 ## 5. 结果保存与常见问题
 
-生成结果默认保存在当前会话工作目录下的 `metaontic-video/`，助手会展示视频，并在正文提供可点击的文件链接。脚本、分镜图、转换图片和恢复后交付的文件也会提供打开链接；图片还会在正文展示。超过15秒且分段生成时，先交付合并后的完整视频，再依次展示第一段、第二段及后续全部分段，合并成片的卡片排在最前；助手若把分段放在成片前面，插件会拦下这次展示并让他把成片挪到第一位重发，不会因此少给成片或分段。暂停时先交付已完成分段，合并失败时说明原因并保留分段。原始分段保留，脚本等资料通常在 `video-projects/<项目名>/`。如只返回上游链接，需在链接失效前保存。
+生成结果默认保存在当前会话工作目录下的 `metaontic-video/`，助手会展示视频，并在正文提供可点击的文件链接。脚本、分镜图、转换图片和恢复后交付的文件也会提供打开链接；图片还会在正文展示。超过15秒且分段生成时，先交付合并后的完整视频，再依次展示第一段、第二段及后续全部分段，合并成片的卡片排在最前；助手若把分段放在成片前面，插件会拦下这次展示并让他把成片挪到第一位重发，不会因此少给成片或分段。成片另存为别的文件名或换到 final 等目录也照样按成片判定，不会因为改名而放过顺序错误。暂停时先交付已完成分段，合并失败时说明原因并保留分段。原始分段保留，脚本等资料通常在 `video-projects/<项目名>/`。如只返回上游链接，需在链接失效前保存。
 
 多段本地合并需要 ffmpeg；缺少时可说“帮我检查并安装 ffmpeg”，确认安装后继续。高级设置中的合并、裁剪、等待时间通常保持默认即可；裁剪可能缩短成片，原始分段不删除。
 

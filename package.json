@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.13.14",
+  "version": "3.13.15",
   "description": "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
   "license": "MIT",
   "type": "module",
@@ -98,11 +98,13 @@
   },
   "dependencies": {},
   "releaseNotes": {
-    "version": "3.13.14",
+    "version": "3.13.15",
     "prerelease": false,
-    "publishedAt": "2026-11-04T00:04:45.580Z",
+    "publishedAt": "2026-11-04T01:08:02.710Z",
     "items": [
-      "修复：每段生成后的“继续确认”接回续做入口——点“继续”后、提交下一段之前由插件弹一次确认框，写明第几段已经生成好、接下来做第几段、整条还差多少秒和剩余分段的预估费用，同一份进度始终只弹一个确认框。“拒绝”即停止并保留已完成分段，之后仍可用 resume 续做；此前这一步只在提示词里要求助手自己询问，助手不问就会继续往下生成，插件拦不住。"
+      "修复：成片被改名或换目录后交付顺序卡口失效——助手把成片另存成别的文件名（例如 final/<项目名>-60s.mp4）、或把分段换成交付目录里的 15 秒副本时，插件认不出这两类文件，分段就排到了成片前面；现在按绝对路径、同名、文件字节数逐级认领，成片排在分段或上一版中间合并视频之后一律拦下并要求把成片放第一位重发。",
+      "优化：生成结果里成片行排在分段逐条列表之前，工具结果卡片与交付清单统一先看成片、再看分段。",
+      "优化：正式版以 Gitee 发布页为主，成品在本地打包后直接上传，发版不再等 GitHub Actions 回传；在线安装与在线更新继续同时查询 Gitee 与 GitHub，两边发布不同步时也能取到新版本。"
     ]
   }
 }

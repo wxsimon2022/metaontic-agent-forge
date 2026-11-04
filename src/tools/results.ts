@@ -229,17 +229,17 @@ export function renderVideoResult(value) {
   } else {
     parts.push(`视频生成失败${error ? `：${error}` : ''}。`);
   }
-  parts.push(...lines);
-
+  // 成片行排在分段逐条列表之前：正文、交付清单与结果卡片统一成片在前。
   if (status === 'succeeded') {
     if (videoPath) {
       parts.push(`成片（本地文件）：${videoPath}（${mergeModeLabel(mergeMode)}）`);
     } else if (segmentsDir) {
-      parts.push(`没有合并成一条：分段文件都在 ${segmentsDir}（每段路径见上面的列表）。`);
+      parts.push(`没有合并成一条：分段文件都在 ${segmentsDir}（每段路径见下面的列表）。`);
     } else {
       parts.push('没有生成合并文件，请按上面的上游链接自行下载分段。');
     }
   }
+  parts.push(...lines);
   if (paused && resumeDir) {
     parts.push(
       `还没生成的部分：还剩 ${formatSeconds(remainingSeconds)} 秒。`

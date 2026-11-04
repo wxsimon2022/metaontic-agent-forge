@@ -37,7 +37,8 @@ export function withVideoExecution(tool, onResult = undefined) {
         await appendVideoExecution(exec, 'end');
       }
       // 记下这次真实交付了哪些分段与成片：present 提交前要用它校验成片排第一。
-      try { onResult?.(exec?.agent?.session, value); } catch { /* 记录失败不能影响交付 */ }
+      // 记录会顺手量一遍文件大小（改名后的交付副本只能靠大小认领），因此这里要等它完成。
+      try { await onResult?.(exec?.agent?.session, value); } catch { /* 记录失败不能影响交付 */ }
       return value;
     },
   };

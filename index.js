@@ -1045,7 +1045,7 @@ var init_config = __esm({
     FORWARD_TRANSITION = "\u5411\u524D\u5EF6\u957F\u65F6\uFF0C\u672C\u6BB5\u6700\u540E\u4E00\u5E27\u5FC5\u987B\u7D27\u63A5\u89C6\u98911\u7B2C\u4E00\u5E27\uFF0C\u4FDD\u6301\u540C\u4E00\u6784\u56FE\u3001\u4EBA\u7269\u5927\u5C0F\u3001\u5DE6\u53F3\u4F4D\u7F6E\u3001\u5934\u90E8\u671D\u5411\u3001\u89C6\u7EBF\u3001\u624B\u90E8\u4F4D\u7F6E\u548C\u52A8\u4F5C\u9636\u6BB5\u3002\u52A8\u4F5C\u671D\u5411\u89C6\u98911\u7684\u5F00\u573A\u52A8\u4F5C\u53D1\u5C55\uFF0C\u4E0D\u91CD\u590D\u524D\u6BB5\u52A8\u4F5C\u3001\u4E0D\u5B9A\u683C\u7B49\u5F85\u3001\u4E0D\u4ECE\u753B\u9762\u53E6\u4E00\u4FA7\u91CD\u65B0\u5165\u573A\uFF1B\u4E0D\u64C5\u81EA\u5207\u955C\u6216\u91CD\u65B0\u5C45\u4E2D\u3002";
     CLOSEUP_TRANSITION = "\u955C\u5934\u8854\u63A5\u5EFA\u8BAE\uFF08\u4EC5\u5728\u672C\u6BB5\u672A\u660E\u786E\u6307\u5B9A\u8FD0\u955C\u6216\u5207\u955C\u5B89\u6392\u65F6\u91C7\u7528\uFF09\uFF1A\u5728\u5B8C\u6574\u53F0\u8BCD\u7ED3\u675F\u5904\u81EA\u7136\u5207\u5230\u4E0B\u4E00\u4F4D\u8BF4\u8BDD\u4EBA\u7684\u8FD1\u666F\u6216\u542C\u8BDD\u4EBA\u7684\u53CD\u5E94\u8FD1\u666F\uFF0C\u518D\u7EE7\u7EED\u672C\u6BB5\u5267\u60C5\u3002\u4FDD\u6301\u8F74\u7EBF\u3001\u89C6\u7EBF\u65B9\u5411\u3001\u5DE6\u53F3\u4EBA\u7269\u5173\u7CFB\u3001\u670D\u88C5\u548C\u97F3\u8272\uFF0C\u4E0D\u4EA4\u6362\u89D2\u8272\uFF1B\u53EA\u6539\u53D8\u666F\u522B\uFF0C\u4E0D\u65B0\u589E\u573A\u666F\u3002";
     CONTENT_REJECTION_HINT = "\u53C2\u8003\u89C6\u9891\u88AB\u4E0A\u6E38\u5185\u5BB9\u5BA1\u6838\u62D2\u7EDD\uFF0C\u5EF6\u957F\u5DF2\u505C\u6B62\u3002Seedance \u542B\u4EBA\u8138\u7EED\u62CD\u9700\u4F7F\u7528\u540C\u4E00\u4E0A\u6E38\u8D26\u53F7\u7684\u53D7\u4FE1\u539F\u59CB\u89C6\u9891\u6216\u6388\u6743\u7D20\u6750\uFF1B\u8BF7\u786E\u8BA4\u4E2D\u8F6C\u7AD9\u900F\u4F20\u4E86\u539F\u59CB video_url \u4E0E reference_video\uFF0C\u4E14\u524D\u540E\u8BF7\u6C42\u4F7F\u7528\u540C\u4E00\u4E0A\u6E38\u8D26\u53F7\u3002\u4E0D\u4F1A\u81EA\u52A8\u53BB\u6389\u53C2\u8003\u89C6\u9891\u751F\u6210\uFF0C\u4EE5\u514D\u4EBA\u7269\u4E0D\u4E00\u81F4\u3002";
-    PLUGIN_VERSION = true ? "3.13.14".trim().replace(/^v/i, "") : "";
+    PLUGIN_VERSION = true ? "3.13.15".trim().replace(/^v/i, "") : "";
   }
 });
 
@@ -1838,12 +1838,13 @@ function createStoryboardReviewGuard() {
 
 // src/workflow/delivery-order.ts
 import path5 from "node:path";
+import { stat as stat4 } from "node:fs/promises";
 function createDeliveryOrderGuard() {
   const sessions = /* @__PURE__ */ new WeakMap();
   function stateFor(session) {
     let state = sessions.get(session);
     if (!state) {
-      state = { turn: void 0, mergedShownTurn: void 0, records: [] };
+      state = { turn: void 0, mergedShownTurn: void 0, groups: [] };
       sessions.set(session, state);
     }
     return state;
@@ -1857,16 +1858,40 @@ function createDeliveryOrderGuard() {
       return "";
     }
   }
-  function remember(session, value) {
+  const nameOf = (target) => {
+    try {
+      return path5.basename(target).toLowerCase();
+    } catch {
+      return "";
+    }
+  };
+  async function sizeOf(target) {
+    try {
+      const info = await stat4(target);
+      return info.isFile() ? info.size : 0;
+    } catch {
+      return 0;
+    }
+  }
+  async function remember(session, value) {
     if (!session || typeof session !== "object") return;
     const segments = (value?.segments || []).filter((segment) => segment?.status === "succeeded" && segment?.localPath).map((segment) => absolute(session, segment.localPath)).filter(Boolean);
-    const merged = value?.merged && value?.videoPath ? absolute(session, value.videoPath) : "";
-    const distinct = merged && !segments.includes(merged) ? merged : "";
-    if (!distinct) return;
-    const key = [distinct, ...segments].join("\0");
+    const film = value?.merged && value?.videoPath ? absolute(session, value.videoPath) : "";
+    const distinct = film && !segments.includes(film) ? film : "";
+    if (!distinct && !segments.length) return;
+    const dir = String(value?.segmentsDir || value?.resumeDir || "").trim() || distinct || segments[0];
     const state = stateFor(session);
-    if (state.records.some((record) => record.key === key)) return;
-    state.records.push({ key, merged: distinct, segments });
+    let group = state.groups.find((item) => item.dir === dir);
+    if (!group) {
+      group = { dir, merges: [], segments: [] };
+      state.groups.push(group);
+    }
+    for (const target of segments) {
+      if (!group.segments.some((item) => item.path === target)) group.segments.push({ path: target, size: await sizeOf(target) });
+    }
+    if (distinct && !group.merges.some((item) => item.path === distinct)) {
+      group.merges.push({ path: distinct, size: await sizeOf(distinct) });
+    }
   }
   function observe(session, event) {
     if (!session || typeof session !== "object") return;
@@ -1875,25 +1900,25 @@ function createDeliveryOrderGuard() {
     if (Number.isInteger(data.turn)) state.turn = data.turn;
     if (event.type !== "deliverables/presented") return;
     const shown = (data.files || []).map((file) => absolute(session, file?.path)).filter(Boolean);
-    if (shown.some((target) => state.records.some((record) => record.merged === target))) state.mergedShownTurn = data.turn;
-  }
-  function pickRecord(state, paths) {
-    let best = null;
-    let score = 0;
-    for (const record of state.records) {
-      const current = paths.filter((target) => target === record.merged || record.segments.includes(target)).length;
-      if (current > score) {
-        best = record;
-        score = current;
-      }
+    if (shown.some((target) => state.groups.some((group) => group.merges.some((item) => item.path === target || nameOf(item.path) === nameOf(target))))) {
+      state.mergedShownTurn = data.turn;
     }
-    return best;
+  }
+  function identify(group, target, size) {
+    const name = nameOf(target);
+    const role2 = (item) => ({ role: group.merges.includes(item) ? "film" : "segment", path: item.path });
+    const samePath = (item) => item.path === target || nameOf(item.path) === name;
+    const byPath = group.merges.find(samePath) || group.segments.find(samePath);
+    if (byPath) return role2(byPath);
+    if (!size) return null;
+    const bySize = group.merges.find((item) => item.size === size) || group.segments.find((item) => item.size === size);
+    return bySize ? role2(bySize) : null;
   }
   async function gate(exec) {
     if (exec?.name !== "present" || !exec.agent?.session) return null;
     const session = exec.agent.session;
     const state = sessions.get(session);
-    if (!state?.records.length) return null;
+    if (!state?.groups.length) return null;
     let args = exec.arguments;
     if (typeof args === "string") {
       try {
@@ -1905,20 +1930,30 @@ function createDeliveryOrderGuard() {
     const files = Array.isArray(args?.files) ? args.files : [];
     const paths = files.map((file) => absolute(session, typeof file === "string" ? file : file?.path)).filter(Boolean);
     if (!paths.length) return null;
-    const record = pickRecord(state, paths);
-    if (!record?.merged) return null;
-    const mergedIndex = paths.indexOf(record.merged);
-    const order = () => `\u6B63\u786E\u987A\u5E8F\uFF1A1. ${record.merged}
-${record.segments.map((segment, index) => `${index + 2}. ${segment}`).join("\n")}`;
-    const segmentsBeforeMerged = mergedIndex > 0 && paths.slice(0, mergedIndex).some((target) => record.segments.includes(target));
-    if (segmentsBeforeMerged) {
+    const sizes = /* @__PURE__ */ new Map();
+    for (const target of paths) sizes.set(target, await sizeOf(target));
+    let best = null;
+    for (const group2 of state.groups) {
+      const marks2 = paths.map((target) => identify(group2, target, sizes.get(target) || 0));
+      const hit = marks2.filter(Boolean).length;
+      if (hit && hit > (best?.marks.filter(Boolean).length || 0)) best = { group: group2, marks: marks2 };
+    }
+    if (!best) return null;
+    const { group, marks } = best;
+    const latest = group.merges[group.merges.length - 1];
+    if (!latest || !latest.path) return null;
+    const isLatest = (mark) => Boolean(mark && mark.role === "film" && mark.path === latest.path);
+    const filmIndex = marks.findIndex(isLatest);
+    const others = marks.map((mark, index) => mark && !isLatest(mark) ? index : -1).filter((index) => index >= 0);
+    const order = () => `\u6B63\u786E\u987A\u5E8F\uFF1A1. ${latest.path}
+${group.segments.map((item, index) => `${index + 2}. ${item.path}`).join("\n")}`;
+    if (filmIndex > 0 && others.some((index) => index < filmIndex)) {
       await appendRequestLog({ event: "delivery_order_blocked", reason: "merged_not_first", files: paths });
       return { kind: "deny", reason: `\u6210\u7247\u5C55\u793A\u987A\u5E8F\u4E0D\u5BF9\uFF1A\u5408\u5E76\u6210\u7247\u5FC5\u987B\u6392\u5728\u6240\u6709\u5206\u6BB5\u4E4B\u524D\u3002\u8BF7\u7ACB\u5373\u91CD\u65B0\u8C03\u7528 present\uFF0C\u628A\u5408\u5E76\u6210\u7247\u653E\u5728 files \u6570\u7EC4\u7B2C\u4E00\u4E2A\uFF0C\u518D\u6309\u6BB5\u53F7\u4F9D\u6B21\u653E\u7B2C\u4E00\u6BB5\u3001\u7B2C\u4E8C\u6BB5\u2026\u2026
 ${order()}` };
     }
-    if (mergedIndex >= 0) return null;
-    const shownSegments = paths.filter((target) => record.segments.includes(target)).length;
-    if (!shownSegments) return null;
+    if (filmIndex >= 0) return null;
+    if (!others.length) return null;
     if (Number.isInteger(state.turn) && state.mergedShownTurn === state.turn) return null;
     await appendRequestLog({ event: "delivery_order_blocked", reason: "merged_missing", files: paths });
     return { kind: "deny", reason: `\u8FD9\u6B21\u53EA\u5C55\u793A\u4E86\u5206\u6BB5\uFF0C\u6210\u7247\u8981\u6392\u5728\u7B2C\u4E00\u4E2A\u4F4D\u7F6E\u3002\u8BF7\u7ACB\u5373\u91CD\u65B0\u8C03\u7528 present\uFF0C\u628A\u5408\u5E76\u6210\u7247\u653E\u5728 files \u6570\u7EC4\u7B2C\u4E00\u4E2A\uFF0C\u518D\u6309\u6BB5\u53F7\u4F9D\u6B21\u653E\u5206\u6BB5\u3002
@@ -2247,7 +2282,7 @@ function withVideoExecution(tool, onResult = void 0) {
         await appendVideoExecution(exec, "end");
       }
       try {
-        onResult?.(exec?.agent?.session, value);
+        await onResult?.(exec?.agent?.session, value);
       } catch {
       }
       return value;
@@ -3315,16 +3350,16 @@ function renderVideoResult(value) {
   } else {
     parts.push(`\u89C6\u9891\u751F\u6210\u5931\u8D25${error ? `\uFF1A${error}` : ""}\u3002`);
   }
-  parts.push(...lines);
   if (status === "succeeded") {
     if (videoPath) {
       parts.push(`\u6210\u7247\uFF08\u672C\u5730\u6587\u4EF6\uFF09\uFF1A${videoPath}\uFF08${mergeModeLabel(mergeMode)}\uFF09`);
     } else if (segmentsDir) {
-      parts.push(`\u6CA1\u6709\u5408\u5E76\u6210\u4E00\u6761\uFF1A\u5206\u6BB5\u6587\u4EF6\u90FD\u5728 ${segmentsDir}\uFF08\u6BCF\u6BB5\u8DEF\u5F84\u89C1\u4E0A\u9762\u7684\u5217\u8868\uFF09\u3002`);
+      parts.push(`\u6CA1\u6709\u5408\u5E76\u6210\u4E00\u6761\uFF1A\u5206\u6BB5\u6587\u4EF6\u90FD\u5728 ${segmentsDir}\uFF08\u6BCF\u6BB5\u8DEF\u5F84\u89C1\u4E0B\u9762\u7684\u5217\u8868\uFF09\u3002`);
     } else {
       parts.push("\u6CA1\u6709\u751F\u6210\u5408\u5E76\u6587\u4EF6\uFF0C\u8BF7\u6309\u4E0A\u9762\u7684\u4E0A\u6E38\u94FE\u63A5\u81EA\u884C\u4E0B\u8F7D\u5206\u6BB5\u3002");
     }
   }
+  parts.push(...lines);
   if (paused && resumeDir) {
     parts.push(
       `\u8FD8\u6CA1\u751F\u6210\u7684\u90E8\u5206\uFF1A\u8FD8\u5269 ${formatSeconds(remainingSeconds)} \u79D2\u3002\u8981\u63A5\u7740\u505A\u5C31\u628A resume \u539F\u6837\u4F20\u56DE video_generate\uFF08resume="${resumeDir}"\uFF09\uFF0C\u63D2\u4EF6\u4F1A\u63A5\u7740\u5DF2\u6709\u7684\u5206\u6BB5\u5F80\u4E0B\u751F\u6210\uFF0C\u524D\u9762\u51E0\u6BB5\u4E0D\u4F1A\u91CD\u65B0\u751F\u6210\u3001\u4E5F\u4E0D\u4F1A\u91CD\u590D\u6263\u8D39\u3002`
@@ -4325,7 +4360,7 @@ async function runTask(liveConfig, body, signal, progress = {}) {
 // src/media/merge.ts
 init_config();
 init_connection();
-import { rm as rm6, mkdir as mkdir8, writeFile as writeFile4, rename as rename6, stat as stat4, copyFile } from "node:fs/promises";
+import { rm as rm6, mkdir as mkdir8, writeFile as writeFile4, rename as rename6, stat as stat5, copyFile } from "node:fs/promises";
 import path11 from "node:path";
 
 // src/media/download.ts
@@ -4613,7 +4648,7 @@ async function downloadSegmentsAndMerge(config, {
       index: segment.index,
       taskId: segment.taskId,
       path: dest,
-      bytes: (await stat4(dest)).size
+      bytes: (await stat5(dest)).size
     });
     const media = await timedStage("segment_probe", () => probeMedia(dest, config, signal));
     if (media?.durationSeconds) {
@@ -5833,7 +5868,7 @@ function setupTool(config) {
 import { spawn as spawn2 } from "node:child_process";
 import path12 from "node:path";
 import { createRequire as createRequire2 } from "node:module";
-import { stat as stat5, mkdir as mkdir9 } from "node:fs/promises";
+import { stat as stat6, mkdir as mkdir9 } from "node:fs/promises";
 function runHyperframes(cli, args, cwd, config, signal) {
   return new Promise((resolve3, reject) => {
     if (signal?.aborted) return reject(new Error("Hyperframes \u5DF2\u53D6\u6D88\u3002"));
@@ -5937,7 +5972,7 @@ function hyperframesTool(config, deps) {
       const project = path12.resolve(cwd, args.projectDir || ".");
       if (action !== "check") {
         if (!args.projectDir) throw new Error("lint/render \u5FC5\u987B\u6307\u5B9A projectDir\u3002");
-        if (!(await stat5(path12.join(project, "index.html"))).isFile()) throw new Error("\u9879\u76EE\u7F3A\u5C11 index.html\u3002");
+        if (!(await stat6(path12.join(project, "index.html"))).isFile()) throw new Error("\u9879\u76EE\u7F3A\u5C11 index.html\u3002");
       }
       let videoPath;
       let command = ["doctor", "--json"];
@@ -5951,7 +5986,7 @@ function hyperframesTool(config, deps) {
           throw new Error("\u8F93\u51FA\u5FC5\u987B\u662F\u9879\u76EE\u76EE\u5F55\u5185\u7684 .mp4 \u6587\u4EF6\u3002");
         }
         try {
-          await stat5(videoPath);
+          await stat6(videoPath);
           throw new Error("\u8F93\u51FA\u6587\u4EF6\u5DF2\u5B58\u5728\uFF0C\u8BF7\u6362\u4E00\u4E2A\u6587\u4EF6\u540D\u3002");
         } catch (error) {
           if (error.code !== "ENOENT") throw error;
@@ -5961,7 +5996,7 @@ function hyperframesTool(config, deps) {
       }
       const result = await runHyperframes(cli, command, action === "check" ? cwd : project, config, exec?.signal);
       if (result.code !== 0) return { status: "failed", action, output: result.output, note: "\u68C0\u67E5\u8F93\u51FA\u4E2D\u7684\u73AF\u5883\u6216\u9879\u76EE\u9519\u8BEF\u540E\u91CD\u8BD5\uFF1B\u4E0D\u4F1A\u91CD\u590D\u63D0\u4EA4 Seedance \u4EFB\u52A1\u3002" };
-      if (videoPath && !(await stat5(videoPath)).size) throw new Error("Hyperframes \u672A\u751F\u6210\u6709\u6548\u7684 MP4 \u6587\u4EF6\u3002");
+      if (videoPath && !(await stat6(videoPath)).size) throw new Error("Hyperframes \u672A\u751F\u6210\u6709\u6548\u7684 MP4 \u6587\u4EF6\u3002");
       return { status: action === "render" ? "succeeded" : "checked", action, output: result.output, ...videoPath ? { videoPath } : {} };
     }
   };
