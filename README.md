@@ -576,7 +576,7 @@ npm pack --dry-run
 3. 同步锁文件，构建并执行相关验证，检查打包清单，确认包含更新后的操作指南。
 4. 提交源码、构建产物与说明。
 5. 创建**附注标签（annotated tag）**，包含版本标题、变更分类及验证结果。
-6. 推送分支和标签到 GitHub、Gitee，两个仓库都创建 Release 并上传同一插件包，再检查发布工作流结果。
+6. 默认只发 Gitee：推送分支和标签到 Gitee，由发布脚本用本地成品直接创建 Gitee Release、上传 `.tgz`、Windows ZIP 与校验文件并逐个核对附件；需要同步 GitHub、拿到双平台安装校验证据时，再给发布脚本加 `--both`，等 GitHub Actions 通过后上传两处附件。
 
 标签说明统一格式如下；只保留本次适用分类，验证结果必须据实填写：
 
@@ -787,7 +787,7 @@ npm run release -- 3.13.3 --dry-run
 npm run release -- 3.13.3
 ```
 
-脚本显示待发布范围与说明，更新版本、锁文件和发布元数据，构建、测试、打包、创建提交及附注标签，先推送 Gitee 再推送 GitHub，等待双平台安装/升级检查及正式附件上传，最后输出发布页、`.tgz` 安装地址和 Windows ZIP 下载地址。使用说明书不写入版本记录。失败立即停止，不强推或覆盖旧标签。
+脚本显示待发布范围与说明，更新版本、锁文件和发布元数据，构建、测试、打包、创建提交及附注标签，推送仓库（默认只推 Gitee，加 `--both` 时与 GitHub 并行推送、各自失败退避重试三次），然后用本地成品直接创建 Gitee Release 并上传核对 `.tgz`、Windows ZIP 与校验文件；带 `--both` 时还会等待 GitHub Actions 的双平台安装/升级检查与附件上传，最后输出发布页、`.tgz` 安装地址和 Windows ZIP 下载地址。使用说明书不写入版本记录。失败立即停止，不强推或覆盖旧标签。
 
 发布文件已提交但上传中断时，保留同一版本续跑：
 
@@ -795,9 +795,9 @@ npm run release -- 3.13.3
 npm run release -- 3.13.3 --resume
 ```
 
-也可指定 `--notes /你的实际路径/说明.json`、`--branch master`、`--github https://github.com/wxsimon2022/metaontic-video.git`、`--gitee https://gitee.com/hackloop/metaontic-video.git`。默认使用当前双仓 SSH 443 地址；Gitee 目标与当前 CI 镜像配置绑定，修改项目归属前需同步 CI，不会静默发布到其他仓库。
+也可指定 `--notes /你的实际路径/说明.json`、`--branch master`、`--both`、`--github https://github.com/wxsimon2022/metaontic-video.git`、`--gitee https://gitee.com/hackloop/metaontic-video.git`。默认只发 Gitee，`--both`（或带地址的 `--github`）才同步 GitHub，默认使用当前仓库的 SSH 443 地址；Gitee 发布需要环境变量 `GITEE_TOKEN`，Gitee 目标与当前 CI 镜像配置绑定，修改项目归属前需同步 CI，不会静默发布到其他仓库。
 
-脚本依赖事先写好的完整说明，不能自动判断业务变化或代替指南审核。GitHub 已上传但 Gitee 超时时，会明确报告未全部完成，使用 `--resume` 重试，不要重新递增版本。
+脚本依赖事先写好的完整说明，不能自动判断业务变化或代替指南审核。推送或上传中断时会明确报告未全部完成，使用 `--resume` 重试，不要重新递增版本；默认的仅 Gitee 发布不含 GitHub 双平台安装校验，缺少 Windows 实测证据时要在发布记录里写明。
 
 ### 测试包（发给他人试用，不进发布页）
 

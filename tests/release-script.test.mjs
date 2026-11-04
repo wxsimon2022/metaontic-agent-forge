@@ -29,6 +29,10 @@ test('release dry run changes no files, tags or git index and starts no publicat
   const before=git('status','--porcelain');const tags=git('tag');const head=git('rev-parse','HEAD');const pkg=await readFile(path.join(dir,'package.json'),'utf8');
   const result=spawnSync(process.execPath,[path.join(dir,'scripts/release.mjs'),'1.0.1','--notes',path.join(dir,'plan.json'),'--dry-run'],{encoding:'utf8',timeout:10000});
   assert.equal(result.status,0,result.stderr);assert.match(result.stdout,/DRY RUN/);assert.match(result.stdout,/metaontic-video-1.0.1.tgz/);
+  // 默认只发 Gitee：不碰 GitHub，也不会打印 GitHub 的发布页与附件地址。
+  assert.match(result.stdout,/仅 Gitee/);assert.doesNotMatch(result.stdout,/github\.com/);
+  const both=spawnSync(process.execPath,[path.join(dir,'scripts/release.mjs'),'1.0.1','--notes',path.join(dir,'plan.json'),'--dry-run','--both'],{encoding:'utf8',timeout:10000});
+  assert.equal(both.status,0,both.stderr);assert.match(both.stdout,/Gitee \+ GitHub/);assert.match(both.stdout,/github\.com\/wxsimon2022\/metaontic-video\/releases\/tag\/v1\.0\.1/);
   assert.equal(git('status','--porcelain'),before);assert.equal(git('tag'),tags);assert.equal(git('rev-parse','HEAD'),head);assert.equal(await readFile(path.join(dir,'package.json'),'utf8'),pkg);
  }finally{await rm(dir,{recursive:true,force:true});}
 });

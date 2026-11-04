@@ -40,6 +40,7 @@ description: 用于本仓库视频与图片接入、断点恢复、费用确认�
 - 先比较最近发布到当前工作区的全部逻辑变化，展示完整说明，再按 README 发布；操作指南必须复核且纳入包；用户要求指南只面向使用，只讲选择 MetaOntic AI 的配置路线，不列其他接入方式，不写 A/B 标记、版本号、更新记录或发布信息；配图优先真实插件组件预览。核对结论及适用版本只写入 docs/engineering/release-<版本>.md，不写进指南或配图；发布时检查指南正文和配图，不得添加“适用版本”“本次更新”“发布核对”等章节。更新内容统一留在 CHANGELOG、README 更新区和 releaseNotes。
 - CI checkout 后显式取回注解标签，再读取完整发布说明，避免 checkout 将标签覆盖为提交引用而只读出提交标题。
 - Gitee 更新已有 Release 使用 PATCH，携带 tag_name；发布后核对 GitHub/Gitee 的说明与附件，不只看工作流绿色。
+- 发布慢的主因是等 GitHub Actions（GitHub SSH 443 还常整段超时）；改成本地成品直传 Gitee 后，一次发版只剩本地构建测试打包约 3 分钟加三个附件上传，双仓并行推送也避免一仓超时拖累另一仓。GitHub Actions 只在--both时使用，作为双平台安装校验证据；仅 Gitee 发布的 Windows 缺口写进 release 文档。
 - 测试包不进 Release：`npm run pack:test -- X.Y.Z-test.N` 会构建、跑测试、打 `.tgz`，直接上传 `https://video.mybfs.cn/test/` 并核对线上 sha256，最后还原包内版本号；版本核心号压在当前正式版之下，更新检查只读正式 Release，因此测试包不影响他人正式版，`--no-upload` 可只出本地包。线上 `/test/` 由 moyubang 仓库 `deploy/nginx/video.mybfs.cn.conf` 提供，目录放在部署目录之外，`deploy.sh` 的 `rsync --delete` 不会清理已上传包。
 - Gitee Go 流水线 `.workflow/MetaOnticVideo.yml` 只在 master 推送、面向 master 的 PR、`v*` 标签时做构建与测试校验，并打出 tgz 与 Windows ZIP（ZIP 依赖构建机 Python3，缺失时自动安装、仍失败则跳过并在日志提示）留作流水线制品（制品有保留期），不发版；GitHub/Gitee Release 成品统一由 GitHub Actions `publish` 产出，不在 Gitee 侧另打一份包。标签触发时用 `git describe --tags --exact-match` 核对标签与包内版本一致，不一致立即失败（取不到标签时只提示，不阻断）；`ci-` 开头的演练标签跳过该强校验，只演练不出发布件；脚本里变量后紧跟中文标点时必须写 `${VAR}`，否则 bash 会把全角标点并入变量名导致展开为空；构建机不保证自带 Node，命令里先探测常见安装路径，找不到就从 `cdn.npmmirror.com` 下载 Node 20（glibc 低于 2.28 时自动换 `node-unofficial-builds` 的 glibc-217 兼容版），并缓存到 `~/.local/node`，不依赖插件下拉版本；Gitee 免费构建机的 Node 版本字段因此只作占位。
 
@@ -133,7 +134,7 @@ Windows解压目录安装在更新时出现空目录/locale缺失：先核对成
 
 更新安全：runOnlineUpdate先用pluginManager.listBundles读取本插件installed/source（兼容原数组和ok/value回包），本地目录/link一律禁止直接替换；来源未知、接口缺失、元信息异常失败关闭。用户已复现Windows点击立即更新清空外部目录，之前成品首次安装验收遗漏本地链接迁移；不能再以恢复目录代替修复更新动作。记录来源与实际解析路径可能在异常迁移后不同，来源检查不能宣称自动修复既有损坏。双平台烟测需真实旧成品升级并断言原安装文件、配置、任务保留。
 
-一键发布使用scripts/release.mjs（npm run release -- X.Y.Z），先准备本地release-plan.json完整条目及指南核对；--dry-run不改文件/版本/标签，不触发发布。脚本从实际最新正式版核对范围，禁止覆盖标签；双仓不全成功时报告失败，同版本--resume续跑。跨平台构建使用scripts/build.mjs的esbuild API，禁止POSIX命令替换使Windows构建失败。编写或测试发布脚本本身不等于获准执行真实发布。
+一键发布使用scripts/release.mjs（npm run release -- X.Y.Z），先准备本地release-plan.json完整条目及指南核对；--dry-run不改文件/版本/标签，不触发发布。脚本从实际最新正式版核对范围（仅 Gitee 发布时读 Gitee 接口，取不到再退回本地标签），禁止覆盖标签；默认只发 Gitee：本地成品用GITEE_TOKEN直接建Release并逐个上传核对附件，加--both才同步GitHub并轮询publish.yml。推送按仓库并行、失败各退避重试三次，GitHub走ssh 443并带ServerAliveInterval；任一仓库最终失败即报告，同版本--resume续跑。跨平台构建使用scripts/build.mjs的esbuild API，禁止POSIX命令替换使Windows构建失败。编写或测试发布脚本本身不等于获准执行真实发布。
 
 历史版本回收使用scripts/clean-releases.mjs（npm run clean:releases -- --apply）：默认演练，只删计划内对象，最新正式版、当前package.json版本以及README/说明书/CHANGELOG/本文件里.tgz下载地址引用过的版本永不删除；先附件、再发行版、最后标签，GitHub与Gitee同一计划并同步本地标签，演练同时给出预计释放的附件体积；待删标签取远端列表与Gitee标签接口的并集，Gitee开放接口没有删除标签的端点（DELETE /tags只会404），只能用私人令牌走HTTPS推送删引用。定期删除由.github/workflows/clean-releases.yml按周演练，只有仓库变量CLEANUP_APPLY=true或手动勾选apply才真正执行。回收不是发版，但删除不可逆，先看演练输出的保留集与待删清单再执行，不在发布流程中间插入清理。
 回收默认发行版与标签各保留最近10个（--keep / --keep-tags，后者默认跟随前者，两条保留线取并集）；Gitee标签只能用git push删引用，Gitee操作需要GITEE_TOKEN。
