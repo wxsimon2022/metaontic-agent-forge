@@ -7,6 +7,7 @@ import { snapshotConfig, resolveApiKey, assertConfigured, isOmniExtendModel, res
 import { assertResumeConnection, saveProgress, resumeDirOf, readPauseFile, resumePlanFrom, pickResumeOptions } from '../workflow/resume.js';
 import { abortError } from '../utils/errors.js';
 import { buildSegmentExecutionPrompt } from '../prompts/generation.js';
+import { takePaidNote } from '../workflow/approval.js';
 import { buildGenerationBody, buildRequestBody, runTask, normalizeReferenceUrl } from '../providers/seedance.js';
 import { resolveOutputDir, allocateStamp, fileStamp } from '../utils/files.js';
 import {
@@ -234,6 +235,9 @@ export function videoTool(liveConfig, deps, ctx) {
       const plannedTotal = plan.reduce((sum, step) => sum + step.seconds, 0);
 
       const notes = [];
+      // 这次用的是此前已经付过款的订单时，把「没重复收费」写进结果，别让用户以为支付被跳过。
+      const paidNote = takePaidNote(exec);
+      if (paidNote) notes.push(paidNote);
       if (restarted) {
         notes.push(
           `接着上一次暂停的进度继续：前面 ${doneBefore} 段（${restarted.cursor} 秒）不重新生成，`

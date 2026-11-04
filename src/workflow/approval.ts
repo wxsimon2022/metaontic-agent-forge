@@ -8,6 +8,7 @@ import { sumStepSeconds, resolveSegmentSeconds, modelMaxSeconds } from './planni
 import { ffmpegInstallOptions, hasFfmpeg, resolveBinary } from '../media/ffmpeg.js';
 import { resumeDirOf, readPauseFile, resumePlanFrom, assertResumeConnection } from './resume.js';
 import { consumeWebpayOrder, createWebpayOrder, fetchWebpayStatus } from '../payment/webpay.js';
+import { lastWebpayEnabled } from '../payment/webpay-state.js';
 
 /** 剩下这几段的预估费用文案（确认框里给用户看钱）。 */
 export async function remainingCostText(config, exec, remainingSteps, inputVideoSeconds = undefined) {
@@ -117,6 +118,50 @@ function paymentInstruction(order, toolName, subject, money, what) {
 }
 
 /**
+ * 这次执行「用了哪笔已经付过的钱」：付过款那笔订单被兑换掉之后记在这里，
+ * 由工具把这句话写进结果。用户在对话框里能看到「这次没重复扣费」，
+ * 而不是只看到视频突然开始生成、以为支付被跳过了。
+ */
+const paidOrders = new WeakMap();
+
+/** 兑换成功时记一笔：同一个执行对象后面在工具里取回来。 */
+export function rememberPaidOrder(exec, info) {
+  try {
+    if (exec) paidOrders.set(exec, info);
+  } catch {
+    // 记不住只是少一句说明，不影响生成。
+  }
+}
+
+/** 把服务端回的付款时间写成用户看得懂的本机时间；认不出来就留空。 */
+export function paymentMoment(paidAt) {
+  const text = String(paidAt || '').trim();
+  if (!text) return '';
+  const iso = text.includes('T') ? text : text.replace(' ', 'T');
+  const utc = /([Zz]|[+-]\d{2}:?\d{2})$/.test(iso) ? iso : `${iso}Z`;
+  const stamp = Date.parse(utc);
+  if (!Number.isFinite(stamp)) return '';
+  const at = new Date(stamp);
+  const pad = value => String(value).padStart(2, '0');
+  return `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())} ${pad(at.getHours())}:${pad(at.getMinutes())}`;
+}
+
+/** 取回并清掉这句说明：一次生成只说一次。返回空串表示这次生成没用到已付款订单。 */
+export function takePaidNote(exec) {
+  let info = null;
+  try {
+    info = exec ? paidOrders.get(exec) : null;
+    if (info) paidOrders.delete(exec);
+  } catch {
+    info = null;
+  }
+  if (!info) return '';
+  const moment = paymentMoment(info.paidAt);
+  return `本次生成用的是此前已经付过款的订单 ${info.outTradeNo}（${info.subject} ${info.money}`
+    + `${moment ? `，付款时间 ${moment}` : ''}）：这次不再重复收费，也不再有额外的确认步骤。`;
+}
+
+/**
  * 「确认生成视频的时候先付款」的卡口。
  *
  * 只对接入方式 A（服务端领 Key，也就是 MetaOnticVideo 这条接入方式）生效：
@@ -138,7 +183,25 @@ export async function paymentGate(config, exec) {
     status = null;
   }
   // 问不到「要不要收钱」时按不收钱处理：老服务端没有这套接口，不能把生成堵死。
-  if (!status?.enabled) return null;
+  if (!status) return null;
+  if (!status.enabled) {
+    if (!status.offline) return null;
+    // 服务端没答上来，但上次问到的结论是「这里收钱」：宁可不生成，也不白送一次。
+    // 否则把收款接口打不通（改 hosts、断代理）就成了免费生成的通道。
+    let known = false;
+    try {
+      known = await lastWebpayEnabled(resolveRegisterApi(config));
+    } catch {
+      known = false;
+    }
+    if (!known) return null;
+    return {
+      kind: 'deny',
+      reason: `收款服务连不上（${status.reason || '服务端没有响应'}），已停止调用：这次没有调用模型、`
+        + '没有产生费用。请确认这台机器能访问插件服务（设置页里的服务地址）后重试；'
+        + '如果服务端已经关掉网站支付收款，这次拦截可以忽略，但仍需先恢复网络。',
+    };
+  }
 
   const symbol = String(status.currency || 'CNY').toUpperCase() === 'CNY' ? '¥' : `${status.currency} `;
   const subject = status.subject || 'AI 视频生成';
@@ -160,6 +223,7 @@ export async function paymentGate(config, exec) {
     const consumed = await consumeWebpayOrder(config, order.out_trade_no, exec.signal);
     // 付过款就是这次调用的人工确认：调用方据此直接放行，不再弹一次费用确认框。
     if (consumed.status === 'ok') {
+      rememberPaidOrder(exec, { outTradeNo: order.out_trade_no, subject, money, paidAt: order.paid_at });
       return { kind: 'paid', outTradeNo: order.out_trade_no, subject, money };
     }
     return {

@@ -15,6 +15,7 @@ import {
   SEGMENT_PAUSE_NOTE, absorbSegmentInterruption, describeIncompleteRun,
   recordSegmentResult, runSegmentDelivery, skipMergeDelivery,
 } from '../workflow/segment-run.js';
+import { takePaidNote } from '../workflow/approval.js';
 
 export function extendTool(liveConfig, deps, ctx) {
   const config = liveConfig;
@@ -251,6 +252,9 @@ export function extendTool(liveConfig, deps, ctx) {
         ? (resume.cursor ?? null)
         : (args?.startAt == null ? null : Math.max(0, Math.round(Number(args.startAt))));
       const notes = [];
+      // 这次用的是此前已经付过款的订单时，把「没重复收费」写进结果，别让用户以为支付被跳过。
+      const paidNote = takePaidNote(exec);
+      if (paidNote) notes.push(paidNote);
       const segments = [];
       if (resume) {
         // 上次暂停前生成好的延长段：文件就在同样的分段目录里（序号 + extend 就是文件名）

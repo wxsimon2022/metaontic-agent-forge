@@ -11,6 +11,7 @@
  */
 import { DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, ref } from '../config.js';
 import { isManualKey, resolveRegisterApi } from '../providers/connection.js';
+import { rememberWebpayStatus } from './webpay-state.js';
 
 /** 一次网站支付订单在插件眼里的样子。 */
 export interface WebpayOrder {
@@ -29,6 +30,9 @@ export interface WebpayStatus {
   amount?: string;
   currency?: string;
   subject?: string;
+  /** 服务端没答上来（网络不通 / 接口不可用）：不能据此当成「不收钱」。 */
+  offline?: boolean;
+  reason?: string;
 }
 
 export interface WebpayCall {
@@ -96,18 +100,25 @@ async function callWebpay(config, path: string, init: { method?: string; body?: 
  *
  * 只有接入方式 A（服务端领 Key，也就是 MetaOnticVideo 这条接入方式）才可能收钱：
  * B MetaOntic AI / C 火山引擎是用户自己的 Key，插件不经过本服务，也就不走网站支付。
- * 服务端关掉收款、或接口不可用时返回 null（按不收钱处理）。
+ * 服务端没答上来时返回带 ``offline`` 的结论（调用方按上次问到的结论判断），
+ * 只有「自带 Key 的接入方式」才返回 null（这条路根本不经本服务）。
  */
 export async function fetchWebpayStatus(config, signal?): Promise<WebpayStatus | null> {
   if (isManualKey(config)) return null;
+  const api = resolveRegisterApi(config);
   const result = await callWebpay(config, '/status', { signal });
-  if (result.status !== 'ok') return null;
-  return {
+  if (result.status !== 'ok') {
+    return { enabled: false, offline: true, reason: result.reason || '服务端没有响应' };
+  }
+  const status: WebpayStatus = {
     enabled: result.data?.enabled === true,
     amount: result.data?.amount,
     currency: result.data?.currency,
     subject: result.data?.subject,
   };
+  // 这次的结论留着：以后问不到时按它处理，免得「打不通收款接口」变成免费生成的通道。
+  await rememberWebpayStatus(api, status);
+  return status;
 }
 
 /**
