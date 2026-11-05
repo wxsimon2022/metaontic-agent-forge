@@ -922,7 +922,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.15.0".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.15.1".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1641,7 +1641,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.15.0",
+    version: "3.15.1",
     description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, image-to-video, text-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects through the MetaOnticVideo relay with email sign-in and wallet top-up, or your own MetaOntic AI key.",
     license: "MIT",
     type: "module",
@@ -1738,12 +1738,11 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.15.0",
+      version: "3.15.1",
       prerelease: false,
-      publishedAt: "2026-11-05T14:54:28.544Z",
+      publishedAt: "2026-11-05T14:58:37.264Z",
       items: [
-        "\u65B0\u589E\uFF1A\u670D\u52A1\u7AEF\u65B9\u5F0F\u6062\u590D\uFF1A\u90AE\u7BB1\u767B\u5F55\u9886 Key\uFF0C\u53EF\u5728\u8BBE\u7F6E\u9875\u5145\u503C\u4F59\u989D\uFF1B\u751F\u6210\u524D\u5148\u6838\u5BF9\u4F59\u989D\uFF0C\u4E0D\u8DB3\u76F4\u63A5\u62E6\u4E0B\u5E76\u63D0\u793A\u5145\u503C\u3002",
-        "\u4F18\u5316\uFF1A\u63D2\u4EF6\u914D\u7F6E\u53EA\u80FD\u5728\u8BBE\u7F6E\u9875\u4FEE\u6539\uFF0C\u5BF9\u8BDD\u53EA\u505A\u89C6\u9891\u521B\u4F5C\uFF1B\u63A5\u5165\u65B9\u5F0F\u7CBE\u7B80\u4E3A\u670D\u52A1\u7AEF\u4E0E MetaOntic AI\u3002"
+        "\u4F18\u5316\uFF1A\u63D2\u4EF6\u9875\u63CF\u8FF0\u6539\u4E3A\u300C\u767B\u5F55\u5F00\u901A\u8D26\u53F7\u300D\uFF0C\u66F4\u8D34\u5408\u90AE\u7BB1\u767B\u5F55\u540E\u81EA\u52A8\u4E0B\u53D1 Key \u7684\u5B9E\u9645\u6D41\u7A0B\u3002"
       ]
     }
   };
