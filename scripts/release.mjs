@@ -19,11 +19,20 @@ export function repository(value, host) {
   if (!match || (match[1] || match[2]) !== host || match[3].includes('..')) throw Error(`无效${host}仓库地址`);
   return { transport:value, slug:match[3], web:`https://${host}/${match[3]}` };
 }
+/** 版本更新内容的字数上限：整篇合计（分类前缀不计），只写用户能感知的结论。 */
+export const NOTES_LIMIT=100;
+/** 更新说明实际字数：按分类前缀后的正文计，空格也算一个字。 */
+export function notesLength(items) {
+  return (items||[]).reduce((total,item)=>total+String(item||'').replace(/^(新增|优化|修复)：/,'').length,0);
+}
 export function notesFor(version, items) {
   if (!validVersion(version) || !Array.isArray(items) || !items.length || items.some(x=>typeof x!=='string'||! /^(新增|优化|修复)：\S/.test(x)||/[\r\n]/.test(x))) throw Error('更新说明必须为完整的新增/优化/修复条目');
+  const length=notesLength(items);
+  if(length>NOTES_LIMIT) throw Error(`更新说明共 ${length} 字，超过 ${NOTES_LIMIT} 字上限；版本更新内容只写用户能感知的结论，实现细节留在提交与工程记录里`);
   return ['新增','优化','修复'].filter(c=>items.some(x=>x.startsWith(c+'：'))).map(c=>({category:c,items:items.filter(x=>x.startsWith(c+'：')).map(x=>x.slice(c.length+1))}));
 }
 const help = `一键发布（准备好完整说明与指南后执行）：
+说明要求：新增/优化/修复合计不超过 ${NOTES_LIMIT} 字，只写用户能感知的结论。
   node scripts/release.mjs 3.13.3 --notes release-plan.json
   node scripts/release.mjs 3.13.3 --notes release-plan.json --dry-run
   node scripts/release.mjs 3.13.3 --resume

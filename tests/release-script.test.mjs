@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, readFile, copyFile, rm } from 'node:fs/promi
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { validVersion, newer, repository, notesFor } from '../scripts/release.mjs';
+import { validVersion, newer, repository, notesFor, notesLength, NOTES_LIMIT } from '../scripts/release.mjs';
 
 test('release input rejects nonstable versions and command-shaped repository names',()=>{
  for(const v of ['3.1.2-beta.1','v3.1.2','03.1.2','--help','3.1'])assert.equal(validVersion(v),false);
@@ -13,6 +13,12 @@ test('release input rejects nonstable versions and command-shaped repository nam
  assert.equal(repository('https://gitee.com/owner/repo.git','gitee.com').web,'https://gitee.com/owner/repo');
  for(const source of ['--upload-pack=evil','https://example.com/owner/repo','git@github.com:owner/repo;bad','https://github.com/../repo'])assert.throws(()=>repository(source,'github.com'));
  assert.throws(()=>notesFor('1.0.0',['unstructured']));assert.throws(()=>notesFor('1.0.0',['修复：text\nforged section']));
+ // 版本更新内容不超过100字：整篇合计（分类前缀不计），刚好100字放行，多一个字直接拒绝。
+ assert.equal(NOTES_LIMIT,100);
+ assert.equal(notesLength(['新增：'+'字'.repeat(60),'修复：'+'字'.repeat(40)]),100);
+ assert.deepEqual(notesFor('1.0.0',['新增：'+'字'.repeat(60),'修复：'+'字'.repeat(40)]).map(x=>x.category),['新增','修复']);
+ assert.throws(()=>notesFor('1.0.0',['新增：'+'字'.repeat(60),'修复：'+'字'.repeat(41)]),/100 字上限/);
+ assert.throws(()=>notesFor('1.0.0',['优化：'+'字'.repeat(101)]),/100 字上限/);
 });
 
 test('release dry run changes no files, tags or git index and starts no publication',async()=>{
