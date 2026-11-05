@@ -80,7 +80,7 @@ for (const connectionMode of ['metaontic', 'volcengine']) test(`${connectionMode
   for (const name of ['video_generate', 'video_extend']) {
     const gate = await h.preflightGate({}, config, { name, arguments: { resume: '/tmp/progress' } });
     assert.equal(gate.kind, 'ask');
-    assert.match(gate.displayReason.zh, /按渠道账户实际用量计费。确认后开始。/);
+    assert.match(gate.displayReason.zh, /按当前 Key 在渠道的实际用量计费。确认后开始。/);
     assert.doesNotMatch(gate.displayReason.zh, /预估|核对|额度/);
     assert.doesNotMatch(gate.displayReason.en, /estimate|balance/i);
   }
@@ -108,7 +108,7 @@ test('service 模式调用前先读这把 Key 的额度，够就弹人工确认'
   assert.equal(asked, 1, 'MetaOnticVideo 接入要在调用前读一次额度');
   assert.equal(gate.kind, 'ask');
   assert.match(gate.displayReason.zh, /\u70b9\u4e86\u300c\u5141\u8bb8\u300d\u624d\u4f1a\u771f\u6b63\u8c03\u7528/);
-  assert.match(gate.displayReason.zh, /\u672c\u673a Key \u5269\u4f59 \u00a5100\.00/);
+  assert.match(gate.displayReason.zh, /\u5f53\u524d\u8d26\u53f7\u4f59\u989d \u00a5100\.00/);
 });
 
 test('service 模式额度不够就不调用，提示充值', async () => {
@@ -128,7 +128,7 @@ test('service 模式额度读不到时不拦，仍弹人工确认并说明读不
   h.estimateUsage = estimateOf(0.1);
   const gate = await h.preflightGate({}, config, { name: 'video_generate', arguments: {} });
   assert.equal(gate.kind, 'ask');
-  assert.match(gate.displayReason.zh, /\u989d\u5ea6\u8bfb\u4e0d\u5230/);
+  assert.match(gate.displayReason.zh, /\u5f53\u524d\u8d26\u53f7\u4f59\u989d\u8bfb\u4e0d\u5230/);
 });
 
 test('service 模式查额度带登录令牌：服务端现在只认它', async () => {
@@ -191,7 +191,7 @@ test('service 模式图片确认带上本机余额，够用就照常确认', asy
   h.fetchDeviceQuota = okQuota();
   const gate = await h.preflightGate({}, config, imageCall);
   assert.equal(gate.kind, 'ask');
-  assert.match(gate.displayReason.zh, /\u672c\u673a Key \u5269\u4f59 \u00a5100\.00/);
+  assert.match(gate.displayReason.zh, /\u5f53\u524d\u8d26\u53f7\u4f59\u989d \u00a5100\.00/);
   assert.match(gate.displayReason.zh, /\u5355\u72ec\u8ba1\u8d39/);
 });
 

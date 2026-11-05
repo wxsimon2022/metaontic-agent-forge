@@ -14,7 +14,7 @@ The project planner supports up to 120 seconds and 10 segments. Longer videos re
 
 ## Features
 
-- **Text-to-video and image-to-video:** prompts, reference images, first frames or first/last frames, depending on the model and provider.
+- **Image-to-video and text-to-video:** prompts, reference images, first frames or first/last frames, depending on the model and provider.
 - **Script and storyboard review:** review the full script, a local storyboard illustration and cost estimates before confirming production.
 - **Video continuation:** describe transitions and extend the previous video while retaining the approved subject, action and audio plan.
 - **Segment previews and resume:** review each completed segment and continue using the saved task state; reuse completed segments after an interruption.

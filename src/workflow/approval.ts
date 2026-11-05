@@ -21,7 +21,7 @@ function unlimitedQuota(data) {
  * 「额度够不够」必须看同一份数据，也不该为了一句话多打一次接口。
  */
 export async function remainingCostText(config, exec, remainingSteps, inputVideoSeconds = undefined, readQuota = null) {
-  if (isManualKey(config)) return { cost: `${connectionLabel(config)}按实际调用计费`, remain: '' };
+  if (isManualKey(config)) return { cost: `${connectionLabel(config)}按当前 Key 在渠道的实际用量计费`, remain: '' };
   try {
     const estimated = estimateSteps(
       config,
@@ -37,8 +37,8 @@ export async function remainingCostText(config, exec, remainingSteps, inputVideo
     const remainAmount = finiteNumber(data.remain_amount);
     return {
       cost: `预估 ${formatMoney(usd * exchange, symbol)}`,
-      remain: unlimitedQuota(data) ? '本机 Key 不限额度'
-        : (remainAmount === null ? '' : `本机 Key 剩余 ${formatMoney(remainAmount, symbol)}`),
+      remain: unlimitedQuota(data) ? '当前账号余额不限额度'
+        : (remainAmount === null ? '' : `当前账号余额 ${formatMoney(remainAmount, symbol)}`),
     };
   } catch (error) {
     return { cost: `预估费用没算出来（${error?.message || error}）`, remain: '' };
@@ -69,7 +69,7 @@ export function segmentContinueLine({ toolName = 'video_generate', done, lastSec
  * 拿不到（没设备凭据、服务不可用）就回 unknown，由调用方决定怎么写进确认框。
  */
 export async function fetchDeviceQuota(config, signal) {
-  if (isManualKey(config)) return { status: 'unknown', reason: `${connectionLabel(config)}费用和余额请在渠道控制台查看` };
+  if (isManualKey(config)) return { status: 'unknown', reason: `${connectionLabel(config)}按当前 Key 在渠道的实际用量计费，费用与余额请在渠道控制台查看` };
   if (!SERVICE_MODE_AVAILABLE) return { status: 'unknown', reason: SERVICE_UNAVAILABLE_MESSAGE };
   const api = resolveRegisterApi(config);
   const deviceId = String(ref(config, 'deviceId', '')).trim();
@@ -245,7 +245,7 @@ async function imageQuotaNotice(config, exec) {
   if (isManualKey(config)) return null;
   const quota = await fetchDeviceQuota(config, exec.signal);
   const data = quota?.status === 'ok' ? quota.data : {};
-  if (unlimitedQuota(data)) return { remainZh: '本机 Key 不限额度', remainEn: 'this key has no balance limit' };
+  if (unlimitedQuota(data)) return { remainZh: '当前账号余额不限额度', remainEn: 'this account has no balance limit' };
   const remainQuota = finiteNumber(data.remain_quota);
   if (remainQuota === null) return null;
   const symbol = String(data.currency_symbol || '¥');
@@ -253,13 +253,13 @@ async function imageQuotaNotice(config, exec) {
   if (remainQuota <= 0) {
     return {
       blocked: true,
-      reason: `额度不足，已停止调用：这把 Key 只剩 ${remainAmount}，图片生成会白跑一趟。`
+      reason: `额度不足，已停止调用：当前账号余额只剩 ${remainAmount}，图片生成会白跑一趟。`
         + '请在插件设置页点「充值」按金额完成支付宝付款（服务端没开在线收款时点「客服」联系人工充值），到账后再重试；'
         + '这次没有调用模型、没有产生费用。'
         + '\n请把这条原因如实告诉用户（额度不足、先充值再重试），不要用其他方式绕开这一步继续调用模型。',
     };
   }
-  return { remainZh: `本机 Key 剩余 ${remainAmount}`, remainEn: `this key has ${remainAmount} left` };
+  return { remainZh: `当前账号余额 ${remainAmount}`, remainEn: `this account has ${remainAmount} left` };
 }
 
 /**
@@ -398,10 +398,10 @@ export async function preflightGate(ctx, config, exec) {
     assertConfigured(config, resolveApiKey(config));
     return {
       kind: 'ask',
-      reason: `${resumeLead ? resumeLead.zh : ''}调用${connectionLabel(config)} ${resolveModel(config)} · ${resolveResolution(config, effectiveArgs)}，按渠道账户实际用量计费。`,
+      reason: `${resumeLead ? resumeLead.zh : ''}调用${connectionLabel(config)} ${resolveModel(config)} · ${resolveResolution(config, effectiveArgs)}，按当前 Key 在渠道的实际用量计费。`,
       displayReason: {
-        zh: `${resumeLead ? resumeLead.zh : ''}本次将通过${connectionLabel(config)}生成 ${resolveResolution(config, effectiveArgs)} 视频，按渠道账户实际用量计费。确认后开始。${resumeLead ? resumeLead.tailZh : ''}`,
-        en: `${resumeLead ? resumeLead.en : ''}Generate ${resolveResolution(config, effectiveArgs)} video via ${connectionLabel(config)}, billed to your channel account. Confirm to continue.${resumeLead ? resumeLead.tailEn : ''}`,
+        zh: `${resumeLead ? resumeLead.zh : ''}本次将通过${connectionLabel(config)}生成 ${resolveResolution(config, effectiveArgs)} 视频，按当前 Key 在渠道的实际用量计费。确认后开始。${resumeLead ? resumeLead.tailZh : ''}`,
+        en: `${resumeLead ? resumeLead.en : ''}Generate ${resolveResolution(config, effectiveArgs)} video via ${connectionLabel(config)}, billed by this key's actual usage on the channel. Confirm to continue.${resumeLead ? resumeLead.tailEn : ''}`,
       },
     };
   }
@@ -433,14 +433,14 @@ export async function preflightGate(ctx, config, exec) {
   const costText = needMoney === null ? '这次调用的费用没法预估' : `预估 ${needMoney}`;
   const remainMoneyText = `${formatMoney(remainAmount === null ? 0 : remainAmount, symbol)}`;
   // 用户看的只有钱；额度数字只留在下面那条审计文本里
-  const remainZh = unlimited ? '本机 Key 不限额度'
+  const remainZh = unlimited ? '当前账号余额不限额度'
     : (remainQuota === null
-      ? `本机 Key 的额度读不到（${quota.reason || '服务端没回额度'}）`
-      : `本机 Key 剩余 ${remainMoneyText}`);
-  const remainEn = unlimited ? 'this key has no balance limit'
+      ? `当前账号余额读不到（${quota.reason || '服务端没回额度'}）`
+      : `当前账号余额 ${remainMoneyText}`);
+  const remainEn = unlimited ? 'this account has no balance limit'
     : (remainQuota === null
-      ? `this key's quota could not be read (${quota.reason || 'the service returned none'})`
-      : `this key has ${remainMoneyText} left`);
+      ? `this account's balance could not be read (${quota.reason || 'the service returned none'})`
+      : `this account has ${remainMoneyText} left`);
 
   // 额度不够就别调用：中转站也会拒，但那样只会白等一轮还看不到原因。提示去充值再重试。
   // 不限额度（unlimited_quota）的 Key 不比较余额：它的 remain_quota 只是个占位数字，
@@ -448,7 +448,7 @@ export async function preflightGate(ctx, config, exec) {
   if (!unlimited && needQuota !== null && remainQuota !== null && remainQuota < needQuota) {
     return {
       kind: 'deny',
-      reason: `额度不足，已停止调用：本次预估需要 ${needMoney ?? '无法预估'}，这把 Key 只剩 ${remainMoneyText}。`
+      reason: `额度不足，已停止调用：本次预估需要 ${needMoney ?? '无法预估'}，当前账号余额只剩 ${remainMoneyText}。`
         + '请在插件设置页点「充值」按金额完成支付宝付款（服务端没开在线收款时点「客服」联系人工充值），到账后再重试；'
         + '这次没有调用模型、没有产生费用。'
         + '\n请把这条原因如实告诉用户（额度不足、先充值再重试），不要重复提交，也不要用其他方式绕开这一步继续调用模型。',
@@ -465,8 +465,8 @@ export async function preflightGate(ctx, config, exec) {
     : '这次调用的费用无法预估';
   return {
     kind: 'ask',
-    reason: `${resumeLead ? resumeLead.zh : ''}人工确认：调用视频模型（${total}）。${auditTax}；本机 Key 剩余 `
-      + `${unlimited ? '不限额度（服务端这把 Key 不按余额计）'
+    reason: `${resumeLead ? resumeLead.zh : ''}人工确认：调用视频模型（${total}）。${auditTax}；当前账号余额 `
+      + `${unlimited ? '不限额度（服务端这个账号不按余额计）'
         : (remainQuota === null ? '额度读不到' : `${remainMoneyText} / `
           + `${remainQuota.toLocaleString('en-US')} 额度`)}。`,
     displayReason: {
