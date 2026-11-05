@@ -3831,7 +3831,10 @@ function estimateUsage(config, toolName, args, actualPlan = void 0) {
 
 // src/workflow/approval.ts
 init_config();
-async function remainingCostText(config, exec, remainingSteps, inputVideoSeconds = void 0) {
+function unlimitedQuota(data) {
+  return Boolean(data && typeof data === "object" && data.unlimited_quota === true);
+}
+async function remainingCostText(config, exec, remainingSteps, inputVideoSeconds = void 0, readQuota = null) {
   if (isManualKey(config)) return { cost: `${connectionLabel(config)}\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39`, remain: "" };
   try {
     const estimated = estimateSteps(
@@ -3841,14 +3844,14 @@ async function remainingCostText(config, exec, remainingSteps, inputVideoSeconds
     );
     const groupRatio = finiteNumber(ref(config, "estimateGroupRatio", 0.8)) ?? 1;
     const usd = estimated.segments.reduce((sum, item) => sum + item.usd, 0) * groupRatio;
-    const quota = await fetchDeviceQuota(config, exec?.signal);
+    const quota = await (readQuota ? readQuota() : fetchDeviceQuota(config, exec?.signal));
     const data = quota?.status === "ok" ? quota.data : {};
     const symbol = String(data.currency_symbol || "\xA5");
     const exchange = finiteNumber(data.usd_exchange_rate) ?? DEFAULT_USD_EXCHANGE_RATE;
     const remainAmount = finiteNumber(data.remain_amount);
     return {
       cost: `\u9884\u4F30 ${formatMoney(usd * exchange, symbol)}`,
-      remain: remainAmount === null ? "" : `\u672C\u673A Key \u5269\u4F59 ${formatMoney(remainAmount, symbol)}`
+      remain: unlimitedQuota(data) ? "\u672C\u673A Key \u4E0D\u9650\u989D\u5EA6" : remainAmount === null ? "" : `\u672C\u673A Key \u5269\u4F59 ${formatMoney(remainAmount, symbol)}`
     };
   } catch (error) {
     return { cost: `\u9884\u4F30\u8D39\u7528\u6CA1\u7B97\u51FA\u6765\uFF08${error?.message || error}\uFF09`, remain: "" };
@@ -3868,6 +3871,7 @@ async function fetchDeviceQuota(config, signal) {
   const api = resolveRegisterApi(config);
   const deviceId = String(ref(config, "deviceId", "")).trim();
   const deviceSecret = String(ref(config, "deviceSecret", "")).trim();
+  const loginKey = String(ref(config, "loginKey", "")).trim();
   if (!deviceId || !deviceSecret) {
     return {
       status: "unknown",
@@ -3883,6 +3887,9 @@ async function fetchDeviceQuota(config, signal) {
         accept: "application/json",
         "content-type": "application/json",
         "X-Register-Token": String(ref(config, "registerToken", "")).trim() || DEFAULT_REGISTER_TOKEN,
+        // 服务端现在按登录令牌认人（只带设备凭据会被 401 login_required 挡回来），
+        // 老版本服务端仍认设备凭据，所以两者一起带。
+        ...loginKey ? { "X-Login-Key": loginKey } : {},
         ...PLUGIN_VERSION ? { "X-Plugin-Version": PLUGIN_VERSION } : {}
       },
       body: JSON.stringify({ device_id: deviceId, device_secret: deviceSecret }),
@@ -3983,6 +3990,24 @@ async function ffmpegConsentGate(config, exec, args) {
     info: { ffmpegMissing: true, os: os3, command, segments: allSteps.length }
   };
 }
+async function imageQuotaNotice(config, exec) {
+  if (isManualKey(config)) return null;
+  const quota = await fetchDeviceQuota(config, exec.signal);
+  const data = quota?.status === "ok" ? quota.data : {};
+  if (unlimitedQuota(data)) return { remainZh: "\u672C\u673A Key \u4E0D\u9650\u989D\u5EA6", remainEn: "this key has no balance limit" };
+  const remainQuota = finiteNumber(data.remain_quota);
+  if (remainQuota === null) return null;
+  const symbol = String(data.currency_symbol || "\xA5");
+  const remainAmount = formatMoney(finiteNumber(data.remain_amount) ?? 0, symbol);
+  if (remainQuota <= 0) {
+    return {
+      blocked: true,
+      reason: `\u989D\u5EA6\u4E0D\u8DB3\uFF0C\u5DF2\u505C\u6B62\u8C03\u7528\uFF1A\u8FD9\u628A Key \u53EA\u5269 ${remainAmount}\uFF0C\u56FE\u7247\u751F\u6210\u4F1A\u767D\u8DD1\u4E00\u8D9F\u3002\u8BF7\u5728\u63D2\u4EF6\u8BBE\u7F6E\u9875\u70B9\u300C\u5145\u503C\u300D\u6309\u91D1\u989D\u5B8C\u6210\u652F\u4ED8\u5B9D\u4ED8\u6B3E\uFF08\u670D\u52A1\u7AEF\u6CA1\u5F00\u5728\u7EBF\u6536\u6B3E\u65F6\u70B9\u300C\u5BA2\u670D\u300D\u8054\u7CFB\u4EBA\u5DE5\u5145\u503C\uFF09\uFF0C\u5230\u8D26\u540E\u518D\u91CD\u8BD5\uFF1B\u8FD9\u6B21\u6CA1\u6709\u8C03\u7528\u6A21\u578B\u3001\u6CA1\u6709\u4EA7\u751F\u8D39\u7528\u3002
+\u8BF7\u628A\u8FD9\u6761\u539F\u56E0\u5982\u5B9E\u544A\u8BC9\u7528\u6237\uFF08\u989D\u5EA6\u4E0D\u8DB3\u3001\u5148\u5145\u503C\u518D\u91CD\u8BD5\uFF09\uFF0C\u4E0D\u8981\u7528\u5176\u4ED6\u65B9\u5F0F\u7ED5\u5F00\u8FD9\u4E00\u6B65\u7EE7\u7EED\u8C03\u7528\u6A21\u578B\u3002`
+    };
+  }
+  return { remainZh: `\u672C\u673A Key \u5269\u4F59 ${remainAmount}`, remainEn: `this key has ${remainAmount} left` };
+}
 async function estimateArgsFor(config, toolName, args) {
   const dir = resumeDirOf(args?.resume);
   if (!dir) return args;
@@ -4025,8 +4050,12 @@ async function preflightGate(ctx, config, exec) {
     if (approvalPolicy(ctx, exec) === "never") return { kind: "deny", reason: "\u5F53\u524D\u6743\u9650\u6A21\u5F0F\u65E0\u6CD5\u8FDB\u884C\u56FE\u7247\u8C03\u7528\u786E\u8BA4\u3002" };
     if (!creating && exec.arguments?.characterType === "realistic") return { kind: "deny", reason: "\u771F\u4EBA\u9650\u5236\u8F6C\u6362\u5FC5\u987B\u4F7F\u7528\u975E\u771F\u4EBA\u98CE\u683C\uFF0C\u4E0D\u80FD\u8F6C\u6362\u4E3A\u771F\u4EBA\u5199\u5B9E\u3002" };
     const characterLabel = exec.arguments?.characterType === "realistic" ? "\u771F\u4EBA\u5199\u5B9E" : "\u975E\u771F\u4EBA";
-    if (creating) return { kind: "ask", reason: "\u8C03\u7528Seedream\u6309\u6587\u5B57\u751F\u6210\u89D2\u8272\u53C2\u8003\u56FE\uFF0C\u56FE\u7247\u5355\u72EC\u8BA1\u8D39\u3002\u5B8C\u6210\u540E\u5148\u5C55\u793A\u5E76\u6838\u5BF9\u89D2\u8272\u548C\u98CE\u683C\uFF0C\u786E\u8BA4\u540E\u624D\u7528\u4E8E\u89C6\u9891\uFF1B\u89C6\u9891\u751F\u6210\u53E6\u884C\u786E\u8BA4\u548C\u8BA1\u8D39\u3002", displayReason: { zh: `\u5148\u751F\u6210\u4E00\u5F20${characterLabel}\u89D2\u8272\u53C2\u8003\u56FE\uFF0C\u56FE\u7247\u8C03\u7528\u5355\u72EC\u8BA1\u8D39\u3002\u751F\u6210\u540E\u5148\u770B\u56FE\u786E\u8BA4\uFF0C\u518D\u7528\u4E8E\u89C6\u9891\uFF1B\u73B0\u5728\u4E0D\u4F1A\u751F\u6210\u89C6\u9891\u3002\u662F\u5426\u540C\u610F\uFF1F`, en: `Generate one ${exec.arguments?.characterType === "realistic" ? "photorealistic" : "stylized"} character reference image, billed separately. Review it before any separately confirmed video generation.` } };
-    return { kind: "ask", reason: "\u8C03\u7528 Seedream \u5C06\u771F\u4EBA\u53C2\u8003\u56FE\u8F6C\u4E3A\u975E\u771F\u4EBA\u98CE\u683C\uFF1B\u56FE\u7247\u751F\u6210\u5355\u72EC\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39\uFF0C\u89C6\u9891\u8D39\u7528\u53E6\u8BA1\u3002", displayReason: { zh: "\u5C06\u8C03\u7528 Seedream \u5904\u7406\u53C2\u8003\u56FE\uFF0C\u56FE\u7247\u8C03\u7528\u5355\u72EC\u8BA1\u8D39\uFF0C\u89C6\u9891\u8D39\u7528\u53E6\u8BA1\u3002\u786E\u8BA4\u540E\u5F00\u59CB\u5904\u7406\u3002", en: "Use Seedream to stylize the reference. Image calls are billed separately from video. Confirm to proceed." } };
+    const imageQuota = await imageQuotaNotice(config, exec);
+    if (imageQuota?.blocked) return { kind: "deny", reason: imageQuota.reason };
+    const imageRemainZh = imageQuota?.remainZh ? `\uFF08${imageQuota.remainZh}\uFF09` : "";
+    const imageRemainEn = imageQuota?.remainEn ? ` (${imageQuota.remainEn})` : "";
+    if (creating) return { kind: "ask", reason: "\u8C03\u7528Seedream\u6309\u6587\u5B57\u751F\u6210\u89D2\u8272\u53C2\u8003\u56FE\uFF0C\u56FE\u7247\u5355\u72EC\u8BA1\u8D39\u3002\u5B8C\u6210\u540E\u5148\u5C55\u793A\u5E76\u6838\u5BF9\u89D2\u8272\u548C\u98CE\u683C\uFF0C\u786E\u8BA4\u540E\u624D\u7528\u4E8E\u89C6\u9891\uFF1B\u89C6\u9891\u751F\u6210\u53E6\u884C\u786E\u8BA4\u548C\u8BA1\u8D39\u3002", displayReason: { zh: `\u5148\u751F\u6210\u4E00\u5F20${characterLabel}\u89D2\u8272\u53C2\u8003\u56FE\uFF0C\u56FE\u7247\u8C03\u7528\u5355\u72EC\u8BA1\u8D39${imageRemainZh}\u3002\u751F\u6210\u540E\u5148\u770B\u56FE\u786E\u8BA4\uFF0C\u518D\u7528\u4E8E\u89C6\u9891\uFF1B\u73B0\u5728\u4E0D\u4F1A\u751F\u6210\u89C6\u9891\u3002\u662F\u5426\u540C\u610F\uFF1F`, en: `Generate one ${exec.arguments?.characterType === "realistic" ? "photorealistic" : "stylized"} character reference image, billed separately. Review it before any separately confirmed video generation.${imageRemainEn}` } };
+    return { kind: "ask", reason: "\u8C03\u7528 Seedream \u5C06\u771F\u4EBA\u53C2\u8003\u56FE\u8F6C\u4E3A\u975E\u771F\u4EBA\u98CE\u683C\uFF1B\u56FE\u7247\u751F\u6210\u5355\u72EC\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39\uFF0C\u89C6\u9891\u8D39\u7528\u53E6\u8BA1\u3002", displayReason: { zh: `\u5C06\u8C03\u7528 Seedream \u5904\u7406\u53C2\u8003\u56FE\uFF0C\u56FE\u7247\u8C03\u7528\u5355\u72EC\u8BA1\u8D39\uFF0C\u89C6\u9891\u8D39\u7528\u53E6\u8BA1${imageRemainZh}\u3002\u786E\u8BA4\u540E\u5F00\u59CB\u5904\u7406\u3002`, en: `Use Seedream to stylize the reference. Image calls are billed separately from video. Confirm to proceed.${imageRemainEn}` } };
   }
   const rawArgs = exec.arguments && typeof exec.arguments === "object" ? exec.arguments : {};
   let effectiveArgs = rawArgs;
@@ -4056,12 +4085,14 @@ async function preflightGate(ctx, config, exec) {
       return { kind: "deny", reason: error?.message || String(error) };
     }
   }
+  let quotaResult = null;
+  const readQuota = () => quotaResult ??= fetchDeviceQuota(config, exec.signal);
   let resumeLead = null;
   if (resumeSegment) {
     const line = segmentContinueLine(resumeSegment);
     let rest = `\u6574\u6761\u8FD8\u5DEE ${resumeSegment.remainingSeconds} \u79D2`;
     try {
-      const measured = await remainingCostText(config, exec, resumeSegment.remainingSteps, resumeSegment.inputVideoSeconds);
+      const measured = await remainingCostText(config, exec, resumeSegment.remainingSteps, resumeSegment.inputVideoSeconds, readQuota);
       rest += `\uFF08${measured.cost}${measured.remain ? `\uFF1B${measured.remain}` : ""}\uFF09`;
     } catch {
     }
@@ -4103,23 +4134,24 @@ async function preflightGate(ctx, config, exec) {
   } catch {
     estimate = null;
   }
-  const quota = await fetchDeviceQuota(config, exec.signal);
+  const quota = await readQuota();
   const data = quota?.status === "ok" ? quota.data : {};
   const symbol = String(data.currency_symbol || "\xA5");
-  const perUnit = finiteNumber(data.quota_per_unit) ?? DEFAULT_QUOTA_PER_UNIT;
+  const perUnit = finiteNumber(data.quota_per_unit) || DEFAULT_QUOTA_PER_UNIT;
   const exchange = finiteNumber(data.usd_exchange_rate) ?? DEFAULT_USD_EXCHANGE_RATE;
+  const unlimited = unlimitedQuota(data);
   const needQuota = estimate ? Math.round(estimate.usd * perUnit) : null;
   const needMoney = estimate ? formatMoney(estimate.usd * exchange, symbol) : null;
   const remainQuota = finiteNumber(data.remain_quota);
   const remainAmount = finiteNumber(data.remain_amount);
   const costText = needMoney === null ? "\u8FD9\u6B21\u8C03\u7528\u7684\u8D39\u7528\u6CA1\u6CD5\u9884\u4F30" : `\u9884\u4F30 ${needMoney}`;
   const remainMoneyText = `${formatMoney(remainAmount === null ? 0 : remainAmount, symbol)}`;
-  const remainZh = remainQuota === null ? `\u672C\u673A Key \u7684\u989D\u5EA6\u8BFB\u4E0D\u5230\uFF08${quota.reason || "\u670D\u52A1\u7AEF\u6CA1\u56DE\u989D\u5EA6"}\uFF09` : `\u672C\u673A Key \u5269\u4F59 ${remainMoneyText}`;
-  const remainEn = remainQuota === null ? `this key's quota could not be read (${quota.reason || "the service returned none"})` : `this key has ${remainMoneyText} left`;
-  if (needQuota !== null && remainQuota !== null && remainQuota < needQuota) {
+  const remainZh = unlimited ? "\u672C\u673A Key \u4E0D\u9650\u989D\u5EA6" : remainQuota === null ? `\u672C\u673A Key \u7684\u989D\u5EA6\u8BFB\u4E0D\u5230\uFF08${quota.reason || "\u670D\u52A1\u7AEF\u6CA1\u56DE\u989D\u5EA6"}\uFF09` : `\u672C\u673A Key \u5269\u4F59 ${remainMoneyText}`;
+  const remainEn = unlimited ? "this key has no balance limit" : remainQuota === null ? `this key's quota could not be read (${quota.reason || "the service returned none"})` : `this key has ${remainMoneyText} left`;
+  if (!unlimited && needQuota !== null && remainQuota !== null && remainQuota < needQuota) {
     return {
       kind: "deny",
-      reason: `\u989D\u5EA6\u4E0D\u8DB3\uFF0C\u5DF2\u505C\u6B62\u8C03\u7528\uFF1A\u672C\u6B21\u9884\u4F30\u9700\u8981 ${needMoney ?? "\u65E0\u6CD5\u9884\u4F30"}\uFF0C\u8FD9\u628A Key \u53EA\u5269 ${remainMoneyText}\u3002\u8BF7\u5728\u63D2\u4EF6\u8BBE\u7F6E\u9875\u70B9\u300C\u5145\u503C\u300D\u6309\u91D1\u989D\u5B8C\u6210\u652F\u4ED8\u5B9D\u4ED8\u6B3E\uFF08\u4E5F\u53EF\u4EE5\u70B9\u300C\u5BA2\u670D\u300D\u8054\u7CFB\u4EBA\u5DE5\u5145\u503C\uFF09\uFF0C\u5230\u8D26\u540E\u518D\u91CD\u8BD5\uFF1B\u8FD9\u6B21\u6CA1\u6709\u8C03\u7528\u6A21\u578B\u3001\u6CA1\u6709\u4EA7\u751F\u8D39\u7528\u3002
+      reason: `\u989D\u5EA6\u4E0D\u8DB3\uFF0C\u5DF2\u505C\u6B62\u8C03\u7528\uFF1A\u672C\u6B21\u9884\u4F30\u9700\u8981 ${needMoney ?? "\u65E0\u6CD5\u9884\u4F30"}\uFF0C\u8FD9\u628A Key \u53EA\u5269 ${remainMoneyText}\u3002\u8BF7\u5728\u63D2\u4EF6\u8BBE\u7F6E\u9875\u70B9\u300C\u5145\u503C\u300D\u6309\u91D1\u989D\u5B8C\u6210\u652F\u4ED8\u5B9D\u4ED8\u6B3E\uFF08\u670D\u52A1\u7AEF\u6CA1\u5F00\u5728\u7EBF\u6536\u6B3E\u65F6\u70B9\u300C\u5BA2\u670D\u300D\u8054\u7CFB\u4EBA\u5DE5\u5145\u503C\uFF09\uFF0C\u5230\u8D26\u540E\u518D\u91CD\u8BD5\uFF1B\u8FD9\u6B21\u6CA1\u6709\u8C03\u7528\u6A21\u578B\u3001\u6CA1\u6709\u4EA7\u751F\u8D39\u7528\u3002
 \u8BF7\u628A\u8FD9\u6761\u539F\u56E0\u5982\u5B9E\u544A\u8BC9\u7528\u6237\uFF08\u989D\u5EA6\u4E0D\u8DB3\u3001\u5148\u5145\u503C\u518D\u91CD\u8BD5\uFF09\uFF0C\u4E0D\u8981\u91CD\u590D\u63D0\u4EA4\uFF0C\u4E5F\u4E0D\u8981\u7528\u5176\u4ED6\u65B9\u5F0F\u7ED5\u5F00\u8FD9\u4E00\u6B65\u7EE7\u7EED\u8C03\u7528\u6A21\u578B\u3002`
     };
   }
@@ -4127,7 +4159,7 @@ async function preflightGate(ctx, config, exec) {
   const auditTax = estimate ? `\u9884\u4F30\u6D88\u8017 ${estimate.tokens.toLocaleString("en-US")} token \u2248 ${needMoney ?? "\u65E0\u6CD5\u9884\u4F30"}\uFF08${needQuota === null ? "\u989D\u5EA6\u672A\u77E5" : `${needQuota.toLocaleString("en-US")} \u989D\u5EA6`}\uFF09` : "\u8FD9\u6B21\u8C03\u7528\u7684\u8D39\u7528\u65E0\u6CD5\u9884\u4F30";
   return {
     kind: "ask",
-    reason: `${resumeLead ? resumeLead.zh : ""}\u4EBA\u5DE5\u786E\u8BA4\uFF1A\u8C03\u7528\u89C6\u9891\u6A21\u578B\uFF08${total}\uFF09\u3002${auditTax}\uFF1B\u672C\u673A Key \u5269\u4F59 ${remainQuota === null ? "\u989D\u5EA6\u8BFB\u4E0D\u5230" : `${remainMoneyText} / ${remainQuota.toLocaleString("en-US")} \u989D\u5EA6`}\u3002`,
+    reason: `${resumeLead ? resumeLead.zh : ""}\u4EBA\u5DE5\u786E\u8BA4\uFF1A\u8C03\u7528\u89C6\u9891\u6A21\u578B\uFF08${total}\uFF09\u3002${auditTax}\uFF1B\u672C\u673A Key \u5269\u4F59 ${unlimited ? "\u4E0D\u9650\u989D\u5EA6\uFF08\u670D\u52A1\u7AEF\u8FD9\u628A Key \u4E0D\u6309\u4F59\u989D\u8BA1\uFF09" : remainQuota === null ? "\u989D\u5EA6\u8BFB\u4E0D\u5230" : `${remainMoneyText} / ${remainQuota.toLocaleString("en-US")} \u989D\u5EA6`}\u3002`,
     displayReason: {
       zh: `${resumeLead ? resumeLead.zh : ""}\u672C\u6B21\u4F1A\u8C03\u7528\u89C6\u9891\u6A21\u578B\uFF1A${total}\uFF1B${costText}\uFF0C${remainZh}\u3002\u70B9\u4E86\u300C\u5141\u8BB8\u300D\u624D\u4F1A\u771F\u6B63\u8C03\u7528\u3002${resumeLead ? resumeLead.tailZh : ""}`,
       en: `${resumeLead ? resumeLead.en : ""}This will call the video model: ${total}. Estimated cost ${needMoney === null ? "unknown" : needMoney}; ${remainEn}. The call runs only after you allow it.` + (resumeLead ? resumeLead.tailEn : "")

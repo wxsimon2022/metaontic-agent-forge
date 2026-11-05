@@ -27,8 +27,10 @@ function harness({ serviceAvailable = true } = {}) {
     estimateUsage: () => { throw new Error('must not estimate'); },
     resolveRegisterApi: () => { throw new Error('must not query service'); },
     isServerIssuedKey: () => false,
+    DEFAULT_REGISTER_TOKEN: 'metaontic-video-register-v1',
+    PLUGIN_VERSION: '3.14.0',
   });
-  for (const name of ['resolveResolution', 'isVolcengine', 'isMetaontic', 'isService', 'isManualKey', 'assertServiceAvailable', 'connectionLabel', 'resolveApiKey', 'resolveBaseUrl', 'resolveSubmitPath', 'resolveQueryPath', 'assertConfigured', 'fetchDeviceQuota', 'remainingCostText', 'segmentContinueLine', 'planSummary', 'preflightGate']) {
+  for (const name of ['resolveResolution', 'isVolcengine', 'isMetaontic', 'isService', 'isManualKey', 'assertServiceAvailable', 'connectionLabel', 'resolveApiKey', 'resolveBaseUrl', 'resolveSubmitPath', 'resolveQueryPath', 'assertConfigured', 'fetchDeviceQuota', 'remainingCostText', 'segmentContinueLine', 'planSummary', 'unlimitedQuota', 'imageQuotaNotice', 'preflightGate']) {
     const start = source.search(new RegExp(`(?:async )?function ${name}\\(`));
     assert.ok(start >= 0, name);
     vm.runInContext(source.slice(start, source.indexOf('\n}', start) + 2), context);
@@ -127,4 +129,77 @@ test('service 模式额度读不到时不拦，仍弹人工确认并说明读不
   const gate = await h.preflightGate({}, config, { name: 'video_generate', arguments: {} });
   assert.equal(gate.kind, 'ask');
   assert.match(gate.displayReason.zh, /\u989d\u5ea6\u8bfb\u4e0d\u5230/);
+});
+
+test('service 模式查额度带登录令牌：服务端现在只认它', async () => {
+  const h = harness(), config = { ...serviceConfig(), loginKey: 'login-token-abc' };
+  const seen = [];
+  h.AbortSignal = AbortSignal;
+  h.resolveRegisterApi = () => 'https://register.example';
+  h.fetch = async (url, init) => {
+    seen.push({ url: String(url), headers: init.headers });
+    return { ok: true, status: 200, text: async () => JSON.stringify({ code: 0, data: { remain_quota: 100 } }) };
+  };
+  const quota = await h.fetchDeviceQuota(config, undefined);
+  assert.equal(quota.status, 'ok');
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].url, 'https://register.example/api/v1/register/quota');
+  assert.equal(seen[0].headers['X-Login-Key'], 'login-token-abc');
+  assert.equal(seen[0].headers['X-Register-Token'], 'metaontic-video-register-v1');
+});
+
+test('service 模式不限额度（unlimited_quota）的 Key 不比较余额、不误拦', async () => {
+  const h = harness(), config = serviceConfig();
+  // 服务端创建不限额度 Key 时 remain_quota 只是占位数字：按它比较会误判成「额度不足、请充值」。
+  h.fetchDeviceQuota = okQuota({ unlimited_quota: true, remain_quota: 5000, remain_amount: 0.01 });
+  h.estimateUsage = estimateOf(1);
+  const gate = await h.preflightGate({}, config, { name: 'video_generate', arguments: {} });
+  assert.equal(gate.kind, 'ask');
+  assert.match(gate.displayReason.zh, /\u4e0d\u9650\u989d\u5ea6/);
+  assert.doesNotMatch(gate.displayReason.zh, /\u989d\u5ea6\u4e0d\u8db3/);
+  assert.doesNotMatch(gate.displayReason.zh, /\u00a50\.01/);
+});
+
+test('service 模式续做确认与额度判断共用一次额度读取', async () => {
+  const h = harness(), config = serviceConfig();
+  const quota = okQuota();
+  let asked = 0;
+  h.fetchDeviceQuota = async () => { asked += 1; return quota(); };
+  h.estimateUsage = estimateOf(0.1);
+  h.readPauseFile = async () => ({ operationState: {}, done: 1, steps: [{ seconds: 15 }] });
+  h.estimateArgsFor = async (_config, _tool, args) => ({ ...args, inputVideoSeconds: 15, remainingPlan: [{ kind: 'extend', seconds: 5 }] });
+  const gate = await h.preflightGate({}, config, { name: 'video_generate', arguments: { resume: '/tmp/progress' } });
+  assert.equal(gate.kind, 'ask');
+  assert.equal(asked, 1, '续做确认与「够不够」只读一次额度');
+  assert.match(gate.displayReason.zh, /\u6574\u6761\u8fd8\u5dee 5 \u79d2/);
+});
+
+const imageCall = { name: 'video_prepare_image', arguments: { operation: 'create_character', prompt: '角色', style: '二维动画' } };
+
+test('service 模式图片调用先看余额，余额为 0 就停下提示充值', async () => {
+  const h = harness(), config = serviceConfig();
+  h.fetchDeviceQuota = okQuota({ remain_quota: 0, remain_amount: 0 });
+  const gate = await h.preflightGate({}, config, imageCall);
+  assert.equal(gate.kind, 'deny');
+  assert.match(gate.reason, /\u989d\u5ea6\u4e0d\u8db3/);
+  assert.match(gate.reason, /\u5145\u503c/);
+  assert.match(gate.reason, /\u6ca1\u6709\u8c03\u7528\u6a21\u578b\u3001\u6ca1\u6709\u4ea7\u751f\u8d39\u7528/);
+});
+
+test('service 模式图片确认带上本机余额，够用就照常确认', async () => {
+  const h = harness(), config = serviceConfig();
+  h.fetchDeviceQuota = okQuota();
+  const gate = await h.preflightGate({}, config, imageCall);
+  assert.equal(gate.kind, 'ask');
+  assert.match(gate.displayReason.zh, /\u672c\u673a Key \u5269\u4f59 \u00a5100\.00/);
+  assert.match(gate.displayReason.zh, /\u5355\u72ec\u8ba1\u8d39/);
+});
+
+test('MetaOntic AI 图片调用不查额度、确认框不带余额', async () => {
+  const h = harness(), config = { connectionMode: 'metaontic', metaonticApiKey: 'm' };
+  h.fetchDeviceQuota = async () => { throw new Error('metaontic must not query service quota'); };
+  const gate = await h.preflightGate({}, config, imageCall);
+  assert.equal(gate.kind, 'ask');
+  assert.doesNotMatch(gate.displayReason.zh, /\u4f59\u989d|\u989d\u5ea6/);
+  assert.match(gate.displayReason.zh, /\u5355\u72ec\u8ba1\u8d39/);
 });
