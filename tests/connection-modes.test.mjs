@@ -28,7 +28,7 @@ function harness({ serviceAvailable = true } = {}) {
     resolveRegisterApi: () => { throw new Error('must not query service'); },
     isServerIssuedKey: () => false,
   });
-  for (const name of ['resolveResolution', 'isVolcengine', 'isMetaontic', 'isService', 'isManualKey', 'assertServiceAvailable', 'connectionLabel', 'resolveApiKey', 'resolveBaseUrl', 'resolveSubmitPath', 'resolveQueryPath', 'assertConfigured', 'fetchDeviceQuota', 'remainingCostText', 'segmentContinueLine', 'preflightGate']) {
+  for (const name of ['resolveResolution', 'isVolcengine', 'isMetaontic', 'isService', 'isManualKey', 'assertServiceAvailable', 'connectionLabel', 'resolveApiKey', 'resolveBaseUrl', 'resolveSubmitPath', 'resolveQueryPath', 'assertConfigured', 'fetchDeviceQuota', 'remainingCostText', 'segmentContinueLine', 'planSummary', 'preflightGate']) {
     const start = source.search(new RegExp(`(?:async )?function ${name}\\(`));
     assert.ok(start >= 0, name);
     vm.runInContext(source.slice(start, source.indexOf('\n}', start) + 2), context);
@@ -73,6 +73,8 @@ for (const connectionMode of ['metaontic', 'volcengine']) test(`${connectionMode
   const h = harness(), config = { connectionMode, metaonticApiKey: 'm', volcengineApiKey: 'v' };
   assert.equal((await h.fetchDeviceQuota(config)).status, 'unknown');
   assert.equal((await h.remainingCostText(config, {}, [])).remain, '');
+  // 手填 Key 的接入方式不判断额度：预检任何一步都不该去查这把 Key 的额度。
+  h.fetchDeviceQuota = async () => { throw new Error('metaontic/volcengine must not query service quota'); };
   for (const name of ['video_generate', 'video_extend']) {
     const gate = await h.preflightGate({}, config, { name, arguments: { resume: '/tmp/progress' } });
     assert.equal(gate.kind, 'ask');
