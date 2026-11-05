@@ -142,3 +142,5 @@ Windows解压目录安装在更新时出现空目录/locale缺失：先核对成
 回收默认发行版与标签各保留最近10个（--keep / --keep-tags，后者默认跟随前者，两条保留线取并集）；Gitee标签只能用git push删引用，Gitee操作需要GITEE_TOKEN。
 
 分段收尾与重复逻辑：video_generate 与 video_extend 的分段循环共用 workflow/segment-run.ts（结果落盘、中断收尾、暂停说明、merge:false、下载合并收尾），结果文案共用 tools/results.ts 的 renderVideoResult/renderResult（同一实现在 RENDER_WORDING 里分工具措辞），改措辞只改一处，不要再各自复制一份。media/merge.ts 的分段下载与 ffprobe 探测并发跑（mapLimit，上限 SEGMENT_TASK_CONCURRENCY=4），跑完仍按段号顺序处理，因为「累计成片」识别依赖 files 的推进顺序；下载失败仍按段号取最靠前的那一段报错。参考图适配缓存在系统临时目录只增不减，写入成功后调 pruneReferenceCache（7 天、上限 200 个，5 分钟内带 .fit- 的临时文件不删）；日志目录按天缓存 mkdir，失败不记缓存以便下次重试。
+
+宿主插件页的「详细介绍」不可关闭，只能靠包里没有文档来隐藏：Harness 的插件页（组合包页面）会读安装目录里的介绍文档，顺序是 locale/<界面语言>.json 的 meta.detail → 包内 README.md / readme.md / Readme.md / README.markdown / README（README.en.md 不在名单里，也没有任何开关或布尔配置能关掉这块）；找到就整篇渲染，找不到才整块不显示，因此成品包用 scripts/strip-package-readme.py 在打包后裁掉 package/README.md（release.mjs 与 pack-test.mjs 已接入，放在算 sha256/Windows ZIP 之前），仓库首页的 README 保持不动；本地 link 安装仍读工作区，会照旧显示，要看隐藏效果必须装成品包。给页面换成简短介绍才用 locale 的 meta.detail（文件也得进 files）。

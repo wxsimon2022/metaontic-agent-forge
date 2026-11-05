@@ -94,6 +94,9 @@ if (!TEST_VERSION.test(version)) {
     run(process.execPath, [npmCli, 'pack', '--pack-destination', out, '--cache', path.join(root, '.local/npm-cache')]);
     const file = path.join(out, `metaontic-video-${version}.tgz`);
     if (!existsSync(file)) throw Error(`未生成 ${file}`);
+    // 包内 README 会被宿主插件页当成「详细介绍」渲染，成品包统一裁掉（放在算 sha256 之前）。
+    const python = process.env.PYTHON || (process.platform === 'win32' ? 'py' : 'python3');
+    run(python, [...(python === 'py' ? ['-3'] : []), 'scripts/strip-package-readme.py', file]);
     const bytes = readFileSync(file);
     const localHash = digest(bytes);
     console.log(`\n测试包：${file}`);

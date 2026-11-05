@@ -1688,7 +1688,6 @@
       "locale/*.json",
       "icon.svg",
       "logo.svg",
-      "README.md",
       "README.en.md",
       "MetaOnticVideo\u4F7F\u7528\u8BF4\u660E\u4E66.md",
       "MetaOnticVideo\u4F7F\u7528\u8BF4\u660E\u4E66.pdf",
