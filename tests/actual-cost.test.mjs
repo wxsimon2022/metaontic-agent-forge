@@ -18,12 +18,17 @@ test('final actual_quota used once, never summed with precharge, adjustment or d
  assert.equal(api.settledTaskCosts([row(2,0)],['task-a'])[0].quota,0);
  assert.equal(api.settledTaskCosts([row(1,null)],['task-a'])[0].status,'pending');
 });
-test('A/B use the video credential and same base; public conversion has no Key; correct amount returned',async()=>{
- for(const mode of ['service','metaontic']){
+test('MetaOntic AI uses the video credential and same base; public conversion has no Key; correct amount returned',async()=>{
+ for(const mode of ['metaontic']){
  const calls=[];await mock(async(url,opts)=>{calls.push([url,opts]);return Response.json(url.endsWith('/api/status')?settings:{success:true,data:[row(2,231470),row(1)]});},async()=>{
  const r=await api.fetchActualCost({...config,connectionMode:mode},['task-a']);assert.equal(r.status,'settled');assert.equal(r.amount,3.379462);assert.equal(r.currency,'CNY');
- assert.equal(calls[0][0],'https://relay.example/api/log/token');assert.equal(calls[0][1].headers.Authorization,`Bearer ${mode==='service'?'video-a':'video-b'}`);assert.equal(calls[1][1].headers.Authorization,undefined);assert.equal(calls[0][1].redirect,'error');
+ assert.equal(calls[0][0],'https://relay.example/api/log/token');assert.equal(calls[0][1].headers.Authorization,'Bearer video-b');assert.equal(calls[1][1].headers.Authorization,undefined);assert.equal(calls[0][1].redirect,'error');
  });}
+});
+test('service mode stops before settlement queries while it is unavailable',async()=>{
+ const calls=[];
+ const r=await mock(async(url,opts)=>{calls.push([url,opts]);return Response.json({success:true,data:[]});},async()=>api.fetchActualCost({...config,connectionMode:'service'},['task-a']));
+ assert.equal(r.status,'pending');assert.equal(r.amount,null);assert.equal(calls.length,0);
 });
 test('missing settlement, auth failure and missing conversion never turn precharge into actual money',async()=>{
  await mock(async()=>Response.json({success:true,data:[row(1)]}),async()=>{

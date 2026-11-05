@@ -42,7 +42,7 @@ async function fixture(run) {
  const h={dir,config,calls,tools,ctx,flags,body,get asks(){return asks;},get images(){return imageCount;},get videos(){return videoCount;},exec:{agent:{}},read:async d=>JSON.parse(await readFile(path.join(d,'paused-plan.json'),'utf8'))};
  try {await run(h);} finally {globalThis.fetch=oldFetch;if(oldHome===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=oldHome;}
 }
-for(const mode of ['service','metaontic']) test(`${mode}: convert, pause for review, then one durable video retry`,()=>fixture(async h=>{
+for(const mode of ['metaontic']) test(`${mode}: convert, pause for review, then one durable video retry`,()=>fixture(async h=>{
  h.config.connectionMode=mode;
  const state={}; const saved=[];
  const progress={state,saveState:async()=>saved.push(JSON.parse(JSON.stringify(state))),ctx:h.ctx,exec:h.exec};
@@ -54,7 +54,7 @@ for(const mode of ['service','metaontic']) test(`${mode}: convert, pause for rev
  await api.runTask(h.config,h.body,undefined,progress);assert.equal(h.videos,2);assert.equal(h.images,1);
  const imagePost=h.calls.find(c=>c.url.endsWith('/tasks/doubao'));
  assert.deepEqual(imagePost.body.image,['https://example.com/original.png']);assert.equal(imagePost.body.size,'2048x2048');assert.equal(imagePost.body.n,1);
- assert.equal(imagePost.key,mode==='service'?'Bearer a':'Bearer b');
+ assert.equal(imagePost.key,'Bearer b');
  const retried=h.calls.filter(c=>c.body?.model==='video')[1].body;
  assert.equal(retried.content[1].role,'first_frame');assert.match(retried.content[1].image_url.url,/cartoon/);
  assert.ok(saved.some(s=>s.images&&Object.values(s.images).some(i=>i.taskId&&!i.imageUrl)));
@@ -159,10 +159,10 @@ test('missing independent image key stops before network and shared mode ignores
  assert.ok(h.calls.every(c=>c.key==='Bearer b'));
 }));
 
-test('A always shares issued key even when legacy independent image configuration remains',()=>fixture(async h=>{
+test('service method is refused before any image traffic while it is temporarily unavailable',()=>fixture(async h=>{
  h.config.connectionMode='service';h.config.imageUseVideoKey=false;h.config.imageApiKey='ignored';
- await api.prepareImageTool(h.config).execute({image:'https://example.com/ref.png',style:'动画'},{});
- assert.ok(h.calls.every(c=>c.key==='Bearer a'));
+ await assert.rejects(api.prepareImageTool(h.config).execute({image:'https://example.com/ref.png',style:'动画'},{}),/暂时不可用/);
+ assert.equal(h.calls.length,0);
 }));
 
 test('B recovery uses image key only for image traffic and video key for original/retry/status',()=>fixture(async h=>{
@@ -310,7 +310,7 @@ for(const resolution of ['480p','720p']) test(`script and approval continuation 
  assert.ok(Math.abs(gate.usd*7.3-script.plugin.cny)<0.0001);
 }));
 
-for(const mode of ['service','metaontic','volcengine']) test(`${mode}: initial character images persist through all four 60s segments and resume`,()=>fixture(async h=>{
+for(const mode of ['metaontic','volcengine']) test(`${mode}: initial character images persist through all four 60s segments and resume`,()=>fixture(async h=>{
  h.flags.videoReject=false;h.config.connectionMode=mode;h.config.volcengineApiKey='c';
  const tool=h.tools.get('video_generate');
  const images=['https://example.com/face.png','https://example.com/body.png'];

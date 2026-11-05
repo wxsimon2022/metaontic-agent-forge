@@ -3,9 +3,11 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 const source = sourceOf('config', 'providers/connection', 'workflow/approval');
-function harness() {
+function harness({ serviceAvailable = true } = {}) {
   const context = vm.createContext({ characterChoiceGate: async () => null,
     METAONTIC_BASE_URL: 'https://ai.bileego.com',
+    SERVICE_MODE_AVAILABLE: serviceAvailable,
+    SERVICE_UNAVAILABLE_MESSAGE: 'MetaOnticVideo 服务端方式暂时不可用：请在插件设置页把「接入方式」改为 MetaOntic AI 或火山引擎直连，填好 Key 保存后重试。',
     ref: (config, key, fallback) => config[key] ?? fallback,
     envValue: () => '',
     relayPreset: () => ({ baseUrl: 'https://ai.bileego.com', submitPath: '/doubao/api/v3/contents/generations/tasks', queryPath: '/doubao/api/v3/contents/generations/tasks/{task_id}' }),
@@ -21,13 +23,32 @@ function harness() {
     resolveRegisterApi: () => { throw new Error('must not query service'); },
     isServerIssuedKey: () => false,
   });
-  for (const name of ['resolveResolution', 'isVolcengine', 'isMetaontic', 'isManualKey', 'connectionLabel', 'resolveApiKey', 'resolveBaseUrl', 'resolveSubmitPath', 'resolveQueryPath', 'assertConfigured', 'fetchDeviceQuota', 'remainingCostText', 'segmentContinueLine', 'preflightGate']) {
+  for (const name of ['resolveResolution', 'isVolcengine', 'isMetaontic', 'isService', 'isManualKey', 'assertServiceAvailable', 'connectionLabel', 'resolveApiKey', 'resolveBaseUrl', 'resolveSubmitPath', 'resolveQueryPath', 'assertConfigured', 'fetchDeviceQuota', 'remainingCostText', 'segmentContinueLine', 'preflightGate']) {
     const start = source.search(new RegExp(`(?:async )?function ${name}\\(`));
     assert.ok(start >= 0, name);
     vm.runInContext(source.slice(start, source.indexOf('\n}', start) + 2), context);
   }
   return context;
 }
+test('service mode is refused end to end while it is temporarily unavailable', async () => {
+  const h = harness({ serviceAvailable: false }), config = { connectionMode: 'service', apiKey: 'issued', deviceId: 'd', deviceSecret: 's', registerEmail: 'a@b.c' };
+  assert.equal(h.isService(config), true);
+  assert.equal(h.resolveApiKey(config), '');
+  assert.throws(() => h.assertServiceAvailable(config), /暂时不可用/);
+  assert.throws(() => h.assertConfigured(config, 'issued'), /暂时不可用/);
+  assert.equal(h.assertServiceAvailable({ connectionMode: 'metaontic' }), undefined);
+  const quota = await h.fetchDeviceQuota(config, undefined);
+  assert.equal(quota.status, 'unknown');
+  assert.match(quota.reason, /暂时不可用/);
+  const gate = await h.preflightGate({}, config, { name: 'video_generate', arguments: {} });
+  assert.equal(gate.kind, 'deny');
+  assert.match(gate.reason, /暂时不可用/);
+});
+test('service mode keeps its own key rules when it is available', () => {
+  const h = harness(), config = { connectionMode: 'service', apiKey: 'issued' };
+  assert.equal(h.resolveApiKey(config), 'issued');
+  assert.equal(h.assertServiceAvailable(config), undefined);
+});
 test('MetaOntic key is independent; relay routes match service and secrets do not fall back', () => {
   const h = harness(), config = { connectionMode: 'metaontic', metaonticApiKey: ' manual ', apiKey: 'service', volcengineApiKey: 'volcano' };
   assert.equal(h.resolveApiKey(config), 'manual');

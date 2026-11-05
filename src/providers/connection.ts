@@ -1,5 +1,6 @@
 /** providers/connection：从宿主入口拆出的独立职责模块。 */
 import { RELAY_PRESET, ref, KEY_ORIGIN_REGISTER, envValue, DEFAULT_REGISTER_API } from '../config.js';
+import { SERVICE_MODE_AVAILABLE, SERVICE_UNAVAILABLE_MESSAGE } from '../connection-defaults.js';
 
 export function relayPreset() {
   // 只走 New API 中转站，路径/模型都取这一份预设。
@@ -18,6 +19,16 @@ export function isManualKey(config) {
   return isVolcengine(config) || isMetaontic(config);
 }
 
+export function isService(config) {
+  return ref(config, 'connectionMode', 'service') === 'service';
+}
+
+/** A 服务端方式停用期间，任何按该方式发起的连接都直接拒绝。 */
+export function assertServiceAvailable(config) {
+  if (SERVICE_MODE_AVAILABLE || !isService(config)) return;
+  throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
+}
+
 export function connectionLabel(config) {
   return isMetaontic(config) ? 'MetaOntic AI' : '火山引擎';
 }
@@ -25,6 +36,8 @@ export function connectionLabel(config) {
 export function resolveApiKey(config) {
   if (isMetaontic(config)) return String(ref(config, 'metaonticApiKey', '')).trim();
   if (isVolcengine(config)) return String(ref(config, 'volcengineApiKey', '')).trim();
+  // 停用期间不交出这把 Key，任何绕开 assertServiceAvailable 的路径也不会带着它发请求。
+  if (!SERVICE_MODE_AVAILABLE) return '';
   // 只认配置里那一把——它只能由设置页「登录」时服务端下发写入，
   // 不读环境变量、也不认手填，避免用到没绑设备 / 没额度的野 Key。
   return String(ref(config, 'apiKey', '')).trim();
@@ -93,9 +106,10 @@ export function assertConfigured(config, apiKey) {
     return;
   }
   if (isVolcengine(config)) {
-    if (!apiKey) throw new Error('请在 C 火山引擎模式中配置火山 API Key。');
+    if (!apiKey) throw new Error('请在火山引擎直连模式中配置火山 API Key。');
     return;
   }
+  assertServiceAvailable(config);
   if (!apiKey) {
     throw new Error(
       '未配置 API Key（重置后需重新登录，无需重装或重启）：打开「插件 → 已安装插件 → MetaOnticVideo → 查看」，点「登录」领一把——'

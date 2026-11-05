@@ -50,7 +50,7 @@ test('published host preserves schema, tool registration, live configuration and
   assert.equal(host.disposed(), 9);
 });
 
-for (const mode of ['service', 'metaontic', 'volcengine']) test(`${mode}: bundled tools submit, query, pause, resume and extend through split modules`, async () => {
+for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools submit, query, pause, resume and extend through split modules`, async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'mv-integration-'));
   const previousFetch = globalThis.fetch;
   const previousHome = process.env.DSH_HOME;
@@ -127,6 +127,35 @@ for (const mode of ['service', 'metaontic', 'volcengine']) test(`${mode}: bundle
     assert.equal(extended.status, 'succeeded');
     assert.equal(submissions.length, 4);
     assert.equal(submissions[3].content.find(part => part.type === 'video_url').video_url.url, 'https://media.invalid/task-1.mp4');
+    host.dispose();
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousHome === undefined) delete process.env.DSH_HOME;
+    else process.env.DSH_HOME = previousHome;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+// 服务端方式（service）暂时停用：确认框直接拒绝，也不会真的提交任务。
+test('service: bundled host refuses the temporarily unavailable server method', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'mv-integration-off-'));
+  const previousFetch = globalThis.fetch;
+  const previousHome = process.env.DSH_HOME;
+  let requests = 0;
+  process.env.DSH_HOME = directory;
+  globalThis.fetch = async () => { requests++; return Response.json({}); };
+  try {
+    const config = {
+      connectionMode: 'service', apiKey: 'test-key', keyOrigin: 'register', deviceId: 'd', deviceSecret: 's', registerEmail: 'a@b.c',
+      deviceFingerprint: 'f', model: 'doubao-seedance-2-0-mini-260615', outputDir: directory,
+      ffmpegBinary: '/missing/ffmpeg', ffprobeBinary: '/missing/ffprobe',
+    };
+    const host = harness(config, directory);
+    const gate = await host.gate({ name: 'video_generate', arguments: { duration: 5 } });
+    assert.equal(gate.kind, 'deny');
+    assert.match(gate.reason, /暂时不可用/);
+    await assert.rejects(host.tools.get('video_generate').execute({ prompt: 'A title', duration: 5 }, { callId: 'off', agent: {} }), /暂时不可用/);
+    assert.equal(requests, 0);
     host.dispose();
   } finally {
     globalThis.fetch = previousFetch;

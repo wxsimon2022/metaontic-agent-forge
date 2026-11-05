@@ -1,6 +1,7 @@
 import { characterChoiceGate } from './character-choice.js';
 /** workflow/approval：从宿主入口拆出的独立职责模块。 */
 import { isManualKey, connectionLabel, resolveRegisterApi, assertConfigured, resolveApiKey, resolveModel } from '../providers/connection.js';
+import { SERVICE_MODE_AVAILABLE, SERVICE_UNAVAILABLE_MESSAGE } from '../connection-defaults.js';
 import { estimateSteps, formatMoney, estimatePlan, estimateUsage } from './costs.js';
 import { finiteNumber, clampInteger } from '../utils/validation.js';
 import { ref, DEFAULT_USD_EXCHANGE_RATE, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, MIN_SECONDS, MAX_SEGMENTS, DEFAULT_QUOTA_PER_UNIT, resolveResolution } from '../config.js';
@@ -58,6 +59,7 @@ export function segmentContinueLine({ toolName = 'video_generate', done, lastSec
  */
 export async function fetchDeviceQuota(config, signal) {
   if (isManualKey(config)) return { status: 'unknown', reason: `${connectionLabel(config)}费用和余额请在渠道控制台查看` };
+  if (!SERVICE_MODE_AVAILABLE) return { status: 'unknown', reason: SERVICE_UNAVAILABLE_MESSAGE };
   const api = resolveRegisterApi(config);
   const deviceId = String(ref(config, 'deviceId', '')).trim();
   const deviceSecret = String(ref(config, 'deviceSecret', '')).trim();
@@ -329,6 +331,8 @@ export async function preflightGate(ctx, config, exec) {
   }
 
   const args = exec.arguments && typeof exec.arguments === 'object' ? exec.arguments : {};
+  // A 服务端方式停用期间先拦住：不让用户走完脚本审核和确认，再在提交阶段失败。
+  if (!SERVICE_MODE_AVAILABLE && !isManualKey(config)) return { kind: 'deny', reason: SERVICE_UNAVAILABLE_MESSAGE };
   const characterChoice = await characterChoiceGate(ctx, config, exec, args);
   if (characterChoice) return characterChoice;
 

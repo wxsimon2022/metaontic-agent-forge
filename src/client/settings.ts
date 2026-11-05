@@ -1,4 +1,5 @@
 import { createAccountActions } from './account.js';
+import { SERVICE_MODE_AVAILABLE } from '../connection-defaults.js';
 import { createUpdateActions, renderUpdateNotice, formatReleaseTime } from './updates.js';
 /** 浏览器端 settings：由入口注入宿主 React 与共享依赖。 */
 import packageInfo from '../../package.json';
@@ -23,6 +24,10 @@ export function createSettingsPage(deps: any) {
 // A 服务端模式的使用记录暂时影藏：接口未就绪，先不渲染这张卡，也不再轮询。
 // 恢复时把这一项改回 true 即可，额度卡片与其余设置不受影响。
 const SHOW_USAGE_RECORD = false;
+// 接入方式下拉暂时不提供 A 服务端（service），只留 config 里那两个候选。
+// 旧配置仍是 service 时用一个隐藏项显示当前取值：列表里选不到它，也不会显示成别的渠道。
+// 恢复（SERVICE_MODE_AVAILABLE 改回 true）时把 'service' 补回 SELECTS.connectionMode 即可。
+const HIDDEN_CONNECTION_MODES = ['service'];
 function makePage({ form, t, manager }) {
       return function ConfigPage(props) {
         const snapshot = useSnapshot(form);
@@ -46,7 +51,7 @@ function makePage({ form, t, manager }) {
         const connectionBusy = React.useRef(false);
         const saveInFlight = React.useRef(false);
         function serviceActive() {
-          return !connectionBusy.current && (form.getSnapshot().value?.connectionMode || 'service') === 'service';
+          return SERVICE_MODE_AVAILABLE && !connectionBusy.current && (form.getSnapshot().value?.connectionMode || 'service') === 'service';
         }
         const [registerStatus, setRegisterStatus] = React.useState('idle');
         const [registerMessage, setRegisterMessage] = React.useState('');
@@ -150,7 +155,7 @@ function makePage({ form, t, manager }) {
         // 但刚点过「重置插件」的不算——那时要保持未登录，等用户自己再点「登录」。
         const restoreTried = React.useRef(false);
         React.useEffect(() => {
-          if (restoreTried.current) return;
+          if (!SERVICE_MODE_AVAILABLE || restoreTried.current) return;
           restoreTried.current = true;
           const snap = form.getSnapshot() || {};
           if (((snap.value || {}).connectionMode || 'service') !== 'service') return;
@@ -335,8 +340,9 @@ function makePage({ form, t, manager }) {
             const options = SELECTS[field.key] || [];
             // 当前值不在候选表里（例如服务端刚换的型号）就把它补进去，避免下拉里看不到自己现在的取值
             const hiddenModel = field.key === 'model' && /seedance-2(?:-5|\.5)/i.test(String(current || ''));
+            const hiddenMode = field.key === 'connectionMode' && HIDDEN_CONNECTION_MODES.includes(String(current || ''));
             const legacyMerge = field.key === 'mergeMode' && current === 'seamless';
-            const list = current && !options.includes(current) && !hiddenModel && !legacyMerge ? [...options, current] : options;
+            const list = current && !options.includes(current) && !hiddenModel && !hiddenMode && !legacyMerge ? [...options, current] : options;
             return h('select', {
               id,
               'data-field': field.key,
@@ -346,6 +352,8 @@ function makePage({ form, t, manager }) {
               onChange: (event) => edit(field.key, event.target.value),
             }, [
               hiddenModel ? h('option', { key: 'hidden-current', value: current, hidden: true }, t('modelHiddenCurrent')) : null,
+              // 停用期间直接标出不可用；恢复后这一支不会走到（'service' 会回到候选里）。
+              hiddenMode ? h('option', { key: 'hidden-current', value: current, hidden: true }, t(SERVICE_MODE_AVAILABLE ? current : 'serviceUnavailable')) : null,
               ...list.map((option) => h('option', { key: option, value: option }, optionLabel(t, field.key, option))),
             ]);
           }
@@ -390,7 +398,7 @@ function makePage({ form, t, manager }) {
         const hints = {
           connectionMode: selectedMode === 'metaontic'
             ? [t('connectionMetaonticHint'), ' ', h('a', { key: 'metaontic-register', href: 'https://ai.bileego.com/', target: '_blank', rel: 'noopener noreferrer', style: { textDecoration: 'underline' } }, t('connectionMetaonticRegister'))]
-            : t('connectionModeHint'),
+            : serviceMode && !SERVICE_MODE_AVAILABLE ? t('connectionServiceUnavailable') : t('connectionModeHint'),
           metaonticApiKey: t('metaonticKeyHint'),
           volcengineApiKey: t('volcengineKeyHint'),
           model: t('modelHint'),
@@ -577,7 +585,7 @@ function makePage({ form, t, manager }) {
           ]
           : null;
         // 没登录就没有额度可言：整块不渲染（跟使用记录一个规矩）
-        const quotaBox = serviceMode && keyReady ? h('div', {
+        const quotaBox = serviceMode && SERVICE_MODE_AVAILABLE && keyReady ? h('div', {
           key: 'quota',
           'data-field': 'quota',
           className: 'mov-card mov-quota-compact',
@@ -826,7 +834,7 @@ function makePage({ form, t, manager }) {
         ]);
 
         // 有 Key 就整块不渲染（连标题、提示文字都没有），页面上只剩配置项 + 额度卡片。
-        const registerBox = keyReady || !serviceMode ? null : h('div', {
+        const registerBox = keyReady || !serviceMode || !SERVICE_MODE_AVAILABLE ? null : h('div', {
           key: 'register',
           className: 'mov-card',
           style: { gap: 10 },

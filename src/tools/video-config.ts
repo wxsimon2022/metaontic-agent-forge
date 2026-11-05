@@ -1,4 +1,4 @@
-import { connectionDefaults } from '../connection-defaults.js';
+import { connectionDefaults, SERVICE_MODE_AVAILABLE, SERVICE_UNAVAILABLE_MESSAGE } from '../connection-defaults.js';
 /** tools/video-config：从宿主入口拆出的独立职责模块。 */
 import { ref } from '../config.js';
 import { isMetaontic, isVolcengine, resolveBaseUrl, resolveSubmitPath, relayPreset, resolveModel, resolveApiKey, isServerIssuedKey } from '../providers/connection.js';
@@ -59,6 +59,7 @@ export function normalizeConnectionPatch(config, input) {
   if (patch.connectionMode === undefined) return { ...patch, ...connectionDefaults({ ...Object.fromEntries(Object.keys(config || {}).map(key => [key, ref(config, key, undefined)])), ...patch }) };
   const mode = patch.connectionMode;
   if (!['service', 'metaontic', 'volcengine'].includes(mode)) throw new Error('未知接入方式');
+  if (mode === 'service' && !SERVICE_MODE_AVAILABLE) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
   const inactive = mode === 'volcengine'
     ? ['metaonticApiKey', 'apiKey', 'keyOrigin', 'baseUrl', 'submitPath', 'queryPath', 'registerEmail', 'deviceId', 'deviceSecret', 'registerApi', 'registerToken']
     : mode === 'metaontic'
@@ -111,9 +112,14 @@ export function configTool(config, settings) {
           enum: ['get', 'set'],
           description: 'get=查看当前配置；set=修改配置（至少给一个要改的字段）。',
         },
-        connectionMode: { type: 'string', enum: ['service', 'metaontic', 'volcengine'], description: 'A 服务端 / B MetaOntic AI / C 火山直连' },
+        connectionMode: {
+          type: 'string', enum: ['service', 'metaontic', 'volcengine'],
+          description: SERVICE_MODE_AVAILABLE
+            ? '接入方式：MetaOntic AI / 火山引擎直连 / service 服务端（邮箱登录领 Key）'
+            : '接入方式：MetaOntic AI（metaontic）/ 火山引擎直连（volcengine）；service 服务端方式暂时不可用，不要设置',
+        },
         metaonticApiKey: { type: 'string', description: 'MetaOntic AI 手动 API Key，无需登录' },
-        volcengineApiKey: { type: 'string', description: 'C 模式火山 API Key' },
+        volcengineApiKey: { type: 'string', description: '火山引擎直连模式的火山 API Key' },
         baseUrl: { type: 'string', description: '基础地址，即中转站站址，例如 https://ai.bileego.com。' },
         registerEmail: { type: 'string', description: '领 Key 用的邮箱（账号）；注册要邮箱验证码，一个邮箱只发一把。' },
         registerApi: { type: 'string', description: '插件服务地址（领 Key / 查额度 / 使用记录）；留空用内置域名。' },
