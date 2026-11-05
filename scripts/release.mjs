@@ -21,18 +21,21 @@ export function repository(value, host) {
 }
 /** 版本更新内容的字数上限：整篇合计（分类前缀不计），只写用户能感知的结论。 */
 export const NOTES_LIMIT=100;
+/** 版本更新内容只展示这两类；修复并入「优化」，不单独列一节。 */
+export const NOTES_CATEGORIES=['新增','优化'];
 /** 更新说明实际字数：按分类前缀后的正文计，空格也算一个字。 */
 export function notesLength(items) {
   return (items||[]).reduce((total,item)=>total+String(item||'').replace(/^(新增|优化|修复)：/,'').length,0);
 }
 export function notesFor(version, items) {
-  if (!validVersion(version) || !Array.isArray(items) || !items.length || items.some(x=>typeof x!=='string'||! /^(新增|优化|修复)：\S/.test(x)||/[\r\n]/.test(x))) throw Error('更新说明必须为完整的新增/优化/修复条目');
+  if (items.some(x=>typeof x==='string'&&x.startsWith('修复：'))) throw Error('版本更新内容只展示「新增」与「优化」：修复项请并入「优化」条目，不单列修复分类');
+  if (!validVersion(version) || !Array.isArray(items) || !items.length || items.some(x=>typeof x!=='string'||! /^(新增|优化)：\S/.test(x)||/[\r\n]/.test(x))) throw Error('更新说明必须为完整的新增/优化条目');
   const length=notesLength(items);
   if(length>NOTES_LIMIT) throw Error(`更新说明共 ${length} 字，超过 ${NOTES_LIMIT} 字上限；版本更新内容只写用户能感知的结论，实现细节留在提交与工程记录里`);
-  return ['新增','优化','修复'].filter(c=>items.some(x=>x.startsWith(c+'：'))).map(c=>({category:c,items:items.filter(x=>x.startsWith(c+'：')).map(x=>x.slice(c.length+1))}));
+  return NOTES_CATEGORIES.filter(c=>items.some(x=>x.startsWith(c+'：'))).map(c=>({category:c,items:items.filter(x=>x.startsWith(c+'：')).map(x=>x.slice(c.length+1))}));
 }
 const help = `一键发布（准备好完整说明与指南后执行）：
-说明要求：新增/优化/修复合计不超过 ${NOTES_LIMIT} 字，只写用户能感知的结论。
+说明要求：只写「新增」与「优化」两类（修复并入优化），合计不超过 ${NOTES_LIMIT} 字。
   node scripts/release.mjs 3.13.3 --notes release-plan.json
   node scripts/release.mjs 3.13.3 --notes release-plan.json --dry-run
   node scripts/release.mjs 3.13.3 --resume
