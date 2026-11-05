@@ -587,30 +587,15 @@ function makePage({ form, t, manager }) {
         const quotaSymbol = quota && quota.currency_symbol ? quota.currency_symbol : '¥';
         const money = (field) => `${quotaSymbol}${formatMoney(quota ? quota[field] : 0)}`;
         const quotaReady = quotaStatus === 'ok' && quota;
-        // 没读到额度时还是给一句话（读取中 / 还没领 Key），读到了就摊成三个数字块。
+        // 没读到余额时给一句话（读取中 / 还没领 Key），读到了就显示金额。
         const quotaFallback = keyReady ? t('quotaLoading') : t('quotaNoKey');
-        // 余额：读到才占一块；服务端没开钱包（off）时整块不出现
+        // 服务端开没开钱包（充值上下限、到账提示要用）：off 时充值入口整体不出现
         const walletReady = walletStatus === 'ok' && wallet && wallet.enabled;
         const walletSymbol = wallet && wallet.currency_symbol ? wallet.currency_symbol : quotaSymbol;
-        const walletStats = walletReady
-          ? [{
-            key: 'balance',
-            label: t('walletBalance'),
-            value: `${walletSymbol}${formatMoney(Number(wallet.balance) || 0)}`,
-            color: TOKENS.primaryFill,
-          }]
-          : [];
-        const quotaStats = quotaReady
-          ? [
-            {
-              key: 'remain',
-              label: t('quotaRemain'),
-              value: quota.unlimited_quota ? t('quotaUnlimited') : money('remain_amount'),
-              color: TOKENS.success,
-            },
-            { key: 'used', label: t('quotaUsed'), value: money('used_amount'), color: TOKENS.text },
-            { key: 'total', label: t('quotaTotal'), value: money('total_amount'), color: TOKENS.muted },
-          ]
+        // 余额就是中转站那把 Key 的额度（充值回调直接给 Key 加额度）：只显示这一个数，
+        // 不再单独摆服务端的钱包余额，免得两个数字对不上。
+        const balanceText = quotaReady
+          ? (quota.unlimited_quota ? t('quotaUnlimited') : money('remain_amount'))
           : null;
         // 没登录就没有额度可言：整块不渲染（跟使用记录一个规矩）
         const quotaBox = serviceMode && SERVICE_MODE_AVAILABLE && keyReady ? h('div', {
@@ -619,18 +604,15 @@ function makePage({ form, t, manager }) {
           className: 'mov-card mov-quota-compact',
         }, [
           h('div', { key: 'head', className: 'mov-card-head' }, [
-            h('span', { key: 'title', className: 'mov-card-title' }, t('quotaTitle')),
+            h('span', { key: 'title', className: 'mov-card-title' }, t('walletBalance')),
           ]),
-          (walletStats.length || quotaStats)
-            ? h('div', { key: 'text', 'data-field': 'quotaValue', className: 'mov-stats' },
-              [...walletStats, ...(quotaStats || [])].map((item) => h('div', { key: item.key, className: 'mov-stat' }, [
-                h('span', { key: 'label', className: 'mov-stat-label' }, item.label),
-                h('span', {
-                  key: 'value',
-                  className: 'mov-stat-value',
-                  style: { color: item.color },
-                }, item.value),
-              ])))
+          balanceText !== null
+            ? h('span', {
+              key: 'text',
+              'data-field': 'quotaValue',
+              className: 'mov-stat-value',
+              style: { color: TOKENS.primaryFill },
+            }, balanceText)
             : h('span', {
               key: 'text',
               'data-field': 'quotaValue',
