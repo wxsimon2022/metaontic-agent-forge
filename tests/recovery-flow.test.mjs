@@ -158,6 +158,8 @@ for (const name of ['video_generate', 'video_extend']) test(`${name}: final-segm
 test('service preflight estimates only the segment that this call will execute', async () => {
   const calls = [];
   const context = vm.createContext({ characterChoiceGate: async () => null,
+    // 服务端方式的估价口径：插件已恢复该方式，这里直接按可用态注入。
+    SERVICE_MODE_AVAILABLE: true, SERVICE_UNAVAILABLE_MESSAGE: 'unavailable',
     resumeDirOf: value => value || '', approvalPolicy: () => 'ask', ffmpegConsentGate: async () => null, paymentGate: async () => null,
     isManualKey: () => false, estimateArgsFor: async () => ({ remainingPlan: [{ kind: 'extend', seconds: 7 }, { kind: 'extend', seconds: 12 }] }),
     estimatePlan: () => { throw new Error('must use saved plan'); },

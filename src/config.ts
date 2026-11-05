@@ -1,11 +1,14 @@
-import { METAONTIC_BASE_URL } from './connection-defaults.js';
+import { METAONTIC_BASE_URL, SERVICE_MODE_AVAILABLE } from './connection-defaults.js';
 /** config：从宿主入口拆出的独立职责模块。 */
 import z from '@deepseek-ai/schemastery';
 
 export const Config = z.object({
-  connectionMode: z.union(['service', 'metaontic', 'volcengine']).default('service').description('接入方式：A 服务端领 Key；B MetaOntic AI；C 火山引擎直连').volatile(),
+  // 服务端方式停用期间，新装默认落到 MetaOntic AI（否则新用户一进来就是不可用的方式）；
+  // 已有配置的取值不受默认值影响，按停用规则被拒绝调用。
+  connectionMode: z.union(['service', 'metaontic', 'volcengine']).default(SERVICE_MODE_AVAILABLE ? 'service' : 'metaontic')
+    .description('接入方式：MetaOntic AI；火山引擎直连；service 服务端领 Key（暂时不可用）').volatile(),
   metaonticApiKey: z.string().default('').description('MetaOntic AI API Key').volatile(),
-  volcengineApiKey: z.string().default('').description('C 模式火山引擎 API Key').volatile(),
+  volcengineApiKey: z.string().default('').description('火山引擎直连模式的火山 API Key').volatile(),
   entryId: z.string()
     .default('metaontic-video')
     .description('本插件在 profile patch 里的条目 id；配置工具用它把改动写回')

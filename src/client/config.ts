@@ -16,7 +16,10 @@ export function createClientConfig() {
     ];
     /** 可编辑字段；kind 决定控件，标注 secret 的字段宿主只会告知是否已配置。 */
     const SELECTS = {
-      connectionMode: ['service', 'metaontic', 'volcengine'],
+      // 接入方式暂时只提供 MetaOntic AI 与火山直连；旧配置仍是 service 时，
+      // 设置页用隐藏项显示当前取值（见 settings 里的 HIDDEN_CONNECTION_MODES）。
+      // 恢复时把 'service' 加回这个数组即可。
+      connectionMode: ['metaontic', 'volcengine'],
       model: MODEL_OPTIONS,
       imageModel: ['doubao-seedream-5-0-260128', 'doubao-seedream-5-0-pro-260628'],
       ratio: ['16:9', '9:16', '4:3', '3:4', '1:1', 'adaptive'],
