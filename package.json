@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.14.0",
+  "version": "3.15.0",
   "description": "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, image-to-video, text-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects through the MetaOnticVideo relay with email sign-in and wallet top-up, or your own MetaOntic AI key.",
   "license": "MIT",
   "type": "module",
@@ -97,14 +97,12 @@
   },
   "dependencies": {},
   "releaseNotes": {
-    "version": "3.14.0",
+    "version": "3.15.0",
     "prerelease": false,
-    "publishedAt": "2026-11-05T01:10:29.148Z",
+    "publishedAt": "2026-11-05T14:54:28.544Z",
     "items": [
-      "新增：接入方式新增服务端方式的临时下架开关，当前为下架状态：新装默认 MetaOntic AI，设置页与在线安装都不再提供该方式，恢复时改一个开关即可，其余代码无需改动。",
-      "优化：接入方式下拉精简为 MetaOntic AI 与火山引擎直连两项，并去掉名称前的 A/B 字母标记，选项文字改为「MetaOntic AI」「MetaOnticVideo」「火山引擎直连」。",
-      "优化：已配置服务端方式的安装不会显示空白或错位：下拉里该项显示为「MetaOnticVideo（暂时不可用）」并给出切换提示，原有 Key、额度与设备凭据保留；服务端登录表单、额度卡片与充值入口不再显示，后台也不再请求服务端额度与记录接口。",
-      "修复：服务端方式下架期间，视频生成、续拍、图片处理（含真人参考图转换）与费用查询都会在发出请求前明确拒绝，并提示改用 MetaOntic AI 或火山引擎直连，不再带着旧 Key 调用上游；用配置工具把接入方式保存成该方式同样会被拒绝。"
+      "新增：服务端方式恢复：邮箱登录领 Key，可在设置页充值余额；生成前先核对余额，不足直接拦下并提示充值。",
+      "优化：插件配置只能在设置页修改，对话只做视频创作；接入方式精简为服务端与 MetaOntic AI。"
     ]
   }
 }
