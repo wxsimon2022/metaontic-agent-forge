@@ -11,13 +11,14 @@ function extract(name) {
   const end = source.indexOf('\n' + indent + '}', start);
   return 'var context = globalThis;\n' + source.slice(start, end + indent.length + 2);
 }
-function setup(fail = false) {
-  const state = { connectionMode: 'service', apiKey: 'previous', deviceSecret: 'device', model: 'model' };
+function setup(fail = false, options = {}) {
+  const state = { connectionMode: 'service', apiKey: 'previous', deviceSecret: 'device', model: 'model', ...(options.state || {}) };
   const events = []; let calls = 0;
+  const connectionBusy = options.connectionBusy || { current: false };
   const ctx = vm.createContext({
     form: { async mutate(ops) { calls++; if (fail) return false; for (const op of ops) { if (op.op === 'unset') delete state[op.path[0]]; else state[op.path[0]] = op.value; } return true; } },
-    connectionBusy: { current: false }, window: { confirm: () => true }, snapshot: { user: { ...state } },
-    PLUGIN_OWNED_KEYS: Object.keys(state), serviceActive: () => true,
+    connectionBusy, window: { confirm: () => true }, snapshot: { user: { ...state } },
+    PLUGIN_OWNED_KEYS: Object.keys(state), serviceActive: options.serviceActive || (() => true),
     clearLoggedOut: () => events.push('logged-in'), forgetDevice: () => events.push('forgot-device'),
     deviceWrites: () => [['deviceId', 'new-device'], ['deviceSecret', 'new-secret']],
     registerApiRoot: () => 'https://example.invalid',
@@ -25,7 +26,7 @@ function setup(fail = false) {
     setStatus: x => events.push(['status', x]), setRegisterStatus: x => events.push(['register', x]),
     setDraft: () => {}, setVisibleKey: () => {}, setRegisterEmail: () => {}, setRegisterMessage: () => {}, setRegisterCode: () => {}, setQuota: () => {},
     flashStatus: x => events.push(['flash', x]),
-    settingsError: e => e.message, t: (key, args) => args ? `${key}: ${args.message}` : key,
+    settingsError: e => e?.message || String(e), t: (key, args) => args ? `${key}: ${args.message}` : key,
     loadQuota: async () => {}, loadUsage: async () => {},
   });
   vm.runInContext(sourceOf('connection-defaults'), ctx);
@@ -41,6 +42,41 @@ test('login writes credentials together and only marks login after acceptance', 
   await assert.rejects(rejected.ctx.applyRegistration({ api_key: 'new' }), /atomicRejected/);
   assert.equal(rejected.calls(), 1); assert.equal(rejected.state.apiKey, 'previous'); assert.ok(!rejected.events.includes('logged-in'));
   assert.equal(rejected.ctx.connectionBusy.current, false);
+});
+test('login switches a saved non-service channel to service instead of stopping silently', async () => {
+  const h = setup(false, {
+    state: { connectionMode: 'metaontic', metaonticApiKey: 'old-channel' },
+    serviceActive: () => false,
+  });
+  assert.equal(await h.ctx.applyRegistration({ api_key: 'new', email: 'test@example.invalid' }), true);
+  assert.equal(h.calls(), 1);
+  assert.equal(h.state.connectionMode, 'service');
+  assert.equal(h.state.apiKey, 'new');
+  assert.equal(h.state.metaonticApiKey, '');
+  assert.equal(h.state.registerEmail, 'test@example.invalid');
+  assert.ok(h.events.includes('logged-in'));
+  assert.ok(h.events.some(e => Array.isArray(e) && e[0] === 'register' && e[1] === 'ok'));
+});
+test('login waits for an in-flight settings write and reports a busy form instead of returning silently', async () => {
+  const h = setup();
+  let release;
+  const pending = new Promise((resolve) => { release = resolve; });
+  h.ctx.connectionBusy.current = true;
+  h.ctx.connectionBusy.pending = pending;
+  const registration = h.ctx.applyRegistration({ api_key: 'new' });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.calls(), 0);
+  h.ctx.connectionBusy.current = false;
+  h.ctx.connectionBusy.pending = null;
+  release();
+  await registration;
+  assert.equal(h.calls(), 1);
+
+  const busy = setup();
+  busy.ctx.connectionBusy.current = true;
+  await assert.rejects(busy.ctx.applyRegistration({ api_key: 'new' }), /settingsUnavailable/);
+  assert.equal(busy.calls(), 0);
+  assert.ok(!busy.events.includes('logged-in'));
 });
 test('reset clears in one operation and preserves local identity if rejected', async () => {
   const h = setup(); await h.ctx.reset();

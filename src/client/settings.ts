@@ -1,5 +1,5 @@
 import { createAccountActions } from './account.js';
-import { SERVICE_MODE_AVAILABLE } from '../connection-defaults.js';
+import { SERVICE_MODE_AVAILABLE, VOLCENGINE_MODE_AVAILABLE } from '../connection-defaults.js';
 import { createUpdateActions, renderUpdateNotice, formatReleaseTime } from './updates.js';
 /** 浏览器端 settings：由入口注入宿主 React 与共享依赖。 */
 import packageInfo from '../../package.json';
@@ -24,10 +24,18 @@ export function createSettingsPage(deps: any) {
 // A 服务端模式的使用记录暂时影藏：接口未就绪，先不渲染这张卡，也不再轮询。
 // 恢复时把这一项改回 true 即可，额度卡片与其余设置不受影响。
 const SHOW_USAGE_RECORD = false;
-// 接入方式下拉暂时不提供 A 服务端（service），只留 config 里那两个候选。
-// 旧配置仍是 service 时用一个隐藏项显示当前取值：列表里选不到它，也不会显示成别的渠道。
-// 恢复（SERVICE_MODE_AVAILABLE 改回 true）时把 'service' 补回 SELECTS.connectionMode 即可。
-const HIDDEN_CONNECTION_MODES = ['service'];
+// 下架某个接入方式时，把它填进这里：设置页用一个隐藏项显示已有取值，列表里选不到它，
+// 也不会把它显示成别的渠道。在售时为空气（候选见 SELECTS.connectionMode）。
+const HIDDEN_CONNECTION_MODES = [
+  ...(SERVICE_MODE_AVAILABLE ? [] : ['service']),
+  ...(VOLCENGINE_MODE_AVAILABLE ? [] : ['volcengine']),
+];
+// 隐藏项显示什么：下架的方式带上「暂不提供」的说明，其余照原样显示当前取值。
+function hiddenConnectionLabel(t, mode) {
+  if (mode === 'service') return t(SERVICE_MODE_AVAILABLE ? 'service' : 'serviceUnavailable');
+  if (mode === 'volcengine') return t(VOLCENGINE_MODE_AVAILABLE ? 'volcengine' : 'volcengineUnavailable');
+  return t(mode);
+}
 function makePage({ form, t, manager }) {
       return function ConfigPage(props) {
         const snapshot = useSnapshot(form);
@@ -71,6 +79,20 @@ function makePage({ form, t, manager }) {
         const [quotaStatus, setQuotaStatus] = React.useState('idle');
         const [quotaMessage, setQuotaMessage] = React.useState('');
         const [quotaAt, setQuotaAt] = React.useState('');
+        // 余额（钱包）：登录后由服务端下发，充值到账即更新；生成只做人工确认，不从余额扣费
+        const [wallet, setWallet] = React.useState(null);
+        const [walletStatus, setWalletStatus] = React.useState('idle');
+        const [walletMessage, setWalletMessage] = React.useState('');
+        const [rechargeOpen, setRechargeOpen] = React.useState(false);
+        const [rechargeAmount, setRechargeAmount] = React.useState('30');
+        const [rechargeState, setRechargeState] = React.useState('idle');
+        const [rechargeMessage, setRechargeMessage] = React.useState('');
+        const [rechargeLink, setRechargeLink] = React.useState('');
+        const rechargeDialog = React.useRef(null);
+        React.useEffect(() => {
+          if (rechargeOpen && rechargeDialog.current && !rechargeDialog.current.open) rechargeDialog.current.showModal();
+        }, [rechargeOpen]);
+        React.useEffect(() => { setRechargeOpen(false); }, [selectedMode]);
         // 使用记录：本机那把 Key 最近几次出片（服务端按设备认人，只给自己的）
         const [usage, setUsage] = React.useState(null);
         const [usageStatus, setUsageStatus] = React.useState('idle');
@@ -95,7 +117,7 @@ function makePage({ form, t, manager }) {
           catch { return ''; }
         });
 
-                const { registerApiRoot, loggedOut, setLoggedOut, clearLoggedOut, forgetDevice, deviceIdentity, deviceFingerprint, deviceLabel, deviceWrites, syncDeviceIdentity, callRegister, applyRegistration, lookupOwnKey, startCooldown, sendEmailCode, register, loadQuota, loadUsage } = createAccountActions({
+                const { registerApiRoot, loggedOut, setLoggedOut, clearLoggedOut, forgetDevice, deviceIdentity, deviceFingerprint, deviceLabel, deviceWrites, syncDeviceIdentity, callRegister, applyRegistration, lookupOwnKey, startCooldown, sendEmailCode, register, loadQuota, loadUsage, loadWallet, startRecharge, waitRecharge } = createAccountActions({
           get value() { return value; },
           get DEFAULT_REGISTER_API() { return DEFAULT_REGISTER_API; },
           get LOGGED_OUT_KEY() { return LOGGED_OUT_KEY; },
@@ -122,6 +144,9 @@ function makePage({ form, t, manager }) {
           get setQuotaMessage() { return setQuotaMessage; },
           get setQuota() { return setQuota; },
           get setQuotaAt() { return setQuotaAt; },
+          get setWallet() { return setWallet; },
+          get setWalletStatus() { return setWalletStatus; },
+          get setWalletMessage() { return setWalletMessage; },
           get usageInFlight() { return usageInFlight; },
           get setUsageStatus() { return setUsageStatus; },
           get setUsageMessage() { return setUsageMessage; },
@@ -167,6 +192,7 @@ function makePage({ form, t, manager }) {
           syncDeviceIdentity().catch(() => {});
           if (snap.secrets?.apiKey || (snap.value || {}).apiKey) {
             loadQuota().catch(() => {});
+            loadWallet().catch(() => {});
             if (SHOW_USAGE_RECORD) loadUsage().catch(() => {});
             return;
           }
@@ -352,8 +378,8 @@ function makePage({ form, t, manager }) {
               onChange: (event) => edit(field.key, event.target.value),
             }, [
               hiddenModel ? h('option', { key: 'hidden-current', value: current, hidden: true }, t('modelHiddenCurrent')) : null,
-              // 停用期间直接标出不可用；恢复后这一支不会走到（'service' 会回到候选里）。
-              hiddenMode ? h('option', { key: 'hidden-current', value: current, hidden: true }, t(SERVICE_MODE_AVAILABLE ? current : 'serviceUnavailable')) : null,
+              // 下架期间直接标出不可用；恢复后这一支不会走到（该方式会回到候选里）。
+              hiddenMode ? h('option', { key: 'hidden-current', value: current, hidden: true }, hiddenConnectionLabel(t, String(current || ''))) : null,
               ...list.map((option) => h('option', { key: option, value: option }, optionLabel(t, field.key, option))),
             ]);
           }
@@ -398,7 +424,8 @@ function makePage({ form, t, manager }) {
         const hints = {
           connectionMode: selectedMode === 'metaontic'
             ? [t('connectionMetaonticHint'), ' ', h('a', { key: 'metaontic-register', href: 'https://ai.bileego.com/', target: '_blank', rel: 'noopener noreferrer', style: { textDecoration: 'underline' } }, t('connectionMetaonticRegister'))]
-            : serviceMode && !SERVICE_MODE_AVAILABLE ? t('connectionServiceUnavailable') : t('connectionModeHint'),
+            : serviceMode && !SERVICE_MODE_AVAILABLE ? t('connectionServiceUnavailable')
+              : directMode && !VOLCENGINE_MODE_AVAILABLE ? t('connectionVolcengineUnavailable') : t('connectionModeHint'),
           metaonticApiKey: t('metaonticKeyHint'),
           volcengineApiKey: t('volcengineKeyHint'),
           model: t('modelHint'),
@@ -570,19 +597,15 @@ function makePage({ form, t, manager }) {
         const quotaSymbol = quota && quota.currency_symbol ? quota.currency_symbol : '¥';
         const money = (field) => `${quotaSymbol}${formatMoney(quota ? quota[field] : 0)}`;
         const quotaReady = quotaStatus === 'ok' && quota;
-        // 没读到额度时还是给一句话（读取中 / 还没领 Key），读到了就摊成三个数字块。
+        // 没读到余额时给一句话（读取中 / 还没领 Key），读到了就显示金额。
         const quotaFallback = keyReady ? t('quotaLoading') : t('quotaNoKey');
-        const quotaStats = quotaReady
-          ? [
-            {
-              key: 'remain',
-              label: t('quotaRemain'),
-              value: quota.unlimited_quota ? t('quotaUnlimited') : money('remain_amount'),
-              color: TOKENS.success,
-            },
-            { key: 'used', label: t('quotaUsed'), value: money('used_amount'), color: TOKENS.text },
-            { key: 'total', label: t('quotaTotal'), value: money('total_amount'), color: TOKENS.muted },
-          ]
+        // 服务端开没开钱包（充值上下限、到账提示要用）：off 时充值入口整体不出现
+        const walletReady = walletStatus === 'ok' && wallet && wallet.enabled;
+        const walletSymbol = wallet && wallet.currency_symbol ? wallet.currency_symbol : quotaSymbol;
+        // 余额就是中转站那把 Key 的额度（充值回调直接给 Key 加额度）：只显示这一个数，
+        // 不再单独摆服务端的钱包余额，免得两个数字对不上。
+        const balanceText = quotaReady
+          ? (quota.unlimited_quota ? t('quotaUnlimited') : money('remain_amount'))
           : null;
         // 没登录就没有额度可言：整块不渲染（跟使用记录一个规矩）
         const quotaBox = serviceMode && SERVICE_MODE_AVAILABLE && keyReady ? h('div', {
@@ -591,18 +614,15 @@ function makePage({ form, t, manager }) {
           className: 'mov-card mov-quota-compact',
         }, [
           h('div', { key: 'head', className: 'mov-card-head' }, [
-            h('span', { key: 'title', className: 'mov-card-title' }, t('quotaTitle')),
+            h('span', { key: 'title', className: 'mov-card-title' }, t('walletBalance')),
           ]),
-          quotaStats
-            ? h('div', { key: 'text', 'data-field': 'quotaValue', className: 'mov-stats' },
-              quotaStats.map((item) => h('div', { key: item.key, className: 'mov-stat' }, [
-                h('span', { key: 'label', className: 'mov-stat-label' }, item.label),
-                h('span', {
-                  key: 'value',
-                  className: 'mov-stat-value',
-                  style: { color: item.color },
-                }, item.value),
-              ])))
+          balanceText !== null
+            ? h('span', {
+              key: 'text',
+              'data-field': 'quotaValue',
+              className: 'mov-stat-value',
+              style: { color: TOKENS.primaryFill },
+            }, balanceText)
             : h('span', {
               key: 'text',
               'data-field': 'quotaValue',
@@ -612,12 +632,33 @@ function makePage({ form, t, manager }) {
             ? h('span', { key: 'at', className: 'mov-foot-note' }, t('quotaUpdatedAt', { time: quotaAt }))
             : null,
           quotaMessage ? h('span', { key: 'message', className: 'mov-hint' }, quotaMessage) : null,
+          walletMessage ? h('span', { key: 'wallet-message', className: 'mov-hint' }, walletMessage) : null,
           h('div', { key: 'actions', className: 'mov-quota-actions mov-trailing' }, [
             h('button', {
               key: 'refresh', 'data-action': 'quota-refresh', type: 'button',
               className: 'mov-btn mov-btn-sm', disabled: quotaStatus === 'working',
-              onClick: () => { loadQuota().catch(() => {}); },
+              onClick: () => {
+                loadQuota().catch(() => {});
+                loadWallet().catch(() => {});
+              },
             }, t('quotaRefresh')),
+            walletReady
+              ? h('button', {
+                key: 'recharge', 'data-action': 'wallet-recharge', type: 'button',
+                className: 'mov-btn mov-btn-sm mov-btn-primary', 'aria-haspopup': 'dialog',
+                onClick: () => {
+                  setRechargeState('idle');
+                  setRechargeMessage('');
+                  setRechargeLink('');
+                  if (wallet && wallet.recharge_min) {
+                    const current = Number(rechargeAmount);
+                    const min = Number(wallet.recharge_min);
+                    if (!Number.isFinite(current) || current < min) setRechargeAmount(String(min));
+                  }
+                  setRechargeOpen(true);
+                },
+              }, t('walletRecharge'))
+              : null,
             h('button', {
               key: 'support', 'data-action': 'support-recharge', type: 'button',
               className: 'mov-btn mov-btn-sm', 'aria-haspopup': 'dialog',
@@ -626,6 +667,47 @@ function makePage({ form, t, manager }) {
           ]),
 
         ]) : null;
+
+        /** 充值：下单 -> 打开收银台 -> 等余额到账（到账自动刷新余额与额度）。 */
+        async function submitRecharge() {
+          const amount = Number(String(rechargeAmount).trim());
+          if (!Number.isFinite(amount) || amount <= 0) {
+            setRechargeState('failed');
+            setRechargeMessage(t('walletRechargeBadAmount'));
+            return;
+          }
+          setRechargeState('working');
+          setRechargeMessage('');
+          setRechargeLink('');
+          try {
+            const order = await startRecharge(amount);
+            const link = order && order.pay_url ? String(order.pay_url) : '';
+            setRechargeLink(link);
+            if (link) {
+              try { window.open(link, '_blank', 'noopener'); } catch { /* 打不开就靠下面的链接 */ }
+            }
+            setRechargeState('pending');
+            setRechargeMessage(t('walletRechargeOpening'));
+            const done = await waitRecharge(String(order && order.out_trade_no));
+            if (done && done.credited) {
+              setRechargeState('ok');
+              // 余额就是那把 Key 的额度：到账后按中转站的实时额度显示，不用本地账本的数字
+              const fresh = await loadQuota().catch(() => null);
+              const shown = fresh
+                ? `${quotaSymbol}${formatMoney(Number(fresh.remain_amount) || 0)}`
+                : `${walletSymbol}${formatMoney(Number(done.balance) || 0)}`;
+              setRechargeMessage(t('walletRechargeDone', { balance: shown }));
+            }
+            else {
+              setRechargeState('failed');
+              setRechargeMessage(t('walletRechargeTimeout'));
+            }
+          }
+          catch (error) {
+            setRechargeState('failed');
+            setRechargeMessage(t('walletRechargeFailed', { message: error?.message || String(error) }));
+          }
+        }
 
         /** 复制一段文本；剪贴板不可用就什么都不做，用户照样能照着敲。 */
         function copyText(text, mark) {
@@ -941,6 +1023,48 @@ function makePage({ form, t, manager }) {
           notice ? h('p', { key: 'notice', className: 'mov-notice' }, notice) : null,
           ...(notice && !snapshot.value ? [] : settingsRows()),
           ...blobs,
+          rechargeOpen ? h('dialog', {
+            key: 'recharge-dialog', ref: rechargeDialog, className: 'mov-support-dialog',
+            'aria-labelledby': 'mov-recharge-title',
+            onCancel: () => setRechargeOpen(false), onClose: () => setRechargeOpen(false),
+            onClick: (event) => { if (event.target === event.currentTarget) { const rect = event.currentTarget.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) setRechargeOpen(false); } },
+          }, h('div', { className: 'mov-support-content' }, [
+            h('div', { key: 'heading', className: 'mov-card-head' }, [
+              h('strong', { key: 'title', id: 'mov-recharge-title' }, t('walletRechargeTitle')),
+              h('button', { key: 'close', type: 'button', className: 'mov-btn mov-btn-sm mov-trailing', 'aria-label': t('walletRechargeCancel'), onClick: () => setRechargeOpen(false) }, t('walletRechargeCancel')),
+            ]),
+            h('p', { key: 'hint', className: 'mov-hint' }, walletReady
+              ? t('walletRechargeRange', {
+                min: walletSymbol + formatMoney(Number(wallet.recharge_min) || 0),
+                max: walletSymbol + formatMoney(Number(wallet.recharge_max) || 0),
+              })
+              : ''),
+            h('div', { key: 'form', style: { display: 'flex', gap: 8, alignItems: 'center' } }, [
+              h('input', {
+                key: 'amount',
+                'data-field': 'rechargeAmount',
+                type: 'text',
+                inputMode: 'decimal',
+                className: 'mov-input',
+                value: rechargeAmount,
+                placeholder: t('walletRechargeAmount'),
+                'aria-label': t('walletRechargeAmount'),
+                disabled: rechargeState === 'working' || rechargeState === 'pending',
+                onChange: (event) => setRechargeAmount(event.target.value),
+                style: { ...inputStyle, flex: '1 1 auto' },
+              }),
+              h('button', {
+                key: 'confirm',
+                'data-action': 'wallet-recharge-confirm',
+                type: 'button',
+                className: 'mov-btn mov-btn-primary',
+                disabled: rechargeState === 'working' || rechargeState === 'pending' || !String(rechargeAmount).trim(),
+                onClick: () => { submitRecharge().catch(() => {}); },
+              }, rechargeState === 'working' ? t('walletRechargeWorking') : t('walletRechargeConfirm')),
+            ]),
+            rechargeMessage ? h('p', { key: 'message', className: 'mov-hint' }, rechargeMessage) : null,
+            rechargeLink ? h('a', { key: 'link', href: rechargeLink, target: '_blank', rel: 'noopener noreferrer' }, t('walletRechargeLink')) : null,
+          ])) : null,
           supportOpen ? h('dialog', {
             key: 'support-dialog', ref: supportDialog, className: 'mov-support-dialog',
             'aria-labelledby': 'mov-support-title',

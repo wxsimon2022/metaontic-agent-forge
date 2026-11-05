@@ -112,9 +112,9 @@ const TOKENS = {
       .mov-support-frame { width: 100%; height: min(480px, 62vh); border: 0; border-radius: 8px; background: white; }
       .mov-trailing { margin-left: auto; }
       /* 额度：三个数字块，一眼分清剩余 / 已用 / 总额度 */
-      .mov-quota-compact { padding: 8px 12px; gap: 14px; flex-direction: row; align-items: center; flex-wrap: nowrap; overflow-x: auto; }
+      .mov-quota-compact { padding: 8px 12px; gap: 10px 14px; flex-direction: row; align-items: center; flex-wrap: wrap; }
       .mov-quota-compact .mov-card-head { min-height: 24px; flex: 0 0 auto; gap: 8px; }
-      .mov-quota-compact .mov-stats { display: flex; flex: 1 0 auto; gap: 16px; }
+      .mov-quota-compact .mov-stats { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 8px 16px; min-width: 0; }
       .mov-quota-compact .mov-stat { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 6px; padding: 0; border: 0; border-radius: 0; white-space: nowrap; }
       .mov-quota-compact .mov-stat-label { font-size: 11px; white-space: nowrap; }
       .mov-quota-compact .mov-stat-value { font-size: 14px; }

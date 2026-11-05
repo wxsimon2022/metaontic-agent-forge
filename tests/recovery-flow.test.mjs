@@ -158,7 +158,7 @@ for (const name of ['video_generate', 'video_extend']) test(`${name}: final-segm
 test('service preflight estimates only the segment that this call will execute', async () => {
   const calls = [];
   const context = vm.createContext({ characterChoiceGate: async () => null,
-    // 这一条测的是服务端方式的估价口径：把停用开关临时打开，等该方式恢复后这里的断言继续有效。
+    // 服务端方式的估价口径：插件已恢复该方式，这里直接按可用态注入。
     SERVICE_MODE_AVAILABLE: true, SERVICE_UNAVAILABLE_MESSAGE: 'unavailable',
     resumeDirOf: value => value || '', approvalPolicy: () => 'ask', ffmpegConsentGate: async () => null,
     isManualKey: () => false, estimateArgsFor: async () => ({ remainingPlan: [{ kind: 'extend', seconds: 7 }, { kind: 'extend', seconds: 12 }] }),
@@ -166,6 +166,10 @@ test('service preflight estimates only the segment that this call will execute',
     estimateUsage: (_config, _name, _args, plan) => { calls.push(plan); return { usd: 1, tokens: 100, model: 'test', resolution: '720p', segments: plan }; },
     fetchDeviceQuota: async () => ({ status: 'ok', data: { remain_quota: 10000, remain_amount: 100, quota_per_unit: 1, usd_exchange_rate: 1 } }),
     finiteNumber: value => typeof value === 'number' ? value : null,
+    // preflightGate 之前定义的辅助函数不在截取范围内，按里面用到的语义注入：
+    // unlimitedQuota 认不限额度的 Key（这份数据不是），imageQuotaNotice 只服务图片调用。
+    unlimitedQuota: data => Boolean(data && data.unlimited_quota === true),
+    imageQuotaNotice: async () => null,
     DEFAULT_QUOTA_PER_UNIT: 1, DEFAULT_USD_EXCHANGE_RATE: 1, formatMoney: String, planSummary: () => 'one segment',
   });
   const source = sourceOf('workflow/approval');

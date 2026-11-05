@@ -158,6 +158,8 @@ export async function main(argv) {
     run(process.execPath,[npmCli,'pack','--pack-destination',out]);
     // Python is a packaging tool only; Windows py launcher is accepted.
     const python=process.platform==='win32'?'py':'python3';
+    // 包内 README 会被宿主插件页当成「详细介绍」渲染，成品包统一裁掉。
+    run(python,[...(python==='py'?['-3']:[]),'scripts/strip-package-readme.py',path.join(out,`metaontic-video-${version}.tgz`)]);
     run(python,[...(python==='py'?['-3']:[]),'scripts/package-windows.py',path.join(out,`metaontic-video-${version}.tgz`),path.join(out,`MetaOnticVideo-Windows-${version}.zip`)]);
     run('git',['diff','--check']);
     const body=`MetaOnticVideo ${tag}\n\n`+sections.map(s=>s.category+'\n'+s.items.map(i=>'- '+i).join('\n')).join('\n\n')+'\n\n验证\n- 本地构建及测试通过。\n'+(includeGithub?'- Windows/macOS成品安装及升级为CI上传前置条件。\n':'- 本条按仅 Gitee 发布处理：未运行 GitHub 双平台 CI，也没做 Windows 桌面实测，Windows 兼容性只有构建与打包层面的保证。\n')+'- 桌面GUI与付费调用未由发布脚本自动验证。\n';

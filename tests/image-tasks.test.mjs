@@ -159,10 +159,10 @@ test('missing independent image key stops before network and shared mode ignores
  assert.ok(h.calls.every(c=>c.key==='Bearer b'));
 }));
 
-test('service method is refused before any image traffic while it is temporarily unavailable',()=>fixture(async h=>{
- h.config.connectionMode='service';h.config.imageUseVideoKey=false;h.config.imageApiKey='ignored';
- await assert.rejects(api.prepareImageTool(h.config).execute({image:'https://example.com/ref.png',style:'动画'},{}),/暂时不可用/);
- assert.equal(h.calls.length,0);
+test('service method carries image traffic with the service-issued key',()=>fixture(async h=>{
+ h.config.connectionMode='service';
+ await api.prepareImageTool(h.config).execute({image:'https://example.com/ref.png',style:'动画'},{});
+ assert.ok(h.calls.length>=1);assert.ok(h.calls.every(c=>c.key==='Bearer a'));
 }));
 
 test('B recovery uses image key only for image traffic and video key for original/retry/status',()=>fixture(async h=>{
@@ -283,11 +283,13 @@ test('legacy global continuation mode does not override new script requests',()=
  const scripted=api.buildRequestBody(h.config,{prompt:'人物继续说话',duration:15,mode:'closeup'},'https://example.com/source.mp4').body.content[0].text;
  assert.match(scripted,/下一位说话人的近景/);
 }));
-test('video_config no longer exposes or saves a global continuation mode',()=>fixture(async h=>{
+test('video_config is read-only: no global continuation mode, no conversation-side writes',()=>fixture(async h=>{
  let writes=0;
  const tool=api.configTool(h.config,{mutate(){writes++;}});
  assert.equal(tool.parameters.properties.mode,undefined);
- await assert.rejects(tool.execute({action:'set',mode:'closeup'}),/续拍方式由已审核脚本决定/);
+ assert.deepEqual(tool.parameters.properties.action.enum,['get']);
+ await assert.rejects(tool.execute({action:'set',mode:'closeup'}),/插件配置不能在对话里改/);
+ await assert.rejects(tool.execute({action:'set',model:'doubao-seedance-2-5'}),/插件配置不能在对话里改/);
  assert.equal(writes,0);
 }));
 for(const toolName of ['video_generate','video_extend']) test(`${toolName}: resume retains script continuation mode after global config changes`,()=>fixture(async h=>{

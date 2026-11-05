@@ -20,7 +20,9 @@ description: 用于本仓库视频与图片接入、断点恢复、费用确认�
 - Key 路由必须用模拟 HTTP Authorization 验证：A 固定登录 Key，B 共用/独立分别覆盖，C 仅火山 Key；覆盖转换后视频重试、图片取件与异常提交核对，缺失时不得回退其他模型 Key。
 - 每次调用固定配置快照，后续轮询不得混用新地址或 Key。密钥不写断点/日志，私有状态文件限制权限。
 - 分段续做的审批文案必须先合并暂停记录 options，再解析清晰度；不得用仅含 resume 的原始参数回退到 720P。覆盖30秒480P两段流程，断言确认文案、估价与两次实际请求一致。
+- 调用模型前的额度预检只针对 MetaOnticVideo（服务端领 Key，即 `connectionMode=service`）：先读本机 Key 的剩余额度，预估超过余额就不调用，并在拒绝原因里让助手转达用户去设置页充值；读不到额度不拦，照常弹确认框并说明读不到。MetaOntic AI（手填 Key）与火山直连不判断额度、确认框也不带余额。
 - 清晰度不在插件设置中配置；工具参数、实际请求、估价和恢复保持一致：480p/720p，脚本阶段须由用户明确选择480P/720P（本次需求已指定不重复问），记录到脚本、制作确认并显式传入工具。恢复已提交任务使用原请求参数。
+- 对话边界：对话只做视频创作，无关话题不承接（一句话说明后请用户回到视频需求，不展开、不代办）；插件配置（接入方式、Key、模型、地址、时长等）只能在设置页修改，`video_config` 只读、`action=set` 直接拒绝并引导设置页，不索取/展示 Key。提示词、video-director 技能、README（中英）与使用说明书同步维护；回归用例在 `tests/host-integration.test.mjs`、`tests/config-tool-save.test.mjs`、`tests/image-tasks.test.mjs`。
 
 ## 对白准确性
 
@@ -140,3 +142,5 @@ Windows解压目录安装在更新时出现空目录/locale缺失：先核对成
 回收默认发行版与标签各保留最近10个（--keep / --keep-tags，后者默认跟随前者，两条保留线取并集）；Gitee标签只能用git push删引用，Gitee操作需要GITEE_TOKEN。
 
 分段收尾与重复逻辑：video_generate 与 video_extend 的分段循环共用 workflow/segment-run.ts（结果落盘、中断收尾、暂停说明、merge:false、下载合并收尾），结果文案共用 tools/results.ts 的 renderVideoResult/renderResult（同一实现在 RENDER_WORDING 里分工具措辞），改措辞只改一处，不要再各自复制一份。media/merge.ts 的分段下载与 ffprobe 探测并发跑（mapLimit，上限 SEGMENT_TASK_CONCURRENCY=4），跑完仍按段号顺序处理，因为「累计成片」识别依赖 files 的推进顺序；下载失败仍按段号取最靠前的那一段报错。参考图适配缓存在系统临时目录只增不减，写入成功后调 pruneReferenceCache（7 天、上限 200 个，5 分钟内带 .fit- 的临时文件不删）；日志目录按天缓存 mkdir，失败不记缓存以便下次重试。
+
+宿主插件页的「详细介绍」不可关闭，只能靠包里没有文档来隐藏：Harness 的插件页（组合包页面）会读安装目录里的介绍文档，顺序是 locale/<界面语言>.json 的 meta.detail → 包内 README.md / readme.md / Readme.md / README.markdown / README（README.en.md 不在名单里，也没有任何开关或布尔配置能关掉这块）；找到就整篇渲染，找不到才整块不显示，因此成品包用 scripts/strip-package-readme.py 在打包后裁掉 package/README.md（release.mjs 与 pack-test.mjs 已接入，放在算 sha256/Windows ZIP 之前），仓库首页的 README 保持不动；本地 link 安装仍读工作区，会照旧显示，要看隐藏效果必须装成品包。给页面换成简短介绍才用 locale 的 meta.detail（文件也得进 files）。

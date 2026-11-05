@@ -95,7 +95,7 @@ export function apply(ctx: DshContext, config: any = {}) {
     return () => { deps.workdir = undefined; };
   });
   for (const dispose of [asDisposer(workdirCleanup)]) if (dispose) disposers.push(dispose);
-  // 每次真正调用视频模型前卡一道：宿主弹人工确认（含预估费用），额度不够直接拒绝。
+  // 每次真正调用视频模型前卡一道：宿主弹人工确认（含预估费用与余额展示）；MetaOnticVideo 接入余额不足会直接拦下并提示充值。
   // 注册或预检本身出问题都不该把生成堵死：那样退回「没有预估数字」的人工确认。
   let gateCleanup;
   try {

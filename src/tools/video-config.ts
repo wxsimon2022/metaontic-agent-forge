@@ -1,4 +1,4 @@
-import { connectionDefaults, SERVICE_MODE_AVAILABLE, SERVICE_UNAVAILABLE_MESSAGE } from '../connection-defaults.js';
+import { SERVICE_MODE_AVAILABLE, VOLCENGINE_MODE_AVAILABLE } from '../connection-defaults.js';
 /** tools/video-config：从宿主入口拆出的独立职责模块。 */
 import { ref } from '../config.js';
 import { isMetaontic, isVolcengine, resolveBaseUrl, resolveSubmitPath, relayPreset, resolveModel, resolveApiKey, isServerIssuedKey } from '../providers/connection.js';
@@ -54,69 +54,38 @@ export function configView(config) {
   };
 }
 
-export function normalizeConnectionPatch(config, input) {
-  const patch = { ...input };
-  if (patch.connectionMode === undefined) return { ...patch, ...connectionDefaults({ ...Object.fromEntries(Object.keys(config || {}).map(key => [key, ref(config, key, undefined)])), ...patch }) };
-  const mode = patch.connectionMode;
-  if (!['service', 'metaontic', 'volcengine'].includes(mode)) throw new Error('未知接入方式');
-  if (mode === 'service' && !SERVICE_MODE_AVAILABLE) throw new Error(SERVICE_UNAVAILABLE_MESSAGE);
-  const inactive = mode === 'volcengine'
-    ? ['metaonticApiKey', 'apiKey', 'keyOrigin', 'baseUrl', 'submitPath', 'queryPath', 'registerEmail', 'deviceId', 'deviceSecret', 'registerApi', 'registerToken']
-    : mode === 'metaontic'
-      ? ['volcengineApiKey', 'apiKey', 'keyOrigin', 'registerEmail', 'deviceId', 'deviceSecret', 'registerApi', 'registerToken']
-      : ['volcengineApiKey', 'metaonticApiKey'];
-  if (ref(config, 'connectionMode', 'service') === 'volcengine' && mode !== 'volcengine') {
-    for (const key of ['baseUrl', 'submitPath', 'queryPath']) if (patch[key] === undefined) patch[key] = '';
-  }
-  for (const key of inactive) patch[key] = '';
-  return { ...patch, ...connectionDefaults({ ...Object.fromEntries(Object.keys(config || {}).map(key => [key, ref(config, key, undefined)])), ...patch }) };
-}
-
-/** 把字段改动合并进本插件在 profile patch 里的那条条目。 */
-export async function writeProfileConfig(settings, config, patch) {
-  const entryId = String(ref(config, 'entryId', 'metaontic-video')).trim();
-  const descriptors = settings.describe({ redactSecrets: true });
-  const entry = descriptors.find((item) => item.ns === entryId);
-  if (!entry) {
-    throw new Error(
-      `profile patch 里没有可编辑的 ${entryId} 条目，无法写回配置。`
-      + '请先在 profile 的 cordis.patch.yml 里加一条覆盖项：\n'
-      + `- id: ${entryId}\n  name: 'metaontic-video'\n  config: { apiKey: 'sk-...', baseUrl: '...', model: '...' }\n`
-      + '（也可以让 Agent 代写这一条。）',
-    );
-  }
-  await settings.update(entryId, patch, entry.revision);
-  return entryId;
-}
-
 export function configTool(config, settings) {
   return {
     name: 'video_config',
     description:
-      '读取或修改 MetaOnticVideo 插件自己的配置（baseUrl、submitPath、queryPath、model、imageModel、'
+      '只读查看 MetaOnticVideo 插件自己的配置（baseUrl、submitPath、queryPath、model、imageModel、'
       + 'duration、singleMaxSeconds、ratio、generateAudio、'
       + 'watermark、extraParams、pollIntervalMs、maxWaitMs、mergeMode、'
       + 'outputDir、resumeLockStaleMinutes、'
       + 'ffmpegBinary、ffprobeBinary、registerEmail、registerApi、estimateGroupRatio）。'
-      + 'apiKey 只能由设置页「登录」时服务端下发，这里只能看、不能改；'
-      + '仅服务端模式换 Key 需要登录；MetaOntic AI 使用 metaonticApiKey，火山直连使用 volcengineApiKey，可手动配置。'
-      + '改动写进 profile 的 cordis.patch.yml，'
-      + '宿主重载后生效。'
-      + '用户说「把中转站地址/模型/时长改成 X」时用 action=set，看当前值用 action=get；'
+      + '对话里禁止改配置：接入方式、Key、模型、地址、时长等任何一项都只能由用户在插件设置页'
+      + '（「插件 → 已安装插件 → MetaOnticVideo → 查看」）修改并保存，宿主重载后生效；'
+      + '本工具没有修改能力，action=set 会被直接拒绝。'
+      + '用户要改配置时，说明改的是哪一项并引导他去设置页改，不要代改、不要索取或展示 Key（apiKey 只能由设置页「登录」时服务端下发）。'
+      + '看当前值用 action=get；'
       + 'duration 是每段新增秒数上限（4 至模型上限（2.0 为 15、2.5 为 30），默认按模型上限、段数最少），singleMaxSeconds 为兼容旧配置保留，直出上限由模型映射。',
     parameters: {
       type: 'object',
       properties: {
         action: {
           type: 'string',
-          enum: ['get', 'set'],
-          description: 'get=查看当前配置；set=修改配置（至少给一个要改的字段）。',
+          enum: ['get'],
+          description: 'get=查看当前配置；配置改动只能在插件设置页完成，本工具不提供修改。',
         },
         connectionMode: {
           type: 'string', enum: ['service', 'metaontic', 'volcengine'],
           description: SERVICE_MODE_AVAILABLE
-            ? '接入方式：MetaOntic AI / 火山引擎直连 / service 服务端（邮箱登录领 Key）'
-            : '接入方式：MetaOntic AI（metaontic）/ 火山引擎直连（volcengine）；service 服务端方式暂时不可用，不要设置',
+            ? (VOLCENGINE_MODE_AVAILABLE
+              ? '接入方式：MetaOnticVideo 服务端（邮箱登录领 Key）/ MetaOntic AI / 火山引擎直连'
+              : '接入方式：MetaOnticVideo 服务端（service，邮箱登录领 Key）/ MetaOntic AI（metaontic）；火山引擎直连当前暂不提供选择，不要主动设置')
+            : (VOLCENGINE_MODE_AVAILABLE
+              ? '接入方式：MetaOntic AI（metaontic）/ 火山引擎直连（volcengine）；service 服务端方式暂时不可用，不要设置'
+              : '接入方式：MetaOntic AI（metaontic）；service 服务端方式与火山引擎直连当前都暂不提供，不要设置'),
         },
         metaonticApiKey: { type: 'string', description: 'MetaOntic AI 手动 API Key，无需登录' },
         volcengineApiKey: { type: 'string', description: '火山引擎直连模式的火山 API Key' },
@@ -176,20 +145,17 @@ export function configTool(config, settings) {
         type: 'object',
         properties: {
           action: { type: 'string' },
-          entryId: { type: 'string' },
-          editable: { type: 'boolean' },
           patchPath: { type: 'string' },
           stored: { type: 'object' },
           effective: { type: 'object' },
-          patch: { type: 'object' },
           error: { type: 'string' },
         },
       },
       render(_args, value) {
-        const { action, stored, effective, entryId, patchPath, patch, error } = value || {};
+        const { stored, effective, patchPath, error } = value || {};
         if (error) return [{ type: 'text', text: error }];
         const lines = [
-          action === 'set' ? `已写入 profile patch（条目 ${entryId}）` : '当前配置：',
+          '当前配置（只读，改配置请在插件设置页）：',
           ...Object.entries(stored || {})
             .filter(([, field]) => field !== undefined && field !== '')
             .map(([key, field]) => `  ${key}: ${typeof field === 'object' ? JSON.stringify(field) : field}`),
@@ -201,7 +167,6 @@ export function configTool(config, settings) {
             missing: '未配置——请到设置页点「登录」',
           }[effective?.apiKeySource] || effective?.apiKeySource}`,
           patchPath ? `配置文件：${patchPath}` : '',
-          patch && Object.keys(patch).length ? '改动会在宿主重载配置后生效。' : '',
         ].filter(Boolean);
         return [{ type: 'text', text: lines.join('\n') }];
       },
@@ -216,37 +181,16 @@ export function configTool(config, settings) {
       const patchPath = settings?.documentPath;
 
       if (action === 'get') {
-        return { action, ...view, editable: Boolean(settings), patchPath };
+        return { action, ...view, patchPath };
       }
-      if (action !== 'set') {
-        throw new Error('action 只能是 get 或 set。');
-      }
-      if (args?.mode !== undefined) throw new Error('续拍方式由已审核脚本决定，请在 video_generate/video_extend 的本次参数或过渡描述中指定，不再作为插件设置保存。');
-      const readonly = Object.keys(args || {}).filter((key) => READ_ONLY_CONFIG_FIELDS.has(key));
-      if (readonly.length) {
+      if (action === 'set') {
         throw new Error(
-          `${readonly.join('、')} 由服务端在「登录」时下发，不能手动改；`
-          + '要换 Key 请在「插件 → 已安装插件 → MetaOnticVideo → 查看」点「登录」重新领取。',
+          '插件配置不能在对话里改：video_config 是只读的，接入方式、Key、模型、地址、时长等任何一项都只能由用户'
+          + '在插件设置页（「插件 → 已安装插件 → MetaOnticVideo → 查看」）修改并保存。'
+          + '请说明要改的是哪一项并引导用户去设置页，不要代改、不要索取或展示 Key。',
         );
       }
-      let patch = {};
-      for (const key of CONFIG_FIELDS) {
-        if (args?.[key] !== undefined && !READ_ONLY_CONFIG_FIELDS.has(key)) patch[key] = args[key];
-      }
-      if (!Object.keys(patch).length) {
-        throw new Error('set 需要至少一个要修改的字段（如 baseUrl、model、duration）。');
-      }
-      if (!settings) {
-        throw new Error(
-          '宿主没有提供 settings 服务，无法写回配置。请手动编辑 profile 的 cordis.patch.yml 里 '
-          + "metaontic-video 那一条的 config（见插件 README）。",
-        );
-      }
-      patch = normalizeConnectionPatch(config, patch);
-      const entryId = await writeProfileConfig(settings, config, patch);
-      const updated = {};
-      for (const key of CONFIG_FIELDS) updated[key] = patch[key] !== undefined ? patch[key] : ref(config, key, undefined);
-      return { action, entryId, patchPath, patch: maskSecrets(patch), ...configView(updated) };
+      throw new Error('action 只能是 get：插件配置只能在设置页修改，本工具不提供写入。');
     },
   };
 }

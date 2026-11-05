@@ -14,7 +14,7 @@ export interface PluginLocale {
 export const locale: PluginLocale = {
   meta: {
     title: 'MetaOnticVideo',
-    description: '从创意到成片：视频创作助手帮你完善创意、编写脚本，审核确认后生成视频。支持参考图、视频续拍、逐段预览与断点续做，可在本机合并成片。可选 MetaOnticVideo、MetaOntic AI 或火山引擎直连。',
+    description: '从创意到成片：视频创作助手帮你完善创意、编写脚本，审核确认后生成视频。支持参考图、视频续拍、逐段预览与断点续做，可在本机合并成片。接入方式可选 MetaOnticVideo（邮箱登录领 Key，支持充值余额）或 MetaOntic AI。',
   },
 };
 

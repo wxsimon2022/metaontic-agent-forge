@@ -38,7 +38,14 @@ test('non-text transition descriptions are refused before any request',()=>{
  assert.throws(()=>ctx.buildExtensionPrompt({...args,transitionDescription:{invalid:true}}),/过渡描述必须是文字/);
 });
 test('settings no longer provide a global continuation mode control',()=>{
- const settings=vm.createContext({});vm.runInContext(sourceOf('client/config')+'\nObject.assign(globalThis,createClientConfig());',settings);
+ const settings=vm.createContext({});vm.runInContext(sourceOf('connection-defaults','client/config')+'\nObject.assign(globalThis,createClientConfig());',settings);
  assert.equal(settings.SELECTS.mode,undefined);assert.equal(settings.FIELD_BY_KEY.mode,undefined);
  assert.equal(settings.SECTIONS.some(s=>s.fields.includes('mode')),false);
+});
+
+test('Volcano Engine direct is hidden from the connection list while existing configs keep working',()=>{
+ const settings=vm.createContext({});vm.runInContext(sourceOf('connection-defaults','client/config')+'\nObject.assign(globalThis,createClientConfig());',settings);
+ assert.equal(Array.from(settings.SELECTS.connectionMode).join(','),'service,metaontic');
+ // 隐藏只在设置页：默认值、旧配置校验与运行端都不受影响的取值仍在 schema 里。
+ assert.equal(settings.FIELD_BY_KEY.volcengineApiKey.kind,'text');
 });

@@ -50,6 +50,23 @@ test('published host preserves schema, tool registration, live configuration and
   assert.equal(host.disposed(), 9);
 });
 
+test('conversation stays inside video creation and configuration is read-only in chat', async () => {
+  const host = harness({ connectionMode: 'metaontic', metaonticApiKey: 'test' }, '/tmp');
+  const prompt = host.prompt();
+  assert.match(prompt, /本对话只做视频创作/);
+  assert.match(prompt, /与视频创作无关的话题/);
+  assert.match(prompt, /只能在插件设置页里改/);
+  const tool = host.tools.get('video_config');
+  assert.equal(Array.from(tool.parameters.properties.action.enum).join(','), 'get');
+  const view = await tool.execute({ action: 'get' });
+  assert.equal(view.action, 'get');
+  assert.ok(view.stored);
+  for (const args of [{ action: 'set', model: 'doubao-seedance-2-0-mini-260615' }, { action: 'set', baseUrl: 'https://example.invalid' }, { action: 'set' }]) {
+    await assert.rejects(tool.execute(args), /插件配置不能在对话里改/);
+  }
+  host.dispose();
+});
+
 for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools submit, query, pause, resume and extend through split modules`, async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'mv-integration-'));
   const previousFetch = globalThis.fetch;
@@ -136,9 +153,10 @@ for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools sub
   }
 });
 
-// 服务端方式（service）暂时停用：确认框直接拒绝，也不会真的提交任务。
-test('service: bundled host refuses the temporarily unavailable server method', async () => {
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'mv-integration-off-'));
+// 服务端方式（service）恢复提供：确认框不再以「方式不可用」直接拒绝，
+// 而是照常进入角色参考图等正常流程卡口（这里没有可交互会话，所以停在提问前）。
+test('service: bundled host serves the server method again instead of refusing it', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'mv-integration-service-'));
   const previousFetch = globalThis.fetch;
   const previousHome = process.env.DSH_HOME;
   let requests = 0;
@@ -151,10 +169,11 @@ test('service: bundled host refuses the temporarily unavailable server method', 
       ffmpegBinary: '/missing/ffmpeg', ffprobeBinary: '/missing/ffprobe',
     };
     const host = harness(config, directory);
-    const gate = await host.gate({ name: 'video_generate', arguments: { duration: 5 } });
-    assert.equal(gate.kind, 'deny');
-    assert.match(gate.reason, /暂时不可用/);
-    await assert.rejects(host.tools.get('video_generate').execute({ prompt: 'A title', duration: 5 }, { callId: 'off', agent: {} }), /暂时不可用/);
+    const decision = await host.gate({ name: 'video_generate', arguments: { duration: 5 } });
+    assert.doesNotMatch(String(decision.reason || ''), /暂时不可用/);
+    assert.equal(decision.kind, 'deny');
+    assert.match(decision.reason, /角色参考图/);
+    assert.ok(host.tools.has('video_config'));
     assert.equal(requests, 0);
     host.dispose();
   } finally {

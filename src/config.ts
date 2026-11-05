@@ -6,7 +6,7 @@ export const Config = z.object({
   // 服务端方式停用期间，新装默认落到 MetaOntic AI（否则新用户一进来就是不可用的方式）；
   // 已有配置的取值不受默认值影响，按停用规则被拒绝调用。
   connectionMode: z.union(['service', 'metaontic', 'volcengine']).default(SERVICE_MODE_AVAILABLE ? 'service' : 'metaontic')
-    .description('接入方式：MetaOntic AI；火山引擎直连；service 服务端领 Key（暂时不可用）').volatile(),
+    .description('接入方式：MetaOnticVideo 服务端领 Key（service）；MetaOntic AI（metaontic）；火山引擎直连（volcengine，当前设置页暂不提供选择）').volatile(),
   metaonticApiKey: z.string().default('').description('MetaOntic AI API Key').volatile(),
   volcengineApiKey: z.string().default('').description('火山引擎直连模式的火山 API Key').volatile(),
   entryId: z.string()
@@ -65,6 +65,10 @@ export const Config = z.object({
   deviceSecret: z.string()
     .default('')
     .description('本机设备密钥：与设备标识一起绑定归属；页面不显示')
+    .volatile(),
+  loginKey: z.string()
+    .default('')
+    .description('登录令牌（服务端下发，JWT）：之后每个服务端请求都带它证明账号身份；页面不显示')
     .volatile(),
   estimateGroupRatio: z.number().min(0).max(10)
     .default(0.8)

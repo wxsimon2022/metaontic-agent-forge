@@ -14,15 +14,16 @@ The project planner supports up to 120 seconds and 10 segments. Longer videos re
 
 ## Features
 
-- **Text-to-video and image-to-video:** prompts, reference images, first frames or first/last frames, depending on the model and provider.
+- **Image-to-video and text-to-video:** prompts, reference images, first frames or first/last frames, depending on the model and provider.
 - **Script and storyboard review:** review the full script, a local storyboard illustration and cost estimates before confirming production.
 - **Video continuation:** describe transitions and extend the previous video while retaining the approved subject, action and audio plan.
 - **Segment previews and resume:** review each completed segment and continue using the saved task state; reuse completed segments after an interruption.
 - **Local FFmpeg merging:** deliver the merged video first, followed by the original numbered segments.
 - **480P and 720P:** confirm resolution during script review; subsequent segments retain that choice.
-- **Provider options:** MetaOntic AI or direct Volcano Engine access. The service-issued key option is temporarily unavailable and no longer appears in the connection list; the current model selector offers Seedance 2.0 Mini and Fast.
+- **Provider options:** the MetaOnticVideo relay (email sign-in, key issued by the service, wallet top-up and per-generation Alipay payment) or MetaOntic AI with your own key. Direct Volcano Engine access is not offered in the connection list right now; existing configurations keep working. The current model selector offers Seedance 2.0 Mini and Fast.
 - **Optional character design:** for a text-only project, choose whether to generate a stylized character image with Seedream. Image calls are billed separately; review the result before using it for the initial video and all continuations. Declining keeps the text-only workflow.
 - **Reference image preparation:** supported relay connections can use Seedream to convert real-person references into a non-photorealistic style, with separate consent, billing and result review.
+- **Scope and configuration:** the conversation covers video creation only (script, storyboard, generation, continuation, merging and delivery, plus the configuration guidance and environment checks those need); unrelated topics are declined. Provider, key, model, endpoint and duration settings are changed in the plugin settings page only — `video_config` is read-only and never writes, and the assistant will not ask for or display your key.
 
 ## Quick start
 

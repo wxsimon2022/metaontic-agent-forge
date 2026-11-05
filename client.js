@@ -105,9 +105,9 @@
       .mov-support-frame { width: 100%; height: min(480px, 62vh); border: 0; border-radius: 8px; background: white; }
       .mov-trailing { margin-left: auto; }
       /* \u989D\u5EA6\uFF1A\u4E09\u4E2A\u6570\u5B57\u5757\uFF0C\u4E00\u773C\u5206\u6E05\u5269\u4F59 / \u5DF2\u7528 / \u603B\u989D\u5EA6 */
-      .mov-quota-compact { padding: 8px 12px; gap: 14px; flex-direction: row; align-items: center; flex-wrap: nowrap; overflow-x: auto; }
+      .mov-quota-compact { padding: 8px 12px; gap: 10px 14px; flex-direction: row; align-items: center; flex-wrap: wrap; }
       .mov-quota-compact .mov-card-head { min-height: 24px; flex: 0 0 auto; gap: 8px; }
-      .mov-quota-compact .mov-stats { display: flex; flex: 1 0 auto; gap: 16px; }
+      .mov-quota-compact .mov-stats { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 8px 16px; min-width: 0; }
       .mov-quota-compact .mov-stat { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 6px; padding: 0; border: 0; border-radius: 0; white-space: nowrap; }
       .mov-quota-compact .mov-stat-label { font-size: 11px; white-space: nowrap; }
       .mov-quota-compact .mov-stat-value { font-size: 14px; }
@@ -305,6 +305,23 @@
     return { videoExecutionSource, VideoTaskProgress, VideoProgressDock };
   }
 
+  // src/connection-defaults.ts
+  var METAONTIC_BASE_URL = "https://ai.bileego.com";
+  var SERVICE_MODE_AVAILABLE = true;
+  var VOLCENGINE_MODE_AVAILABLE = false;
+  function connectionDefaults(values) {
+    const text = (key, fallback) => String(values[key] ?? "").trim() || fallback;
+    const volc = values.connectionMode === "volcengine";
+    return {
+      ...volc ? { baseUrl: "https://ark.cn-beijing.volces.com" } : { baseUrl: text("baseUrl", METAONTIC_BASE_URL).replace(/\/+$/, "") },
+      submitPath: volc ? "/api/v3/contents/generations/tasks" : text("submitPath", "/doubao/api/v3/contents/generations/tasks"),
+      queryPath: volc ? "/api/v3/contents/generations/tasks/{task_id}" : text("queryPath", "/doubao/api/v3/contents/generations/tasks/{task_id}"),
+      model: text("model", "doubao-seedance-2-0-mini-260615"),
+      imageModel: text("imageModel", "doubao-seedream-5-0-260128"),
+      imageUseVideoKey: values.imageUseVideoKey !== false
+    };
+  }
+
   // src/client/config.ts
   function createClientConfig() {
     const NAMESPACE = "metaontic-video";
@@ -314,10 +331,11 @@
       "doubao-seedance-2-0-fast-260128"
     ];
     const SELECTS = {
-      // 接入方式暂时只提供 MetaOntic AI 与火山直连；旧配置仍是 service 时，
-      // 设置页用隐藏项显示当前取值（见 settings 里的 HIDDEN_CONNECTION_MODES）。
-      // 恢复时把 'service' 加回这个数组即可。
-      connectionMode: ["metaontic", "volcengine"],
+      // 接入方式：A 服务端（邮箱登录领 Key）、B MetaOntic AI（手填 Key）、C 火山直连。
+      // 临时下架某个方式时，先关掉 connection-defaults.ts 里对应的开关，再把它从这里去掉：
+      // 设置页会改用隐藏项显示已有取值（见 settings.ts 的 HIDDEN_CONNECTION_MODES），
+      // 列表里选不到它，也不会把已有配置静默换成别的渠道。
+      connectionMode: VOLCENGINE_MODE_AVAILABLE ? ["service", "metaontic", "volcengine"] : ["service", "metaontic"],
       model: MODEL_OPTIONS,
       imageModel: ["doubao-seedream-5-0-260128", "doubao-seedream-5-0-pro-260628"],
       ratio: ["16:9", "9:16", "4:3", "3:4", "1:1", "adaptive"],
@@ -361,6 +379,7 @@
       "registerEmail",
       "deviceId",
       "deviceSecret",
+      "loginKey",
       "model",
       "imageModel",
       "imageUseVideoKey",
@@ -417,8 +436,9 @@
       summary: "{provider} \xB7 {model}",
       apiKeyConfigured: "\u5DF2\u914D\u7F6E\uFF0C\u7559\u7A7A\u4FDD\u7559\u73B0\u6709\u5BC6\u94A5",
       connectionMode: "\u63A5\u5165\u65B9\u5F0F",
-      connectionModeHint: "\u90AE\u7BB1\u767B\u5F55\u9886\u53D6\u5BC6\u94A5\uFF0C\u6216\u4F7F\u7528\u81EA\u5DF1\u7684 MetaOntic AI\u3001\u706B\u5C71\u5F15\u64CE\u5BC6\u94A5\u3002\u5207\u6362\u540E\u4FDD\u5B58\u751F\u6548\u3002",
+      connectionModeHint: "\u90AE\u7BB1\u767B\u5F55\u9886\u53D6\u5BC6\u94A5\uFF0C\u6216\u4F7F\u7528\u81EA\u5DF1\u7684 MetaOntic AI \u5BC6\u94A5\u3002\u5207\u6362\u540E\u4FDD\u5B58\u751F\u6548\u3002",
       connectionServiceUnavailable: "MetaOnticVideo \u670D\u52A1\u7AEF\u65B9\u5F0F\u6682\u65F6\u4E0D\u53EF\u7528\uFF1A\u8BF7\u6539\u7528 MetaOntic AI \u6216\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\uFF0C\u586B\u597D Key \u4FDD\u5B58\u540E\u751F\u6548\u3002",
+      connectionVolcengineUnavailable: "\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\u5F53\u524D\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF1A\u5DF2\u6709\u7684\u914D\u7F6E\u4ECD\u53EF\u7EE7\u7EED\u751F\u6210\uFF1B\u5982\u9700\u66F4\u6362\uFF0C\u8BF7\u5728\u300C\u63A5\u5165\u65B9\u5F0F\u300D\u91CC\u9009\u62E9 MetaOnticVideo \u6216 MetaOntic AI\u3002",
       connectionMetaonticHint: "\u4F7F\u7528 MetaOntic AI \u7684 API Key\uFF0C\u586B\u5199\u540E\u4FDD\u5B58\u751F\u6548\u3002",
       connectionMetaonticRegister: "\u6CE8\u518C\u83B7\u53D6 Key",
       volcengineKeyHint: "\u586B\u5199\u706B\u5C71\u65B9\u821F\u63A7\u5236\u53F0\u7684 API Key \u540E\u4FDD\u5B58\uFF0C\u8D39\u7528\u7531\u706B\u5C71\u5F15\u64CE\u8D26\u6237\u627F\u62C5\u3002\u9700\u8981\u81EA\u884C\u6838\u5BF9\u597D Key \u7684\u6A21\u578B\u80FD\u529B\u3002",
@@ -431,6 +451,7 @@
       service: "MetaOnticVideo",
       serviceUnavailable: "MetaOnticVideo\uFF08\u6682\u65F6\u4E0D\u53EF\u7528\uFF09",
       volcengine: "\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE",
+      volcengineUnavailable: "\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\uFF08\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF09",
       seamTrimSeconds: "\u63A5\u7F1D\u88C1\u526A\u79D2\u6570\uFF08\u5982 0.5,0\uFF09",
       modelHiddenCurrent: "\u5F53\u524D\u6A21\u578B\uFF08\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF09",
       releaseNotesTitle: "\u66F4\u65B0\u5185\u5BB9",
@@ -482,10 +503,26 @@
       quotaTotal: "\u603B\u989D\u5EA6",
       quotaUnlimited: "\u4E0D\u9650\u989D\u5EA6",
       quotaLoading: "\u8BFB\u53D6\u989D\u5EA6\u4E2D\u2026",
-      quotaRefresh: "\u5237\u65B0\u989D\u5EA6",
-      supportRecharge: "\u4EBA\u5DE5\u5145\u503C",
+      quotaRefresh: "\u5237\u65B0",
+      // 余额（钱包）：登录后显示，可在设置页充值；生成只做人工确认
+      walletBalance: "\u4F59\u989D",
+      walletRecharge: "\u5145\u503C",
+      walletRechargeTitle: "\u5145\u503C\u4F59\u989D",
+      walletRechargeAmount: "\u5145\u503C\u91D1\u989D\uFF08\u5143\uFF09",
+      walletRechargeRange: "\u5355\u6B21\u53EF\u5145 {min} ~ {max} \u5143\uFF0C\u4ED8\u6B3E\u6210\u529F\u5373\u65F6\u5230\u8D26\u3002",
+      walletRechargeConfirm: "\u786E\u8BA4\u5145\u503C",
+      walletRechargeCancel: "\u53D6\u6D88",
+      walletRechargeWorking: "\u6B63\u5728\u4E0B\u5355\uFF0C\u8BF7\u7A0D\u5019\u2026",
+      walletRechargeOpening: "\u5DF2\u6253\u5F00\u652F\u4ED8\u5B9D\u6536\u94F6\u53F0\uFF1A\u8BF7\u5728\u6D4F\u89C8\u5668\u91CC\u5B8C\u6210\u4ED8\u6B3E\uFF0C\u5230\u8D26\u540E\u4F59\u989D\u4F1A\u81EA\u52A8\u66F4\u65B0\u3002",
+      walletRechargePending: "\u7B49\u5F85\u4ED8\u6B3E\u5230\u8D26\u2026\uFF08\u4ED8\u6B3E\u5B8C\u6210\u540E\u4F59\u989D\u4F1A\u81EA\u52A8\u5237\u65B0\uFF0C\u4E5F\u53EF\u4EE5\u76F4\u63A5\u5173\u6389\u8FD9\u4E2A\u7A97\u53E3\uFF09",
+      walletRechargeDone: "\u5145\u503C\u5230\u8D26\uFF1A\u5F53\u524D\u4F59\u989D {balance}",
+      walletRechargeTimeout: "\u8FD8\u6CA1\u67E5\u5230\u4ED8\u6B3E\u7ED3\u679C\uFF1A\u4ED8\u6B3E\u5B8C\u6210\u540E\u56DE\u5230\u8FD9\u91CC\u70B9\u300C\u5237\u65B0\u300D\u5373\u53EF\u786E\u8BA4\u3002",
+      walletRechargeFailed: "\u5145\u503C\u672A\u5B8C\u6210\uFF1A{message}",
+      walletRechargeBadAmount: "\u8BF7\u8F93\u5165\u6B63\u786E\u7684\u91D1\u989D\uFF0C\u6BD4\u5982 30\u3002",
+      walletRechargeLink: "\u6CA1\u5F39\u51FA\u6536\u94F6\u53F0\uFF1F\u70B9\u8FD9\u91CC\u6253\u5F00",
+      supportRecharge: "\u5BA2\u670D",
       supportClose: "\u5173\u95ED",
-      supportScan: "\u8BF7\u7528\u5FAE\u4FE1\u626B\u63CF\u4E8C\u7EF4\u7801\uFF0C\u8054\u7CFB\u4EBA\u5DE5\u5145\u503C\u3002\u9875\u9762\u672A\u52A0\u8F7D\u65F6\u53EF\u70B9\u51FB\u4E0B\u65B9\u94FE\u63A5\u3002",
+      supportScan: "\u8BF7\u7528\u5FAE\u4FE1\u626B\u63CF\u4E8C\u7EF4\u7801\uFF0C\u8054\u7CFB\u5BA2\u670D\u5145\u503C\u3002\u9875\u9762\u672A\u52A0\u8F7D\u65F6\u53EF\u70B9\u51FB\u4E0B\u65B9\u94FE\u63A5\u3002",
       supportOpenPage: "\u6253\u5F00\u5BA2\u670D\u9875\u9762",
       quotaNoKey: "\u767B\u5F55\u540E\u53EF\u67E5\u770B\u5269\u4F59\u989D\u5EA6\u4E0E\u5DF2\u7528\u989D\u5EA6\u3002",
       quotaNotRegistered: "\u672A\u627E\u5230\u672C\u673A\u7684\u767B\u5F55\u8BB0\u5F55\uFF0C\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u5904\u7406\u540E\u91CD\u65B0\u767B\u5F55\u3002",
@@ -588,8 +625,9 @@
       summary: "{provider} \xB7 {model}",
       apiKeyConfigured: "Configured; leave blank to keep the current key",
       connectionMode: "Connection",
-      connectionModeHint: "Log in by email to receive a key, or use your own MetaOntic AI or Volcano Engine key. Save to apply a change.",
+      connectionModeHint: "Log in by email to receive a key, or use your own MetaOntic AI key. Save to apply a change.",
       connectionServiceUnavailable: "The MetaOnticVideo server method is temporarily unavailable. Switch to MetaOntic AI or Volcano Engine, enter a key and save.",
+      connectionVolcengineUnavailable: 'Volcano Engine direct is not offered right now. An existing configuration keeps working; switch to MetaOnticVideo or MetaOntic AI in "Connection" to change it.',
       connectionMetaonticHint: "Use your MetaOntic AI API key, then save to apply.",
       connectionMetaonticRegister: "Register to get a key",
       volcengineKeyHint: "Enter an API key from the Volcano Ark console and save. No email login required. Billed to your Volcano Engine account. Check which models your key can access.",
@@ -602,6 +640,7 @@
       service: "MetaOnticVideo",
       serviceUnavailable: "MetaOnticVideo (unavailable)",
       volcengine: "Volcano Engine",
+      volcengineUnavailable: "Volcano Engine (not offered right now)",
       seamTrimSeconds: "Seam head trims (e.g. 0.5,0)",
       modelHiddenCurrent: "Current model (selection unavailable)",
       releaseNotesTitle: "Release notes",
@@ -653,10 +692,25 @@
       quotaTotal: "Total",
       quotaUnlimited: "Unlimited",
       quotaLoading: "Reading quota\u2026",
-      quotaRefresh: "Refresh quota",
-      supportRecharge: "Manual recharge",
+      quotaRefresh: "Refresh",
+      walletBalance: "Balance",
+      walletRecharge: "Top up",
+      walletRechargeTitle: "Top up balance",
+      walletRechargeAmount: "Amount (CNY)",
+      walletRechargeRange: "{min} ~ {max} CNY per top-up. The balance updates right after payment.",
+      walletRechargeConfirm: "Confirm",
+      walletRechargeCancel: "Cancel",
+      walletRechargeWorking: "Creating the order\u2026",
+      walletRechargeOpening: "Alipay checkout opened: finish the payment in your browser. The balance updates automatically.",
+      walletRechargePending: "Waiting for the payment\u2026 (the balance refreshes automatically; you can close this dialog)",
+      walletRechargeDone: "Top-up credited: balance {balance}",
+      walletRechargeTimeout: 'No payment result yet: click "Refresh" here once the payment is done.',
+      walletRechargeFailed: "Top-up failed: {message}",
+      walletRechargeBadAmount: "Enter a valid amount, e.g. 30.",
+      walletRechargeLink: "Checkout did not open? Click here",
+      supportRecharge: "Support",
       supportClose: "Close",
-      supportScan: "Scan the QR code with WeChat to contact recharge support. If it does not load, use the link below.",
+      supportScan: "Scan the QR code with WeChat to contact support for a top-up. If it does not load, use the link below.",
       supportOpenPage: "Open support page",
       quotaNoKey: "Log in to view remaining and used quota.",
       quotaNotRegistered: "No login record found for this device. Contact an administrator before logging in again.",
@@ -740,22 +794,6 @@
       resetFailed: "Reset failed: {message}"
     };
     return { zh, en };
-  }
-
-  // src/connection-defaults.ts
-  var METAONTIC_BASE_URL = "https://ai.bileego.com";
-  var SERVICE_MODE_AVAILABLE = false;
-  function connectionDefaults(values) {
-    const text = (key, fallback) => String(values[key] ?? "").trim() || fallback;
-    const volc = values.connectionMode === "volcengine";
-    return {
-      ...volc ? { baseUrl: "https://ark.cn-beijing.volces.com" } : { baseUrl: text("baseUrl", METAONTIC_BASE_URL).replace(/\/+$/, "") },
-      submitPath: volc ? "/api/v3/contents/generations/tasks" : text("submitPath", "/doubao/api/v3/contents/generations/tasks"),
-      queryPath: volc ? "/api/v3/contents/generations/tasks/{task_id}" : text("queryPath", "/doubao/api/v3/contents/generations/tasks/{task_id}"),
-      model: text("model", "doubao-seedance-2-0-mini-260615"),
-      imageModel: text("imageModel", "doubao-seedream-5-0-260128"),
-      imageUseVideoKey: values.imageUseVideoKey !== false
-    };
   }
 
   // src/client/state.ts
@@ -1284,10 +1322,12 @@
       const controller = typeof AbortController === "function" ? new AbortController() : null;
       const timer = controller ? window.setTimeout(() => controller.abort(), 9e4) : null;
       const token = String(context.value.registerToken || context.DEFAULT_REGISTER_TOKEN);
+      const loginKey = String(context.value.loginKey || "").trim();
       const options = { ...init || {} };
       options.headers = {
         accept: "application/json",
         "x-register-token": token,
+        ...loginKey ? { "x-login-key": loginKey } : {},
         // 本插件版本：服务端会记进请求日志，便于回溯「这版有没有问题」
         ...context.PLUGIN_VERSION ? { "x-plugin-version": context.PLUGIN_VERSION } : {},
         ...init && init.headers || {}
@@ -1318,8 +1358,11 @@
       return payload || {};
     }
     async function applyRegistration(result, fallbackBase, device) {
-      if (!context.serviceActive())
-        return;
+      if (context.connectionBusy.current) {
+        if (!context.connectionBusy.pending)
+          throw new Error(context.settingsError("settingsUnavailable"));
+        await context.connectionBusy.pending;
+      }
       const writes = [
         ["apiKey", result.api_key],
         ["keyOrigin", "register"],
@@ -1329,10 +1372,12 @@
       const account = result.email || result.display_name || "";
       if (account)
         writes.push(["registerEmail", account]);
+      if (result.login_key)
+        writes.push(["loginKey", result.login_key]);
       if (result.model)
         writes.push(["model", result.model]);
-      if (!context.serviceActive())
-        return false;
+      if (context.connectionBusy.current)
+        throw new Error(context.settingsError("settingsUnavailable"));
       context.connectionBusy.current = true;
       try {
         const pending = context.persistConnection(context.form, writes, "service");
@@ -1494,6 +1539,71 @@
         throw error;
       }
     }
+    async function loadWallet() {
+      if (!context.serviceMode || !context.serviceActive())
+        return;
+      const device = deviceIdentity();
+      context.setWalletStatus("working");
+      try {
+        const result = await callRegister(`${registerApiRoot()}/api/v1/wallet/status`, {
+          method: "POST",
+          headers: { "content-type": "application/json", accept: "application/json" },
+          body: JSON.stringify({ device_id: device.id, device_secret: device.secret })
+        });
+        if (!context.serviceActive())
+          return;
+        context.setWallet(result);
+        context.setWalletStatus("ok");
+        return result;
+      } catch (error) {
+        context.setWallet(null);
+        context.setWalletStatus(error?.status === 404 ? "off" : "failed");
+        if (error?.status !== 404)
+          context.setWalletMessage(context.t("quotaFailed", { message: error?.message || String(error) }));
+        return null;
+      }
+    }
+    async function startRecharge(amount) {
+      const device = deviceIdentity();
+      return callRegister(`${registerApiRoot()}/api/v1/wallet/recharge`, {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify({
+          device_id: device.id,
+          device_secret: device.secret,
+          amount: String(amount)
+        })
+      });
+    }
+    async function fetchRecharge(outTradeNo) {
+      const device = deviceIdentity();
+      return callRegister(`${registerApiRoot()}/api/v1/wallet/recharge/status`, {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify({
+          device_id: device.id,
+          device_secret: device.secret,
+          out_trade_no: outTradeNo
+        })
+      });
+    }
+    async function waitRecharge(outTradeNo, { tries = 40, intervalMs = 3e3 } = {}) {
+      for (let index = 0; index < tries; index += 1) {
+        const result = await fetchRecharge(outTradeNo).catch(() => null);
+        if (result && result.credited) {
+          await loadWallet().catch(() => {
+          });
+          await loadQuota().catch(() => {
+          });
+          return result;
+        }
+        if (result && result.status === "CLOSED") return result;
+        await new Promise((resolve) => {
+          window.setTimeout(resolve, intervalMs);
+        });
+      }
+      return null;
+    }
     async function loadUsage() {
       if (!context.serviceMode || !context.serviceActive() || context.usageInFlight.current)
         return;
@@ -1525,14 +1635,14 @@
         context.usageInFlight.current = false;
       }
     }
-    return { registerApiRoot, loggedOut, setLoggedOut, clearLoggedOut, forgetDevice, deviceIdentity, deviceFingerprint, deviceLabel, deviceWrites, syncDeviceIdentity, callRegister, applyRegistration, lookupOwnKey, startCooldown, sendEmailCode, register, loadQuota, loadUsage };
+    return { registerApiRoot, loggedOut, setLoggedOut, clearLoggedOut, forgetDevice, deviceIdentity, deviceFingerprint, deviceLabel, deviceWrites, syncDeviceIdentity, callRegister, applyRegistration, lookupOwnKey, startCooldown, sendEmailCode, register, loadQuota, loadUsage, loadWallet, startRecharge, waitRecharge };
   }
 
   // package.json
   var package_default = {
     name: "metaontic-video",
     version: "3.14.0",
-    description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
+    description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, image-to-video, text-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects through the MetaOnticVideo relay with email sign-in and wallet top-up, or your own MetaOntic AI key.",
     license: "MIT",
     type: "module",
     keywords: [
@@ -1546,8 +1656,8 @@
       "seedance-2",
       "long-video",
       "video-generation",
-      "text-to-video",
       "image-to-video",
+      "text-to-video",
       "video-continuation",
       "video-extension",
       "storyboard",
@@ -1578,7 +1688,6 @@
       "locale/*.json",
       "icon.svg",
       "logo.svg",
-      "README.md",
       "README.en.md",
       "MetaOnticVideo\u4F7F\u7528\u8BF4\u660E\u4E66.md",
       "MetaOnticVideo\u4F7F\u7528\u8BF4\u660E\u4E66.pdf",
@@ -1674,7 +1783,15 @@
       PAGE_CSS
     } = deps;
     const SHOW_USAGE_RECORD = false;
-    const HIDDEN_CONNECTION_MODES = ["service"];
+    const HIDDEN_CONNECTION_MODES = [
+      ...SERVICE_MODE_AVAILABLE ? [] : ["service"],
+      ...VOLCENGINE_MODE_AVAILABLE ? [] : ["volcengine"]
+    ];
+    function hiddenConnectionLabel(t, mode) {
+      if (mode === "service") return t(SERVICE_MODE_AVAILABLE ? "service" : "serviceUnavailable");
+      if (mode === "volcengine") return t(VOLCENGINE_MODE_AVAILABLE ? "volcengine" : "volcengineUnavailable");
+      return t(mode);
+    }
     function makePage({ form, t, manager }) {
       return function ConfigPage(props) {
         const snapshot = useSnapshot(form);
@@ -1718,6 +1835,21 @@
         const [quotaStatus, setQuotaStatus] = React.useState("idle");
         const [quotaMessage, setQuotaMessage] = React.useState("");
         const [quotaAt, setQuotaAt] = React.useState("");
+        const [wallet, setWallet] = React.useState(null);
+        const [walletStatus, setWalletStatus] = React.useState("idle");
+        const [walletMessage, setWalletMessage] = React.useState("");
+        const [rechargeOpen, setRechargeOpen] = React.useState(false);
+        const [rechargeAmount, setRechargeAmount] = React.useState("30");
+        const [rechargeState, setRechargeState] = React.useState("idle");
+        const [rechargeMessage, setRechargeMessage] = React.useState("");
+        const [rechargeLink, setRechargeLink] = React.useState("");
+        const rechargeDialog = React.useRef(null);
+        React.useEffect(() => {
+          if (rechargeOpen && rechargeDialog.current && !rechargeDialog.current.open) rechargeDialog.current.showModal();
+        }, [rechargeOpen]);
+        React.useEffect(() => {
+          setRechargeOpen(false);
+        }, [selectedMode]);
         const [usage, setUsage] = React.useState(null);
         const [usageStatus, setUsageStatus] = React.useState("idle");
         const [usageMessage, setUsageMessage] = React.useState("");
@@ -1739,7 +1871,7 @@
             return "";
           }
         });
-        const { registerApiRoot, loggedOut, setLoggedOut, clearLoggedOut, forgetDevice, deviceIdentity, deviceFingerprint, deviceLabel, deviceWrites, syncDeviceIdentity, callRegister, applyRegistration, lookupOwnKey, startCooldown, sendEmailCode, register, loadQuota, loadUsage } = createAccountActions({
+        const { registerApiRoot, loggedOut, setLoggedOut, clearLoggedOut, forgetDevice, deviceIdentity, deviceFingerprint, deviceLabel, deviceWrites, syncDeviceIdentity, callRegister, applyRegistration, lookupOwnKey, startCooldown, sendEmailCode, register, loadQuota, loadUsage, loadWallet, startRecharge, waitRecharge } = createAccountActions({
           get value() {
             return value;
           },
@@ -1817,6 +1949,15 @@
           },
           get setQuotaAt() {
             return setQuotaAt;
+          },
+          get setWallet() {
+            return setWallet;
+          },
+          get setWalletStatus() {
+            return setWalletStatus;
+          },
+          get setWalletMessage() {
+            return setWalletMessage;
           },
           get usageInFlight() {
             return usageInFlight;
@@ -1907,6 +2048,8 @@
           });
           if (snap.secrets?.apiKey || (snap.value || {}).apiKey) {
             loadQuota().catch(() => {
+            });
+            loadWallet().catch(() => {
             });
             if (SHOW_USAGE_RECORD) loadUsage().catch(() => {
             });
@@ -2086,8 +2229,8 @@
               onChange: (event) => edit(field.key, event.target.value)
             }, [
               hiddenModel ? h("option", { key: "hidden-current", value: current, hidden: true }, t("modelHiddenCurrent")) : null,
-              // 停用期间直接标出不可用；恢复后这一支不会走到（'service' 会回到候选里）。
-              hiddenMode ? h("option", { key: "hidden-current", value: current, hidden: true }, t(SERVICE_MODE_AVAILABLE ? current : "serviceUnavailable")) : null,
+              // 下架期间直接标出不可用；恢复后这一支不会走到（该方式会回到候选里）。
+              hiddenMode ? h("option", { key: "hidden-current", value: current, hidden: true }, hiddenConnectionLabel(t, String(current || ""))) : null,
               ...list.map((option) => h("option", { key: option, value: option }, optionLabel(t, field.key, option)))
             ]);
           }
@@ -2128,7 +2271,7 @@
           ]);
         }
         const hints = {
-          connectionMode: selectedMode === "metaontic" ? [t("connectionMetaonticHint"), " ", h("a", { key: "metaontic-register", href: "https://ai.bileego.com/", target: "_blank", rel: "noopener noreferrer", style: { textDecoration: "underline" } }, t("connectionMetaonticRegister"))] : serviceMode && !SERVICE_MODE_AVAILABLE ? t("connectionServiceUnavailable") : t("connectionModeHint"),
+          connectionMode: selectedMode === "metaontic" ? [t("connectionMetaonticHint"), " ", h("a", { key: "metaontic-register", href: "https://ai.bileego.com/", target: "_blank", rel: "noopener noreferrer", style: { textDecoration: "underline" } }, t("connectionMetaonticRegister"))] : serviceMode && !SERVICE_MODE_AVAILABLE ? t("connectionServiceUnavailable") : directMode && !VOLCENGINE_MODE_AVAILABLE ? t("connectionVolcengineUnavailable") : t("connectionModeHint"),
           metaonticApiKey: t("metaonticKeyHint"),
           volcengineApiKey: t("volcengineKeyHint"),
           model: t("modelHint"),
@@ -2254,42 +2397,30 @@
         const money = (field) => `${quotaSymbol}${formatMoney(quota ? quota[field] : 0)}`;
         const quotaReady = quotaStatus === "ok" && quota;
         const quotaFallback = keyReady ? t("quotaLoading") : t("quotaNoKey");
-        const quotaStats = quotaReady ? [
-          {
-            key: "remain",
-            label: t("quotaRemain"),
-            value: quota.unlimited_quota ? t("quotaUnlimited") : money("remain_amount"),
-            color: TOKENS.success
-          },
-          { key: "used", label: t("quotaUsed"), value: money("used_amount"), color: TOKENS.text },
-          { key: "total", label: t("quotaTotal"), value: money("total_amount"), color: TOKENS.muted }
-        ] : null;
+        const walletReady = walletStatus === "ok" && wallet && wallet.enabled;
+        const walletSymbol = wallet && wallet.currency_symbol ? wallet.currency_symbol : quotaSymbol;
+        const balanceText = quotaReady ? quota.unlimited_quota ? t("quotaUnlimited") : money("remain_amount") : null;
         const quotaBox = serviceMode && SERVICE_MODE_AVAILABLE && keyReady ? h("div", {
           key: "quota",
           "data-field": "quota",
           className: "mov-card mov-quota-compact"
         }, [
           h("div", { key: "head", className: "mov-card-head" }, [
-            h("span", { key: "title", className: "mov-card-title" }, t("quotaTitle"))
+            h("span", { key: "title", className: "mov-card-title" }, t("walletBalance"))
           ]),
-          quotaStats ? h(
-            "div",
-            { key: "text", "data-field": "quotaValue", className: "mov-stats" },
-            quotaStats.map((item) => h("div", { key: item.key, className: "mov-stat" }, [
-              h("span", { key: "label", className: "mov-stat-label" }, item.label),
-              h("span", {
-                key: "value",
-                className: "mov-stat-value",
-                style: { color: item.color }
-              }, item.value)
-            ]))
-          ) : h("span", {
+          balanceText !== null ? h("span", {
+            key: "text",
+            "data-field": "quotaValue",
+            className: "mov-stat-value",
+            style: { color: TOKENS.primaryFill }
+          }, balanceText) : h("span", {
             key: "text",
             "data-field": "quotaValue",
             className: "mov-hint"
           }, quotaFallback),
           quotaReady ? h("span", { key: "at", className: "mov-foot-note" }, t("quotaUpdatedAt", { time: quotaAt })) : null,
           quotaMessage ? h("span", { key: "message", className: "mov-hint" }, quotaMessage) : null,
+          walletMessage ? h("span", { key: "wallet-message", className: "mov-hint" }, walletMessage) : null,
           h("div", { key: "actions", className: "mov-quota-actions mov-trailing" }, [
             h("button", {
               key: "refresh",
@@ -2300,8 +2431,28 @@
               onClick: () => {
                 loadQuota().catch(() => {
                 });
+                loadWallet().catch(() => {
+                });
               }
             }, t("quotaRefresh")),
+            walletReady ? h("button", {
+              key: "recharge",
+              "data-action": "wallet-recharge",
+              type: "button",
+              className: "mov-btn mov-btn-sm mov-btn-primary",
+              "aria-haspopup": "dialog",
+              onClick: () => {
+                setRechargeState("idle");
+                setRechargeMessage("");
+                setRechargeLink("");
+                if (wallet && wallet.recharge_min) {
+                  const current = Number(rechargeAmount);
+                  const min = Number(wallet.recharge_min);
+                  if (!Number.isFinite(current) || current < min) setRechargeAmount(String(min));
+                }
+                setRechargeOpen(true);
+              }
+            }, t("walletRecharge")) : null,
             h("button", {
               key: "support",
               "data-action": "support-recharge",
@@ -2312,6 +2463,43 @@
             }, t("supportRecharge"))
           ])
         ]) : null;
+        async function submitRecharge() {
+          const amount = Number(String(rechargeAmount).trim());
+          if (!Number.isFinite(amount) || amount <= 0) {
+            setRechargeState("failed");
+            setRechargeMessage(t("walletRechargeBadAmount"));
+            return;
+          }
+          setRechargeState("working");
+          setRechargeMessage("");
+          setRechargeLink("");
+          try {
+            const order = await startRecharge(amount);
+            const link = order && order.pay_url ? String(order.pay_url) : "";
+            setRechargeLink(link);
+            if (link) {
+              try {
+                window.open(link, "_blank", "noopener");
+              } catch {
+              }
+            }
+            setRechargeState("pending");
+            setRechargeMessage(t("walletRechargeOpening"));
+            const done = await waitRecharge(String(order && order.out_trade_no));
+            if (done && done.credited) {
+              setRechargeState("ok");
+              const fresh = await loadQuota().catch(() => null);
+              const shown = fresh ? `${quotaSymbol}${formatMoney(Number(fresh.remain_amount) || 0)}` : `${walletSymbol}${formatMoney(Number(done.balance) || 0)}`;
+              setRechargeMessage(t("walletRechargeDone", { balance: shown }));
+            } else {
+              setRechargeState("failed");
+              setRechargeMessage(t("walletRechargeTimeout"));
+            }
+          } catch (error) {
+            setRechargeState("failed");
+            setRechargeMessage(t("walletRechargeFailed", { message: error?.message || String(error) }));
+          }
+        }
         function copyText(text, mark) {
           try {
             const result = window.navigator?.clipboard?.writeText(text);
@@ -2603,6 +2791,57 @@
           notice ? h("p", { key: "notice", className: "mov-notice" }, notice) : null,
           ...notice && !snapshot.value ? [] : settingsRows(),
           ...blobs,
+          rechargeOpen ? h("dialog", {
+            key: "recharge-dialog",
+            ref: rechargeDialog,
+            className: "mov-support-dialog",
+            "aria-labelledby": "mov-recharge-title",
+            onCancel: () => setRechargeOpen(false),
+            onClose: () => setRechargeOpen(false),
+            onClick: (event) => {
+              if (event.target === event.currentTarget) {
+                const rect = event.currentTarget.getBoundingClientRect();
+                if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) setRechargeOpen(false);
+              }
+            }
+          }, h("div", { className: "mov-support-content" }, [
+            h("div", { key: "heading", className: "mov-card-head" }, [
+              h("strong", { key: "title", id: "mov-recharge-title" }, t("walletRechargeTitle")),
+              h("button", { key: "close", type: "button", className: "mov-btn mov-btn-sm mov-trailing", "aria-label": t("walletRechargeCancel"), onClick: () => setRechargeOpen(false) }, t("walletRechargeCancel"))
+            ]),
+            h("p", { key: "hint", className: "mov-hint" }, walletReady ? t("walletRechargeRange", {
+              min: walletSymbol + formatMoney(Number(wallet.recharge_min) || 0),
+              max: walletSymbol + formatMoney(Number(wallet.recharge_max) || 0)
+            }) : ""),
+            h("div", { key: "form", style: { display: "flex", gap: 8, alignItems: "center" } }, [
+              h("input", {
+                key: "amount",
+                "data-field": "rechargeAmount",
+                type: "text",
+                inputMode: "decimal",
+                className: "mov-input",
+                value: rechargeAmount,
+                placeholder: t("walletRechargeAmount"),
+                "aria-label": t("walletRechargeAmount"),
+                disabled: rechargeState === "working" || rechargeState === "pending",
+                onChange: (event) => setRechargeAmount(event.target.value),
+                style: { ...inputStyle, flex: "1 1 auto" }
+              }),
+              h("button", {
+                key: "confirm",
+                "data-action": "wallet-recharge-confirm",
+                type: "button",
+                className: "mov-btn mov-btn-primary",
+                disabled: rechargeState === "working" || rechargeState === "pending" || !String(rechargeAmount).trim(),
+                onClick: () => {
+                  submitRecharge().catch(() => {
+                  });
+                }
+              }, rechargeState === "working" ? t("walletRechargeWorking") : t("walletRechargeConfirm"))
+            ]),
+            rechargeMessage ? h("p", { key: "message", className: "mov-hint" }, rechargeMessage) : null,
+            rechargeLink ? h("a", { key: "link", href: rechargeLink, target: "_blank", rel: "noopener noreferrer" }, t("walletRechargeLink")) : null
+          ])) : null,
           supportOpen ? h("dialog", {
             key: "support-dialog",
             ref: supportDialog,

@@ -1,4 +1,6 @@
 /** 浏览器端 config：由入口注入宿主 React 与共享依赖。 */
+import { VOLCENGINE_MODE_AVAILABLE } from '../connection-defaults.js';
+
 export function createClientConfig() {
 /** Host 侧条目的 id，与 cordis.patch.yml 里那条覆盖项一致。 */
     const NAMESPACE = 'metaontic-video';
@@ -16,10 +18,13 @@ export function createClientConfig() {
     ];
     /** 可编辑字段；kind 决定控件，标注 secret 的字段宿主只会告知是否已配置。 */
     const SELECTS = {
-      // 接入方式暂时只提供 MetaOntic AI 与火山直连；旧配置仍是 service 时，
-      // 设置页用隐藏项显示当前取值（见 settings 里的 HIDDEN_CONNECTION_MODES）。
-      // 恢复时把 'service' 加回这个数组即可。
-      connectionMode: ['metaontic', 'volcengine'],
+      // 接入方式：A 服务端（邮箱登录领 Key）、B MetaOntic AI（手填 Key）、C 火山直连。
+      // 临时下架某个方式时，先关掉 connection-defaults.ts 里对应的开关，再把它从这里去掉：
+      // 设置页会改用隐藏项显示已有取值（见 settings.ts 的 HIDDEN_CONNECTION_MODES），
+      // 列表里选不到它，也不会把已有配置静默换成别的渠道。
+      connectionMode: VOLCENGINE_MODE_AVAILABLE
+        ? ['service', 'metaontic', 'volcengine']
+        : ['service', 'metaontic'],
       model: MODEL_OPTIONS,
       imageModel: ['doubao-seedream-5-0-260128', 'doubao-seedream-5-0-pro-260628'],
       ratio: ['16:9', '9:16', '4:3', '3:4', '1:1', 'adaptive'],
@@ -63,7 +68,7 @@ export function createClientConfig() {
     const LOGGED_OUT_KEY = 'metaontic-video.logged-out';
     /** 插件自己会写进配置的项：重置时兜底一起清，免得宿主没把它们列进 user。 */
     const PLUGIN_OWNED_KEYS = [
-      'connectionMode', 'metaonticApiKey', 'volcengineApiKey', 'apiKey', 'keyOrigin', 'baseUrl', 'registerEmail', 'deviceId', 'deviceSecret', 'model', 'imageModel', 'imageUseVideoKey', 'imageApiKey',
+      'connectionMode', 'metaonticApiKey', 'volcengineApiKey', 'apiKey', 'keyOrigin', 'baseUrl', 'registerEmail', 'deviceId', 'deviceSecret', 'loginKey', 'model', 'imageModel', 'imageUseVideoKey', 'imageApiKey',
     ];
     /** 注册接口的握手请求头 X-Register-Token：与服务端 REGISTER_CLIENT_TOKEN 一致。 */
     const DEFAULT_REGISTER_TOKEN = 'metaontic-video-register-v1';
