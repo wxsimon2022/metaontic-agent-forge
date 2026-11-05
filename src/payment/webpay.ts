@@ -43,10 +43,12 @@ export interface WebpayCall {
 }
 
 function webpayHeaders(config) {
+  const loginKey = String(ref(config, 'loginKey', '')).trim();
   return {
     accept: 'application/json',
     'content-type': 'application/json',
     'X-Register-Token': String(ref(config, 'registerToken', '')).trim() || DEFAULT_REGISTER_TOKEN,
+    ...(loginKey ? { 'X-Login-Key': loginKey } : {}),
     ...(PLUGIN_VERSION ? { 'X-Plugin-Version': PLUGIN_VERSION } : {}),
   };
 }

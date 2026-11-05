@@ -63,6 +63,10 @@ export const Config = z.object({
     .default('')
     .description('本机设备密钥：与设备标识一起绑定归属；页面不显示')
     .volatile(),
+  loginKey: z.string()
+    .default('')
+    .description('登录令牌（服务端下发，JWT）：之后每个服务端请求都带它证明账号身份；页面不显示')
+    .volatile(),
   estimateGroupRatio: z.number().min(0).max(10)
     .default(0.8)
     .description('预估费用用的分组折扣（中转站 group_ratio：videosvip=0.8、default=1）')

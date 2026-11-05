@@ -59,6 +59,21 @@ test('收款接口说得清价格和标题', async () => {
   assert.equal(calls[0].init.headers['X-Register-Token'], 'metaontic-video-register-v1');
 });
 
+test('登录令牌随每个请求带上，没配就不带', async () => {
+  const { context, calls } = harness([
+    { body: { code: 0, data: { enabled: true, amount: '9.90' } } },
+    { body: { code: 0, data: { enabled: true, amount: '9.90' } } },
+  ]);
+
+  await context.fetchWebpayStatus(CONFIG);
+  assert.equal(calls[0].init.headers['X-Login-Key'], undefined);
+
+  await context.fetchWebpayStatus({ ...CONFIG, loginKey: 'lk.header.signature' });
+  assert.equal(calls[1].init.headers['X-Login-Key'], 'lk.header.signature');
+  // 老凭据照旧带着：账号是身份，设备凭据只是登记与过渡期兜底
+  assert.equal(calls[1].init.headers['X-Register-Token'], 'metaontic-video-register-v1');
+});
+
 test('收款接口不可用时回「问不到」，而不是「不收钱」', async () => {
   const { context } = harness([
     { status: 404, body: { code: 404, message: '没有这个接口' } },

@@ -954,6 +954,7 @@ var init_config = __esm({
       registerApi: Schema.string().default("").description("\u63D2\u4EF6\u670D\u52A1\u5730\u5740\uFF08\u9886 Key / \u67E5\u989D\u5EA6 / \u4F7F\u7528\u8BB0\u5F55\uFF09\uFF1B\u7559\u7A7A\u7528\u5185\u7F6E\u7684\u89C6\u9891\u670D\u52A1\u57DF\u540D").volatile(),
       deviceId: Schema.string().default("").description("\u672C\u673A\u8BBE\u5907\u6807\u8BC6\uFF1A\u8BBE\u7F6E\u9875\u70B9\u300C\u767B\u5F55\u300D\u65F6\u5199\u5165\uFF0C\u7528\u6765\u67E5\u8FD9\u628A Key \u7684\u5269\u4F59\u989D\u5EA6").volatile(),
       deviceSecret: Schema.string().default("").description("\u672C\u673A\u8BBE\u5907\u5BC6\u94A5\uFF1A\u4E0E\u8BBE\u5907\u6807\u8BC6\u4E00\u8D77\u7ED1\u5B9A\u5F52\u5C5E\uFF1B\u9875\u9762\u4E0D\u663E\u793A").volatile(),
+      loginKey: Schema.string().default("").description("\u767B\u5F55\u4EE4\u724C\uFF08\u670D\u52A1\u7AEF\u4E0B\u53D1\uFF0CJWT\uFF09\uFF1A\u4E4B\u540E\u6BCF\u4E2A\u670D\u52A1\u7AEF\u8BF7\u6C42\u90FD\u5E26\u5B83\u8BC1\u660E\u8D26\u53F7\u8EAB\u4EFD\uFF1B\u9875\u9762\u4E0D\u663E\u793A").volatile(),
       estimateGroupRatio: Schema.number().min(0).max(10).default(0.8).description("\u9884\u4F30\u8D39\u7528\u7528\u7684\u5206\u7EC4\u6298\u6263\uFF08\u4E2D\u8F6C\u7AD9 group_ratio\uFF1Avideosvip=0.8\u3001default=1\uFF09").volatile(),
       duration: Schema.number().step(1).min(4).max(30).default(15).description("\u517C\u5BB9\u65E7\u914D\u7F6E\uFF1B\u5206\u6BB5\u9ED8\u8BA4\u6309\u6A21\u578B\u4E0A\u9650\u6620\u5C04\uFF1A2.0 \u4E3A 15 \u79D2\u30012.5 \u4E3A 30 \u79D2\u3002\u9700\u7F29\u77ED\u5206\u6BB5\u65F6\u5728\u5DE5\u5177\u8C03\u7528\u4E2D\u6307\u5B9A\u3002").volatile(),
       singleMaxSeconds: Schema.number().step(1).min(4).max(30).default(15).description("\u517C\u5BB9\u65E7\u914D\u7F6E\uFF1B\u5355\u6B21\u76F4\u51FA\u4E0A\u9650\u7531\u6A21\u578B\u51B3\u5B9A\uFF1A2.0 \u4E3A 15 \u79D2\u30012.5 \u4E3A 30 \u79D2\u3002").volatile(),
@@ -3856,10 +3857,12 @@ async function lastWebpayEnabled(api, now = Date.now()) {
 
 // src/payment/webpay.ts
 function webpayHeaders(config) {
+  const loginKey = String(ref(config, "loginKey", "")).trim();
   return {
     accept: "application/json",
     "content-type": "application/json",
     "X-Register-Token": String(ref(config, "registerToken", "")).trim() || DEFAULT_REGISTER_TOKEN,
+    ...loginKey ? { "X-Login-Key": loginKey } : {},
     ...PLUGIN_VERSION ? { "X-Plugin-Version": PLUGIN_VERSION } : {}
   };
 }

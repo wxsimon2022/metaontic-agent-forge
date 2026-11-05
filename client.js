@@ -358,6 +358,7 @@
       "registerEmail",
       "deviceId",
       "deviceSecret",
+      "loginKey",
       "model",
       "imageModel",
       "imageUseVideoKey",
@@ -1307,10 +1308,12 @@
       const controller = typeof AbortController === "function" ? new AbortController() : null;
       const timer = controller ? window.setTimeout(() => controller.abort(), 9e4) : null;
       const token = String(context.value.registerToken || context.DEFAULT_REGISTER_TOKEN);
+      const loginKey = String(context.value.loginKey || "").trim();
       const options = { ...init || {} };
       options.headers = {
         accept: "application/json",
         "x-register-token": token,
+        ...loginKey ? { "x-login-key": loginKey } : {},
         // 本插件版本：服务端会记进请求日志，便于回溯「这版有没有问题」
         ...context.PLUGIN_VERSION ? { "x-plugin-version": context.PLUGIN_VERSION } : {},
         ...init && init.headers || {}
@@ -1355,6 +1358,8 @@
       const account = result.email || result.display_name || "";
       if (account)
         writes.push(["registerEmail", account]);
+      if (result.login_key)
+        writes.push(["loginKey", result.login_key]);
       if (result.model)
         writes.push(["model", result.model]);
       if (context.connectionBusy.current)
