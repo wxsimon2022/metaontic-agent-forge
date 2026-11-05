@@ -50,6 +50,23 @@ test('published host preserves schema, tool registration, live configuration and
   assert.equal(host.disposed(), 9);
 });
 
+test('conversation stays inside video creation and configuration is read-only in chat', async () => {
+  const host = harness({ connectionMode: 'metaontic', metaonticApiKey: 'test' }, '/tmp');
+  const prompt = host.prompt();
+  assert.match(prompt, /本对话只做视频创作/);
+  assert.match(prompt, /与视频创作无关的话题/);
+  assert.match(prompt, /只能在插件设置页里改/);
+  const tool = host.tools.get('video_config');
+  assert.equal(Array.from(tool.parameters.properties.action.enum).join(','), 'get');
+  const view = await tool.execute({ action: 'get' });
+  assert.equal(view.action, 'get');
+  assert.ok(view.stored);
+  for (const args of [{ action: 'set', model: 'doubao-seedance-2-0-mini-260615' }, { action: 'set', baseUrl: 'https://example.invalid' }, { action: 'set' }]) {
+    await assert.rejects(tool.execute(args), /插件配置不能在对话里改/);
+  }
+  host.dispose();
+});
+
 for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools submit, query, pause, resume and extend through split modules`, async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'mv-integration-'));
   const previousFetch = globalThis.fetch;
