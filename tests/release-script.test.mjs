@@ -30,6 +30,7 @@ test('release dry run changes no files, tags or git index and starts no publicat
  try {
   await mkdir(path.join(dir,'scripts'));
   await copyFile(new URL('../scripts/release.mjs',import.meta.url),path.join(dir,'scripts/release.mjs'));
+  await copyFile(new URL('../scripts/sync-promo-address.mjs',import.meta.url),path.join(dir,'scripts/sync-promo-address.mjs'));
   await writeFile(path.join(dir,'package.json'),'{"type":"module","version":"1.0.0"}');
   await writeFile(path.join(dir,'MetaOnticVideo使用说明书.md'),'# 安装指南\n使用正式成品。');
   await writeFile(path.join(dir,'MetaOnticVideo使用说明书.pdf'),'test fixture');
@@ -37,11 +38,13 @@ test('release dry run changes no files, tags or git index and starts no publicat
   const git=(...a)=>execFileSync('git',a,{cwd:dir,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
   git('init','-b','master');git('add','.');git('-c','user.name=Test','-c','user.email=test@localhost','commit','-m','fixture');git('tag','v1.0.0');
   const before=git('status','--porcelain');const tags=git('tag');const head=git('rev-parse','HEAD');const pkg=await readFile(path.join(dir,'package.json'),'utf8');
-  const result=spawnSync(process.execPath,[path.join(dir,'scripts/release.mjs'),'1.0.1','--notes',path.join(dir,'plan.json'),'--dry-run'],{encoding:'utf8',timeout:10000});
+  // 宣传页路径显式指向不存在的文件：演练环境不该去碰本机服务端仓库里的真实宣传页。
+  const env={...process.env,METAONTIC_PROMO_PATH:path.join(dir,'no-promo','index.html')};
+  const result=spawnSync(process.execPath,[path.join(dir,'scripts/release.mjs'),'1.0.1','--notes',path.join(dir,'plan.json'),'--dry-run'],{encoding:'utf8',timeout:10000,env});
   assert.equal(result.status,0,result.stderr);assert.match(result.stdout,/DRY RUN/);assert.match(result.stdout,/metaontic-video-1.0.1.tgz/);
   // 默认只发 Gitee：不碰 GitHub，也不会打印 GitHub 的发布页与附件地址。
   assert.match(result.stdout,/仅 Gitee/);assert.doesNotMatch(result.stdout,/github\.com/);
-  const both=spawnSync(process.execPath,[path.join(dir,'scripts/release.mjs'),'1.0.1','--notes',path.join(dir,'plan.json'),'--dry-run','--both'],{encoding:'utf8',timeout:10000});
+  const both=spawnSync(process.execPath,[path.join(dir,'scripts/release.mjs'),'1.0.1','--notes',path.join(dir,'plan.json'),'--dry-run','--both'],{encoding:'utf8',timeout:10000,env});
   assert.equal(both.status,0,both.stderr);assert.match(both.stdout,/Gitee \+ GitHub/);assert.match(both.stdout,/github\.com\/wxsimon2022\/metaontic-video\/releases\/tag\/v1\.0\.1/);
   assert.equal(git('status','--porcelain'),before);assert.equal(git('tag'),tags);assert.equal(git('rev-parse','HEAD'),head);assert.equal(await readFile(path.join(dir,'package.json'),'utf8'),pkg);
  }finally{await rm(dir,{recursive:true,force:true});}

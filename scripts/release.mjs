@@ -4,8 +4,17 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, realpa
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { findPromoPage, syncPromoFile, syncPromoText } from './sync-promo-address.mjs';
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+/** 宣传页（服务端仓库）当前是否已指向目标版本；只读，不写文件。 */
+export function promoStatus(version, file = findPromoPage()) {
+  if (!file) return { file: '', needsSync: false, missing: [] };
+  const before = readFileSync(file, 'utf8');
+  const { text, results } = syncPromoText(before, version);
+  return { file, needsSync: text !== before, missing: results.filter((item) => !item.hit).map((item) => item.name) };
+}
 
 export function validVersion(value) { return /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(value || ''); }
 export function newer(next, previous) {
@@ -36,6 +45,7 @@ export function notesFor(version, items) {
 }
 const help = `一键发布（准备好完整说明与指南后执行）：
 说明要求：只写「新增」与「优化」两类（修复并入优化），合计不超过 ${NOTES_LIMIT} 字。
+发版会同时把使用说明书的成品地址与宣传页（服务端仓库，可用 METAONTIC_PROMO_PATH 指定，--no-promo 跳过）同步到本次版本。
   node scripts/release.mjs 3.13.3 --notes release-plan.json
   node scripts/release.mjs 3.13.3 --notes release-plan.json --dry-run
   node scripts/release.mjs 3.13.3 --resume
@@ -60,7 +70,7 @@ export async function main(argv) {
   const opts={branch:'master',targets:'gitee',github:'git@ssh.github.com:wxsimon2022/metaontic-video.git',gitee:'git@ssh.gitee.com:hackloop/metaontic-video.git'};
   for(let i=1;i<argv.length;i++) {
     const key=argv[i];
-    if(['--dry-run','--resume'].includes(key)) opts[key.slice(2)]=true;
+    if(['--dry-run','--resume','--no-promo'].includes(key)) opts[key.slice(2)]=true;
     else if(key==='--both') opts.targets='both';
     // GitHub 只在明确要求时同步；不带地址的 --github 表示“连同 GitHub 一起发”。
     else if(key==='--github' && (!argv[i+1] || argv[i+1].startsWith('--'))) opts.targets='both';
@@ -108,7 +118,11 @@ export async function main(argv) {
   console.log(`版本：${tag}\n发布渠道：${includeGithub?'Gitee + GitHub':'仅 Gitee'}\nGitee：${gitee.web}${includeGithub?`\nGitHub：${github.web}`:''}\n本地最近标签：${local}\n提交范围：\n${changes||'（无新提交，包含下列工作区改动）'}\n工作区：\n${dirty||'（干净）'}`);
   console.log(sections.map(x=>x.category+'\n'+x.items.map(i=>'- '+i).join('\n')).join('\n\n'));
   const printLinks=()=>console.log(`\nGitee发布页：${gitee.web}/releases/tag/${tag}\n插件地址：${gitee.web}/releases/download/${tag}/metaontic-video-${version}.tgz\nWindows包：${gitee.web}/releases/download/${tag}/MetaOnticVideo-Windows-${version}.zip${includeGithub?`\nGitHub发布页：${github.web}/releases/tag/${tag}`:''}\n注意：安装框填写tgz地址，不填写发布页或ZIP地址。`);
-  if(opts['dry-run']) { console.log(`\nDRY RUN（${includeGithub?'Gitee + GitHub':'仅 Gitee'}）：计划检查 → 构建/测试 → 打包/核对 → 提交/标签 → 推送 → ${includeGithub?'等待双平台CI → 核对两处附件':'上传并核对 Gitee Release 附件'}。`);printLinks();return; }
+  if(opts['dry-run']) {
+    const promo=promoStatus(version);
+    console.log(promo.file?`宣传页：${promo.file}${promo.needsSync?`（待同步到 v${version}）`:`（已是 v${version}）`}`:'宣传页：未找到，发布时需手动同步安装地址');
+    console.log(`\nDRY RUN（${includeGithub?'Gitee + GitHub':'仅 Gitee'}）：计划检查 → 构建/测试 → 打包/核对 → 提交/标签 → 推送 → ${includeGithub?'等待双平台CI → 核对两处附件':'上传并核对 Gitee Release 附件'}。`);printLinks();return;
+  }
   // 最新正式版以发布渠道为准：Gitee 单仓发布时不能依赖 GitHub Release 列表。
   const latestOfficial=async()=>{
     const token=process.env.GITEE_TOKEN;
@@ -153,6 +167,18 @@ export async function main(argv) {
       const at=text.search(/^## v\d+\.\d+\.\d+/m);if(at<0)throw Error(`${file}缺少更新区插入位置`);
       writeFileSync(file,text.slice(0,at)+header+'\n\n'+markdown+'\n\n'+text.slice(at));
     }
+    // 宣传页在服务端仓库、不属于这个包，但用户会照它复制安装地址：发版时一并改到目标版本。
+    // 只在这里（真正发版的路径）写文件，--dry-run 不会动宣传页。
+    let promoLine='';
+    if(!opts['no-promo']) {
+      const promo=promoStatus(version);
+      if(promo.file) {
+        const {changed}=syncPromoFile(promo.file,version);
+        console.log(`宣传页${changed?'已同步到':'已是'} v${version}：${promo.file}`);
+        promoLine=`- 宣传页安装地址已同步为 v${version}（${promo.file}，属服务端仓库，需在那里提交并部署）。\n`;
+        if(promo.missing.length)console.warn(`宣传页这些位置没匹配到，请人工核对：${promo.missing.join('、')}`);
+      } else console.warn('未找到宣传页，请在服务端仓库手动同步安装地址（可用 METAONTIC_PROMO_PATH 指定路径）。');
+    }
     mkdirSync(out,{recursive:true});
     // npm CLI is JavaScript; invoking it through Node avoids .cmd shell quoting on Windows.
     const npm=process.env.npm_execpath||run(process.platform==='win32'?'where.exe':'which',['npm'],{capture:true}).split(/\r?\n/).find(x=>x.endsWith('npm'));
@@ -174,7 +200,7 @@ export async function main(argv) {
     run(python,[...(python==='py'?['-3']:[]),'scripts/strip-package-readme.py',path.join(out,`metaontic-video-${version}.tgz`)]);
     run(python,[...(python==='py'?['-3']:[]),'scripts/package-windows.py',path.join(out,`metaontic-video-${version}.tgz`),path.join(out,`MetaOnticVideo-Windows-${version}.zip`)]);
     run('git',['diff','--check']);
-    const body=`MetaOnticVideo ${tag}\n\n`+sections.map(s=>s.category+'\n'+s.items.map(i=>'- '+i).join('\n')).join('\n\n')+'\n\n验证\n- 本地构建及测试通过。\n'+(includeGithub?'- Windows/macOS成品安装及升级为CI上传前置条件。\n':'- 本条按仅 Gitee 发布处理：未运行 GitHub 双平台 CI，也没做 Windows 桌面实测，Windows 兼容性只有构建与打包层面的保证。\n')+'- 桌面GUI与付费调用未由发布脚本自动验证。\n';
+    const body=`MetaOnticVideo ${tag}\n\n`+sections.map(s=>s.category+'\n'+s.items.map(i=>'- '+i).join('\n')).join('\n\n')+'\n\n验证\n- 本地构建及测试通过。\n'+(includeGithub?'- Windows/macOS成品安装及升级为CI上传前置条件。\n':'- 本条按仅 Gitee 发布处理：未运行 GitHub 双平台 CI，也没做 Windows 桌面实测，Windows 兼容性只有构建与打包层面的保证。\n')+promoLine+'- 桌面GUI与付费调用未由发布脚本自动验证。\n';
     const notes=path.join(out,'release-notes.txt');writeFileSync(notes,body);
     writeFileSync(`docs/engineering/release-${version}.md`,`# ${tag} 发布核对\n\n实际基线：${base}。\n\n${body}\n指南核对：${plan.guideReview}\n`);
     run('git',['add','-A']);run('git',['commit','-m',`release: ${tag}`]);run('git',['tag','-a',tag,'-F',notes]);
