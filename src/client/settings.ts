@@ -24,10 +24,9 @@ export function createSettingsPage(deps: any) {
 // A 服务端模式的使用记录暂时影藏：接口未就绪，先不渲染这张卡，也不再轮询。
 // 恢复时把这一项改回 true 即可，额度卡片与其余设置不受影响。
 const SHOW_USAGE_RECORD = false;
-// 接入方式下拉暂时不提供 A 服务端（service），只留 config 里那两个候选。
-// 旧配置仍是 service 时用一个隐藏项显示当前取值：列表里选不到它，也不会显示成别的渠道。
-// 恢复（SERVICE_MODE_AVAILABLE 改回 true）时把 'service' 补回 SELECTS.connectionMode 即可。
-const HIDDEN_CONNECTION_MODES = ['service'];
+// 下架某个接入方式时，把它填进这里：设置页用一个隐藏项显示已有取值，列表里选不到它，
+// 也不会把它显示成别的渠道。三种方式都在售时为空气（SELECTS.connectionMode 里已含 service）。
+const HIDDEN_CONNECTION_MODES = [];
 function makePage({ form, t, manager }) {
       return function ConfigPage(props) {
         const snapshot = useSnapshot(form);

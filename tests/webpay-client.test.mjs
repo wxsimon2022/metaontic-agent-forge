@@ -24,6 +24,8 @@ function harness(responses) {
   const remembered = [];
   const context = vm.createContext({
     METAONTIC_BASE_URL: 'https://ai.bileego.com',
+    SERVICE_MODE_AVAILABLE: true,
+    SERVICE_UNAVAILABLE_MESSAGE: 'MetaOnticVideo 服务端方式暂时不可用：请在插件设置页把「接入方式」改为 MetaOntic AI 或火山引擎直连，填好 Key 保存后重试。',
     z: schema,
     AbortSignal,
     fetch,

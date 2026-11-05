@@ -314,10 +314,10 @@
       "doubao-seedance-2-0-fast-260128"
     ];
     const SELECTS = {
-      // 接入方式暂时只提供 MetaOntic AI 与火山直连；旧配置仍是 service 时，
-      // 设置页用隐藏项显示当前取值（见 settings 里的 HIDDEN_CONNECTION_MODES）。
-      // 恢复时把 'service' 加回这个数组即可。
-      connectionMode: ["metaontic", "volcengine"],
+      // 三种接入方式都在：A 服务端（邮箱登录领 Key）、B MetaOntic AI（手填 Key）、C 火山直连。
+      // 服务端方式若要临时下架，先关掉 connection-defaults.ts 里的 SERVICE_MODE_AVAILABLE，
+      // 再把它从下面这个数组里去掉（设置页会改用隐藏项显示已有取值）。
+      connectionMode: ["service", "metaontic", "volcengine"],
       model: MODEL_OPTIONS,
       imageModel: ["doubao-seedream-5-0-260128", "doubao-seedream-5-0-pro-260628"],
       ratio: ["16:9", "9:16", "4:3", "3:4", "1:1", "adaptive"],
@@ -776,7 +776,7 @@
 
   // src/connection-defaults.ts
   var METAONTIC_BASE_URL = "https://ai.bileego.com";
-  var SERVICE_MODE_AVAILABLE = false;
+  var SERVICE_MODE_AVAILABLE = true;
   function connectionDefaults(values) {
     const text = (key, fallback) => String(values[key] ?? "").trim() || fallback;
     const volc = values.connectionMode === "volcengine";
@@ -1778,7 +1778,7 @@
       PAGE_CSS
     } = deps;
     const SHOW_USAGE_RECORD = false;
-    const HIDDEN_CONNECTION_MODES = ["service"];
+    const HIDDEN_CONNECTION_MODES = [];
     function makePage({ form, t, manager }) {
       return function ConfigPage(props) {
         const snapshot = useSnapshot(form);

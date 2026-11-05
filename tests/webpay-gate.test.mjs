@@ -9,6 +9,8 @@ const source = sourceOf('providers/connection', 'workflow/approval');
 
 function harness(webpay) {
   const context = vm.createContext({
+    SERVICE_MODE_AVAILABLE: true,
+    SERVICE_UNAVAILABLE_MESSAGE: 'MetaOnticVideo 服务端方式暂时不可用：请在插件设置页把「接入方式」改为 MetaOntic AI 或火山引擎直连，填好 Key 保存后重试。',
     ref: (config, key, fallback) => config[key] ?? fallback,
     formatMoney: (value, symbol = '¥') => `${symbol}${Number(value).toFixed(2)}`,
     fetchWebpayStatus: webpay.status,

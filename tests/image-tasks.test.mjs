@@ -159,10 +159,10 @@ test('missing independent image key stops before network and shared mode ignores
  assert.ok(h.calls.every(c=>c.key==='Bearer b'));
 }));
 
-test('service method is refused before any image traffic while it is temporarily unavailable',()=>fixture(async h=>{
- h.config.connectionMode='service';h.config.imageUseVideoKey=false;h.config.imageApiKey='ignored';
- await assert.rejects(api.prepareImageTool(h.config).execute({image:'https://example.com/ref.png',style:'动画'},{}),/暂时不可用/);
- assert.equal(h.calls.length,0);
+test('service method carries image traffic with the service-issued key',()=>fixture(async h=>{
+ h.config.connectionMode='service';
+ await api.prepareImageTool(h.config).execute({image:'https://example.com/ref.png',style:'动画'},{});
+ assert.ok(h.calls.length>=1);assert.ok(h.calls.every(c=>c.key==='Bearer a'));
 }));
 
 test('B recovery uses image key only for image traffic and video key for original/retry/status',()=>fixture(async h=>{
