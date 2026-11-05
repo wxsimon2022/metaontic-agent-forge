@@ -13,6 +13,15 @@ export const SERVICE_MODE_AVAILABLE = true;
 /** 该方式被停用时对用户说的话：设置页提示与运行时错误共用一份，避免两处措辞不一致。 */
 export const SERVICE_UNAVAILABLE_MESSAGE = 'MetaOnticVideo 服务端方式暂时不可用：请在插件设置页把「接入方式」改为 MetaOntic AI 或火山引擎直连，填好 Key 保存后重试。';
 
+/**
+ * C 火山引擎直连方式开关。
+ *
+ * true：设置页正常提供该方式；false（当前）时只在设置页隐藏：下拉里选不到它，
+ * 已经有该配置的安装继续按原值调用，不会被静默换成别的渠道，也不会丢 Key。
+ * 恢复时把这一行改回 true，并把 settings.ts 的 SELECTS 候选一起补齐即可。
+ */
+export const VOLCENGINE_MODE_AVAILABLE = false;
+
 export function connectionDefaults(values) {
   const text = (key, fallback) => String(values[key] ?? '').trim() || fallback;
   const volc = values.connectionMode === 'volcengine';

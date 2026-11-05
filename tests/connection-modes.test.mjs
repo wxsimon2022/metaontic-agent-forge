@@ -17,7 +17,7 @@ function harness({ serviceAvailable = true } = {}) {
     estimateArgsFor: async (_config, _tool, args) => ({ ...args, remainingPlan: [{ kind: 'extend', seconds: 5 }] }),
     // 续做入口的确认要报「整条还差多少秒」，算的是剩下的分段时长。
     sumStepSeconds: steps => steps.reduce((total, step) => total + (step.seconds || 0), 0),
-    approvalPolicy: () => 'ask', ffmpegConsentGate: async () => null, paymentGate: async () => null,
+    approvalPolicy: () => 'ask', ffmpegConsentGate: async () => null,
     resolveModel: () => 'seedance',
     // 预检确认框里的费用口径（钱包数字格式化 + 额度/汇率兜底）
     finiteNumber: value => (Number.isFinite(Number(value)) ? Number(value) : null),
@@ -82,26 +82,47 @@ for (const connectionMode of ['metaontic', 'volcengine']) test(`${connectionMode
   }
 });
 
-test('service 模式不读也不提额度：能不能开始只看服务端支付结果', async () => {
-  const h = harness(), config = { connectionMode: 'service', apiKey: 'sk-service' };
-  let asked = 0;
-  h.fetchDeviceQuota = async () => { asked += 1; throw new Error('must not read quota'); };
-  const gate = await h.preflightGate({}, config, { name: 'video_generate', arguments: {} });
-  assert.equal(gate.kind, 'ask');
-  assert.equal(asked, 0, 'MetaOnticVideo 接入不该去读中转站额度');
-  assert.match(gate.displayReason.zh, /按插件服务的支付与用量结算/);
-  assert.doesNotMatch(gate.displayReason.zh, /额度|剩余/);
+const serviceConfig = () => ({
+  connectionMode: 'service', apiKey: 'sk-service',
+  deviceId: 'd', deviceSecret: 's', registerEmail: 'a@b.c',
+});
+const okQuota = over => async () => ({
+  status: 'ok',
+  data: { remain_quota: 10000, remain_amount: 100, quota_per_unit: 68500, usd_exchange_rate: 7.3, currency_symbol: '\u00a5', ...over },
+});
+const estimateOf = usd => () => ({
+  model: 'doubao-seedance', resolution: '720p', usd,
+  tokens: 1000, seconds: 15, segments: [{ seconds: 15, usd, tokens: 1000 }],
 });
 
-test('service 模式付过款就直接放行，不再弹一次费用确认', async () => {
-  const h = harness(), config = { connectionMode: 'service', apiKey: 'sk-service' };
-  h.paymentGate = async () => ({ kind: 'paid', outTradeNo: 'WP123456', money: '¥9.90' });
+test('service 模式调用前先读这把 Key 的额度，够就弹人工确认', async () => {
+  const h = harness(), config = serviceConfig();
+  let asked = 0;
+  h.fetchDeviceQuota = async (...args) => { asked += 1; return okQuota()(...args); };
+  h.estimateUsage = estimateOf(0.1);
   const gate = await h.preflightGate({}, config, { name: 'video_generate', arguments: {} });
-  assert.equal(gate.kind, 'allow');
+  assert.equal(asked, 1, 'MetaOnticVideo 接入要在调用前读一次额度');
+  assert.equal(gate.kind, 'ask');
+  assert.match(gate.displayReason.zh, /\u70b9\u4e86\u300c\u5141\u8bb8\u300d\u624d\u4f1a\u771f\u6b63\u8c03\u7528/);
+  assert.match(gate.displayReason.zh, /\u672c\u673a Key \u5269\u4f59 \u00a5100\.00/);
+});
 
-  // 没付款时仍然退回付款说明，不放行
-  h.paymentGate = async () => ({ kind: 'deny', reason: '本次生成需要先付款' });
-  const denied = await h.preflightGate({}, config, { name: 'video_generate', arguments: {} });
-  assert.equal(denied.kind, 'deny');
-  assert.match(denied.reason, /需要先付款/);
+test('service 模式额度不够就不调用，提示充值', async () => {
+  const h = harness(), config = serviceConfig();
+  h.fetchDeviceQuota = okQuota();
+  h.estimateUsage = estimateOf(1);
+  const gate = await h.preflightGate({}, config, { name: 'video_generate', arguments: {} });
+  assert.equal(gate.kind, 'deny');
+  assert.match(gate.reason, /\u989d\u5ea6\u4e0d\u8db3\uff0c\u5df2\u505c\u6b62\u8c03\u7528/);
+  assert.match(gate.reason, /\u5145\u503c/);
+  assert.match(gate.reason, /\u8fd9\u6b21\u6ca1\u6709\u8c03\u7528\u6a21\u578b\u3001\u6ca1\u6709\u4ea7\u751f\u8d39\u7528/);
+});
+
+test('service 模式额度读不到时不拦，仍弹人工确认并说明读不到', async () => {
+  const h = harness(), config = serviceConfig();
+  h.fetchDeviceQuota = async () => ({ status: 'unknown', reason: 'service did not return quota' });
+  h.estimateUsage = estimateOf(0.1);
+  const gate = await h.preflightGate({}, config, { name: 'video_generate', arguments: {} });
+  assert.equal(gate.kind, 'ask');
+  assert.match(gate.displayReason.zh, /\u989d\u5ea6\u8bfb\u4e0d\u5230/);
 });

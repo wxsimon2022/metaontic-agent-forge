@@ -1,4 +1,4 @@
-import { connectionDefaults, SERVICE_MODE_AVAILABLE, SERVICE_UNAVAILABLE_MESSAGE } from '../connection-defaults.js';
+import { connectionDefaults, SERVICE_MODE_AVAILABLE, VOLCENGINE_MODE_AVAILABLE, SERVICE_UNAVAILABLE_MESSAGE } from '../connection-defaults.js';
 /** tools/video-config：从宿主入口拆出的独立职责模块。 */
 import { ref } from '../config.js';
 import { isMetaontic, isVolcengine, resolveBaseUrl, resolveSubmitPath, relayPreset, resolveModel, resolveApiKey, isServerIssuedKey } from '../providers/connection.js';
@@ -99,7 +99,8 @@ export function configTool(config, settings) {
       + 'outputDir、resumeLockStaleMinutes、'
       + 'ffmpegBinary、ffprobeBinary、registerEmail、registerApi、estimateGroupRatio）。'
       + 'apiKey 只能由设置页「登录」时服务端下发，这里只能看、不能改；'
-      + '仅服务端模式换 Key 需要登录；MetaOntic AI 使用 metaonticApiKey，火山直连使用 volcengineApiKey，可手动配置。'
+      + '仅服务端模式换 Key 需要登录；MetaOntic AI 使用 metaonticApiKey，可手动配置；'
+      + '火山直连使用 volcengineApiKey，可手动配置，但该方式当前在设置页暂不提供选择，不要主动帮用户切过去。'
       + '改动写进 profile 的 cordis.patch.yml，'
       + '宿主重载后生效。'
       + '用户说「把中转站地址/模型/时长改成 X」时用 action=set，看当前值用 action=get；'
@@ -115,8 +116,12 @@ export function configTool(config, settings) {
         connectionMode: {
           type: 'string', enum: ['service', 'metaontic', 'volcengine'],
           description: SERVICE_MODE_AVAILABLE
-            ? '接入方式：MetaOntic AI / 火山引擎直连 / service 服务端（邮箱登录领 Key）'
-            : '接入方式：MetaOntic AI（metaontic）/ 火山引擎直连（volcengine）；service 服务端方式暂时不可用，不要设置',
+            ? (VOLCENGINE_MODE_AVAILABLE
+              ? '接入方式：MetaOnticVideo 服务端（邮箱登录领 Key）/ MetaOntic AI / 火山引擎直连'
+              : '接入方式：MetaOnticVideo 服务端（service，邮箱登录领 Key）/ MetaOntic AI（metaontic）；火山引擎直连当前暂不提供选择，不要主动设置')
+            : (VOLCENGINE_MODE_AVAILABLE
+              ? '接入方式：MetaOntic AI（metaontic）/ 火山引擎直连（volcengine）；service 服务端方式暂时不可用，不要设置'
+              : '接入方式：MetaOntic AI（metaontic）；service 服务端方式与火山引擎直连当前都暂不提供，不要设置'),
         },
         metaonticApiKey: { type: 'string', description: 'MetaOntic AI 手动 API Key，无需登录' },
         volcengineApiKey: { type: 'string', description: '火山引擎直连模式的火山 API Key' },

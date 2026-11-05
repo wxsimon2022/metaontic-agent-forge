@@ -1,5 +1,5 @@
 import { createAccountActions } from './account.js';
-import { SERVICE_MODE_AVAILABLE } from '../connection-defaults.js';
+import { SERVICE_MODE_AVAILABLE, VOLCENGINE_MODE_AVAILABLE } from '../connection-defaults.js';
 import { createUpdateActions, renderUpdateNotice, formatReleaseTime } from './updates.js';
 /** 浏览器端 settings：由入口注入宿主 React 与共享依赖。 */
 import packageInfo from '../../package.json';
@@ -25,8 +25,17 @@ export function createSettingsPage(deps: any) {
 // 恢复时把这一项改回 true 即可，额度卡片与其余设置不受影响。
 const SHOW_USAGE_RECORD = false;
 // 下架某个接入方式时，把它填进这里：设置页用一个隐藏项显示已有取值，列表里选不到它，
-// 也不会把它显示成别的渠道。三种方式都在售时为空气（SELECTS.connectionMode 里已含 service）。
-const HIDDEN_CONNECTION_MODES = [];
+// 也不会把它显示成别的渠道。在售时为空气（候选见 SELECTS.connectionMode）。
+const HIDDEN_CONNECTION_MODES = [
+  ...(SERVICE_MODE_AVAILABLE ? [] : ['service']),
+  ...(VOLCENGINE_MODE_AVAILABLE ? [] : ['volcengine']),
+];
+// 隐藏项显示什么：下架的方式带上「暂不提供」的说明，其余照原样显示当前取值。
+function hiddenConnectionLabel(t, mode) {
+  if (mode === 'service') return t(SERVICE_MODE_AVAILABLE ? 'service' : 'serviceUnavailable');
+  if (mode === 'volcengine') return t(VOLCENGINE_MODE_AVAILABLE ? 'volcengine' : 'volcengineUnavailable');
+  return t(mode);
+}
 function makePage({ form, t, manager }) {
       return function ConfigPage(props) {
         const snapshot = useSnapshot(form);
@@ -70,7 +79,7 @@ function makePage({ form, t, manager }) {
         const [quotaStatus, setQuotaStatus] = React.useState('idle');
         const [quotaMessage, setQuotaMessage] = React.useState('');
         const [quotaAt, setQuotaAt] = React.useState('');
-        // 余额（钱包）：生成优先扣余额，不够再提示充值 / 单次付款
+        // 余额（钱包）：登录后由服务端下发，充值到账即更新；生成只做人工确认，不从余额扣费
         const [wallet, setWallet] = React.useState(null);
         const [walletStatus, setWalletStatus] = React.useState('idle');
         const [walletMessage, setWalletMessage] = React.useState('');
@@ -369,8 +378,8 @@ function makePage({ form, t, manager }) {
               onChange: (event) => edit(field.key, event.target.value),
             }, [
               hiddenModel ? h('option', { key: 'hidden-current', value: current, hidden: true }, t('modelHiddenCurrent')) : null,
-              // 停用期间直接标出不可用；恢复后这一支不会走到（'service' 会回到候选里）。
-              hiddenMode ? h('option', { key: 'hidden-current', value: current, hidden: true }, t(SERVICE_MODE_AVAILABLE ? current : 'serviceUnavailable')) : null,
+              // 下架期间直接标出不可用；恢复后这一支不会走到（该方式会回到候选里）。
+              hiddenMode ? h('option', { key: 'hidden-current', value: current, hidden: true }, hiddenConnectionLabel(t, String(current || ''))) : null,
               ...list.map((option) => h('option', { key: option, value: option }, optionLabel(t, field.key, option))),
             ]);
           }
@@ -415,7 +424,8 @@ function makePage({ form, t, manager }) {
         const hints = {
           connectionMode: selectedMode === 'metaontic'
             ? [t('connectionMetaonticHint'), ' ', h('a', { key: 'metaontic-register', href: 'https://ai.bileego.com/', target: '_blank', rel: 'noopener noreferrer', style: { textDecoration: 'underline' } }, t('connectionMetaonticRegister'))]
-            : serviceMode && !SERVICE_MODE_AVAILABLE ? t('connectionServiceUnavailable') : t('connectionModeHint'),
+            : serviceMode && !SERVICE_MODE_AVAILABLE ? t('connectionServiceUnavailable')
+              : directMode && !VOLCENGINE_MODE_AVAILABLE ? t('connectionVolcengineUnavailable') : t('connectionModeHint'),
           metaonticApiKey: t('metaonticKeyHint'),
           volcengineApiKey: t('volcengineKeyHint'),
           model: t('modelHint'),
@@ -681,9 +691,12 @@ function makePage({ form, t, manager }) {
             const done = await waitRecharge(String(order && order.out_trade_no));
             if (done && done.credited) {
               setRechargeState('ok');
-              setRechargeMessage(t('walletRechargeDone', {
-                balance: `${walletSymbol}${formatMoney(Number(done.balance) || 0)}`,
-              }));
+              // 余额就是那把 Key 的额度：到账后按中转站的实时额度显示，不用本地账本的数字
+              const fresh = await loadQuota().catch(() => null);
+              const shown = fresh
+                ? `${quotaSymbol}${formatMoney(Number(fresh.remain_amount) || 0)}`
+                : `${walletSymbol}${formatMoney(Number(done.balance) || 0)}`;
+              setRechargeMessage(t('walletRechargeDone', { balance: shown }));
             }
             else {
               setRechargeState('failed');

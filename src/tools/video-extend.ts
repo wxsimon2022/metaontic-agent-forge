@@ -15,7 +15,6 @@ import {
   SEGMENT_PAUSE_NOTE, absorbSegmentInterruption, describeIncompleteRun,
   recordSegmentResult, runSegmentDelivery, skipMergeDelivery,
 } from '../workflow/segment-run.js';
-import { releasePaidTicket, reportPaidTaskId, takePaidNote } from '../workflow/approval.js';
 
 export function extendTool(liveConfig, deps, ctx) {
   const config = liveConfig;
@@ -252,9 +251,6 @@ export function extendTool(liveConfig, deps, ctx) {
         ? (resume.cursor ?? null)
         : (args?.startAt == null ? null : Math.max(0, Math.round(Number(args.startAt))));
       const notes = [];
-      // 这次用的是此前已经付过款的订单时，把「没重复收费」写进结果，别让用户以为支付被跳过。
-      const paidNote = takePaidNote(exec);
-      if (paidNote) notes.push(paidNote);
       const segments = [];
       if (resume) {
         // 上次暂停前生成好的延长段：文件就在同样的分段目录里（序号 + extend 就是文件名）
@@ -320,8 +316,6 @@ export function extendTool(liveConfig, deps, ctx) {
           onCreated: async (taskId) => {
             pendingTask = { taskId, index: position + 1, kind: step.kind, seconds };
             await checkpoint();
-            // 拿到任务 ID 就回写订单（履约凭证）：付了款、也确实产出了任务
-            await reportPaidTaskId(config, exec, taskId);
           },
         });
         if (final.status === 'succeeded') {
@@ -365,12 +359,6 @@ export function extendTool(liveConfig, deps, ctx) {
         });
         interrupted = true;
         paused = true;
-      }
-
-      // 一段任务都没提交成功（上游直接拦回 / 中途停止）：把这次的付款凭据还回去，
-      // 用户不用为「没生成成的这次」再付一次钱（余额扣减的会退回余额）。
-      if (!segments.some((segment) => segment.taskId)) {
-        await releasePaidTicket(config, exec);
       }
 
       const completed = segments.filter((segment) => segment.status === 'succeeded' && segment.videoUrl);

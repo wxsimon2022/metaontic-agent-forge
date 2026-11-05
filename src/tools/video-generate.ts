@@ -7,7 +7,6 @@ import { snapshotConfig, resolveApiKey, assertConfigured, isOmniExtendModel, res
 import { assertResumeConnection, saveProgress, resumeDirOf, readPauseFile, resumePlanFrom, pickResumeOptions } from '../workflow/resume.js';
 import { abortError } from '../utils/errors.js';
 import { buildSegmentExecutionPrompt } from '../prompts/generation.js';
-import { releasePaidTicket, reportPaidTaskId, takePaidNote } from '../workflow/approval.js';
 import { buildGenerationBody, buildRequestBody, runTask, normalizeReferenceUrl } from '../providers/seedance.js';
 import { resolveOutputDir, allocateStamp, fileStamp } from '../utils/files.js';
 import {
@@ -235,9 +234,6 @@ export function videoTool(liveConfig, deps, ctx) {
       const plannedTotal = plan.reduce((sum, step) => sum + step.seconds, 0);
 
       const notes = [];
-      // 这次用的是此前已经付过款的订单时，把「没重复收费」写进结果，别让用户以为支付被跳过。
-      const paidNote = takePaidNote(exec);
-      if (paidNote) notes.push(paidNote);
       if (restarted) {
         notes.push(
           `接着上一次暂停的进度继续：前面 ${doneBefore} 段（${restarted.cursor} 秒）不重新生成，`
@@ -355,8 +351,6 @@ export function videoTool(liveConfig, deps, ctx) {
           onCreated: async (taskId) => {
             pendingTask = { taskId, index: position + 1, kind: step.kind, seconds };
             await checkpoint();
-            // 拿到任务 ID 就回写订单（履约凭证）：付了款、也确实产出了任务
-            await reportPaidTaskId(config, exec, taskId);
           },
         });
         if (final.status === 'succeeded') {
@@ -398,12 +392,6 @@ export function videoTool(liveConfig, deps, ctx) {
         // 中断/超时：已经生成的部分照常下载合并交付，剩下的交给 resume。
         interrupted = true;
         paused = true;
-      }
-
-      // 一段任务都没提交成功（上游直接拦回 / 中途停止）：把这次的付款凭据还回去，
-      // 用户不用为「没生成成的这次」再付一次钱（余额扣减的会退回余额）。
-      if (!segments.some((segment) => segment.taskId)) {
-        await releasePaidTicket(config, exec);
       }
 
       const completed = segments.filter((segment) => segment.status === 'succeeded' && segment.videoUrl);

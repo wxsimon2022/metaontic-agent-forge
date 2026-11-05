@@ -305,6 +305,23 @@
     return { videoExecutionSource, VideoTaskProgress, VideoProgressDock };
   }
 
+  // src/connection-defaults.ts
+  var METAONTIC_BASE_URL = "https://ai.bileego.com";
+  var SERVICE_MODE_AVAILABLE = true;
+  var VOLCENGINE_MODE_AVAILABLE = false;
+  function connectionDefaults(values) {
+    const text = (key, fallback) => String(values[key] ?? "").trim() || fallback;
+    const volc = values.connectionMode === "volcengine";
+    return {
+      ...volc ? { baseUrl: "https://ark.cn-beijing.volces.com" } : { baseUrl: text("baseUrl", METAONTIC_BASE_URL).replace(/\/+$/, "") },
+      submitPath: volc ? "/api/v3/contents/generations/tasks" : text("submitPath", "/doubao/api/v3/contents/generations/tasks"),
+      queryPath: volc ? "/api/v3/contents/generations/tasks/{task_id}" : text("queryPath", "/doubao/api/v3/contents/generations/tasks/{task_id}"),
+      model: text("model", "doubao-seedance-2-0-mini-260615"),
+      imageModel: text("imageModel", "doubao-seedream-5-0-260128"),
+      imageUseVideoKey: values.imageUseVideoKey !== false
+    };
+  }
+
   // src/client/config.ts
   function createClientConfig() {
     const NAMESPACE = "metaontic-video";
@@ -314,10 +331,11 @@
       "doubao-seedance-2-0-fast-260128"
     ];
     const SELECTS = {
-      // 三种接入方式都在：A 服务端（邮箱登录领 Key）、B MetaOntic AI（手填 Key）、C 火山直连。
-      // 服务端方式若要临时下架，先关掉 connection-defaults.ts 里的 SERVICE_MODE_AVAILABLE，
-      // 再把它从下面这个数组里去掉（设置页会改用隐藏项显示已有取值）。
-      connectionMode: ["service", "metaontic", "volcengine"],
+      // 接入方式：A 服务端（邮箱登录领 Key）、B MetaOntic AI（手填 Key）、C 火山直连。
+      // 临时下架某个方式时，先关掉 connection-defaults.ts 里对应的开关，再把它从这里去掉：
+      // 设置页会改用隐藏项显示已有取值（见 settings.ts 的 HIDDEN_CONNECTION_MODES），
+      // 列表里选不到它，也不会把已有配置静默换成别的渠道。
+      connectionMode: VOLCENGINE_MODE_AVAILABLE ? ["service", "metaontic", "volcengine"] : ["service", "metaontic"],
       model: MODEL_OPTIONS,
       imageModel: ["doubao-seedream-5-0-260128", "doubao-seedream-5-0-pro-260628"],
       ratio: ["16:9", "9:16", "4:3", "3:4", "1:1", "adaptive"],
@@ -418,8 +436,9 @@
       summary: "{provider} \xB7 {model}",
       apiKeyConfigured: "\u5DF2\u914D\u7F6E\uFF0C\u7559\u7A7A\u4FDD\u7559\u73B0\u6709\u5BC6\u94A5",
       connectionMode: "\u63A5\u5165\u65B9\u5F0F",
-      connectionModeHint: "\u90AE\u7BB1\u767B\u5F55\u9886\u53D6\u5BC6\u94A5\uFF0C\u6216\u4F7F\u7528\u81EA\u5DF1\u7684 MetaOntic AI\u3001\u706B\u5C71\u5F15\u64CE\u5BC6\u94A5\u3002\u5207\u6362\u540E\u4FDD\u5B58\u751F\u6548\u3002",
+      connectionModeHint: "\u90AE\u7BB1\u767B\u5F55\u9886\u53D6\u5BC6\u94A5\uFF0C\u6216\u4F7F\u7528\u81EA\u5DF1\u7684 MetaOntic AI \u5BC6\u94A5\u3002\u5207\u6362\u540E\u4FDD\u5B58\u751F\u6548\u3002",
       connectionServiceUnavailable: "MetaOnticVideo \u670D\u52A1\u7AEF\u65B9\u5F0F\u6682\u65F6\u4E0D\u53EF\u7528\uFF1A\u8BF7\u6539\u7528 MetaOntic AI \u6216\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\uFF0C\u586B\u597D Key \u4FDD\u5B58\u540E\u751F\u6548\u3002",
+      connectionVolcengineUnavailable: "\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\u5F53\u524D\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF1A\u5DF2\u6709\u7684\u914D\u7F6E\u4ECD\u53EF\u7EE7\u7EED\u751F\u6210\uFF1B\u5982\u9700\u66F4\u6362\uFF0C\u8BF7\u5728\u300C\u63A5\u5165\u65B9\u5F0F\u300D\u91CC\u9009\u62E9 MetaOnticVideo \u6216 MetaOntic AI\u3002",
       connectionMetaonticHint: "\u4F7F\u7528 MetaOntic AI \u7684 API Key\uFF0C\u586B\u5199\u540E\u4FDD\u5B58\u751F\u6548\u3002",
       connectionMetaonticRegister: "\u6CE8\u518C\u83B7\u53D6 Key",
       volcengineKeyHint: "\u586B\u5199\u706B\u5C71\u65B9\u821F\u63A7\u5236\u53F0\u7684 API Key \u540E\u4FDD\u5B58\uFF0C\u8D39\u7528\u7531\u706B\u5C71\u5F15\u64CE\u8D26\u6237\u627F\u62C5\u3002\u9700\u8981\u81EA\u884C\u6838\u5BF9\u597D Key \u7684\u6A21\u578B\u80FD\u529B\u3002",
@@ -432,6 +451,7 @@
       service: "MetaOnticVideo",
       serviceUnavailable: "MetaOnticVideo\uFF08\u6682\u65F6\u4E0D\u53EF\u7528\uFF09",
       volcengine: "\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE",
+      volcengineUnavailable: "\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\uFF08\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF09",
       seamTrimSeconds: "\u63A5\u7F1D\u88C1\u526A\u79D2\u6570\uFF08\u5982 0.5,0\uFF09",
       modelHiddenCurrent: "\u5F53\u524D\u6A21\u578B\uFF08\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF09",
       releaseNotesTitle: "\u66F4\u65B0\u5185\u5BB9",
@@ -483,8 +503,8 @@
       quotaTotal: "\u603B\u989D\u5EA6",
       quotaUnlimited: "\u4E0D\u9650\u989D\u5EA6",
       quotaLoading: "\u8BFB\u53D6\u989D\u5EA6\u4E2D\u2026",
-      quotaRefresh: "\u5237\u65B0\u989D\u5EA6",
-      // 余额（钱包）：生成优先扣余额，不够再提示充值
+      quotaRefresh: "\u5237\u65B0",
+      // 余额（钱包）：登录后显示，可在设置页充值；生成只做人工确认
       walletBalance: "\u4F59\u989D",
       walletRecharge: "\u5145\u503C",
       walletRechargeTitle: "\u5145\u503C\u4F59\u989D",
@@ -496,7 +516,7 @@
       walletRechargeOpening: "\u5DF2\u6253\u5F00\u652F\u4ED8\u5B9D\u6536\u94F6\u53F0\uFF1A\u8BF7\u5728\u6D4F\u89C8\u5668\u91CC\u5B8C\u6210\u4ED8\u6B3E\uFF0C\u5230\u8D26\u540E\u4F59\u989D\u4F1A\u81EA\u52A8\u66F4\u65B0\u3002",
       walletRechargePending: "\u7B49\u5F85\u4ED8\u6B3E\u5230\u8D26\u2026\uFF08\u4ED8\u6B3E\u5B8C\u6210\u540E\u4F59\u989D\u4F1A\u81EA\u52A8\u5237\u65B0\uFF0C\u4E5F\u53EF\u4EE5\u76F4\u63A5\u5173\u6389\u8FD9\u4E2A\u7A97\u53E3\uFF09",
       walletRechargeDone: "\u5145\u503C\u5230\u8D26\uFF1A\u5F53\u524D\u4F59\u989D {balance}",
-      walletRechargeTimeout: "\u8FD8\u6CA1\u67E5\u5230\u4ED8\u6B3E\u7ED3\u679C\uFF1A\u4ED8\u6B3E\u5B8C\u6210\u540E\u56DE\u5230\u8FD9\u91CC\u70B9\u300C\u5237\u65B0\u989D\u5EA6\u300D\u5373\u53EF\u786E\u8BA4\u3002",
+      walletRechargeTimeout: "\u8FD8\u6CA1\u67E5\u5230\u4ED8\u6B3E\u7ED3\u679C\uFF1A\u4ED8\u6B3E\u5B8C\u6210\u540E\u56DE\u5230\u8FD9\u91CC\u70B9\u300C\u5237\u65B0\u300D\u5373\u53EF\u786E\u8BA4\u3002",
       walletRechargeFailed: "\u5145\u503C\u672A\u5B8C\u6210\uFF1A{message}",
       walletRechargeBadAmount: "\u8BF7\u8F93\u5165\u6B63\u786E\u7684\u91D1\u989D\uFF0C\u6BD4\u5982 30\u3002",
       walletRechargeLink: "\u6CA1\u5F39\u51FA\u6536\u94F6\u53F0\uFF1F\u70B9\u8FD9\u91CC\u6253\u5F00",
@@ -605,8 +625,9 @@
       summary: "{provider} \xB7 {model}",
       apiKeyConfigured: "Configured; leave blank to keep the current key",
       connectionMode: "Connection",
-      connectionModeHint: "Log in by email to receive a key, or use your own MetaOntic AI or Volcano Engine key. Save to apply a change.",
+      connectionModeHint: "Log in by email to receive a key, or use your own MetaOntic AI key. Save to apply a change.",
       connectionServiceUnavailable: "The MetaOnticVideo server method is temporarily unavailable. Switch to MetaOntic AI or Volcano Engine, enter a key and save.",
+      connectionVolcengineUnavailable: 'Volcano Engine direct is not offered right now. An existing configuration keeps working; switch to MetaOnticVideo or MetaOntic AI in "Connection" to change it.',
       connectionMetaonticHint: "Use your MetaOntic AI API key, then save to apply.",
       connectionMetaonticRegister: "Register to get a key",
       volcengineKeyHint: "Enter an API key from the Volcano Ark console and save. No email login required. Billed to your Volcano Engine account. Check which models your key can access.",
@@ -619,6 +640,7 @@
       service: "MetaOnticVideo",
       serviceUnavailable: "MetaOnticVideo (unavailable)",
       volcengine: "Volcano Engine",
+      volcengineUnavailable: "Volcano Engine (not offered right now)",
       seamTrimSeconds: "Seam head trims (e.g. 0.5,0)",
       modelHiddenCurrent: "Current model (selection unavailable)",
       releaseNotesTitle: "Release notes",
@@ -670,7 +692,7 @@
       quotaTotal: "Total",
       quotaUnlimited: "Unlimited",
       quotaLoading: "Reading quota\u2026",
-      quotaRefresh: "Refresh quota",
+      quotaRefresh: "Refresh",
       walletBalance: "Balance",
       walletRecharge: "Top up",
       walletRechargeTitle: "Top up balance",
@@ -682,7 +704,7 @@
       walletRechargeOpening: "Alipay checkout opened: finish the payment in your browser. The balance updates automatically.",
       walletRechargePending: "Waiting for the payment\u2026 (the balance refreshes automatically; you can close this dialog)",
       walletRechargeDone: "Top-up credited: balance {balance}",
-      walletRechargeTimeout: 'No payment result yet: click "Refresh quota" here once the payment is done.',
+      walletRechargeTimeout: 'No payment result yet: click "Refresh" here once the payment is done.',
       walletRechargeFailed: "Top-up failed: {message}",
       walletRechargeBadAmount: "Enter a valid amount, e.g. 30.",
       walletRechargeLink: "Checkout did not open? Click here",
@@ -772,22 +794,6 @@
       resetFailed: "Reset failed: {message}"
     };
     return { zh, en };
-  }
-
-  // src/connection-defaults.ts
-  var METAONTIC_BASE_URL = "https://ai.bileego.com";
-  var SERVICE_MODE_AVAILABLE = true;
-  function connectionDefaults(values) {
-    const text = (key, fallback) => String(values[key] ?? "").trim() || fallback;
-    const volc = values.connectionMode === "volcengine";
-    return {
-      ...volc ? { baseUrl: "https://ark.cn-beijing.volces.com" } : { baseUrl: text("baseUrl", METAONTIC_BASE_URL).replace(/\/+$/, "") },
-      submitPath: volc ? "/api/v3/contents/generations/tasks" : text("submitPath", "/doubao/api/v3/contents/generations/tasks"),
-      queryPath: volc ? "/api/v3/contents/generations/tasks/{task_id}" : text("queryPath", "/doubao/api/v3/contents/generations/tasks/{task_id}"),
-      model: text("model", "doubao-seedance-2-0-mini-260615"),
-      imageModel: text("imageModel", "doubao-seedream-5-0-260128"),
-      imageUseVideoKey: values.imageUseVideoKey !== false
-    };
   }
 
   // src/client/state.ts
@@ -1636,7 +1642,7 @@
   var package_default = {
     name: "metaontic-video",
     version: "3.14.0",
-    description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging.",
+    description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, text-to-video, image-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects through the MetaOnticVideo relay with email sign-in and wallet top-up, or your own MetaOntic AI key.",
     license: "MIT",
     type: "module",
     keywords: [
@@ -1778,7 +1784,15 @@
       PAGE_CSS
     } = deps;
     const SHOW_USAGE_RECORD = false;
-    const HIDDEN_CONNECTION_MODES = [];
+    const HIDDEN_CONNECTION_MODES = [
+      ...SERVICE_MODE_AVAILABLE ? [] : ["service"],
+      ...VOLCENGINE_MODE_AVAILABLE ? [] : ["volcengine"]
+    ];
+    function hiddenConnectionLabel(t, mode) {
+      if (mode === "service") return t(SERVICE_MODE_AVAILABLE ? "service" : "serviceUnavailable");
+      if (mode === "volcengine") return t(VOLCENGINE_MODE_AVAILABLE ? "volcengine" : "volcengineUnavailable");
+      return t(mode);
+    }
     function makePage({ form, t, manager }) {
       return function ConfigPage(props) {
         const snapshot = useSnapshot(form);
@@ -2216,8 +2230,8 @@
               onChange: (event) => edit(field.key, event.target.value)
             }, [
               hiddenModel ? h("option", { key: "hidden-current", value: current, hidden: true }, t("modelHiddenCurrent")) : null,
-              // 停用期间直接标出不可用；恢复后这一支不会走到（'service' 会回到候选里）。
-              hiddenMode ? h("option", { key: "hidden-current", value: current, hidden: true }, t(SERVICE_MODE_AVAILABLE ? current : "serviceUnavailable")) : null,
+              // 下架期间直接标出不可用；恢复后这一支不会走到（该方式会回到候选里）。
+              hiddenMode ? h("option", { key: "hidden-current", value: current, hidden: true }, hiddenConnectionLabel(t, String(current || ""))) : null,
               ...list.map((option) => h("option", { key: option, value: option }, optionLabel(t, field.key, option)))
             ]);
           }
@@ -2258,7 +2272,7 @@
           ]);
         }
         const hints = {
-          connectionMode: selectedMode === "metaontic" ? [t("connectionMetaonticHint"), " ", h("a", { key: "metaontic-register", href: "https://ai.bileego.com/", target: "_blank", rel: "noopener noreferrer", style: { textDecoration: "underline" } }, t("connectionMetaonticRegister"))] : serviceMode && !SERVICE_MODE_AVAILABLE ? t("connectionServiceUnavailable") : t("connectionModeHint"),
+          connectionMode: selectedMode === "metaontic" ? [t("connectionMetaonticHint"), " ", h("a", { key: "metaontic-register", href: "https://ai.bileego.com/", target: "_blank", rel: "noopener noreferrer", style: { textDecoration: "underline" } }, t("connectionMetaonticRegister"))] : serviceMode && !SERVICE_MODE_AVAILABLE ? t("connectionServiceUnavailable") : directMode && !VOLCENGINE_MODE_AVAILABLE ? t("connectionVolcengineUnavailable") : t("connectionModeHint"),
           metaonticApiKey: t("metaonticKeyHint"),
           volcengineApiKey: t("volcengineKeyHint"),
           model: t("modelHint"),
@@ -2386,42 +2400,21 @@
         const quotaFallback = keyReady ? t("quotaLoading") : t("quotaNoKey");
         const walletReady = walletStatus === "ok" && wallet && wallet.enabled;
         const walletSymbol = wallet && wallet.currency_symbol ? wallet.currency_symbol : quotaSymbol;
-        const walletStats = walletReady ? [{
-          key: "balance",
-          label: t("walletBalance"),
-          value: `${walletSymbol}${formatMoney(Number(wallet.balance) || 0)}`,
-          color: TOKENS.primaryFill
-        }] : [];
-        const quotaStats = quotaReady ? [
-          {
-            key: "remain",
-            label: t("quotaRemain"),
-            value: quota.unlimited_quota ? t("quotaUnlimited") : money("remain_amount"),
-            color: TOKENS.success
-          },
-          { key: "used", label: t("quotaUsed"), value: money("used_amount"), color: TOKENS.text },
-          { key: "total", label: t("quotaTotal"), value: money("total_amount"), color: TOKENS.muted }
-        ] : null;
+        const balanceText = quotaReady ? quota.unlimited_quota ? t("quotaUnlimited") : money("remain_amount") : null;
         const quotaBox = serviceMode && SERVICE_MODE_AVAILABLE && keyReady ? h("div", {
           key: "quota",
           "data-field": "quota",
           className: "mov-card mov-quota-compact"
         }, [
           h("div", { key: "head", className: "mov-card-head" }, [
-            h("span", { key: "title", className: "mov-card-title" }, t("quotaTitle"))
+            h("span", { key: "title", className: "mov-card-title" }, t("walletBalance"))
           ]),
-          walletStats.length || quotaStats ? h(
-            "div",
-            { key: "text", "data-field": "quotaValue", className: "mov-stats" },
-            [...walletStats, ...quotaStats || []].map((item) => h("div", { key: item.key, className: "mov-stat" }, [
-              h("span", { key: "label", className: "mov-stat-label" }, item.label),
-              h("span", {
-                key: "value",
-                className: "mov-stat-value",
-                style: { color: item.color }
-              }, item.value)
-            ]))
-          ) : h("span", {
+          balanceText !== null ? h("span", {
+            key: "text",
+            "data-field": "quotaValue",
+            className: "mov-stat-value",
+            style: { color: TOKENS.primaryFill }
+          }, balanceText) : h("span", {
             key: "text",
             "data-field": "quotaValue",
             className: "mov-hint"
@@ -2496,9 +2489,9 @@
             const done = await waitRecharge(String(order && order.out_trade_no));
             if (done && done.credited) {
               setRechargeState("ok");
-              setRechargeMessage(t("walletRechargeDone", {
-                balance: `${walletSymbol}${formatMoney(Number(done.balance) || 0)}`
-              }));
+              const fresh = await loadQuota().catch(() => null);
+              const shown = fresh ? `${quotaSymbol}${formatMoney(Number(fresh.remain_amount) || 0)}` : `${walletSymbol}${formatMoney(Number(done.balance) || 0)}`;
+              setRechargeMessage(t("walletRechargeDone", { balance: shown }));
             } else {
               setRechargeState("failed");
               setRechargeMessage(t("walletRechargeTimeout"));

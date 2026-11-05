@@ -1,4 +1,6 @@
 /** 浏览器端 config：由入口注入宿主 React 与共享依赖。 */
+import { VOLCENGINE_MODE_AVAILABLE } from '../connection-defaults.js';
+
 export function createClientConfig() {
 /** Host 侧条目的 id，与 cordis.patch.yml 里那条覆盖项一致。 */
     const NAMESPACE = 'metaontic-video';
@@ -16,10 +18,13 @@ export function createClientConfig() {
     ];
     /** 可编辑字段；kind 决定控件，标注 secret 的字段宿主只会告知是否已配置。 */
     const SELECTS = {
-      // 三种接入方式都在：A 服务端（邮箱登录领 Key）、B MetaOntic AI（手填 Key）、C 火山直连。
-      // 服务端方式若要临时下架，先关掉 connection-defaults.ts 里的 SERVICE_MODE_AVAILABLE，
-      // 再把它从下面这个数组里去掉（设置页会改用隐藏项显示已有取值）。
-      connectionMode: ['service', 'metaontic', 'volcengine'],
+      // 接入方式：A 服务端（邮箱登录领 Key）、B MetaOntic AI（手填 Key）、C 火山直连。
+      // 临时下架某个方式时，先关掉 connection-defaults.ts 里对应的开关，再把它从这里去掉：
+      // 设置页会改用隐藏项显示已有取值（见 settings.ts 的 HIDDEN_CONNECTION_MODES），
+      // 列表里选不到它，也不会把已有配置静默换成别的渠道。
+      connectionMode: VOLCENGINE_MODE_AVAILABLE
+        ? ['service', 'metaontic', 'volcengine']
+        : ['service', 'metaontic'],
       model: MODEL_OPTIONS,
       imageModel: ['doubao-seedream-5-0-260128', 'doubao-seedream-5-0-pro-260628'],
       ratio: ['16:9', '9:16', '4:3', '3:4', '1:1', 'adaptive'],

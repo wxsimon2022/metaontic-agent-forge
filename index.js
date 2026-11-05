@@ -26,12 +26,13 @@ function connectionDefaults(values) {
     imageUseVideoKey: values.imageUseVideoKey !== false
   };
 }
-var METAONTIC_BASE_URL, SERVICE_MODE_AVAILABLE, SERVICE_UNAVAILABLE_MESSAGE;
+var METAONTIC_BASE_URL, SERVICE_MODE_AVAILABLE, SERVICE_UNAVAILABLE_MESSAGE, VOLCENGINE_MODE_AVAILABLE;
 var init_connection_defaults = __esm({
   "src/connection-defaults.ts"() {
     METAONTIC_BASE_URL = "https://ai.bileego.com";
     SERVICE_MODE_AVAILABLE = true;
     SERVICE_UNAVAILABLE_MESSAGE = "MetaOnticVideo \u670D\u52A1\u7AEF\u65B9\u5F0F\u6682\u65F6\u4E0D\u53EF\u7528\uFF1A\u8BF7\u5728\u63D2\u4EF6\u8BBE\u7F6E\u9875\u628A\u300C\u63A5\u5165\u65B9\u5F0F\u300D\u6539\u4E3A MetaOntic AI \u6216\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\uFF0C\u586B\u597D Key \u4FDD\u5B58\u540E\u91CD\u8BD5\u3002";
+    VOLCENGINE_MODE_AVAILABLE = false;
   }
 });
 
@@ -279,17 +280,17 @@ function getInner(value) {
 function extractKeys(data) {
   return filterKeys(data ?? {}, (key) => !key.startsWith("$"));
 }
-function validateVolatileSchema(schema, path15 = [], blocked2 = false, seen = /* @__PURE__ */ new Map()) {
+function validateVolatileSchema(schema, path14 = [], blocked2 = false, seen = /* @__PURE__ */ new Map()) {
   const states = seen.get(schema) ?? /* @__PURE__ */ new Set();
   if (states.has(blocked2)) return;
   states.add(blocked2);
   seen.set(schema, states);
-  if (schema.meta?.volatile && blocked2) throw new ValidationError("volatile fields require a fixed object path without an enclosing volatile field", { path: path15 });
+  if (schema.meta?.volatile && blocked2) throw new ValidationError("volatile fields require a fixed object path without an enclosing volatile field", { path: path14 });
   const nested = blocked2 || !!schema.meta?.volatile;
-  if (schema.dict) for (const [key, child] of Object.entries(schema.dict)) validateVolatileSchema(child, [...path15, key], nested, seen);
-  if (schema.sKey) validateVolatileSchema(schema.sKey, [...path15, "<key>"], true, seen);
-  if (schema.inner && (schema.type !== "lazy" || schema.inner[kSchema])) validateVolatileSchema(schema.inner, [...path15, "*"], true, seen);
-  if (schema.list) for (let index = 0; index < schema.list.length; index++) validateVolatileSchema(schema.list[index], [...path15, String(index)], true, seen);
+  if (schema.dict) for (const [key, child] of Object.entries(schema.dict)) validateVolatileSchema(child, [...path14, key], nested, seen);
+  if (schema.sKey) validateVolatileSchema(schema.sKey, [...path14, "<key>"], true, seen);
+  if (schema.inner && (schema.type !== "lazy" || schema.inner[kSchema])) validateVolatileSchema(schema.inner, [...path14, "*"], true, seen);
+  if (schema.list) for (let index = 0; index < schema.list.length; index++) validateVolatileSchema(schema.list[index], [...path14, String(index)], true, seen);
 }
 function checkWithinRange(data, meta, description, options, skipMin = false) {
   const { max = Infinity, min = -Infinity } = meta;
@@ -936,7 +937,7 @@ var init_config = __esm({
     Config = Schema.object({
       // 服务端方式停用期间，新装默认落到 MetaOntic AI（否则新用户一进来就是不可用的方式）；
       // 已有配置的取值不受默认值影响，按停用规则被拒绝调用。
-      connectionMode: Schema.union(["service", "metaontic", "volcengine"]).default(SERVICE_MODE_AVAILABLE ? "service" : "metaontic").description("\u63A5\u5165\u65B9\u5F0F\uFF1AMetaOntic AI\uFF1B\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\uFF1Bservice \u670D\u52A1\u7AEF\u9886 Key\uFF08\u6682\u65F6\u4E0D\u53EF\u7528\uFF09").volatile(),
+      connectionMode: Schema.union(["service", "metaontic", "volcengine"]).default(SERVICE_MODE_AVAILABLE ? "service" : "metaontic").description("\u63A5\u5165\u65B9\u5F0F\uFF1AMetaOnticVideo \u670D\u52A1\u7AEF\u9886 Key\uFF08service\uFF09\uFF1BMetaOntic AI\uFF08metaontic\uFF09\uFF1B\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\uFF08volcengine\uFF0C\u5F53\u524D\u8BBE\u7F6E\u9875\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF09").volatile(),
       metaonticApiKey: Schema.string().default("").description("MetaOntic AI API Key").volatile(),
       volcengineApiKey: Schema.string().default("").description("\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\u6A21\u5F0F\u7684\u706B\u5C71 API Key").volatile(),
       entryId: Schema.string().default("metaontic-video").description("\u672C\u63D2\u4EF6\u5728 profile patch \u91CC\u7684\u6761\u76EE id\uFF1B\u914D\u7F6E\u5DE5\u5177\u7528\u5B83\u628A\u6539\u52A8\u5199\u56DE").volatile(),
@@ -1120,8 +1121,8 @@ function resolveSubmitPath(config) {
 }
 function resolveQueryPath(config, taskId) {
   if (isVolcengine(config)) return `/api/v3/contents/generations/tasks/${encodeURIComponent(taskId)}`;
-  const path15 = String(ref(config, "queryPath", "")).trim() || relayPreset().queryPath;
-  return path15.replace("{task_id}", encodeURIComponent(taskId));
+  const path14 = String(ref(config, "queryPath", "")).trim() || relayPreset().queryPath;
+  return path14.replace("{task_id}", encodeURIComponent(taskId));
 }
 function resolveModel(config) {
   const preset = relayPreset();
@@ -2274,8 +2275,8 @@ async function fetchActualCost(config, taskIds, signal) {
   const base = resolveBaseUrl(config).replace(/\/v1\/?$/, "");
   if (!key || !base) return pending("\u8D39\u7528\u5F85\u67E5\u8BE2\uFF1A\u539F\u8C03\u7528\u8FDE\u63A5\u4E0D\u53EF\u7528\u3002");
   const requestSignal = signal ? AbortSignal.any([signal, AbortSignal.timeout(8e3)]) : AbortSignal.timeout(8e3);
-  async function get(path15, authenticated) {
-    const response = await fetch(`${base}${path15}`, {
+  async function get(path14, authenticated) {
+    const response = await fetch(`${base}${path14}`, {
       method: "GET",
       redirect: "error",
       signal: requestSignal,
@@ -2867,14 +2868,14 @@ function findKey(payload, keys, depth = Infinity) {
   }
   return void 0;
 }
-function collectUrls(payload, path15 = [], found = []) {
+function collectUrls(payload, path14 = [], found = []) {
   if (typeof payload === "string") {
-    if (/^https?:\/\//i.test(payload)) found.push([path15, payload]);
+    if (/^https?:\/\//i.test(payload)) found.push([path14, payload]);
   } else if (Array.isArray(payload)) {
-    for (const item of payload) collectUrls(item, path15, found);
+    for (const item of payload) collectUrls(item, path14, found);
   } else if (payload && typeof payload === "object") {
     for (const [key, value] of Object.entries(payload)) {
-      collectUrls(value, [...path15, key], found);
+      collectUrls(value, [...path14, key], found);
     }
   }
   return found;
@@ -2892,22 +2893,22 @@ function extractTaskId(payload) {
 }
 function extractVideoUrl(payload) {
   const candidates = collectUrls(payload).filter(
-    ([path15, url]) => !looksLikeImageUrl(url) && !path15.some(isImageKey)
+    ([path14, url]) => !looksLikeImageUrl(url) && !path14.some(isImageKey)
   );
   if (!candidates.length) return void 0;
   for (const wanted of VIDEO_URL_KEYS) {
-    for (const [path15, url] of candidates) {
-      if (path15.length && String(path15.at(-1)).toLowerCase() === wanted) return url;
+    for (const [path14, url] of candidates) {
+      if (path14.length && String(path14.at(-1)).toLowerCase() === wanted) return url;
     }
   }
-  for (const [path15, url] of candidates) {
-    if (path15.length && GENERIC_URL_KEYS.has(String(path15.at(-1)).toLowerCase())) return url;
+  for (const [path14, url] of candidates) {
+    if (path14.length && GENERIC_URL_KEYS.has(String(path14.at(-1)).toLowerCase())) return url;
   }
   return candidates[0][1];
 }
 function extractImageUrl(payload) {
   const found = collectUrls(payload).find(
-    ([path15, url]) => looksLikeImageUrl(url) || path15.some(isImageKey)
+    ([path14, url]) => looksLikeImageUrl(url) || path14.some(isImageKey)
   );
   return found?.[1];
 }
@@ -2964,8 +2965,8 @@ async function relayRequest(config, requestPath, options = {}) {
     throw error;
   }
 }
-async function relayRequestCore(config, path15, { method = "GET", body, signal } = {}, trace = {}) {
-  const url = `${resolveBaseUrl(config)}${path15}`;
+async function relayRequestCore(config, path14, { method = "GET", body, signal } = {}, trace = {}) {
+  const url = `${resolveBaseUrl(config)}${path14}`;
   const timeout = AbortSignal.timeout(RELAY_TIMEOUT_MS);
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
   const serialized = body === void 0 ? void 0 : JSON.stringify(body);
@@ -3656,6 +3657,13 @@ function endWithPunctuation(text) {
   return /[。．.!！?？;；~～:：,，]$/.test(value) ? value : `${value}\u3002`;
 }
 
+// src/providers/seedance.ts
+init_connection();
+init_config();
+
+// src/workflow/real-person.ts
+import { createHash as createHash3 } from "node:crypto";
+
 // src/workflow/character-choice.ts
 import { createHash as createHash2 } from "node:crypto";
 import { mkdir as mkdir6, readFile as readFile4, writeFile as writeFile3, rename as rename4, rm as rm4 } from "node:fs/promises";
@@ -3823,164 +3831,6 @@ function estimateUsage(config, toolName, args, actualPlan = void 0) {
 
 // src/workflow/approval.ts
 init_config();
-
-// src/payment/webpay.ts
-init_config();
-init_connection();
-
-// src/payment/webpay-state.ts
-import path10 from "node:path";
-import { mkdir as mkdir7, readFile as readFile5, writeFile as writeFile4 } from "node:fs/promises";
-var STATE_FILE = "webpay-state.json";
-var FRESH_DAYS = 30;
-function stateFile() {
-  return path10.join(dshHome(), "metaontic-video", STATE_FILE);
-}
-function normalizeBase(api) {
-  return String(api || "").trim().replace(/\/+$/, "");
-}
-async function rememberWebpayStatus(api, status) {
-  const base = normalizeBase(api);
-  if (!base) return;
-  try {
-    const file = stateFile();
-    let payload;
-    try {
-      payload = JSON.parse(await readFile5(file, "utf8"));
-    } catch {
-      payload = null;
-    }
-    if (!payload || typeof payload !== "object" || Array.isArray(payload)) payload = {};
-    payload[base] = { enabled: status?.enabled === true, enabledAt: (/* @__PURE__ */ new Date()).toISOString() };
-    await mkdir7(path10.dirname(file), { recursive: true, mode: 448 });
-    await writeFile4(file, JSON.stringify(payload), { mode: 384 });
-  } catch {
-  }
-}
-async function lastWebpayEnabled(api, now = Date.now()) {
-  const base = normalizeBase(api);
-  if (!base) return false;
-  try {
-    const payload = JSON.parse(await readFile5(stateFile(), "utf8"));
-    const record = payload && typeof payload === "object" ? payload[base] : null;
-    if (!record || record.enabled !== true) return false;
-    const at = Date.parse(String(record.enabledAt || ""));
-    if (!Number.isFinite(at)) return false;
-    return now - at <= FRESH_DAYS * 24 * 60 * 60 * 1e3;
-  } catch {
-    return false;
-  }
-}
-
-// src/payment/webpay.ts
-function webpayHeaders(config) {
-  const loginKey = String(ref(config, "loginKey", "")).trim();
-  return {
-    accept: "application/json",
-    "content-type": "application/json",
-    "X-Register-Token": String(ref(config, "registerToken", "")).trim() || DEFAULT_REGISTER_TOKEN,
-    ...loginKey ? { "X-Login-Key": loginKey } : {},
-    ...PLUGIN_VERSION ? { "X-Plugin-Version": PLUGIN_VERSION } : {}
-  };
-}
-function deviceBody(config) {
-  return {
-    device_id: String(ref(config, "deviceId", "")).trim(),
-    device_secret: String(ref(config, "deviceSecret", "")).trim(),
-    plugin_version: PLUGIN_VERSION || void 0
-  };
-}
-async function callApi(config, base, path15, init = {}) {
-  const api = resolveRegisterApi(config);
-  const timeout = AbortSignal.timeout(15e3);
-  const requestSignal = init.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
-  try {
-    const response = await fetch(`${api}/api/v1${base}${path15}`, {
-      method: init.method || "GET",
-      headers: webpayHeaders(config),
-      ...init.body === void 0 ? {} : { body: JSON.stringify(init.body) },
-      signal: requestSignal
-    });
-    const text = await response.text();
-    let body = {};
-    if (text) {
-      try {
-        body = JSON.parse(text);
-      } catch {
-        body = { message: text.slice(0, 200) };
-      }
-    }
-    const payload = body && typeof body === "object" && body.data !== void 0 ? body.data : body;
-    if (!response.ok || body && typeof body === "object" && body.code) {
-      return {
-        status: "unknown",
-        reason: body && (body.message || body.detail) || `HTTP ${response.status}`
-      };
-    }
-    return { status: "ok", data: payload || {} };
-  } catch (error) {
-    return { status: "unknown", reason: error?.message || String(error) };
-  }
-}
-async function callWebpay(config, path15, init = {}) {
-  return callApi(config, "/webpay", path15, init);
-}
-async function callWallet(config, path15, init = {}) {
-  return callApi(config, "/wallet", path15, init);
-}
-async function fetchWebpayStatus(config, signal) {
-  if (isManualKey(config)) return null;
-  const api = resolveRegisterApi(config);
-  const result = await callWebpay(config, "/status", { signal });
-  if (result.status !== "ok") {
-    return { enabled: false, offline: true, reason: result.reason || "\u670D\u52A1\u7AEF\u6CA1\u6709\u54CD\u5E94" };
-  }
-  const status = {
-    enabled: result.data?.enabled === true,
-    amount: result.data?.amount,
-    currency: result.data?.currency,
-    subject: result.data?.subject
-  };
-  await rememberWebpayStatus(api, status);
-  return status;
-}
-async function createWebpayOrder(config, signal) {
-  const result = await callWebpay(config, "/orders", { method: "POST", body: deviceBody(config), signal });
-  if (result.status !== "ok" || !result.data?.out_trade_no) return null;
-  return result.data;
-}
-async function fulfillWebpayOrder(config, outTradeNo, taskId, signal) {
-  const id = String(taskId || "").trim();
-  if (!id) return { status: "unknown", reason: "\u7F3A\u5C11\u4EFB\u52A1 ID" };
-  return callWebpay(config, `/orders/${encodeURIComponent(outTradeNo)}/fulfill`, {
-    method: "POST",
-    body: { ...deviceBody(config), task_id: id },
-    signal
-  });
-}
-async function consumeWebpayOrder(config, outTradeNo, signal) {
-  return callWebpay(config, `/orders/${encodeURIComponent(outTradeNo)}/consume`, {
-    method: "POST",
-    body: { device_id: String(ref(config, "deviceId", "")).trim() },
-    signal
-  });
-}
-async function fetchWalletStatus(config, signal) {
-  if (isManualKey(config)) return { status: "unknown", reason: "\u81EA\u5E26 Key \u7684\u63A5\u5165\u65B9\u5F0F\u4E0D\u8D70\u672C\u670D\u52A1\u4F59\u989D" };
-  return callWallet(config, "/status", { method: "POST", body: deviceBody(config), signal });
-}
-async function consumeWalletForGeneration(config, signal) {
-  return callWallet(config, "/consume", { method: "POST", body: deviceBody(config), signal });
-}
-async function releaseWebpayOrder(config, outTradeNo, signal) {
-  return callWebpay(config, `/orders/${encodeURIComponent(outTradeNo)}/release`, {
-    method: "POST",
-    body: deviceBody(config),
-    signal
-  });
-}
-
-// src/workflow/approval.ts
 async function remainingCostText(config, exec, remainingSteps, inputVideoSeconds = void 0) {
   if (isManualKey(config)) return { cost: `${connectionLabel(config)}\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39`, remain: "" };
   try {
@@ -4057,176 +3907,6 @@ async function fetchDeviceQuota(config, signal) {
   } catch (error) {
     return { status: "unknown", reason: error?.message || String(error) };
   }
-}
-function paymentInstruction(order, toolName, subject, money, what) {
-  return [
-    `\u672C\u6B21\u751F\u6210\u9700\u8981\u5148\u4ED8\u6B3E\uFF1A${subject} ${money}\uFF08\u8BA2\u5355\u53F7 ${order.out_trade_no}\uFF09\u3002` + (what ? `\u8FD9\u6B21\u8981\u8C03\u7528\uFF1A${what}\uFF0C\u4ED8\u8FC7\u6B3E\u5C31\u4E0D\u518D\u53E6\u5F39\u786E\u8BA4\u6846\uFF0C\u76F4\u63A5\u8C03\u7528\u3002` : ""),
-    "\u8BF7\u628A\u4E0B\u9762\u8FD9\u6761\u6536\u94F6\u53F0\u94FE\u63A5\u539F\u6837\u53D1\u7ED9\u7528\u6237\uFF0C\u5E76\u8BF4\u660E\uFF1A\u5728\u6D4F\u89C8\u5668\u91CC\u6253\u5F00\u3001\u7528\u652F\u4ED8\u5B9D\u5B8C\u6210\u4ED8\u6B3E\uFF0C\u4ED8\u5B8C\u56DE\u6765\u56DE\u590D\u4E00\u58F0\u5C31\u80FD\u7EE7\u7EED\u751F\u6210\u3002\u4E0D\u8981\u4EE3\u66FF\u7528\u6237\u8DF3\u8FC7\u4ED8\u6B3E\uFF0C\u4E5F\u4E0D\u8981\u6539\u7528\u522B\u7684\u65B9\u5F0F\u8C03\u7528\u6A21\u578B\u3002",
-    order.pay_url || "\uFF08\u6536\u94F6\u53F0\u94FE\u63A5\u6CA1\u62FF\u5230\uFF0C\u8BF7\u8BA9\u7528\u6237\u5728\u63D2\u4EF6\u8BBE\u7F6E\u9875\u70B9\u4E00\u6B21\u300C\u767B\u5F55\u300D\u540E\u91CD\u8BD5\uFF09",
-    `\u7528\u6237\u786E\u8BA4\u4ED8\u5B8C\u6B3E\u540E\uFF0C\u7528\u540C\u6837\u7684\u53C2\u6570\u91CD\u65B0\u8C03\u7528 ${toolName}\uFF1A\u63D2\u4EF6\u4F1A\u81EA\u5DF1\u8DDF\u670D\u52A1\u7AEF\u6838\u5BF9\u8FD9\u7B14\u8BA2\u5355\uFF0C\u6838\u5BF9\u5230\u5DF2\u652F\u4ED8\u5C31\u5151\u6362\u51ED\u636E\u5E76\u76F4\u63A5\u8C03\u7528\u6A21\u578B\uFF1B\u6CA1\u6838\u5BF9\u5230\u8FD8\u4F1A\u8FD4\u56DE\u8FD9\u6761\u8BF4\u660E\uFF0C\u4E0D\u8981\u7ED5\u8FC7\u5B83\u3002`
-  ].join("\n");
-}
-var paidOrders = /* @__PURE__ */ new WeakMap();
-function rememberPaidOrder(exec, info) {
-  try {
-    if (exec) paidOrders.set(exec, info);
-  } catch {
-  }
-}
-function paymentMoment(paidAt) {
-  const text = String(paidAt || "").trim();
-  if (!text) return "";
-  const iso = text.includes("T") ? text : text.replace(" ", "T");
-  const utc = /([Zz]|[+-]\d{2}:?\d{2})$/.test(iso) ? iso : `${iso}Z`;
-  const stamp = Date.parse(utc);
-  if (!Number.isFinite(stamp)) return "";
-  const at = new Date(stamp);
-  const pad = (value) => String(value).padStart(2, "0");
-  return `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())} ${pad(at.getHours())}:${pad(at.getMinutes())}`;
-}
-function takePaidNote(exec) {
-  let info = null;
-  try {
-    info = exec ? paidOrders.get(exec) : null;
-    if (info?.noted) return "";
-    if (info) info.noted = true;
-  } catch {
-    info = null;
-  }
-  if (!info) return "";
-  if (info.fromBalance) {
-    return `\u672C\u6B21\u751F\u6210\u4ECE\u8D26\u6237\u4F59\u989D\u91CC\u6263\u4E86 ${info.money}\uFF08${info.subject}\uFF0C\u8BA2\u5355 ${info.outTradeNo}${info.balanceBefore ? `\uFF0C\u6263\u524D\u4F59\u989D ${info.balanceBefore}` : ""}\uFF09\uFF1A\u4E0D\u7528\u518D\u4ED8\u6B3E\uFF0C\u4E5F\u4E0D\u4F1A\u6709\u989D\u5916\u7684\u786E\u8BA4\u6B65\u9AA4\u3002`;
-  }
-  const moment = paymentMoment(info.paidAt);
-  return `\u672C\u6B21\u751F\u6210\u7528\u7684\u662F\u6B64\u524D\u5DF2\u7ECF\u4ED8\u8FC7\u6B3E\u7684\u8BA2\u5355 ${info.outTradeNo}\uFF08${info.subject} ${info.money}${moment ? `\uFF0C\u4ED8\u6B3E\u65F6\u95F4 ${moment}` : ""}\uFF09\uFF1A\u8FD9\u6B21\u4E0D\u518D\u91CD\u590D\u6536\u8D39\uFF0C\u4E5F\u4E0D\u518D\u6709\u989D\u5916\u7684\u786E\u8BA4\u6B65\u9AA4\u3002`;
-}
-async function readWallet(config, exec) {
-  try {
-    const result = await fetchWalletStatus(config, exec?.signal);
-    if (result.status !== "ok" || !result.data || result.data.enabled !== true) return null;
-    return result.data;
-  } catch {
-    return null;
-  }
-}
-async function releasePaidTicket(config, exec) {
-  let info = null;
-  try {
-    info = exec ? paidOrders.get(exec) : null;
-  } catch {
-    info = null;
-  }
-  if (!info || info.released || info.taskId) return;
-  info.released = true;
-  try {
-    await releaseWebpayOrder(config, info.outTradeNo, exec?.signal);
-  } catch {
-  }
-}
-async function reportPaidTaskId(config, exec, taskId) {
-  const id = String(taskId || "").trim();
-  if (!id) return;
-  let info = null;
-  try {
-    info = exec ? paidOrders.get(exec) : null;
-  } catch {
-    info = null;
-  }
-  if (!info || info.taskId === id) return;
-  info.taskId = id;
-  try {
-    const result = await fulfillWebpayOrder(config, info.outTradeNo, id, exec?.signal);
-    if (result.status !== "ok") info.taskId = "";
-  } catch {
-    info.taskId = "";
-  }
-}
-async function paymentGate(config, exec) {
-  if (exec.name !== "video_generate" && exec.name !== "video_extend") return null;
-  if (isManualKey(config)) return null;
-  let status = null;
-  try {
-    status = await fetchWebpayStatus(config, exec.signal);
-  } catch {
-    status = null;
-  }
-  if (!status) return null;
-  if (!status.enabled) {
-    if (!status.offline) return null;
-    let known = false;
-    try {
-      known = await lastWebpayEnabled(resolveRegisterApi(config));
-    } catch {
-      known = false;
-    }
-    if (!known) return null;
-    return {
-      kind: "deny",
-      reason: `\u6536\u6B3E\u670D\u52A1\u8FDE\u4E0D\u4E0A\uFF08${status.reason || "\u670D\u52A1\u7AEF\u6CA1\u6709\u54CD\u5E94"}\uFF09\uFF0C\u5DF2\u505C\u6B62\u8C03\u7528\uFF1A\u8FD9\u6B21\u6CA1\u6709\u8C03\u7528\u6A21\u578B\u3001\u6CA1\u6709\u4EA7\u751F\u8D39\u7528\u3002\u8BF7\u786E\u8BA4\u8FD9\u53F0\u673A\u5668\u80FD\u8BBF\u95EE\u63D2\u4EF6\u670D\u52A1\uFF08\u8BBE\u7F6E\u9875\u91CC\u7684\u670D\u52A1\u5730\u5740\uFF09\u540E\u91CD\u8BD5\uFF1B\u5982\u679C\u670D\u52A1\u7AEF\u5DF2\u7ECF\u5173\u6389\u7F51\u7AD9\u652F\u4ED8\u6536\u6B3E\uFF0C\u8FD9\u6B21\u62E6\u622A\u53EF\u4EE5\u5FFD\u7565\uFF0C\u4F46\u4ECD\u9700\u5148\u6062\u590D\u7F51\u7EDC\u3002`
-    };
-  }
-  const symbol = String(status.currency || "CNY").toUpperCase() === "CNY" ? "\xA5" : `${status.currency} `;
-  const subject = status.subject || "AI \u89C6\u9891\u751F\u6210";
-  const wallet = await readWallet(config, exec);
-  if (wallet && wallet.enabled) {
-    const price = Number(wallet.price || status.amount || 0);
-    const balance = Number(wallet.balance || 0);
-    const priceText = formatMoney(price, wallet.currency_symbol || symbol);
-    if (balance >= price) {
-      const consumed = await consumeWalletForGeneration(config, exec.signal);
-      if (consumed.status === "ok" && consumed.data?.out_trade_no) {
-        rememberPaidOrder(exec, {
-          outTradeNo: consumed.data.out_trade_no,
-          subject,
-          money: priceText,
-          paidAt: consumed.data.paid_at,
-          fromBalance: true,
-          balanceBefore: formatMoney(balance, wallet.currency_symbol || symbol)
-        });
-        return { kind: "paid", outTradeNo: consumed.data.out_trade_no, subject, money: priceText };
-      }
-    } else {
-      return {
-        kind: "deny",
-        reason: `\u4F59\u989D\u4E0D\u8DB3\uFF1A\u5F53\u524D ${formatMoney(balance, wallet.currency_symbol || symbol)}\uFF0C\u672C\u6B21\u751F\u6210\u9700\u8981 ${priceText}\u3002\u8BF7\u5728\u63D2\u4EF6\u8BBE\u7F6E\u9875\u7684\u989D\u5EA6\u533A\u70B9\u300C\u5145\u503C\u300D\uFF0C\u628A\u91D1\u989D\u5145\u4E0A\u540E\u91CD\u8BD5\uFF1B\uFF08\u4E5F\u53EF\u4EE5\u9009\u62E9\u5355\u6B21\u76F4\u4ED8\uFF1A\u5145\u503C\u4E0D\u53EF\u7528\u65F6\u6309\u63D0\u793A\u91CD\u65B0\u53D1\u8D77\u4E00\u6B21\u751F\u6210\u3002\uFF09`
-      };
-    }
-  }
-  let order = null;
-  try {
-    order = await createWebpayOrder(config, exec.signal);
-  } catch (error) {
-    order = null;
-  }
-  if (!order) {
-    return {
-      kind: "deny",
-      reason: "\u6536\u6B3E\u670D\u52A1\u6682\u65F6\u4E0D\u53EF\u7528\uFF0C\u5DF2\u505C\u6B62\u8C03\u7528\uFF1A\u8BF7\u7A0D\u540E\u91CD\u8BD5\uFF1B\u5982\u679C\u4E00\u76F4\u4E0D\u53EF\u7528\uFF0C\u8BF7\u68C0\u67E5\u670D\u52A1\u7AEF\u7F51\u7AD9\u652F\u4ED8\u914D\u7F6E\uFF08WEBPAY_*\uFF09\u4E0E\u7F51\u7EDC\u3002\u8FD9\u6B21\u6CA1\u6709\u8C03\u7528\u6A21\u578B\u3001\u6CA1\u6709\u4EA7\u751F\u8D39\u7528\u3002"
-    };
-  }
-  const money = formatMoney(Number(order.amount ?? status.amount ?? 0), symbol);
-  if (order.status === "PAID") {
-    const consumed = await consumeWebpayOrder(config, order.out_trade_no, exec.signal);
-    if (consumed.status === "ok") {
-      rememberPaidOrder(exec, { outTradeNo: order.out_trade_no, subject, money, paidAt: order.paid_at });
-      return { kind: "paid", outTradeNo: order.out_trade_no, subject, money };
-    }
-    return {
-      kind: "deny",
-      reason: `\u8FD9\u7B14\u8BA2\u5355\u7684\u652F\u4ED8\u51ED\u636E\u6CA1\u80FD\u5151\u6362\uFF08${consumed.reason || "\u670D\u52A1\u7AEF\u6CA1\u6709\u786E\u8BA4"}\uFF09\uFF0C\u5DF2\u505C\u6B62\u8C03\u7528\uFF0C\u6CA1\u6709\u8C03\u7528\u6A21\u578B\u3001\u6CA1\u6709\u4EA7\u751F\u8D39\u7528\u3002\u8BA2\u5355\u53F7 ${order.out_trade_no}\uFF1A\u8BF7\u628A\u8FD9\u6761\u539F\u56E0\u544A\u8BC9\u7528\u6237\uFF0C\u8BA9\u7528\u6237\u5728\u63D2\u4EF6\u8BBE\u7F6E\u9875\u70B9\u4E00\u6B21\u300C\u767B\u5F55\u300D\u540E\u91CD\u8BD5\uFF1B\u540C\u4E00\u7B14\u4ED8\u6B3E\u53EA\u80FD\u5151\u6362\u4E00\u6B21\uFF0C\u4E0D\u8981\u91CD\u590D\u4ED8\u6B3E\u3002`
-    };
-  }
-  return {
-    kind: "deny",
-    reason: paymentInstruction(
-      order,
-      exec.name,
-      subject,
-      money,
-      `${resolveModel(config)} \xB7 ${resolveResolution(config, exec.arguments || {})}`
-    ),
-    info: { webpayPending: true, out_trade_no: order.out_trade_no, pay_url: order.pay_url }
-  };
 }
 function approvalPolicy(ctx, exec) {
   try {
@@ -4404,9 +4084,6 @@ async function preflightGate(ctx, config, exec) {
   if (characterChoice) return characterChoice;
   const consent = await ffmpegConsentGate(config, exec, args);
   if (consent) return consent;
-  const payment = await paymentGate(config, exec);
-  if (payment && payment.kind !== "paid") return payment;
-  if (payment) return { kind: "allow" };
   if (isManualKey(config)) {
     assertConfigured(config, resolveApiKey(config));
     return {
@@ -4438,13 +4115,13 @@ async function preflightGate(ctx, config, exec) {
   const remainAmount = finiteNumber(data.remain_amount);
   const costText = needMoney === null ? "\u8FD9\u6B21\u8C03\u7528\u7684\u8D39\u7528\u6CA1\u6CD5\u9884\u4F30" : `\u9884\u4F30 ${needMoney}`;
   const remainMoneyText = `${formatMoney(remainAmount === null ? 0 : remainAmount, symbol)}`;
-  const remainZh = !showsQuota ? "\u8D39\u7528\u6309\u63D2\u4EF6\u670D\u52A1\u7684\u652F\u4ED8\u4E0E\u7528\u91CF\u7ED3\u7B97" : remainQuota === null ? `\u672C\u673A Key \u7684\u989D\u5EA6\u8BFB\u4E0D\u5230\uFF08${quota.reason || "\u670D\u52A1\u7AEF\u6CA1\u56DE\u989D\u5EA6"}\uFF09` : `\u672C\u673A Key \u5269\u4F59 ${remainMoneyText}`;
-  const remainEn = !showsQuota ? "billing follows the plugin service payment and usage" : remainQuota === null ? `this key's quota could not be read (${quota.reason || "the service returned none"})` : `this key has ${remainMoneyText} left`;
+  const remainZh = !showsQuota ? "\u8D39\u7528\u6309\u63D2\u4EF6\u670D\u52A1\u8D26\u6237\u7684\u5B9E\u9645\u7528\u91CF\u7ED3\u7B97" : remainQuota === null ? `\u672C\u673A Key \u7684\u989D\u5EA6\u8BFB\u4E0D\u5230\uFF08${quota.reason || "\u670D\u52A1\u7AEF\u6CA1\u56DE\u989D\u5EA6"}\uFF09` : `\u672C\u673A Key \u5269\u4F59 ${remainMoneyText}`;
+  const remainEn = !showsQuota ? "billing follows actual usage of the plugin service account" : remainQuota === null ? `this key's quota could not be read (${quota.reason || "the service returned none"})` : `this key has ${remainMoneyText} left`;
   const total = estimate ? `${estimate.model} \xB7 ${estimate.resolution} \xB7 ${planSummary(estimate)}` : `${resolveModel(config)} \xB7 ${resolveResolution(config, effectiveArgs)}`;
   const auditTax = estimate ? `\u9884\u4F30\u6D88\u8017 ${estimate.tokens.toLocaleString("en-US")} token \u2248 ${needMoney ?? "\u65E0\u6CD5\u9884\u4F30"}\uFF08${!showsQuota ? "MetaOnticVideo \u63A5\u5165\u4E0D\u770B\u989D\u5EA6" : needQuota === null ? "\u989D\u5EA6\u672A\u77E5" : `${needQuota.toLocaleString("en-US")} \u989D\u5EA6`}\uFF09` : "\u8FD9\u6B21\u8C03\u7528\u7684\u8D39\u7528\u65E0\u6CD5\u9884\u4F30";
   return {
     kind: "ask",
-    reason: `${resumeLead ? resumeLead.zh : ""}\u4EBA\u5DE5\u786E\u8BA4\uFF1A\u8C03\u7528\u89C6\u9891\u6A21\u578B\uFF08${total}\uFF09\u3002${auditTax}\uFF1B` + (showsQuota ? `\u672C\u673A Key \u5269\u4F59 ${remainQuota === null ? "\u989D\u5EA6\u8BFB\u4E0D\u5230" : `${remainMoneyText} / ${remainQuota.toLocaleString("en-US")} \u989D\u5EA6`}\u3002` : "\u8D39\u7528\u6309\u63D2\u4EF6\u670D\u52A1\u7AEF\u7684\u652F\u4ED8\u4E0E\u7528\u91CF\u7ED3\u7B97\u3002"),
+    reason: `${resumeLead ? resumeLead.zh : ""}\u4EBA\u5DE5\u786E\u8BA4\uFF1A\u8C03\u7528\u89C6\u9891\u6A21\u578B\uFF08${total}\uFF09\u3002${auditTax}\uFF1B` + (showsQuota ? `\u672C\u673A Key \u5269\u4F59 ${remainQuota === null ? "\u989D\u5EA6\u8BFB\u4E0D\u5230" : `${remainMoneyText} / ${remainQuota.toLocaleString("en-US")} \u989D\u5EA6`}\u3002` : "\u8D39\u7528\u6309\u63D2\u4EF6\u670D\u52A1\u8D26\u6237\u7684\u5B9E\u9645\u7528\u91CF\u7ED3\u7B97\u3002"),
     displayReason: {
       zh: `${resumeLead ? resumeLead.zh : ""}\u672C\u6B21\u4F1A\u8C03\u7528\u89C6\u9891\u6A21\u578B\uFF1A${total}\uFF1B${costText}\uFF0C${remainZh}\u3002\u70B9\u4E86\u300C\u5141\u8BB8\u300D\u624D\u4F1A\u771F\u6B63\u8C03\u7528\u3002${resumeLead ? resumeLead.tailZh : ""}`,
       en: `${resumeLead ? resumeLead.en : ""}This will call the video model: ${total}. Estimated cost ${needMoney === null ? "unknown" : needMoney}; ${remainEn}. The call runs only after you allow it.` + (resumeLead ? resumeLead.tailEn : "")
@@ -4452,12 +4129,7 @@ async function preflightGate(ctx, config, exec) {
   };
 }
 
-// src/providers/seedance.ts
-init_connection();
-init_config();
-
 // src/workflow/real-person.ts
-import { createHash as createHash3 } from "node:crypto";
 async function recoverRealPersonImages(config, body, ctx, exec, final, state = {}, saveState = async () => {
 }) {
   const images = (body.content || []).filter((item) => item.type === "image_url" && item.image_url?.url);
@@ -4743,18 +4415,18 @@ init_config();
 // src/media/merge.ts
 init_config();
 init_connection();
-import { rm as rm6, mkdir as mkdir9, writeFile as writeFile5, rename as rename6, stat as stat5, copyFile } from "node:fs/promises";
-import path12 from "node:path";
+import { rm as rm6, mkdir as mkdir8, writeFile as writeFile4, rename as rename6, stat as stat5, copyFile } from "node:fs/promises";
+import path11 from "node:path";
 
 // src/media/download.ts
-import { mkdir as mkdir8, rename as rename5, rm as rm5 } from "node:fs/promises";
-import path11 from "node:path";
+import { mkdir as mkdir7, rename as rename5, rm as rm5 } from "node:fs/promises";
+import path10 from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 import { createWriteStream } from "node:fs";
 var DOWNLOAD_TIMEOUT_MS = 15 * 60 * 1e3;
 async function downloadFile(url, destPath, { signal } = {}) {
-  await mkdir8(path11.dirname(destPath), { recursive: true });
+  await mkdir7(path10.dirname(destPath), { recursive: true });
   const partial = `${destPath}.${uniqueSuffix("part")}`;
   const timeout = AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS);
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
@@ -4847,7 +4519,7 @@ async function cleanupSegmentTemps(temps) {
 }
 async function mergeClips(config, files, outPath, { signal } = {}) {
   const binary = resolveBinary(config, "ffmpegBinary", "ffmpeg");
-  await mkdir9(path12.dirname(outPath), { recursive: true });
+  await mkdir8(path11.dirname(outPath), { recursive: true });
   await rm6(outPath, { force: true });
   const work = `${outPath}.${uniqueSuffix("work")}.mp4`;
   let copyError = "";
@@ -4869,7 +4541,7 @@ async function mergeClips(config, files, outPath, { signal } = {}) {
     if (mergeMode !== "reencode" && paramsMatch) {
       const listPath = `${work}.concat.txt`;
       const lines = files.map((file) => `file '${file.replace(/'/g, "'\\''")}'`).join("\n");
-      await writeFile5(listPath, `${lines}
+      await writeFile4(listPath, `${lines}
 `, "utf8");
       try {
         const { code: code2, stderr: stderr2 } = await runProcess(binary, [
@@ -5029,7 +4701,7 @@ async function downloadSegmentsAndMerge(config, {
   const deliveredSeconds = segments.reduce((sum, item) => sum + (item.seconds || 0), 0);
   const ffmpegReady = segments.length > 1 ? await hasFfmpeg(config, signal) : true;
   let probeWarned = false;
-  const destOf = (segment) => path12.join(
+  const destOf = (segment) => path11.join(
     segmentsDir,
     `${String(segment.index).padStart(2, "0")}-${segment.kind}.mp4`
   );
@@ -5108,13 +4780,13 @@ async function downloadSegmentsAndMerge(config, {
       installHint: guide.hint
     };
   }
-  const finalPath = path12.join(outDir, `${stamp}-${deliveredSeconds}s.mp4`);
+  const finalPath = path11.join(outDir, `${stamp}-${deliveredSeconds}s.mp4`);
   try {
     if (files.length === 1 && keepSingleFile) {
       return { files, segmentsDir, deliveredSeconds, merged: true, mergeMode: "segment", videoPath: files[0] };
     }
     if (files.length === 1) {
-      await mkdir9(path12.dirname(finalPath), { recursive: true });
+      await mkdir8(path11.dirname(finalPath), { recursive: true });
       await rm6(finalPath, { force: true });
       await copyFile(files[0], finalPath);
       await appendRequestLog({ event: "delivery_copied", sourcePath: files[0], videoPath: finalPath });
@@ -5451,8 +5123,6 @@ function videoTool(liveConfig, deps, ctx) {
       const doneBefore = restarted ? Number(resume.done) || 0 : 0;
       const plannedTotal = plan.reduce((sum, step) => sum + step.seconds, 0);
       const notes = [];
-      const paidNote = takePaidNote(exec);
-      if (paidNote) notes.push(paidNote);
       if (restarted) {
         notes.push(
           `\u63A5\u7740\u4E0A\u4E00\u6B21\u6682\u505C\u7684\u8FDB\u5EA6\u7EE7\u7EED\uFF1A\u524D\u9762 ${doneBefore} \u6BB5\uFF08${restarted.cursor} \u79D2\uFF09\u4E0D\u91CD\u65B0\u751F\u6210\uFF0C\u8FD9\u6B21\u8FD8\u8981\u751F\u6210 ${plan.length} \u6BB5\u5171 ${plannedTotal} \u79D2\u3002`
@@ -5566,7 +5236,6 @@ function videoTool(liveConfig, deps, ctx) {
             onCreated: async (taskId) => {
               pendingTask = { taskId, index: position + 1, kind: step.kind, seconds };
               await checkpoint();
-              await reportPaidTaskId(config2, exec, taskId);
             }
           });
           if (final.status === "succeeded") {
@@ -5605,9 +5274,6 @@ function videoTool(liveConfig, deps, ctx) {
         });
         interrupted = true;
         paused = true;
-      }
-      if (!segments.some((segment) => segment.taskId)) {
-        await releasePaidTicket(config2, exec);
       }
       const completed = segments.filter((segment) => segment.status === "succeeded" && segment.videoUrl);
       const deliveredSeconds = completed.reduce((sum, segment) => sum + (segment.seconds || 0), 0);
@@ -5866,8 +5532,6 @@ function extendTool(liveConfig, deps, ctx) {
       const plannedSeconds = plan.reduce((sum, step) => sum + step.seconds, 0);
       let cursor = resume ? resume.cursor ?? null : args?.startAt == null ? null : Math.max(0, Math.round(Number(args.startAt)));
       const notes = [];
-      const paidNote = takePaidNote(exec);
-      if (paidNote) notes.push(paidNote);
       const segments = [];
       if (resume) {
         for (const step of resume.steps || []) {
@@ -5937,7 +5601,6 @@ function extendTool(liveConfig, deps, ctx) {
             onCreated: async (taskId) => {
               pendingTask = { taskId, index: position + 1, kind: step.kind, seconds };
               await checkpoint();
-              await reportPaidTaskId(config2, exec, taskId);
             }
           });
           if (final.status === "succeeded") {
@@ -5979,9 +5642,6 @@ function extendTool(liveConfig, deps, ctx) {
         });
         interrupted = true;
         paused = true;
-      }
-      if (!segments.some((segment) => segment.taskId)) {
-        await releasePaidTicket(config2, exec);
       }
       const completed = segments.filter((segment) => segment.status === "succeeded" && segment.videoUrl);
       const deliveredSeconds = completed.reduce((sum, segment) => sum + (segment.seconds || 0), 0);
@@ -6316,9 +5976,9 @@ function setupTool(config) {
 
 // src/internal/hyperframes.ts
 import { spawn as spawn2 } from "node:child_process";
-import path13 from "node:path";
+import path12 from "node:path";
 import { createRequire as createRequire2 } from "node:module";
-import { stat as stat6, mkdir as mkdir10 } from "node:fs/promises";
+import { stat as stat6, mkdir as mkdir9 } from "node:fs/promises";
 function runHyperframes(cli, args, cwd, config, signal) {
   return new Promise((resolve3, reject) => {
     if (signal?.aborted) return reject(new Error("Hyperframes \u5DF2\u53D6\u6D88\u3002"));
@@ -6333,7 +5993,7 @@ function runHyperframes(cli, args, cwd, config, signal) {
         ...Object.fromEntries([
           ["HYPERFRAMES_FFMPEG_PATH", resolveBinary(config, "ffmpegBinary", "ffmpeg")],
           ["HYPERFRAMES_FFPROBE_PATH", resolveBinary(config, "ffprobeBinary", "ffprobe")]
-        ].filter(([, binary]) => path13.isAbsolute(binary)))
+        ].filter(([, binary]) => path12.isAbsolute(binary)))
       },
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true
@@ -6413,16 +6073,16 @@ function hyperframesTool(config, deps) {
       let cli;
       try {
         const require2 = createRequire2(import.meta.url);
-        cli = path13.join(path13.dirname(require2.resolve("hyperframes/package.json")), "bin/hyperframes.mjs");
+        cli = path12.join(path12.dirname(require2.resolve("hyperframes/package.json")), "bin/hyperframes.mjs");
       } catch {
         return { status: "dependency_missing", note: "Hyperframes \u4E3A\u5185\u90E8\u5F00\u53D1\u80FD\u529B\uFF0C\u516C\u5F00\u63D2\u4EF6\u5305\u4E0D\u5305\u542B\u8BE5\u4F9D\u8D56\uFF1B\u9700\u5728\u5F00\u53D1\u73AF\u5883\u5355\u72EC\u51C6\u5907\u3002" };
       }
       let cwd = process.cwd();
       if (deps.workdir && exec?.agent) cwd = await deps.workdir.ensure(exec.agent, exec.signal) || cwd;
-      const project = path13.resolve(cwd, args.projectDir || ".");
+      const project = path12.resolve(cwd, args.projectDir || ".");
       if (action !== "check") {
         if (!args.projectDir) throw new Error("lint/render \u5FC5\u987B\u6307\u5B9A projectDir\u3002");
-        if (!(await stat6(path13.join(project, "index.html"))).isFile()) throw new Error("\u9879\u76EE\u7F3A\u5C11 index.html\u3002");
+        if (!(await stat6(path12.join(project, "index.html"))).isFile()) throw new Error("\u9879\u76EE\u7F3A\u5C11 index.html\u3002");
       }
       let videoPath;
       let command = ["doctor", "--json"];
@@ -6430,9 +6090,9 @@ function hyperframesTool(config, deps) {
       if (action === "render") {
         if (args.fps !== void 0 && ![24, 25, 30, 50, 60].includes(args.fps)) throw new Error("\u4E0D\u652F\u6301\u7684\u5E27\u7387\u3002");
         const output = args.output || `renders/output-${Date.now()}.mp4`;
-        videoPath = path13.resolve(project, output);
-        const relative = path13.relative(project, videoPath);
-        if (!relative || relative === ".." || relative.startsWith(`..${path13.sep}`) || path13.isAbsolute(relative) || path13.extname(videoPath).toLowerCase() !== ".mp4") {
+        videoPath = path12.resolve(project, output);
+        const relative = path12.relative(project, videoPath);
+        if (!relative || relative === ".." || relative.startsWith(`..${path12.sep}`) || path12.isAbsolute(relative) || path12.extname(videoPath).toLowerCase() !== ".mp4") {
           throw new Error("\u8F93\u51FA\u5FC5\u987B\u662F\u9879\u76EE\u76EE\u5F55\u5185\u7684 .mp4 \u6587\u4EF6\u3002");
         }
         try {
@@ -6441,7 +6101,7 @@ function hyperframesTool(config, deps) {
         } catch (error) {
           if (error.code !== "ENOENT") throw error;
         }
-        await mkdir10(path13.dirname(videoPath), { recursive: true });
+        await mkdir9(path12.dirname(videoPath), { recursive: true });
         command = ["render", project, "--output", videoPath, "--fps", String(args.fps || 30), "--workers", "1", "--strict"];
       }
       const result = await runHyperframes(cli, command, action === "check" ? cwd : project, config, exec?.signal);
@@ -6630,7 +6290,7 @@ async function writeProfileConfig(settings, config, patch) {
 function configTool(config, settings) {
   return {
     name: "video_config",
-    description: "\u8BFB\u53D6\u6216\u4FEE\u6539 MetaOnticVideo \u63D2\u4EF6\u81EA\u5DF1\u7684\u914D\u7F6E\uFF08baseUrl\u3001submitPath\u3001queryPath\u3001model\u3001imageModel\u3001duration\u3001singleMaxSeconds\u3001ratio\u3001generateAudio\u3001watermark\u3001extraParams\u3001pollIntervalMs\u3001maxWaitMs\u3001mergeMode\u3001outputDir\u3001resumeLockStaleMinutes\u3001ffmpegBinary\u3001ffprobeBinary\u3001registerEmail\u3001registerApi\u3001estimateGroupRatio\uFF09\u3002apiKey \u53EA\u80FD\u7531\u8BBE\u7F6E\u9875\u300C\u767B\u5F55\u300D\u65F6\u670D\u52A1\u7AEF\u4E0B\u53D1\uFF0C\u8FD9\u91CC\u53EA\u80FD\u770B\u3001\u4E0D\u80FD\u6539\uFF1B\u4EC5\u670D\u52A1\u7AEF\u6A21\u5F0F\u6362 Key \u9700\u8981\u767B\u5F55\uFF1BMetaOntic AI \u4F7F\u7528 metaonticApiKey\uFF0C\u706B\u5C71\u76F4\u8FDE\u4F7F\u7528 volcengineApiKey\uFF0C\u53EF\u624B\u52A8\u914D\u7F6E\u3002\u6539\u52A8\u5199\u8FDB profile \u7684 cordis.patch.yml\uFF0C\u5BBF\u4E3B\u91CD\u8F7D\u540E\u751F\u6548\u3002\u7528\u6237\u8BF4\u300C\u628A\u4E2D\u8F6C\u7AD9\u5730\u5740/\u6A21\u578B/\u65F6\u957F\u6539\u6210 X\u300D\u65F6\u7528 action=set\uFF0C\u770B\u5F53\u524D\u503C\u7528 action=get\uFF1Bduration \u662F\u6BCF\u6BB5\u65B0\u589E\u79D2\u6570\u4E0A\u9650\uFF084 \u81F3\u6A21\u578B\u4E0A\u9650\uFF082.0 \u4E3A 15\u30012.5 \u4E3A 30\uFF09\uFF0C\u9ED8\u8BA4\u6309\u6A21\u578B\u4E0A\u9650\u3001\u6BB5\u6570\u6700\u5C11\uFF09\uFF0CsingleMaxSeconds \u4E3A\u517C\u5BB9\u65E7\u914D\u7F6E\u4FDD\u7559\uFF0C\u76F4\u51FA\u4E0A\u9650\u7531\u6A21\u578B\u6620\u5C04\u3002",
+    description: "\u8BFB\u53D6\u6216\u4FEE\u6539 MetaOnticVideo \u63D2\u4EF6\u81EA\u5DF1\u7684\u914D\u7F6E\uFF08baseUrl\u3001submitPath\u3001queryPath\u3001model\u3001imageModel\u3001duration\u3001singleMaxSeconds\u3001ratio\u3001generateAudio\u3001watermark\u3001extraParams\u3001pollIntervalMs\u3001maxWaitMs\u3001mergeMode\u3001outputDir\u3001resumeLockStaleMinutes\u3001ffmpegBinary\u3001ffprobeBinary\u3001registerEmail\u3001registerApi\u3001estimateGroupRatio\uFF09\u3002apiKey \u53EA\u80FD\u7531\u8BBE\u7F6E\u9875\u300C\u767B\u5F55\u300D\u65F6\u670D\u52A1\u7AEF\u4E0B\u53D1\uFF0C\u8FD9\u91CC\u53EA\u80FD\u770B\u3001\u4E0D\u80FD\u6539\uFF1B\u4EC5\u670D\u52A1\u7AEF\u6A21\u5F0F\u6362 Key \u9700\u8981\u767B\u5F55\uFF1BMetaOntic AI \u4F7F\u7528 metaonticApiKey\uFF0C\u53EF\u624B\u52A8\u914D\u7F6E\uFF1B\u706B\u5C71\u76F4\u8FDE\u4F7F\u7528 volcengineApiKey\uFF0C\u53EF\u624B\u52A8\u914D\u7F6E\uFF0C\u4F46\u8BE5\u65B9\u5F0F\u5F53\u524D\u5728\u8BBE\u7F6E\u9875\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF0C\u4E0D\u8981\u4E3B\u52A8\u5E2E\u7528\u6237\u5207\u8FC7\u53BB\u3002\u6539\u52A8\u5199\u8FDB profile \u7684 cordis.patch.yml\uFF0C\u5BBF\u4E3B\u91CD\u8F7D\u540E\u751F\u6548\u3002\u7528\u6237\u8BF4\u300C\u628A\u4E2D\u8F6C\u7AD9\u5730\u5740/\u6A21\u578B/\u65F6\u957F\u6539\u6210 X\u300D\u65F6\u7528 action=set\uFF0C\u770B\u5F53\u524D\u503C\u7528 action=get\uFF1Bduration \u662F\u6BCF\u6BB5\u65B0\u589E\u79D2\u6570\u4E0A\u9650\uFF084 \u81F3\u6A21\u578B\u4E0A\u9650\uFF082.0 \u4E3A 15\u30012.5 \u4E3A 30\uFF09\uFF0C\u9ED8\u8BA4\u6309\u6A21\u578B\u4E0A\u9650\u3001\u6BB5\u6570\u6700\u5C11\uFF09\uFF0CsingleMaxSeconds \u4E3A\u517C\u5BB9\u65E7\u914D\u7F6E\u4FDD\u7559\uFF0C\u76F4\u51FA\u4E0A\u9650\u7531\u6A21\u578B\u6620\u5C04\u3002",
     parameters: {
       type: "object",
       properties: {
@@ -6642,7 +6302,7 @@ function configTool(config, settings) {
         connectionMode: {
           type: "string",
           enum: ["service", "metaontic", "volcengine"],
-          description: SERVICE_MODE_AVAILABLE ? "\u63A5\u5165\u65B9\u5F0F\uFF1AMetaOntic AI / \u706B\u5C71\u5F15\u64CE\u76F4\u8FDE / service \u670D\u52A1\u7AEF\uFF08\u90AE\u7BB1\u767B\u5F55\u9886 Key\uFF09" : "\u63A5\u5165\u65B9\u5F0F\uFF1AMetaOntic AI\uFF08metaontic\uFF09/ \u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\uFF08volcengine\uFF09\uFF1Bservice \u670D\u52A1\u7AEF\u65B9\u5F0F\u6682\u65F6\u4E0D\u53EF\u7528\uFF0C\u4E0D\u8981\u8BBE\u7F6E"
+          description: SERVICE_MODE_AVAILABLE ? VOLCENGINE_MODE_AVAILABLE ? "\u63A5\u5165\u65B9\u5F0F\uFF1AMetaOnticVideo \u670D\u52A1\u7AEF\uFF08\u90AE\u7BB1\u767B\u5F55\u9886 Key\uFF09/ MetaOntic AI / \u706B\u5C71\u5F15\u64CE\u76F4\u8FDE" : "\u63A5\u5165\u65B9\u5F0F\uFF1AMetaOnticVideo \u670D\u52A1\u7AEF\uFF08service\uFF0C\u90AE\u7BB1\u767B\u5F55\u9886 Key\uFF09/ MetaOntic AI\uFF08metaontic\uFF09\uFF1B\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\u5F53\u524D\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF0C\u4E0D\u8981\u4E3B\u52A8\u8BBE\u7F6E" : VOLCENGINE_MODE_AVAILABLE ? "\u63A5\u5165\u65B9\u5F0F\uFF1AMetaOntic AI\uFF08metaontic\uFF09/ \u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\uFF08volcengine\uFF09\uFF1Bservice \u670D\u52A1\u7AEF\u65B9\u5F0F\u6682\u65F6\u4E0D\u53EF\u7528\uFF0C\u4E0D\u8981\u8BBE\u7F6E" : "\u63A5\u5165\u65B9\u5F0F\uFF1AMetaOntic AI\uFF08metaontic\uFF09\uFF1Bservice \u670D\u52A1\u7AEF\u65B9\u5F0F\u4E0E\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\u5F53\u524D\u90FD\u6682\u4E0D\u63D0\u4F9B\uFF0C\u4E0D\u8981\u8BBE\u7F6E"
         },
         metaonticApiKey: { type: "string", description: "MetaOntic AI \u624B\u52A8 API Key\uFF0C\u65E0\u9700\u767B\u5F55" },
         volcengineApiKey: { type: "string", description: "\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\u6A21\u5F0F\u7684\u706B\u5C71 API Key" },
@@ -6798,10 +6458,10 @@ function buildPromptGuidance(config) {
     "\u672C\u6BB5\u662FMetaOnticVideo\u5F53\u524D\u751F\u6548\u7684\u64CD\u4F5C\u89C4\u5219\uFF0C\u70ED\u52A0\u8F7D\u540E\u73B0\u6709\u5BF9\u8BDD\u4ECE\u4E0B\u4E00\u8F6E\u6309\u672C\u6BB5\u6267\u884C\uFF1B\u6B64\u524D\u5BF9\u8BDD\u6216\u65E7\u7248\u63D2\u4EF6\u9884\u8BBE\u4E2D\u7684\u8FC7\u65F6\u4EA4\u4E92\u8BF4\u660E\u4EE5\u672C\u6BB5\u4E3A\u51C6\uFF0C\u4ECD\u9075\u5B88\u7528\u6237\u5F53\u524D\u660E\u786E\u8981\u6C42\u3002\u65E0\u9700\u4E3A\u4E86\u5E94\u7528\u8FD9\u4E9B\u89C4\u5219\u65B0\u5EFA\u5BF9\u8BDD\u3002\u4FDD\u7559\u65E2\u6709\u811A\u672C\u3001\u6587\u4EF6\u4E0E\u4EFB\u52A1ID\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u5DF2\u5B8C\u6210\u7684\u89C6\u9891\uFF1B\u5DF2\u6253\u5F00\u7684\u65E7\u786E\u8BA4\u7A97\u53E3\u4E0D\u4F1A\u81EA\u52A8\u6539\u5199\uFF0C\u7528\u6237\u8981\u6C42\u91CD\u5F00\u6216\u6539\u7A3F\u65F6\u5148\u91CD\u65B0\u5C55\u793A\u5F53\u524D\u7248\u6750\u6599\u5E76\u53D1\u8D77\u65B0\u95EE\u9898\uFF0C\u4E0D\u6CBF\u7528\u65E7\u95EE\u9898\u7684\u7B54\u590D\u3002",
     "\u63D0\u793A\u8BCD\u9075\u5FAA\u706B\u5C71\u8FDB\u9636\u539F\u5219\uFF1A\u5148\u5B9A\u4E49\u4E3B\u4F53\u76842\u20133\u4E2A\u7A33\u5B9A\u7279\u5F81\u5E76\u56FA\u5B9A\u6807\u7B7E\uFF0C\u518D\u5199\u6709\u627F\u63A5\u5173\u7CFB\u7684\u52A8\u4F5C\u3001\u573A\u666F\u5149\u7EBF\u3001\u8FD0\u955C\u548C\u97F3\u9891\uFF1B\u5C11\u5199\u91CD\u590D\u9650\u5236\u3002\u591A\u6BB5\u65F6\u5FC5\u987B\u51C6\u5907segmentPrompts\uFF0C\u6BCF\u6BB5\u4EC5\u542B\u65B0\u589E\u4E8B\u4EF6\u548C\u5BF9\u767D\u30022.0\u6309\u4E8B\u4EF6\u987A\u5E8F\u81EA\u7136\u8282\u594F\uFF0C2.5\u53EF\u7528\u8FDE\u7EED\u79D2\u7EA7\u533A\u95F4\uFF1B\u5B8C\u6574\u5267\u672C\u7559\u5728script.md\uFF0C\u4E0D\u76F4\u63A5\u53CD\u590D\u53D1\u7ED9\u6A21\u578B\u3002",
     "\xB7 \u5BF9\u767D\u53D1\u97F3\u6821\u5BF9\uFF1A\u811A\u672C\u5BA1\u6838\u524D\u8BFB\u53D6video-director\u7684references/pronunciation.md\uFF0C\u68C0\u67E5\u591A\u97F3\u5B57\u3001\u751F\u50FB\u5B57\u3001\u4E13\u540D\u3001\u6570\u5B57\u3001\u5355\u4F4D\u548C\u7F29\u5199\u3002\u4FDD\u7559\u811A\u672C\u53CA\u5B57\u5E55\u6B63\u786E\u539F\u6587\uFF0C\u53E6\u5217\u201C\u539F\u6587\u2192\u53D1\u97F3\u6587\u672C\u201D\u7528\u4E8E\u751F\u6210\uFF1B\u4EC5\u5BF9\u8BFB\u97F3\u660E\u786E\u7684\u6613\u9519\u8BCD\u7528\u5E38\u7528\u540C\u97F3\u5B57\uFF0C\u4E0D\u5168\u6587\u66FF\u6362\u3001\u4E0D\u7528\u62FC\u97F3\u5192\u5145\u53EF\u9760\u4FEE\u97F3\u3002\u4E13\u540D\u8BFB\u97F3\u4E0D\u660E\u5148\u6F84\u6E05\uFF0C\u6D89\u53CA\u539F\u610F\u6216\u53F0\u8BCD\u5185\u5BB9\u53D8\u5316\u987B\u5728\u811A\u672C\u5BA1\u6838\u4E2D\u786E\u8BA4\u3002\u53F0\u8BCD\u7528{\u53F0\u8BCD}\uFF0C\u97F3\u6548\u7528<\u97F3\u6548>\uFF0C\u97F3\u4E50\u7528(\u97F3\u4E50)\uFF0C\u660E\u786E\u8BF4\u8BDD\u8005\u3001\u8BED\u8A00\u548C\u5148\u540E\u987A\u5E8F\uFF0C\u907F\u514D\u65E0\u5FC5\u8981\u7684\u4E2D\u82F1\u6587\u6DF7\u8BFB\u3002\u6309\u5B9E\u9645\u53D1\u58F0\u65F6\u95F4\u7EA63\u20134\u5B57/\u79D2\u521D\u4F30\u5E76\u7559\u505C\u987F\u3001\u52A8\u4F5C\u548C\u6536\u5C3E\uFF1B\u8FC7\u5BC6\u5148\u8C03\u6574\u5206\u914D\uFF0C\u4FEE\u6539\u7528\u6237\u5173\u952E\u53F0\u8BCD\u987B\u7ECF\u5BA1\u6838\u3002segmentPrompts\u4EC5\u542B\u672C\u6BB5\u5B8C\u6574\u65B0\u53F0\u8BCD\u4E0E\u9700\u8981\u7684\u53D1\u97F3\u6587\u672C\uFF0C\u4E0D\u8DE8\u6BB5\u622A\u65AD\u4E00\u53E5\u3001\u4E0D\u5939\u5E26\u5DF2\u8BF4\u53F0\u8BCD\u6216\u628A\u6620\u5C04\u8BF4\u660E\u5F53\u5BF9\u767D\u3002\u751F\u6210\u540E\u987B\u5B9E\u9645\u8BD5\u542C\u624D\u80FD\u5224\u65AD\u5410\u5B57\uFF0C\u4E0D\u5F97\u4EC5\u51ED\u6210\u529F\u72B6\u6001\u58F0\u79F0\u51C6\u786E\uFF1B\u65E0\u6CD5\u8BD5\u542C\u5219\u660E\u786E\u5F85\u7528\u6237\u6838\u542C\u3002\u8BEF\u8BFB\u53EA\u4FEE\u5BF9\u5E94\u7247\u6BB5\uFF0C\u91CD\u65B0\u751F\u6210\u524D\u8BF4\u660E\u8BA1\u8D39\u5E76\u53D6\u5F97\u540C\u610F\uFF0C\u4E0D\u81EA\u52A8\u4ED8\u8D39\u91CD\u8BD5\u3002\u9010\u5B57\u51C6\u786E\u8981\u6C42\u53EF\u5EFA\u8BAE\u6821\u5BF9\u914D\u97F3\u540E\u671F\u66FF\u6362\uFF0C\u4F46\u5F53\u524D\u63D2\u4EF6\u672A\u5B9E\u73B0\u81EA\u52A8\u914D\u97F3\u6216\u53E3\u578B\u4FEE\u590D\uFF0C\u4E0D\u627F\u8BFA\u97F3\u9891\u53C2\u8003\u4FDD\u8BC1\u9010\u5B57\u6B63\u786E\u3002",
-    isMetaontic(config) ? "\u5F53\u524D\u4E3A MetaOntic AI\uFF1A\u4F7F\u7528 metaonticApiKey \u548C\u670D\u52A1\u7AEF\u6A21\u5F0F\u76F8\u540C\u7684\u4E2D\u8F6C\u5730\u5740\uFF0C\u65E0\u9700\u767B\u5F55\uFF1B\u811A\u672C\u5BA1\u6838\u524D\u8C03\u7528video_estimate\u63D0\u4F9B\u53CC\u65B9\u6848\u57FA\u7840\u4F30\u4EF7\uFF1B\u4E0D\u6267\u884C\u989D\u5EA6\u6216\u4F7F\u7528\u8BB0\u5F55\u67E5\u8BE2\uFF1B\u8FD9\u4E9B\u5185\u90E8\u89C4\u5219\u4E0D\u5199\u8FDB\u7528\u6237\u8D39\u7528\u8BF4\u660E\u3002\u5236\u4F5C\u524D\u5C55\u793A\u5F53\u524D\u811A\u672C\u7684\u53CC\u65B9\u6848\u57FA\u7840\u4F30\u4EF7\u5E76\u8BF4\u660E\u201C\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39\u201D\uFF0C\u518D\u8BE2\u95EE\u662F\u5426\u5F00\u59CB\uFF1B\u521B\u5EFA\u6210\u529F\u4E0D\u4EE3\u8868\u751F\u6210\u6210\u529F\uFF0C\u5FC5\u987B\u67E5\u8BE2\u81F3succeeded\u4E14\u6709\u89C6\u9891\u5730\u5740\u3002\u4E0B\u8FF0\u767B\u5F55\u9886 Key \u89C4\u5219\u4EC5\u9002\u7528\u4E8E\u670D\u52A1\u7AEF\u65B9\u5F0F\u3002" : isVolcengine(config) ? "\u5F53\u524D\u4E3A\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\uFF1A\u4F7F\u7528 volcengineApiKey\uFF0C\u65E0\u9700\u670D\u52A1\u7AEF\u767B\u5F55\uFF1B\u811A\u672C\u5BA1\u6838\u524D\u8C03\u7528video_estimate\u5C55\u793A\u53CC\u65B9\u6848\u57FA\u7840\u4F30\u4EF7\uFF0C\u63D2\u4EF6\u8DEF\u7EBF\u6309\u706B\u5C71\u76F4\u8FDE\u4EF7\u3001\u4E0D\u5957\u4E2D\u8F6C\u6298\u6263\uFF1B\u5185\u90E8\u4E0D\u67E5\u8BE2\u4F59\u989D\uFF0C\u4E0D\u628A\u8FD9\u4E9B\u5185\u90E8\u89C4\u5219\u5199\u8FDB\u7528\u6237\u8D39\u7528\u8BF4\u660E\u3002\u4EC5\u6309\u521B\u5EFA\u4EFB\u52A1\u4E0E\u67E5\u8BE2\u4EFB\u52A1\u63A5\u53E3\u7684\u5B9E\u9645\u7ED3\u679C\u62A5\u544A\u72B6\u6001\uFF1B\u521B\u5EFA\u6210\u529F\u4E0D\u4EE3\u8868\u89C6\u9891\u5DF2\u751F\u6210\uFF0C\u5FC5\u987B\u67E5\u8BE2\u81F3succeeded\u4E14\u6709\u89C6\u9891\u5730\u5740\u3002\u4E0B\u8FF0\u670D\u52A1\u7AEF\u9886 Key \u8981\u6C42\u4EC5\u9002\u7528\u4E8E\u670D\u52A1\u7AEF\u65B9\u5F0F\u3002" : "\u5F53\u524D\u4E3A MetaOnticVideo \u670D\u52A1\u7AEF\u65B9\u5F0F\uFF0C\u8BE5\u65B9\u5F0F\u6682\u65F6\u4E0D\u53EF\u7528\uFF1A\u4E0D\u8981\u6309\u5B83\u51C6\u5907\u3001\u4F30\u4EF7\u6216\u63D0\u4EA4\uFF0C\u4E5F\u4E0D\u8981\u7528\u5B83\u767B\u5F55\u9886 Key\uFF1B\u5148\u8BF7\u7528\u6237\u5728\u63D2\u4EF6\u8BBE\u7F6E\u9875\u628A\u63A5\u5165\u65B9\u5F0F\u6539\u4E3A MetaOntic AI \u6216\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\u5E76\u586B\u597D Key\uFF0C\u518D\u7EE7\u7EED\u811A\u672C\u5BA1\u6838\u4E0E\u5236\u4F5C\u3002\u914D\u7F6E\u91CC\u5386\u53F2\u7559\u5B58\u7684 Key\u3001\u989D\u5EA6\u4E0E\u8BBE\u5907\u51ED\u636E\u4E0D\u8981\u6E05\u9664\uFF0C\u7B49\u8BE5\u65B9\u5F0F\u6062\u590D\u540E\u4ECD\u53EF\u7EE7\u7EED\u4F7F\u7528\u3002",
+    isMetaontic(config) ? "\u5F53\u524D\u4E3A MetaOntic AI\uFF1A\u4F7F\u7528 metaonticApiKey \u548C\u670D\u52A1\u7AEF\u6A21\u5F0F\u76F8\u540C\u7684\u4E2D\u8F6C\u5730\u5740\uFF0C\u65E0\u9700\u767B\u5F55\uFF1B\u811A\u672C\u5BA1\u6838\u524D\u8C03\u7528video_estimate\u63D0\u4F9B\u53CC\u65B9\u6848\u57FA\u7840\u4F30\u4EF7\uFF1B\u4E0D\u6267\u884C\u989D\u5EA6\u6216\u4F7F\u7528\u8BB0\u5F55\u67E5\u8BE2\uFF1B\u8FD9\u4E9B\u5185\u90E8\u89C4\u5219\u4E0D\u5199\u8FDB\u7528\u6237\u8D39\u7528\u8BF4\u660E\u3002\u5236\u4F5C\u524D\u5C55\u793A\u5F53\u524D\u811A\u672C\u7684\u53CC\u65B9\u6848\u57FA\u7840\u4F30\u4EF7\u5E76\u8BF4\u660E\u201C\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39\u201D\uFF0C\u518D\u8BE2\u95EE\u662F\u5426\u5F00\u59CB\uFF1B\u521B\u5EFA\u6210\u529F\u4E0D\u4EE3\u8868\u751F\u6210\u6210\u529F\uFF0C\u5FC5\u987B\u67E5\u8BE2\u81F3succeeded\u4E14\u6709\u89C6\u9891\u5730\u5740\u3002\u4E0B\u8FF0\u767B\u5F55\u9886 Key \u89C4\u5219\u4EC5\u9002\u7528\u4E8E\u670D\u52A1\u7AEF\u65B9\u5F0F\u3002" : isVolcengine(config) ? "\u5F53\u524D\u4E3A\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\uFF1A\u4F7F\u7528 volcengineApiKey\uFF0C\u65E0\u9700\u670D\u52A1\u7AEF\u767B\u5F55\uFF1B\u811A\u672C\u5BA1\u6838\u524D\u8C03\u7528video_estimate\u5C55\u793A\u53CC\u65B9\u6848\u57FA\u7840\u4F30\u4EF7\uFF0C\u63D2\u4EF6\u8DEF\u7EBF\u6309\u706B\u5C71\u76F4\u8FDE\u4EF7\u3001\u4E0D\u5957\u4E2D\u8F6C\u6298\u6263\uFF1B\u5185\u90E8\u4E0D\u67E5\u8BE2\u4F59\u989D\uFF0C\u4E0D\u628A\u8FD9\u4E9B\u5185\u90E8\u89C4\u5219\u5199\u8FDB\u7528\u6237\u8D39\u7528\u8BF4\u660E\u3002\u4EC5\u6309\u521B\u5EFA\u4EFB\u52A1\u4E0E\u67E5\u8BE2\u4EFB\u52A1\u63A5\u53E3\u7684\u5B9E\u9645\u7ED3\u679C\u62A5\u544A\u72B6\u6001\uFF1B\u521B\u5EFA\u6210\u529F\u4E0D\u4EE3\u8868\u89C6\u9891\u5DF2\u751F\u6210\uFF0C\u5FC5\u987B\u67E5\u8BE2\u81F3succeeded\u4E14\u6709\u89C6\u9891\u5730\u5740\u3002\u4E0B\u8FF0\u670D\u52A1\u7AEF\u9886 Key \u8981\u6C42\u4EC5\u9002\u7528\u4E8E\u670D\u52A1\u7AEF\u65B9\u5F0F\u3002" : "\u5F53\u524D\u4E3A MetaOnticVideo \u670D\u52A1\u7AEF\u65B9\u5F0F\uFF1A\u4F7F\u7528\u8BBE\u7F6E\u9875\u300C\u767B\u5F55\u300D\u65F6\u670D\u52A1\u7AEF\u4E0B\u53D1\u7684 Key\uFF0C\u5185\u90E8\u4E0D\u67E5\u8BE2\u4F7F\u7528\u8BB0\u5F55\uFF08\u8BE5\u5361\u7247\u6682\u65F6\u9690\u85CF\uFF09\uFF1B\u811A\u672C\u5BA1\u6838\u524D\u8C03\u7528video_estimate\u63D0\u4F9B\u53CC\u65B9\u6848\u57FA\u7840\u4F30\u4EF7\uFF0C\u5236\u4F5C\u524D\u5C55\u793A\u53CC\u65B9\u6848\u57FA\u7840\u4F30\u4EF7\u5E76\u8BF4\u660E\u201C\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39\u201D\uFF0C\u518D\u8BE2\u95EE\u662F\u5426\u5F00\u59CB\uFF1B\u521B\u5EFA\u6210\u529F\u4E0D\u4EE3\u8868\u751F\u6210\u6210\u529F\uFF0C\u5FC5\u987B\u67E5\u8BE2\u81F3succeeded\u4E14\u6709\u89C6\u9891\u5730\u5740\u3002\u4E0B\u8FF0\u767B\u5F55\u9886 Key \u89C4\u5219\u9002\u7528\u4E8E\u672C\u65B9\u5F0F\u3002",
     "MetaOnticVideo\uFF08Seedance \u89C6\u9891\u751F\u6210\u63D2\u4EF6\uFF09\uFF1A\u9700\u8981\u751F\u6210\u89C6\u9891\u3001\u7ED9\u89C6\u9891\u52A0\u957F\u65F6\u4F18\u5148\u7528\u5B83\uFF1B\u7528\u6237\u53EA\u8981\u8BF4\u60F3\u8981\u591A\u957F\uFF08duration\uFF09\uFF0C\u8D85\u8FC7\u5355\u6BB5\u4E0A\u9650\u7684\u90E8\u5206\u63D2\u4EF6\u81EA\u5DF1\u5206\u6BB5\u7EED\u62CD\u518D\u5408\u5E76\uFF0C\u4E0D\u7528\u7528\u6237\u81EA\u5DF1\u62C6\u4EFB\u52A1\u3002",
     "\xB7 \u5148\u8BC4\u4F30\u7528\u6237\u65B9\u6848\u5B8C\u6574\u5EA6\uFF1A\u4E3B\u9898/\u76EE\u6807\u3001\u4E3B\u4F53\u3001\u4E3B\u8981\u5185\u5BB9\u4E0E\u53D1\u5C55\u3001\u7ED3\u5C3E\u6216\u5C55\u793A\u7ED3\u679C\u53CA\u660E\u786E\u7EA6\u675F\u662F\u5426\u8DB3\u4EE5\u5199\u811A\u672C\uFF1B\u98CE\u666F\u4E0E\u5C55\u793A\u4E0D\u5F3A\u6C42\u51B2\u7A81\uFF0C\u7F3A\u65F6\u957F\u6216\u753B\u5E45\u53EF\u7528\u9ED8\u8BA4\u503C\uFF0C\u4E0D\u56E0\u6B64\u5224\u4E3A\u4E0D\u5B8C\u5584\u3002\u4E0D\u5B8C\u5584\u4E14\u5C1A\u672A\u6388\u6743\u65F6\uFF0C\u7B80\u77ED\u6307\u51FA\u5173\u952E\u7F3A\u53E3\uFF0C\u5148\u95EE\u201C\u8981\u4E0D\u8981\u6211\u5E2E\u4F60\u5B8C\u5584\u65B9\u6848\uFF1F\u201D\uFF0C\u63D0\u4F9B\u201C\u5E2E\u6211\u5B8C\u5584 / \u4FDD\u7559\u539F\u65B9\u6848\u201D\uFF0C\u7B49\u5F85\u660E\u786E\u7B54\u590D\uFF0C\u4E0D\u64C5\u81EA\u6269\u5199\u5267\u60C5\u3002\u5DF2\u6709\u201C\u4F60\u53D1\u6325\u201D\u201C\u5E2E\u6211\u5B8C\u5584\u201D\u7B49\u6388\u6743\u5219\u4E0D\u91CD\u590D\u8BE2\u95EE\u662F\u5426\u5B8C\u5584\uFF0C\u4F46\u5B8C\u5584\u524D\u5FC5\u987B\u786E\u8BA4\u521B\u610F\u65B9\u5411\uFF1A\u65B9\u5411\u4E0D\u660E\u786E\u65F6\u5148\u95EE\u4E00\u4E2A\u7B80\u77ED\u95EE\u9898\uFF0C\u63D0\u4F9B2\u20133\u4E2A\u7B80\u6D01\u3001\u4E92\u65A5\u7684\u5355\u9009\u65B9\u5411\u5E76\u5141\u8BB8\u81EA\u7531\u8F93\u5165\uFF0C\u7B49\u5F85\u7528\u6237\u7B54\u590D\u540E\u518D\u5B8C\u5584\uFF0C\u4E0D\u5F97\u81EA\u884C\u9009\u65B9\u5411\u6216\u968F\u610F\u8865\u5199\u5267\u60C5\u3002\u7528\u6237\u5DF2\u660E\u786E\u521B\u610F\u65B9\u5411\u65F6\u6309\u8BE5\u65B9\u5411\u5B8C\u5584\uFF0C\u4E0D\u91CD\u590D\u8BE2\u95EE\uFF0C\u4E0D\u64C5\u81EA\u6269\u5927\u8303\u56F4\u3002\u5B8C\u6574\u65B9\u6848\u4FDD\u7559\u4E3B\u9898\u3001\u89D2\u8272\u5173\u7CFB\u3001\u60C5\u8282\u987A\u5E8F\u3001\u7ED3\u5C3E\u3001\u5173\u952E\u5BF9\u767D\u3001\u98CE\u683C\u548C\u9650\u5236\uFF0C\u53EA\u6DA6\u8272\u63AA\u8F9E\u3001\u6574\u7406\u683C\u5F0F\u548C\u8F6C\u6210\u5206\u955C\uFF0C\u4E0D\u64C5\u81EA\u589E\u5220\u89D2\u8272/\u4E8B\u4EF6/\u53CD\u8F6C\u3002\u5185\u5BB9\u53D6\u820D\u3001\u65F6\u957F\u538B\u7F29\u6216\u5267\u60C5\u7ED3\u5C3E\u8C03\u6574\u987B\u5148\u5F81\u5F97\u540C\u610F\u3002\u7528\u6237\u9009\u62E9\u4FDD\u7559\u65F6\u5FE0\u4E8E\u539F\u610F\u6574\u7406\uFF0C\u4EC5\u6F84\u6E05\u65E0\u6CD5\u6267\u884C\u7684\u5FC5\u8981\u4FE1\u606F\u3002\u662F\u5426\u5B8C\u5584\u4E0D\u4EE3\u66FF\u811A\u672C\u5BA1\u6838\u6216\u5236\u4F5C\u6388\u6743\uFF1B\u5B8C\u6574\u65B9\u6848\u4E0D\u589E\u52A0\u5B8C\u5584\u8BE2\u95EE\u3002\u9ED8\u8BA415\u79D2\u30019:16\uFF0C\u89C6\u9891\u6E05\u6670\u5EA6\u4EC5\u652F\u6301480P\u3001720P\u3002\u6574\u7406\u811A\u672C\u65F6\u5FC5\u987B\u8BA9\u7528\u6237\u660E\u786E\u9009\u62E9\u6216\u786E\u8BA4\u6E05\u6670\u5EA6\uFF1B\u672A\u6307\u5B9A\u65F6\u901A\u8FC7\u63D0\u95EE\u5DE5\u5177\u63D0\u4F9B\u201C480P / 720P\u201D\u4E24\u4E2A\u5355\u9009\u9879\uFF0C\u4E0D\u5F97\u4EE5\u9ED8\u8BA4\u503C\u4EE3\u66FF\u7528\u6237\u786E\u8BA4\uFF0C\u672A\u7B54\u3001\u53D6\u6D88\u6216pending\u4E0D\u5F97\u81EA\u884C\u4F7F\u7528\u9ED8\u8BA4\u503C\u8FDB\u5165\u5236\u4F5C\u3002\u7528\u6237\u5728\u672C\u6B21\u9700\u6C42\u5DF2\u660E\u786E\u6307\u5B9A\u65F6\u76F4\u63A5\u8BB0\u5F55\uFF0C\u4E0D\u91CD\u590D\u8BE2\u95EE\u3002\u628A\u786E\u8BA4\u503C\u5199\u5165script.md\u7684\u201C\u89C6\u9891\u6E05\u6670\u5EA6\u201D\uFF0C\u811A\u672C\u89C4\u683C\u548C\u5236\u4F5C\u786E\u8BA4\u90FD\u5C55\u793A\u8BE5\u503C\uFF0C\u8C03\u7528video_generate/video_extend\u65F6\u663E\u5F0F\u4F20resolution=480p\u6216720p\uFF1B\u6539\u7A3F\u672A\u6D89\u53CA\u6E05\u6670\u5EA6\u65F6\u4FDD\u7559\u5DF2\u786E\u8BA4\u9009\u62E9\uFF0C\u6539\u53D8\u6E05\u6670\u5EA6\u987B\u91CD\u65B0\u786E\u8BA4\uFF0C\u6062\u590D\u5DF2\u63D0\u4EA4\u4EFB\u52A1\u6CBF\u7528\u539F\u503C\uFF1B\u6309\u539F\u65B9\u6848\u786E\u5B9A\u98CE\u683C\u4E0E\u58F0\u97F3\uFF0C\u65E0\u5FC5\u8981\u4E0D\u52A0\u5BF9\u767D\uFF0C\u5B57\u5E55\u672A\u6307\u5B9A\u4E0D\u52A0\u3002\u6574\u7406\u540E\u5148\u5B8C\u6574\u5C55\u793A\u6545\u4E8B\u3001\u89C4\u683C/\u98CE\u683C/\u58F0\u97F3\u3001\u4EBA\u7269\u6216\u4E3B\u4F53\u548C\u65F6\u95F4/\u753B\u9762/\u5B8C\u6574\u5BF9\u767D\u8868\uFF0C\u518D\u5BA1\u6838\uFF1B\u6BCF\u6B21\u6539\u7A3F\u4FDD\u7559\u6EE1\u610F\u90E8\u5206\uFF0C\u4E0D\u8BA9\u7528\u6237\u6539\u6A21\u578B\u63D0\u793A\u8BCD\u3002\u63A5\u5165\u65B9\u5F0F\u4EC5\u7528\u4E8E\u8FDE\u63A5\u4E0E\u8D39\u7528\u5224\u65AD\uFF0C\u4E0D\u5F53\u4F5C\u521B\u4F5C\u80FD\u529B\u5199\u8FDB\u5BA3\u4F20\u89C6\u9891\uFF0C\u9664\u975E\u7528\u6237\u660E\u786E\u8981\u63A5\u5165\u6559\u7A0B\u3002",
-    "\xB7 **\u751F\u6210\u4E00\u6761\u65B0\u89C6\u9891\u5FC5\u987B\u5148\u8FC7\u4E24\u9053\u786E\u8BA4\uFF0C\u7F3A\u4E00\u4E0D\u53EF**\uFF1A\u2460 \u5148\u628A**\u89C6\u9891\u811A\u672C**\u5199\u51FA\u6765\u4EA4\u7ED9\u7528\u6237**\u5BA1\u6838**\uFF08\u811A\u672C\u8981\u542B\uFF1A\u753B\u9762\u98CE\u683C\u3001\u4EBA\u7269\u5F62\u8C61\u3001\u5206\u955C\u2014\u2014\u9010\u955C\u7684\u955C\u5934 / \u65F6\u95F4 / \u753B\u9762\u3001\u5BF9\u767D\u2014\u2014\u6709\u5BF9\u8BDD\u5C31\u9010\u53E5\u5199\u6E05\u8C01\u5728\u51E0\u79D2\u8BF4\u4EC0\u4E48\uFF09\uFF1B\u2461 \u811A\u672C\u5BA1\u6838\u901A\u8FC7\u540E\uFF0C**\u518D\u5355\u72EC\u95EE\u4E00\u6B21\u8981\u4E0D\u8981\u5F00\u59CB\u505A**\uFF08\u6240\u6709\u63A5\u5165\u65B9\u5F0F\u5747\u590D\u8FF0\u5F53\u524D\u811A\u672C\u7684\u53CC\u65B9\u6848\u57FA\u7840\u4F30\u4EF7\u5E76\u8BF4\u660E\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39\uFF1B\u4EC5\u670D\u52A1\u7AEF\u6A21\u5F0F\u6838\u5BF9\u989D\u5EA6\uFF09\uFF0C\u7528\u6237\u70B9\u5934\u4E86\u624D\u8C03\u7528 video_generate\u3002\u811A\u672C\u4E00\u6539\uFF0C\u4E24\u9053\u786E\u8BA4\u5168\u90E8\u4F5C\u5E9F\uFF0C\u8981\u91CD\u65B0\u8D70\u3002\u7528\u6237\u8BF4\u300C\u76F4\u63A5\u751F\u6210\u300D\u4E5F\u8981\u5148\u8D70\u8FD9\u4E24\u6B65\uFF0C\u4E0D\u8981\u8DF3\u8FC7\u3002\u7ED9\u5DF2\u6709\u89C6\u9891\u63A5\u957F\uFF08video_extend\uFF09\u4E0D\u9700\u8981\u811A\u672C\uFF0C\u4F46\u540C\u6837\u8981\u5148\u786E\u8BA4\u518D\u8C03\u7528\u3002",
+    "\xB7 **\u751F\u6210\u4E00\u6761\u65B0\u89C6\u9891\u5FC5\u987B\u5148\u8FC7\u4E24\u9053\u786E\u8BA4\uFF0C\u7F3A\u4E00\u4E0D\u53EF**\uFF1A\u2460 \u5148\u628A**\u89C6\u9891\u811A\u672C**\u5199\u51FA\u6765\u4EA4\u7ED9\u7528\u6237**\u5BA1\u6838**\uFF08\u811A\u672C\u8981\u542B\uFF1A\u753B\u9762\u98CE\u683C\u3001\u4EBA\u7269\u5F62\u8C61\u3001\u5206\u955C\u2014\u2014\u9010\u955C\u7684\u955C\u5934 / \u65F6\u95F4 / \u753B\u9762\u3001\u5BF9\u767D\u2014\u2014\u6709\u5BF9\u8BDD\u5C31\u9010\u53E5\u5199\u6E05\u8C01\u5728\u51E0\u79D2\u8BF4\u4EC0\u4E48\uFF09\uFF1B\u2461 \u811A\u672C\u5BA1\u6838\u901A\u8FC7\u540E\uFF0C**\u518D\u5355\u72EC\u95EE\u4E00\u6B21\u8981\u4E0D\u8981\u5F00\u59CB\u505A**\uFF08\u6240\u6709\u63A5\u5165\u65B9\u5F0F\u5747\u590D\u8FF0\u5F53\u524D\u811A\u672C\u7684\u53CC\u65B9\u6848\u57FA\u7840\u4F30\u4EF7\u5E76\u8BF4\u660E\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39\uFF1B\u4EC5\u81EA\u5E26 Key \u7684\u63A5\u5165\u65B9\u5F0F\u4F1A\u663E\u793A\u672C\u673A Key \u4F59\u989D\uFF0C\u670D\u52A1\u7AEF\u65B9\u5F0F\u4E0D\u8BFB\u4E5F\u4E0D\u62A5\u4F59\u989D\uFF09\uFF0C\u7528\u6237\u70B9\u5934\u4E86\u624D\u8C03\u7528 video_generate\u3002\u811A\u672C\u4E00\u6539\uFF0C\u4E24\u9053\u786E\u8BA4\u5168\u90E8\u4F5C\u5E9F\uFF0C\u8981\u91CD\u65B0\u8D70\u3002\u7528\u6237\u8BF4\u300C\u76F4\u63A5\u751F\u6210\u300D\u4E5F\u8981\u5148\u8D70\u8FD9\u4E24\u6B65\uFF0C\u4E0D\u8981\u8DF3\u8FC7\u3002\u7ED9\u5DF2\u6709\u89C6\u9891\u63A5\u957F\uFF08video_extend\uFF09\u4E0D\u9700\u8981\u811A\u672C\uFF0C\u4F46\u540C\u6837\u8981\u5148\u786E\u8BA4\u518D\u8C03\u7528\u3002",
     "\xB7 \u4EC5A/B\u63A5\u5165\uFF1Avideo_generate\u3001video_extend\u53CAvideo_status\u5B8C\u6210\u540E\u82E5\u8FD4\u56DEactualCost\uFF0C\u4EA4\u4ED8\u89C6\u9891\u65F6\u4E00\u5E76\u5C55\u793A\u4E2D\u8F6C\u7AD9\u771F\u5B9E\u6D88\u8017\uFF08\u9010\u4EFB\u52A1\u548C\u5408\u8BA1\uFF09\uFF1Bpaused\u53EA\u79F0\u5DF2\u751F\u6210\u90E8\u5206\uFF0Cpartial\u53EA\u79F0\u5DF2\u7ED3\u7B97\u5C0F\u8BA1\uFF0Cpending\u8BF4\u660E\u5F85\u7ED3\u7B97/\u5F85\u67E5\u8BE2\u3002\u5B9E\u9645\u91D1\u989D\u53D6\u4E2D\u8F6C\u6700\u7EC8\u7ED3\u7B97\u800C\u975E\u4F30\u4EF7\u3001\u9884\u6263\u6216\u4F59\u989D\u5DEE\uFF1B\u6CA1\u6709\u91D1\u989D\u4E0D\u8981\u62A50\u3002\u53EF\u7528\u539FtaskId\u8C03\u7528video_status\u8865\u67E5\u8D39\u7528\uFF0C\u4E0D\u56E0\u8D39\u7528\u7F3A\u5931\u91CD\u65B0\u751F\u6210\u3001\u91CD\u8BD5\u4ED8\u8D39\u4EFB\u52A1\u6216\u5EF6\u8FDF\u4EA4\u4ED8\u3002\u53EA\u7EDF\u8BA1\u89C6\u9891\u8D39\u7528\uFF0C\u56FE\u7247\u4E0E\u989D\u5916\u91CD\u505A\u53E6\u8BA1\uFF1BC\u706B\u5C71\u76F4\u8FDE\u4E0D\u63D0\u4F9B\u6B64\u4E2D\u8F6C\u8D26\u5355\u67E5\u8BE2\u3002",
     "\xB7 \u6BCF\u6B21\u65B0\u811A\u672C\u53CA\u6539\u7A3F\u5BA1\u6838\u524D\uFF0C\u65E0\u8BBA\u5355\u6BB5\u8FD8\u662F\u591A\u6BB5\uFF0C\u90FD\u5148\u8BFB\u53D6video-director\u7684references/segment-storyboard.md\u5E76\u5B9E\u9645\u5C55\u793A\u5F53\u524D\u7248\u955C\u5934\u53C2\u8003\u793A\u610F\u56FE\uFF1B\u4E00\u955C\u5230\u5E95\u4E5F\u5C55\u793A\u5173\u952E\u6784\u56FE\u4E0E\u52A8\u4F5C\u3002\u9700\u8981\u62C6\u5206\u751F\u6210\u65F6\u53E6\u5C55\u793A\u5206\u6BB5\u8868\uFF08\u6BB5\u53F7\u3001\u5168\u7247\u65F6\u95F4\u3001\u751F\u6210\u65F6\u957F\u3001\u751F\u6210/\u7EED\u62CD\u3001\u4E3B\u8981\u753B\u9762\u4E0E\u65B0\u5BF9\u767D\u3001\u8D77\u6B62\u72B6\u6001\u53CA\u4EA4\u63A5\uFF09\u3002\u6309\u5F53\u524D\u6A21\u578B\u548C\u5B9E\u9645\u5206\u6BB5\u89C4\u5219\u6838\u5BF9\uFF0C\u4E0D\u8C03\u7528\u751F\u6210\u5DE5\u5177\u8BD5\u7B97\uFF0C\u4E0D\u6309\u5206\u955C\u6570\u589E\u52A0\u4ED8\u8D39\u8C03\u7528\u3002\u7528\u672C\u5730SVG/PNG\u753B\u672C\u7248\u6784\u56FE\u4E0E\u52A8\u4F5C\u793A\u610F\u56FE\uFF0CHTML\u53EF\u4F5C\u9644\u52A0\u9884\u89C8\uFF1B\u5728\u6B63\u6587\u5185\u5D4C\u5F53\u524D\u7248\u56FE\u7247\u5E76\u7ED9\u6253\u5F00\u539F\u56FE\u94FE\u63A5\uFF08\u4E0D\u8C03\u7528 present\uFF09\uFF0C\u660E\u786E\u6807\u6CE8\u201C\u793A\u610F\uFF0C\u975E\u5B9E\u9645\u751F\u6210\u753B\u9762\u201D\uFF0C\u5148\u53D1\u56FE\u7247\u6B63\u6587\u518D\u5F39\u811A\u672C\u5BA1\u6838\u7A97\u3002\u6539\u7A3F\u540C\u6B65\u66F4\u65B0\u56FE\u8868\uFF0C\u4E0D\u589E\u52A0\u7B2C\u4E09\u9053\u786E\u8BA4\uFF1B\u793A\u610F\u56FE\u4E0D\u80FD\u4EE3\u66FF\u771F\u5B9E\u9010\u6BB5\u9884\u89C8\u3002\u9ED8\u8BA4\u4E0D\u8C03\u7528\u4ED8\u8D39\u51FA\u56FE\u6A21\u578B\uFF0C\u89D2\u8272\u53C2\u8003\u56FE\u53EF\u5728\u53D6\u5F97\u540C\u610F\u540E\u7528video_prepare_image\u7684create_character\u751F\u6210\uFF0C\u56FE\u7247\u5355\u72EC\u8BA1\u8D39\uFF1B\u5206\u955C\u793A\u610F\u56FE\u4ECD\u4F7F\u7528\u672C\u5730\u7ED8\u5236\uFF0C\u4E0D\u80FD\u6DF7\u4E3A\u540C\u4E00\u6D41\u7A0B\u3002",
     "\xB7 \u4E0D\u8BBA\u63A5\u5165\u65B9\u5F0F\u662FMetaOnticVideo\u3001MetaOntic AI\u8FD8\u662F\u706B\u5C71\u76F4\u8FDE\uFF0C\u5747\u5FC5\u987B\u9884\u4F30\u8D39\u7528\uFF0C\u4E0D\u5F97\u8DF3\u8FC7\u3002\u6BCF\u6B21\u811A\u672C\u5BA1\u6838\u524D\u5148\u8C03\u7528\u53EA\u8BFBvideo_estimate\uFF08\u76EE\u6807\u603B\u65F6\u957F\u3001\u7528\u6237\u5DF2\u786E\u8BA4resolution\u3001\u753B\u5E45\u548C\u771F\u5B9EsegmentSeconds\uFF09\uFF0C\u5C06\u8FD4\u56DE\u7684\u706B\u5C71\u5B98\u65B9\u65B9\u6848\u4E0EMetaOnticVideo\u63D2\u4EF6\u65B9\u6848\u4E24\u9879\u4EBA\u6C11\u5E01\u57FA\u7840\u4F30\u4EF7\u3001\u5404\u81EA\u6A21\u578B/\u5206\u6BB5/\u500D\u7387/\u65E5\u671F\u5199\u5165script.md\u6700\u540E\u7684\u201C\u8D39\u7528\u9884\u4F30\u201D\u4E00\u8282\uFF0C\u653E\u5728\u5B8C\u6574\u5267\u60C5\u3001\u5206\u955C\u3001\u5BF9\u767D\u3001\u7ED3\u5C3E\u53CA\u5206\u6BB5\u65B9\u6848\u4E4B\u540E\uFF1B\u6B63\u6587\u5C55\u793A\u811A\u672C\u65F6\u4E5F\u6309\u76F8\u540C\u987A\u5E8F\u5728\u672B\u5C3E\u5B8C\u6574\u5C55\u793A\u8FD9\u4E24\u9879\u91D1\u989D\u4E0E\u8BA1\u8D39\u524D\u63D0\uFF0C\u518D\u5F39\u5BA1\u6838\u7A97\u53E3\u3002\u4E0D\u5F97\u53EA\u5199\u5728\u5DE5\u5177\u7ED3\u679C\u3001\u6587\u4EF6\u5916\u7684\u8865\u5145\u6D88\u606F\u6216\u5236\u4F5C\u786E\u8BA4\u91CC\u3002\u706B\u5C71\u5B98\u65B9\u53C2\u7167\u4E00\u5F8B\u91C7\u7528 Seedance 2.5\uFF0C\u4E00\u6BB5\u5C31\u662F 30 \u79D2\uFF1A\u4E0D\u8DB3 30 \u79D2\u7684\u5C3E\u6BB5\u4E5F\u6309 30 \u79D2\u8BA1\uFF0C\u4E0D\u6309\u5269\u4F59\u79D2\u6570\u6298\u534A\uFF1B\u8D85\u8FC7 30 \u79D2\u4E5F\u5FC5\u987B\u5982\u5B9E\u5217\u4E3A\u591A\u6B21\u751F\u6210/\u7EED\u62CD\uFF0C\u4E0D\u79F0\u4E00\u6B21\u76F4\u51FA\uFF1B\u63D2\u4EF6\u6309\u5F53\u524D\u5B9E\u9645\u6A21\u578B\u4E0E\u5206\u6BB5\u65B9\u6848\uFF0C\u7EED\u62CD\u5305\u542B\u4E0A\u4E00\u6BB5\u5B8C\u6574\u89C6\u9891\u8F93\u5165\u3002\u624B\u586BKey\u672A\u6838\u5B9E\u5206\u7EC4\u4E0D\u5F97\u5047\u8BBE0.8\u6298\u6263\uFF1B\u4E0D\u628A\u53C2\u8003\u56FE\u7247\u5F53\u53C2\u8003\u89C6\u9891\u8BA1\u4EF7\u3002\u5FC5\u987B\u6807\u660E\u6700\u4F4E\u7528\u91CF\u8865\u8DB3\u672A\u8BA1\u5165\u3001\u56FE\u7247\u8F6C\u6362/\u91CD\u505A/\u72EC\u7ACB\u914D\u97F3\u53E6\u8BA1\u3001\u5B9E\u9645\u4EE5\u8D26\u5355\u4E3A\u51C6\u53CA\u6A21\u578B\u6548\u679C\u4E0D\u540C\u3002\u53C2\u6570\u6539\u53D8\u91CD\u7B97\uFF0C\u8BD5\u7B97\u4E0D\u8C03\u7528\u751F\u6210\u5DE5\u5177\u3001\u4E0D\u8981\u6C42\u767B\u5F55\u6216\u989D\u5916\u5BA1\u6279\u3001\u4E0D\u66FF\u4EE3\u4E24\u9053\u786E\u8BA4\uFF1B\u5DE5\u5177\u62D2\u7EDD\u6216\u7F3A\u5C11\u53EF\u9760\u4EF7\u76EE\u65F6\u8BF4\u660E\u65E0\u6CD5\u53EF\u9760\u4F30\u7B97\u5E76\u6838\u5BF9\u4F9D\u636E\uFF0C\u7981\u6B62\u731C\u4EF7\u6216\u663E\u793A0\u5143\u3002\u5F53\u524D\u6BCF\u6B21\u751F\u6210\u5BA1\u6279\u53EF\u80FD\u53EA\u4F30\u672C\u6B21\u4E00\u6BB5\uFF0C\u4E0D\u80FD\u5192\u5145\u5168\u7247\u9884\u7B97\u3002",
@@ -6813,12 +6473,12 @@ function buildPromptGuidance(config) {
     "\xB7 \u811A\u672C\u5BA1\u6838\u4E0E\u5236\u4F5C\u786E\u8BA4\u5728\u63D0\u95EE\u5DE5\u5177\u53EF\u7528\u65F6\u5FC5\u987B\u5B9E\u9645\u8C03\u7528 ask_user_question\uFF08\u6309\u4F1A\u8BDD\u5B9E\u9645\u540D\u79F0\uFF09\u5F39\u51FA\u4EA4\u4E92\u7A97\u53E3\uFF0C\u6B63\u6587\u95EE\u53E5\u4E0D\u80FD\u4EE3\u66FF\u3002\u9996\u6B21\u53CA\u6BCF\u6B21\u6539\u7A3F\u90FD\u8981\uFF1A\u9000\u56DE\u8349\u7A3F\u5E76\u6E05\u7A7A\u65E7\u5BA1\u6838/\u5236\u4F5C\u540C\u610F \u2192 \u4FEE\u6539\u5E76\u5C55\u793A\u4FEE\u6539\u70B9\u4E0E\u5B8C\u6574\u5F53\u524D\u7248\u811A\u672C \u2192 \u540C\u4E00\u8F6E\u91CD\u65B0\u8C03\u7528\u63D0\u95EE\u5DE5\u5177\uFF0C\u521B\u5EFA\u201C\u7B2CN\u7248\u811A\u672C\u5BA1\u6838\u201D\u65B0\u95EE\u9898\uFF08\u5982script_review_v2\uFF09\uFF0C\u9009\u9879\u201C\u8FD9\u7248\u811A\u672C\u53EF\u4EE5\uFF0C\u8FDB\u5165\u4E0B\u4E00\u6B65 / \u5148\u6539\u4E00\u4E0B\uFF0C\u6211\u518D\u770B\u770B\u201D\u3002\u4E0D\u590D\u7528\u65E7\u7B54\u6848\uFF0C\u4E0D\u56E0\u6539\u52A8\u5C0F\u3001\u5DF2\u5F39\u8FC7\u4E00\u6B21\u6216\u7528\u6237\u5728\u804A\u5929\u63D0\u4FEE\u6539\u610F\u89C1\u800C\u7701\u7565\u7A97\u53E3\u3002\u5F53\u524D\u7248\u660E\u786E\u901A\u8FC7\u540E\u624D\u5355\u72EC\u5F39\u8D39\u7528\u4E0E\u5236\u4F5C\u786E\u8BA4\uFF1B\u4FEE\u6539\u610F\u89C1\u3001\u65E7\u7248\u901A\u8FC7\u3001\u672A\u7B54\u3001\u8DF3\u8FC7\u3001\u53D6\u6D88\u3001\u8D85\u65F6\u3001pending\u90FD\u4E0D\u662F\u901A\u8FC7\u3002\u5DE5\u5177\u652F\u6301timeout\u65F6\u7528-1\u7B49\u5F85\u660E\u786E\u56DE\u7B54\u3002\u53EA\u6709\u63D0\u95EE\u5DE5\u5177\u786E\u5B9E\u4E0D\u5B58\u5728\u6216\u660E\u786E\u62A5\u9519\u4E0D\u53EF\u7528\u624D\u56DE\u9000\u6587\u5B57\u5BA1\u6838\uFF0C\u7ED3\u675F\u672C\u8F6E\u7B49\u56DE\u590D\u3002",
     `\xB7 \u65B0\u89C6\u9891\u7528 video_generate\uFF0Cduration \u4F20\u76EE\u6807\u603B\u79D2\u6570\u3002**\u786C\u89C4\u5219\uFF1A\u603B\u65F6\u957F \u2264 ${singleMax} \u79D2\uFF08\u5355\u6BB5\u4E0A\u9650\uFF09\u7684\u6574\u6761\u89C6\u9891\u5FC5\u987B\u4E00\u6B21\u76F4\u51FA\uFF0C\u7981\u6B62\u6309\u53D9\u4E8B\u955C\u5934\u62C6\u6210\u591A\u6B21 video_generate \u518D\u62FC\u63A5**\u2014\u2014\u4F8B\u5982\u300C15 \u79D2\u300D\u5C31\u662F\u4E00\u6B21 15 \u79D2\uFF0C\u4E0D\u8BB8\u62C6\u6210 8+7\uFF1B\u6309\u6545\u4E8B\u9009\u62E9\u4E00\u955C\u5230\u5E95\u6216\u5C11\u91CF\u6709\u52A8\u673A\u7684\u5207\u955C\uFF0C\u955C\u5934\u65B9\u6848\u5148\u5199\u8FDB\u5F85\u5BA1\u6838\u811A\u672C\uFF0C\u5DF2\u5BA1\u6838\u7684\u5207\u955C\u5728\u540C\u4E00\u6B21\u751F\u6210\u63D0\u793A\u8BCD\u4E2D\u5B89\u6392\uFF1B\u7528\u6237\u6307\u5B9A\u7684\u955C\u5934\u5F62\u5F0F\u4F18\u5148\u3002\u8D85\u8FC7\u4E0A\u9650\u65F6\uFF08\u5982 20 \u79D2\uFF09\u4F1A\u81EA\u52A8\u62C6\u6210\u9996\u6BB5 + \u82E5\u5E72\u7EED\u62CD\u6BB5\u518D\u5408\u5E76\u2014\u2014\u90A3\u662F\u540C\u4E00\u6761\u89C6\u9891\u5F80\u4E0B\u7EED\u62CD\uFF0C\u4E0D\u662F\u591A\u955C\u62FC\u63A5\u3002\u6240\u4EE5\u300C20 \u79D2\u89C6\u9891\u300D\u76F4\u63A5\u4F20 duration=20\uFF0C\u4E0D\u7528\u62C6\u6210\u591A\u4E2A\u4EFB\u52A1\uFF0C\u4E5F\u4E0D\u7528\u8DDF\u7528\u6237\u89E3\u91CA\u300C\u6A21\u578B\u4E00\u6B21\u53EA\u80FD\u51FA 15 \u79D2\u300D\uFF1B**\u8D85\u8FC7\u5355\u6BB5\u4E0A\u9650\u7684\u6210\u7247\u662F\u300C\u5FAA\u73AF\u8FED\u4EE3\u300D\u7684\uFF1A\u6BCF\u6BB5\u751F\u6210\u5B8C\u5148\u8FD4\u56DE\u89C6\u9891\u6210\u679C\u4F9B\u5C55\u793A\uFF0C\u7528\u6237\u9884\u89C8\u5E76\u786E\u8BA4\u540E\u518D\u7528 resume \u7EE7\u7EED\uFF0C\u4E0D\u8981\u7ED5\u8FC7\u5B83\u3001\u4E5F\u4E0D\u8981\u81EA\u5DF1\u62C6\u6210\u591A\u6B21\u751F\u6210**\uFF1B\u5206\u6BB5\u4EA4\u4ED8\u65F6\u7ED3\u679C\u91CC\u5E26 paused=true\u3001resumeDir\u3001remainingSeconds\u2014\u2014\u8FD9\u65F6\u5148\u628A\u5DF2\u7ECF\u751F\u6210\u7684\u90E8\u5206\u4EA4\u4ED8\u7ED9\u4ED6\uFF0C\u7B49\u4ED6\u8BF4\u300C\u7EE7\u7EED\u300D\u518D\u628A resumeDir \u539F\u6837\u4F20\u7ED9 video_generate \u7684 resume \u53C2\u6570\uFF08\u63D2\u4EF6\u63A5\u7740\u5DF2\u6709\u7684\u5206\u6BB5\u5F80\u4E0B\u505A\uFF0C\u524D\u9762\u51E0\u6BB5\u4E0D\u91CD\u65B0\u751F\u6210\u3001\u4E0D\u91CD\u590D\u6263\u8D39\uFF09\uFF0C\u4E0D\u8981\u4ECE\u5934\u518D\u6765\u4E00\u904D\uFF1B\u540C\u4E00\u4EFD\u6682\u505C\u8FDB\u5EA6\uFF08resumeDir\uFF09\u540C\u4E00\u65F6\u95F4\u53EA\u5141\u8BB8\u4E00\u6B21 resume \u5728\u8DD1\uFF1A\u5982\u679C\u7ED3\u679C\u8BF4\u300C\u5DF2\u7ECF\u6709\u4E00\u6B21\u300E\u7EE7\u7EED\u300F\u5728\u8DD1\u300D\uFF0C\u5C31\u8BA9\u7528\u6237\u7B49\u90A3\u4E00\u6B21\u8DD1\u5B8C\uFF08\u6216\u786E\u8BA4\u5B83\u5DF2\u4E2D\u65AD\u3001\u9501\u8FC7\u671F\uFF09\u518D\u7EE7\u7EED\uFF0C\u4E0D\u8981\u91CD\u590D\u53D1 resume\u2014\u2014\u91CD\u590D\u4F1A\u628A\u5269\u4E0B\u7684\u6BB5\u63D0\u4EA4\u4E24\u904D\u3001\u91CD\u590D\u6263\u8D39\uFF1B\u7528\u6237\u4E2D\u9014\u70B9\u4E86\u300C\u505C\u6B62\u300D\u6216\u8FD9\u4E00\u8F6E\u7B49\u8D85\u65F6\u4E5F\u4E00\u6837\uFF1A\u5DF2\u7ECF\u751F\u6210\u597D\u7684\u6BB5\u4F1A\u5148\u4E0B\u8F7D\u3001\u5408\u5E76\u3001\u4EA4\u4ED8\uFF08\u7ED3\u679C\u91CC\u540C\u6837\u662F paused=true + \u6210\u7247 + resumeDir\uFF09\uFF0C\u4E0D\u8981\u628A\u90A3\u51E0\u6BB5\u4E22\u6389\u91CD\u6765\uFF1B\u5355\u6761\u6210\u7247\u6700\u957F ${MAX_TOTAL_SECONDS} \u79D2\uFF08\u6700\u591A ${MAX_SEGMENTS} \u6BB5\uFF09\uFF0C\u7528\u6237\u8981\u66F4\u957F\u7684\u5C31\u6309 ${MAX_TOTAL_SECONDS} \u79D2\u751F\u6210\u5E76\u8BF4\u660E\u8FD9\u662F\u63D2\u4EF6\u5F53\u524D\u7684\u4E0A\u9650\uFF0C\u4E0D\u8981\u53CD\u590D\u52A0\u5927 duration\uFF1B\u6210\u7247\u9ED8\u8BA4\u843D\u5728\u4F1A\u8BDD\u5DE5\u4F5C\u76EE\u5F55\u4E0B\u7684 metaontic-video/\u3002`,
     "\xB7 \u7ED9\u5DF2\u6709\u89C6\u9891\u63A5\u957F\u7528 video_extend\uFF0C\u8F93\u5165\u5FC5\u987B\u662F\u516C\u7F51 URL\uFF1B\u63D0\u793A\u8BCD\u4EE5\u300C\u5411\u540E\u5EF6\u957F\u89C6\u98911\u300D\u6216\u300C\u5411\u524D\u5EF6\u957F\u89C6\u98911\u300D\u5F00\u5934\uFF0C\u5168\u7A0B\u7528\u300C\u89C6\u98911\u300D\u6307\u4EE3\u7D20\u6750\uFF0C\u4E0D\u8981\u5199\u300C\u53C2\u8003\u89C6\u98911\u300D\uFF1B\u5199\u6E05\u5EF6\u957F\u65B9\u5411\u3001\u5267\u60C5\u53D1\u5C55\u3001\u4E3B\u4F53\u72B6\u6001\u3001\u955C\u5934\u8FD0\u52A8\u3001\u58F0\u97F3\u5EF6\u7EED\uFF08\u80CC\u666F\u97F3\u4E50\u63A5\u5728\u89C6\u98911\u7ED3\u5C3E\u5904\u3001\u4E0D\u8981\u4ECE\u5934\u64AD\u653E\uFF0C\u73AF\u5883\u58F0\u548C\u5BF9\u767D\u4E5F\u8981\u8FDE\u7EED\uFF09\uFF1B\u6BCF\u6BB5 4 \u81F3\u6A21\u578B\u4E0A\u9650\uFF082.0 \u4E3A 15\u30012.5 \u4E3A 30\uFF09 \u79D2\uFF0C\u9ED8\u8BA4\u6309\u4E0A\u9650\u62C6\u3001\u6BB5\u6570\u6700\u5C11\uFF1B\u8FDE\u7740\u5EF6\u957F\u591A\u6BB5\u65F6\u6BCF\u6BB5\u5B8C\u6210\u5148\u4EA4\u4ED8\u9884\u89C8\uFF0C\u7528\u6237\u786E\u8BA4\u540E\u7528 resume \u7EE7\u7EED\uFF0C\u5E76\u9ED8\u8BA4\u4E0B\u8F7D\u5206\u6BB5\u5728\u672C\u673A\u5408\u5E76\u6210\u4E00\u6761\u6210\u7247\uFF08\u7F3A ffmpeg \u4F1A\u5148\u62E6\u4E0B\u6765\u95EE\uFF09\uFF1B\u7528\u6237\u70B9\u300C\u62D2\u7EDD\u300D\u6216\u4E2D\u9014\u88AB\u505C\u6B62\u65F6\uFF0C\u5DF2\u7ECF\u5EF6\u957F\u597D\u7684\u90E8\u5206\u7167\u6837\u5148\u4EA4\u4ED8\uFF08paused=true + resumeDir\uFF09\uFF0C\u4E4B\u540E\u628A resumeDir \u4F20\u7ED9 video_extend \u7684 resume \u53C2\u6570\u63A5\u7740\u505A\u5373\u53EF\uFF0C\u4E0D\u91CD\u590D\u751F\u6210\u3001\u4E0D\u91CD\u590D\u6263\u8D39\u3002",
-    "\xB7 \u670D\u52A1\u7AEF\u5F00\u7740\u7F51\u7AD9\u652F\u4ED8\u65F6\uFF0C\u300C\u751F\u6210\u89C6\u9891\u300D\u4F1A\u5148\u8981\u6C42\u4ED8\u6B3E\uFF1Avideo_generate / video_extend \u4F1A\u88AB\u63D2\u4EF6\u9000\u56DE\u4E00\u6761\u6536\u94F6\u53F0\u94FE\u63A5\u548C\u8BA2\u5355\u53F7\u3002\u628A\u6574\u6761\u94FE\u63A5\u539F\u6837\u53D1\u7ED9\u7528\u6237\uFF0C\u8BF4\u660E\u5728\u6D4F\u89C8\u5668\u91CC\u7528\u652F\u4ED8\u5B9D\u4ED8\u5B8C\u518D\u56DE\u590D\u4E00\u58F0\uFF1B\u7528\u6237\u8BF4\u4ED8\u597D\u4E86\uFF0C\u5C31\u6309\u539F\u53C2\u6570\u91CD\u65B0\u8C03\u7528\u540C\u4E00\u4E2A\u5DE5\u5177\uFF0C\u63D2\u4EF6\u4F1A\u81EA\u5DF1\u8DDF\u670D\u52A1\u7AEF\u6838\u5BF9\u652F\u4ED8\u7ED3\u679C\uFF08\u5DF2\u652F\u4ED8\u4F1A\u5148\u5151\u6362\u51ED\u636E\u3001\u518D\u5F39\u4EBA\u5DE5\u786E\u8BA4\uFF09\u3002\u4E0D\u8981\u8DF3\u8FC7\u4ED8\u6B3E\u3001\u4E0D\u8981\u6539\u7528\u522B\u7684\u5DE5\u5177\u6216\u6E20\u9053\u53BB\u8C03\u6A21\u578B\uFF0C\u4E5F\u4E0D\u8981\u91CD\u590D\u4ED8\u6B3E\uFF1B\u53EA\u6709\u63A5\u5165\u65B9\u5F0F\u662F\u300C\u670D\u52A1\u7AEF\u9886 Key\u300D\uFF08MetaOnticVideo\uFF09\u65F6\u624D\u6709\u8FD9\u4E00\u6B65\uFF0CB MetaOntic AI / C \u706B\u5C71\u5F15\u64CE\u4E0D\u53D7\u5F71\u54CD\u3002",
+    "\xB7 \u300C\u751F\u6210\u89C6\u9891\u300D\u4E00\u5F8B\u5148\u5F39\u4EBA\u5DE5\u786E\u8BA4\uFF1A\u63D2\u4EF6\u4F1A\u5199\u660E\u672C\u6B21\u8981\u8C03\u7528\u7684\u6A21\u578B\u3001\u6E05\u6670\u5EA6\u3001\u5206\u6BB5\u4E0E\u9884\u4F30\u8D39\u7528\uFF0C\u70B9\u4E86\u300C\u5141\u8BB8\u300D\u624D\u4F1A\u771F\u6B63\u8C03\u7528\u6A21\u578B\u3002\u4EFB\u4F55\u63A5\u5165\u65B9\u5F0F\u90FD\u4E0D\u8981\u8DF3\u8FC7\u8FD9\u4E00\u6B65\uFF1B\u670D\u52A1\u7AEF\u65B9\u5F0F\uFF08MetaOnticVideo\uFF09\u4E0D\u8BFB\u4E5F\u4E0D\u63D0\u4F59\u989D\uFF0C\u4E5F\u4E0D\u6309\u4F59\u989D\u62E6\u751F\u6210\uFF0C\u786E\u8BA4\u6846\u91CC\u53EA\u8BF4\u9884\u4F30\u8D39\u7528\u4E0E\u300C\u6309\u63D2\u4EF6\u670D\u52A1\u8D26\u6237\u7684\u5B9E\u9645\u7528\u91CF\u7ED3\u7B97\u300D\uFF1BB MetaOntic AI / C \u706B\u5C71\u5F15\u64CE\u6309\u6E20\u9053\u8D26\u6237\u5B9E\u9645\u7528\u91CF\u8BA1\u8D39\uFF0C\u786E\u8BA4\u6846\u4F1A\u5E26\u672C\u673A Key \u5269\u4F59\u989D\u5EA6\uFF08\u8BFB\u4E0D\u5230\u5C31\u5199\u660E\u8BFB\u4E0D\u5230\uFF09\u3002\u4E0D\u8981\u66FF\u7528\u6237\u786E\u8BA4\uFF0C\u4E5F\u4E0D\u8981\u7528\u4ED8\u6B3E\u6216\u5176\u4ED6\u65B9\u5F0F\u7ED5\u8FC7\u8FD9\u9053\u786E\u8BA4\u3002",
     "\xB7 \u751F\u6210\u901A\u5E38\u8981\u51E0\u5206\u949F\uFF1A\u5355\u6B21\u8C03\u7528\u8FD4\u56DE timeout \u4E0D\u7B49\u4E8E\u5931\u8D25\uFF0C\u4F18\u5148\u7528\u539F\u5DE5\u5177\u52A0 resume \u67E5\u8BE2\u5E76\u63A5\u56DE\u8FDB\u5EA6\uFF0C\u4E5F\u53EF\u7528 video_status \u52A0 taskId \u7EE7\u7EED\u67E5\uFF08\u4E0A\u6E38\u94FE\u63A5\u7EA6 24 \u5C0F\u65F6\u5185\u6709\u6548\uFF09\uFF0C\u4E0D\u8981\u91CD\u590D\u63D0\u4EA4\u540C\u4E00\u6BB5\u3002\u4E0B\u8F7D\u6216\u5408\u5E76\u5931\u8D25\u65F6\u4F7F\u7528\u539Fresume\u91CD\u8BD5\u4EA4\u4ED8\uFF0C\u4E0D\u65B0\u5EFA\u751F\u6210\u4EFB\u52A1\u3002\u6A21\u578B\u6216\u63A5\u5165\u6E20\u9053\u53D8\u5316\u65F6\u5148\u8BF4\u660E\u5E76\u53D6\u5F97\u7528\u6237\u660E\u786E\u786E\u8BA4\uFF0C\u624D\u4F20resumeWithCurrentConfig:true\uFF1B\u8FD8\u6709\u5F85\u67E5\u8BE2\u4EFB\u52A1\u65F6\u5FC5\u987B\u6062\u590D\u539F\u914D\u7F6E\u3002",
     "\xB7 \u73AF\u5883\u6709\u95EE\u9898\uFF08\u7F3A ffmpeg \u88C5\u4E0D\u4E0A\u3001\u60F3\u786E\u8BA4\u80FD\u4E0D\u80FD\u5408\u5E76\uFF09\u7528 video_setup\uFF1A\u9ED8\u8BA4\u53EA\u68C0\u67E5\uFF0Cinstall:true \u624D\u4F1A\u771F\u88C5\uFF1B\u88C5\u547D\u4EE4\u4F1A\u5148\u7ED9\u7528\u6237\u786E\u8BA4\uFF0C\u88C5\u5B8C\u81EA\u52A8\u9A8C\u8BC1\u3002\u7528\u6237\u8BF4\u300C\u5E2E\u6211\u88C5 ffmpeg\u300D\u65F6\u5C31\u7528\u5B83\uFF0C\u522B\u81EA\u5DF1\u62FC\u547D\u4EE4\u884C\u3002",
-    "\xB7 \u6362\u6A21\u578B\u3001\u65F6\u957F\u7B49\u914D\u7F6E\u7528 video_config\uFF08\u5199\u8FDB profile\uFF0C\u5BBF\u4E3B\u91CD\u8F7D\u540E\u751F\u6548\uFF09\uFF1B\u4F46\u670D\u52A1\u7AEF\u65B9\u5F0F\u7684 apiKey \u4F8B\u5916\uFF1A\u5B83\u53EA\u80FD\u7531\u670D\u52A1\u7AEF\u5728\u300C\u767B\u5F55\u300D\u65F6\u4E0B\u53D1\uFF0C\u4E0D\u8981\u624B\u586B\u3001\u4E5F\u4E0D\u8981\u8BA9\u7528\u6237\u624B\u586B\uFF0C\u7F3A Key \u6216\u63D0\u793A\u300C\u4E0D\u662F\u670D\u52A1\u7AEF\u4E0B\u53D1\u7684\u300D\u65F6\uFF0C\u5C31\u5F15\u5BFC\u7528\u6237\u53BB\u63D2\u4EF6\u8BE6\u60C5\u9875\u70B9\u300C\u767B\u5F55\u300D\uFF1B\u8BE5\u65B9\u5F0F\u5F53\u524D\u6682\u65F6\u4E0D\u53EF\u7528\uFF0C\u9047\u5230\u65F6\u5148\u8BF7\u7528\u6237\u6539\u7528 MetaOntic AI \u6216\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\u3002\u957F\u89C6\u9891\u8981\u5728\u672C\u673A\u5408\u5E76\uFF0C\u9700\u8981 ffmpeg\uFF1A\u672C\u673A\u6CA1\u88C5\u65F6\uFF0C\u63D2\u4EF6\u4F1A\u5148\u628A\u8FD9\u6B21\u751F\u6210\u62E6\u56DE\u6765\uFF08\u4E0D\u4EA7\u751F\u8D39\u7528\uFF09\uFF0C\u8FD9\u65F6\u8981\u5728\u5BF9\u8BDD\u6846\u91CC\u95EE\u7528\u6237\u300C\u8981\u4E0D\u8981\u6388\u6743\u6211\u88C5 ffmpeg\u300D\u2014\u2014\u6309\u8FD4\u56DE\u7684\u8BF4\u660E\u8BF4\u6E05\u4ED6\u7684\u7CFB\u7EDF\u4E0E\u547D\u4EE4\uFF0C\u7528\u6237\u540C\u610F\u5C31\u8C03\u7528 video_setup\uFF08install:true\uFF09\u7531\u63D2\u4EF6\u6765\u88C5\uFF08\u5BBF\u4E3B\u4F1A\u5148\u8BA9\u4ED6\u786E\u8BA4\u90A3\u6761\u547D\u4EE4\uFF09\uFF0C\u88C5\u5B8C\u5B83\u4F1A\u81EA\u5DF1\u9A8C\u8BC1\uFF0C\u518D\u6309\u539F duration \u91CD\u53D1\uFF1B\u7528\u6237\u4E0D\u60F3\u88C5\u5C31\u5E26 merge:false \u91CD\u53D1\uFF0C\u63D2\u4EF6\u53EA\u8FD4\u56DE\u5206\u6BB5\u5217\u8868\uFF08\u6BCF\u6BB5\u94FE\u63A5 + \u672C\u5730\u6587\u4EF6\uFF09\uFF0C\u7ED3\u679C\u91CC\u4F1A\u5E26 ffmpegMissing=true \u4E0E installHint\uFF0C\u7167\u5B83\u5F15\u5BFC\u5B89\u88C5\u5373\u53EF\u3002",
+    "\xB7 \u6362\u6A21\u578B\u3001\u65F6\u957F\u7B49\u914D\u7F6E\u7528 video_config\uFF08\u5199\u8FDB profile\uFF0C\u5BBF\u4E3B\u91CD\u8F7D\u540E\u751F\u6548\uFF09\uFF1B\u4F46\u670D\u52A1\u7AEF\u65B9\u5F0F\u7684 apiKey \u4F8B\u5916\uFF1A\u5B83\u53EA\u80FD\u7531\u670D\u52A1\u7AEF\u5728\u300C\u767B\u5F55\u300D\u65F6\u4E0B\u53D1\uFF0C\u4E0D\u8981\u624B\u586B\u3001\u4E5F\u4E0D\u8981\u8BA9\u7528\u6237\u624B\u586B\uFF0C\u7F3A Key \u6216\u63D0\u793A\u300C\u4E0D\u662F\u670D\u52A1\u7AEF\u4E0B\u53D1\u7684\u300D\u65F6\uFF0C\u5C31\u5F15\u5BFC\u7528\u6237\u53BB\u63D2\u4EF6\u8BE6\u60C5\u9875\u70B9\u300C\u767B\u5F55\u300D\uFF1B\u957F\u89C6\u9891\u8981\u5728\u672C\u673A\u5408\u5E76\uFF0C\u9700\u8981 ffmpeg\uFF1A\u672C\u673A\u6CA1\u88C5\u65F6\uFF0C\u63D2\u4EF6\u4F1A\u5148\u628A\u8FD9\u6B21\u751F\u6210\u62E6\u56DE\u6765\uFF08\u4E0D\u4EA7\u751F\u8D39\u7528\uFF09\uFF0C\u8FD9\u65F6\u8981\u5728\u5BF9\u8BDD\u6846\u91CC\u95EE\u7528\u6237\u300C\u8981\u4E0D\u8981\u6388\u6743\u6211\u88C5 ffmpeg\u300D\u2014\u2014\u6309\u8FD4\u56DE\u7684\u8BF4\u660E\u8BF4\u6E05\u4ED6\u7684\u7CFB\u7EDF\u4E0E\u547D\u4EE4\uFF0C\u7528\u6237\u540C\u610F\u5C31\u8C03\u7528 video_setup\uFF08install:true\uFF09\u7531\u63D2\u4EF6\u6765\u88C5\uFF08\u5BBF\u4E3B\u4F1A\u5148\u8BA9\u4ED6\u786E\u8BA4\u90A3\u6761\u547D\u4EE4\uFF09\uFF0C\u88C5\u5B8C\u5B83\u4F1A\u81EA\u5DF1\u9A8C\u8BC1\uFF0C\u518D\u6309\u539F duration \u91CD\u53D1\uFF1B\u7528\u6237\u4E0D\u60F3\u88C5\u5C31\u5E26 merge:false \u91CD\u53D1\uFF0C\u63D2\u4EF6\u53EA\u8FD4\u56DE\u5206\u6BB5\u5217\u8868\uFF08\u6BCF\u6BB5\u94FE\u63A5 + \u672C\u5730\u6587\u4EF6\uFF09\uFF0C\u7ED3\u679C\u91CC\u4F1A\u5E26 ffmpegMissing=true \u4E0E installHint\uFF0C\u7167\u5B83\u5F15\u5BFC\u5B89\u88C5\u5373\u53EF\u3002",
     `\xB7 \u5F53\u524D\u914D\u7F6E\uFF1A\u76F4\u51FA\u4E0A\u9650 ${singleMax} \u79D2\u3001\u6BCF\u6BB5\u5EF6\u957F ${segmentSeconds} \u79D2\u3002`,
-    "\xB7 \u670D\u52A1\u7AEF\u65B9\u5F0F\uFF08MetaOnticVideo\uFF09\u6682\u65F6\u4E0D\u53EF\u7528\uFF1A\u4E0D\u8981\u518D\u5F15\u5BFC\u7528\u6237\u767B\u5F55\u9886 Key\u3002\u5148\u8BF7\u7528\u6237\u5728\u63D2\u4EF6\u8BBE\u7F6E\u9875\u628A\u63A5\u5165\u65B9\u5F0F\u6539\u6210 MetaOntic AI \u6216\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\u5E76\u586B\u5199 Key\uFF1B\u914D\u7F6E\u91CC\u5DF2\u7ECF\u9886\u8FC7\u7684 Key\u3001\u989D\u5EA6\u4E0E\u8BBE\u5907\u51ED\u636E\u4F1A\u4FDD\u7559\uFF0C\u7B49\u8BE5\u65B9\u5F0F\u6062\u590D\u540E\u767B\u5F55\u4E00\u6B21\u5373\u53EF\u7EE7\u7EED\u7528\uFF1B\u4F7F\u7528\u8BB0\u5F55\u5361\u7247\u672C\u6765\u5C31\u6682\u65F6\u9690\u85CF\uFF0C\u4E5F\u4E0D\u8981\u5F15\u5BFC\u7528\u6237\u53BB\u770B\u3002"
+    "\xB7 \u5F53\u524D\u8BBE\u7F6E\u9875\u63D0\u4F9B\u7684\u63A5\u5165\u65B9\u5F0F\uFF1AMetaOnticVideo\uFF08\u670D\u52A1\u7AEF\uFF0C\u90AE\u7BB1\u767B\u5F55\u9886 Key\uFF09\u4E0E MetaOntic AI\uFF08\u624B\u586B Key\uFF09\u3002\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF0C\u5DF2\u6709\u8BE5\u914D\u7F6E\u7684\u5B89\u88C5\u4ECD\u53EF\u7EE7\u7EED\u751F\u6210\uFF1B\u4E0D\u8981\u4E3B\u52A8\u5E2E\u7528\u6237\u5207\u5230\u8BE5\u65B9\u5F0F\uFF0C\u4E5F\u4E0D\u8981\u5728\u65B0\u4F1A\u8BDD\u91CC\u4E3B\u52A8\u63A8\u8350\u6216\u5F15\u5BFC\u914D\u7F6E\u672A\u63D0\u4F9B\u7684\u65B9\u5F0F\u3002\u4F7F\u7528\u8BB0\u5F55\u5361\u7247\u6682\u65F6\u9690\u85CF\uFF0C\u4E5F\u4E0D\u8981\u5F15\u5BFC\u7528\u6237\u53BB\u770B\u3002"
   ].join("\n");
 }
 
@@ -6827,7 +6487,7 @@ init_config();
 
 // src/internal/update-lockfile.ts
 import { existsSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from "node:fs";
-import path14 from "node:path";
+import path13 from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 var PACKAGE_NAME = "metaontic-video";
 var LOCKFILE = "pnpm-lock.yaml";
@@ -6891,7 +6551,7 @@ function stripUnverifiableEntries(text) {
 }
 function locateProfileDir(moduleUrl) {
   let dir = fileURLToPath2(moduleUrl);
-  for (let up = 0; up < 3; up += 1) dir = path14.dirname(dir);
+  for (let up = 0; up < 3; up += 1) dir = path13.dirname(dir);
   return dir;
 }
 function repairLockfileAt(lockfile, log = () => {
@@ -6918,13 +6578,13 @@ function repairLockfileAt(lockfile, log = () => {
     }
     return { status: "failed", message: error && error.message || String(error) };
   }
-  log("\u5DF2\u6E05\u7406 " + removed.length + " \u6761\u7F3A\u5C11 integrity \u7684\u9501\u6587\u4EF6\u8BB0\u5F55\uFF08" + removed.join("\u3001") + "\uFF09\uFF0C\u5907\u4EFD\u5728 " + path14.basename(backup) + "\uFF1B\u4E4B\u540E\u53EF\u4EE5\u5728\u7EBF\u66F4\u65B0\u3002");
+  log("\u5DF2\u6E05\u7406 " + removed.length + " \u6761\u7F3A\u5C11 integrity \u7684\u9501\u6587\u4EF6\u8BB0\u5F55\uFF08" + removed.join("\u3001") + "\uFF09\uFF0C\u5907\u4EFD\u5728 " + path13.basename(backup) + "\uFF1B\u4E4B\u540E\u53EF\u4EE5\u5728\u7EBF\u66F4\u65B0\u3002");
   return { status: "repaired", lockfile, backup, removed };
 }
 function locateLockfiles(dir, depth = 2) {
   const found = [];
   const walk = (current, level) => {
-    const candidate = path14.join(current, LOCKFILE);
+    const candidate = path13.join(current, LOCKFILE);
     try {
       if (existsSync(candidate)) found.push(candidate);
     } catch {
@@ -6938,14 +6598,14 @@ function locateLockfiles(dir, depth = 2) {
     }
     for (const entry of entries) {
       if (!entry.isDirectory() || entry.name === "node_modules") continue;
-      walk(path14.join(current, entry.name), level - 1);
+      walk(path13.join(current, entry.name), level - 1);
     }
   };
   walk(dir, depth);
   return found;
 }
 function locateStagingLockfiles(profileDir) {
-  const parent = path14.dirname(profileDir);
+  const parent = path13.dirname(profileDir);
   let entries = [];
   try {
     entries = readdirSync(parent, { withFileTypes: true });
@@ -6955,7 +6615,7 @@ function locateStagingLockfiles(profileDir) {
   const found = [];
   for (const entry of entries) {
     if (!entry.isDirectory() || !/staging/i.test(entry.name)) continue;
-    const dir = path14.join(parent, entry.name);
+    const dir = path13.join(parent, entry.name);
     if (dir === profileDir) continue;
     found.push(...locateLockfiles(dir, 1));
   }
@@ -6971,7 +6631,7 @@ function startUpdateLockfileRepair(moduleUrl, intervalMs = 2e3, log) {
     if (stopped) return;
     try {
       const dir = locateProfileDir(moduleUrl);
-      if (!existsSync(path14.join(dir, "package.json"))) return;
+      if (!existsSync(path13.join(dir, "package.json"))) return;
       for (const lockfile of updateLockfilesToWatch(dir)) {
         let stamp = "";
         try {
