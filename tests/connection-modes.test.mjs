@@ -120,6 +120,8 @@ test('service 模式额度不够就不调用，提示充值', async () => {
   assert.match(gate.reason, /\u989d\u5ea6\u4e0d\u8db3\uff0c\u5df2\u505c\u6b62\u8c03\u7528/);
   assert.match(gate.reason, /\u5145\u503c/);
   assert.match(gate.reason, /\u8fd9\u6b21\u6ca1\u6709\u8c03\u7528\u6a21\u578b\u3001\u6ca1\u6709\u4ea7\u751f\u8d39\u7528/);
+  // 服务端运行时关掉在线充值：设置页没有「充值」按钮，不能把用户往那个按钮上引。
+  assert.match(gate.reason, /没有「充值」按钮/);
 });
 
 test('service 模式额度读不到时不拦，仍弹人工确认并说明读不到', async () => {
@@ -184,6 +186,7 @@ test('service 模式图片调用先看余额，余额为 0 就停下提示充值
   assert.match(gate.reason, /\u989d\u5ea6\u4e0d\u8db3/);
   assert.match(gate.reason, /\u5145\u503c/);
   assert.match(gate.reason, /\u6ca1\u6709\u8c03\u7528\u6a21\u578b\u3001\u6ca1\u6709\u4ea7\u751f\u8d39\u7528/);
+  assert.match(gate.reason, /没有「充值」按钮/);
 });
 
 test('service 模式图片确认带上本机余额，够用就照常确认', async () => {
