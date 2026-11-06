@@ -22,7 +22,7 @@ function compareVideoCosts(config, args) {
   if (!rates) throw new Error(`尚无${model}的可靠价目，不能套用其他模型报价。`);
   const planned = resolveTargetPlan(config, args);
   if (planned.total !== duration) throw new Error('该时长超出当前分段方案能力，请先调整分段计划。');
-  // 手填Key的分组权限未知，默认按1；仅明确确认的倍率可覆盖。
+  // 手填 API密钥的分组权限未知，默认按1；仅明确确认的倍率可覆盖。
   const groupRatio = args?.groupRatio ?? (isVolcengine(config) || isMetaontic(config) ? 1 : ref(config, 'estimateGroupRatio', 0.8));
   if (!Number.isFinite(groupRatio) || groupRatio < 0 || groupRatio > 10) throw new Error('分组倍率须为0–10的有效数字。');
   if (isVolcengine(config) && groupRatio !== 1) throw new Error('火山直连不适用中转分组折扣。');
@@ -49,7 +49,7 @@ function compareVideoCosts(config, args) {
     plugin: calculate(model, planned.plan, rates[1], groupRatio),
     pluginChannel: isVolcengine(config) ? '火山直连（无中转折扣）' : 'MetaOnticVideo中转制作方案',
     sources: ['https://docs.volcengine.com/docs/ark/model-pricing?lang=zh', 'https://ai.bileego.com/pricing'],
-    notes: ['这是视频API基础公式估价，非固定报价；含视频输入的最低用量补足尚未计入，实际以渠道账单为准。', '续拍输入按上一段完整视频时长计入，不按累计成片输入；参考图片不等同参考视频，不使用含视频单价。', '不含图片生成或转换、重试、独立配音及其他额外调用；本地合并不产生视频模型调用费，接缝裁剪会缩短交付时长。', '不同模型的质量与能力有差异；火山官方为API刊例价，不是网页积分或套餐价格。', '火山官方方案按 Seedance 2.5 的实际秒数排段：单段上限 30 秒，不足 30 秒不凑整；超过 30 秒按 30 秒直出加逐段续拍列出，续拍计入上一段完整视频输入。', '中转倍率仅在Key确有对应分组权限且实际使用该分组时成立；价格日期后可能调整，制作前需复核。'],
+    notes: ['这是视频API基础公式估价，非固定报价；含视频输入的最低用量补足尚未计入，实际以渠道账单为准。', '续拍输入按上一段完整视频时长计入，不按累计成片输入；参考图片不等同参考视频，不使用含视频单价。', '不含图片生成或转换、重试、独立配音及其他额外调用；本地合并不产生视频模型调用费，接缝裁剪会缩短交付时长。', '不同模型的质量与能力有差异；火山官方为API刊例价，不是网页积分或套餐价格。', '火山官方方案按 Seedance 2.5 的实际秒数排段：单段上限 30 秒，不足 30 秒不凑整；超过 30 秒按 30 秒直出加逐段续拍列出，续拍计入上一段完整视频输入。', '中转倍率仅在 API密钥确有对应分组权限且实际使用该分组时成立；价格日期后可能调整，制作前需复核。'],
   };
 }
 
@@ -62,7 +62,7 @@ export function estimateTool(config) {
       resolution: { type: 'string', enum: ['480p', '720p'], description: '用户已确认的视频清晰度' },
       ratio: { type: 'string', enum: ['16:9', '9:16'], description: '脚本画幅，其他画幅暂不可靠试算' },
       segmentSeconds: { type: 'integer', minimum: 4, maximum: 30, description: '与实际生成一致的续拍分段时长上限' },
-      groupRatio: { type: 'number', minimum: 0, maximum: 10, description: '仅在已核对Key分组权限和实际倍率时传入；不得为了显示低价假设0.8' },
+      groupRatio: { type: 'number', minimum: 0, maximum: 10, description: '仅在已核对 API密钥分组权限和实际倍率时传入；不得为了显示低价假设0.8' },
     }, required: ['duration', 'resolution'] },
     output: { schema: { type: 'object' }, render(_args, value) {
       const detail = (name, item) => item.segments.map(s => `${name}第${s.index}段：${s.inputSeconds ? '有视频输入' : '无视频输入'}；输入${s.inputSeconds}秒 + 输出${s.seconds}秒；单价¥${s.rateCnyPerMillion}/百万token；约¥${s.cny.toFixed(4)}`);

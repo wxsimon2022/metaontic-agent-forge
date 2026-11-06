@@ -6,9 +6,9 @@ export const Config = z.object({
   // 服务端方式停用期间，新装默认落到 MetaOntic AI（否则新用户一进来就是不可用的方式）；
   // 已有配置的取值不受默认值影响，按停用规则被拒绝调用。
   connectionMode: z.union(['service', 'metaontic', 'volcengine']).default(SERVICE_MODE_AVAILABLE ? 'service' : 'metaontic')
-    .description('接入方式：MetaOnticVideo 服务端领 Key（service）；MetaOntic AI（metaontic）；火山引擎直连（volcengine，当前设置页暂不提供选择）').volatile(),
-  metaonticApiKey: z.string().default('').description('MetaOntic AI API Key').volatile(),
-  volcengineApiKey: z.string().default('').description('火山引擎直连模式的火山 API Key').volatile(),
+    .description('接入方式：MetaOnticVideo 服务端领 API密钥（service）；MetaOntic AI（metaontic）；火山引擎直连（volcengine，当前设置页暂不提供选择）').volatile(),
+  metaonticApiKey: z.string().default('').description('MetaOntic AI API密钥').volatile(),
+  volcengineApiKey: z.string().default('').description('火山引擎直连模式的火山 API密钥').volatile(),
   entryId: z.string()
     .default('metaontic-video')
     .description('本插件在 profile patch 里的条目 id；配置工具用它把改动写回')
@@ -16,13 +16,13 @@ export const Config = z.object({
   apiKey: z.string()
     .default('')
     .description(
-      'API Key：只在设置页点「登录」时由服务端下发并直接写进配置，不支持手填、'
+      'API密钥：只在设置页点「登录」时由服务端下发并直接写进配置，不支持手填、'
       + '也不读环境变量；手改这里的值会被拒绝调用',
     )
     .volatile(),
   keyOrigin: z.string()
     .default('')
-    .description("密钥来源标记：设置页「登录」成功后写入 'register'，插件只认服务端下发的 Key")
+    .description("密钥来源标记：设置页「登录」成功后写入 'register'，插件只认服务端下发的 API密钥")
     .volatile(),
   baseUrl: z.string()
     .default('')
@@ -39,16 +39,18 @@ export const Config = z.object({
     .default('')
     .description('查询任务路径，{task_id} 会被任务 ID 替换；留空用中转站默认值')
     .volatile(),
-  imageUseVideoKey: z.boolean().default(true).description('图片模型与视频模型共用 Key').volatile(),
-  imageApiKey: z.string().default('').description('不共用时填写的图片模型 API Key').volatile(),
-  imageModel: z.union(['doubao-seedream-5-0-260128', 'doubao-seedream-5-0-pro-260628']).default('doubao-seedream-5-0-260128').description('A/B 真人参考图非真人化使用的图片模型').volatile(),
+  imageUseVideoKey: z.boolean().default(true).description('图片模型与视频模型共用 API密钥').volatile(),
+  imageApiKey: z.string().default('').description('不共用时填写的图片模型 API密钥').volatile(),
+  // 图片模型：doubao-seedream-5-0-260128 已下线，默认改用在售的 pro 版；旧型号仍允许写入校验，
+  // 读取时由 connection-defaults 的 resolveImageModel 归一到在售型号。
+  imageModel: z.union(['doubao-seedream-5-0-pro-260628', 'doubao-seedream-5-0-260128']).default('doubao-seedream-5-0-pro-260628').description('A/B 真人参考图非真人化使用的图片模型（旧型号已下线，按 pro 版调用）').volatile(),
   model: z.string()
     .default('')
     .description('视频生成用的模型 ID（seedance 2.0 / 2.5 系列）；留空读 NEWAPI_VIDEO_MODEL 或内置默认值')
     .volatile(),
   registerEmail: z.string()
     .default('')
-    .description('领 Key 用的邮箱（账号）：中转站里的密钥名由服务端生成唯一串，与这个邮箱绑定')
+    .description('领 API密钥用的邮箱（账号）：中转站里的密钥名由服务端生成唯一串，与这个邮箱绑定')
     .volatile(),
   registerToken: z.string()
     .default('metaontic-video-register-v1')
@@ -56,11 +58,11 @@ export const Config = z.object({
     .volatile(),
   registerApi: z.string()
     .default('')
-    .description('插件服务地址（领 Key / 查额度 / 使用记录）；留空用内置的视频服务域名')
+    .description('插件服务地址（领 API密钥 / 查额度 / 使用记录）；留空用内置的视频服务域名')
     .volatile(),
   deviceId: z.string()
     .default('')
-    .description('本机设备标识：设置页点「登录」时写入，用来查这把 Key 的剩余额度')
+    .description('本机设备标识：设置页点「登录」时写入，用来查这把 API密钥的剩余额度')
     .volatile(),
   deviceSecret: z.string()
     .default('')
@@ -146,7 +148,7 @@ export const Config = z.object({
   pollErrorRetries: z.natural().min(1).max(60)
     .default(5)
     .description(
-      '轮询期间「查询失败」的容忍次数：网络抖动、中转站限流、Key 中途被判无效都会让查询报错，'
+      '轮询期间「查询失败」的容忍次数：网络抖动、中转站限流、API密钥中途被判无效都会让查询报错，'
       + '但任务在上游照常生成——连续失败到这个次数才放弃等待。'
       + '放弃时任务 ID 仍保留，可用 video_status 事后补查，不会把「查不到」当成「没生成」。'
       + '设置页不显示这一项：默认值 5 够用。',
@@ -187,13 +189,13 @@ export const CUMULATIVE_TOLERANCE_RATIO = 0.25;
 
 export const CUMULATIVE_TOLERANCE_MIN_SECONDS = 1.5;
 
-/** 插件服务地址（领 Key、查额度、使用记录）：配置留空时用这个固定域名。 */
+/** 插件服务地址（领 API密钥、查额度、使用记录）：配置留空时用这个固定域名。 */
 export const DEFAULT_REGISTER_API = 'https://video.mybfs.cn';
 
 /** 服务端握手头的兜底值（与服务端 REGISTER_CLIENT_TOKEN 对齐）。 */
 export const DEFAULT_REGISTER_TOKEN = 'metaontic-video-register-v1';
 
-/** 密钥来源标记：设置页「登录」成功后写进配置，表示这把 Key 是服务端下发的。 */
+/** 密钥来源标记：设置页「登录」成功后写进配置，表示这把 API密钥是服务端下发的。 */
 export const KEY_ORIGIN_REGISTER = 'register';
 
 /** 额度/汇率兜底：服务端会回真实值，只有拿不到时才用这两个。 */

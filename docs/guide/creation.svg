@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1040" height="652" viewBox="0 0 1040 652" role="img" aria-labelledby="title desc">
-<title id="title">第一次制作视频</title><desc id="desc">操作示意图 · 清晰度在脚本阶段确认，不在插件设置页配置</desc>
+<title id="title">第一次制作视频</title><desc id="desc">操作示意图 · 画面风格、画幅与清晰度在对话里确认，不在插件设置页配置</desc>
 <style>text{font-family:"PingFang SC","Microsoft YaHei",Arial,sans-serif} .h{font-size:28px;font-weight:700;fill:#20242d}.sub{font-size:17px;fill:#737b8b}.label{font-size:20px;font-weight:600;fill:#20242d}.line{font-size:18px;fill:#737b8b}</style>
 <rect width="1040" height="652" rx="12" fill="#f1f3f7"/>
 <text x="32" y="48" class="h">第一次制作视频</text>
-<text x="32" y="80" class="sub">操作示意图 · 清晰度在脚本阶段确认，不在插件设置页配置</text>
+<text x="32" y="80" class="sub">操作示意图 · 画面风格、画幅与清晰度在对话里确认，不在插件设置页配置</text>
 <rect x="32" y="108" width="976" height="110" rx="8" fill="white" stroke="#dfe3eb"/>
 <rect x="32" y="108" width="5" height="110" rx="2" fill="#247bbf"/>
-<text x="54" y="142" class="label">① 描述需求，确认 480P 或 720P</text>
+<text x="54" y="142" class="label">① 描述需求与风格，确认画幅与 480P / 720P</text>
 <text x="54" y="177" class="line">例如：15 秒、竖屏、720P，展示一杯咖啡，不要对白和字幕。</text>
 <rect x="32" y="238" width="976" height="110" rx="8" fill="white" stroke="#dfe3eb"/>
 <rect x="32" y="238" width="5" height="110" rx="2" fill="#247bbf"/>

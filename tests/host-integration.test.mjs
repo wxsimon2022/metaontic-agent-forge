@@ -67,6 +67,20 @@ test('conversation stays inside video creation and configuration is read-only in
   host.dispose();
 });
 
+test('style guidance asks only when the idea has no style, then refines along the choice', async () => {
+  const host = harness({ connectionMode: 'metaontic', metaonticApiKey: 'test' }, '/tmp');
+  const prompt = host.prompt();
+  for (const needle of ['style-library.md', '没有指定画面风格', '已经说清风格', '不重复推荐', '写入 script.md 的规格']) {
+    assert.ok(prompt.includes(needle), needle);
+  }
+  const skill = await readFile(new URL('../skills/video-director/SKILL.md', import.meta.url), 'utf8');
+  const library = await readFile(new URL('../skills/video-director/references/style-library.md', import.meta.url), 'utf8');
+  assert.match(skill, /\[画面风格库\]\(references\/style-library\.md\)/);
+  assert.match(skill, /已经说清风格/);
+  assert.match(library, /没有指定画面风格/);
+  host.dispose();
+});
+
 for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools submit, query, pause, resume and extend through split modules`, async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'mv-integration-'));
   const previousFetch = globalThis.fetch;

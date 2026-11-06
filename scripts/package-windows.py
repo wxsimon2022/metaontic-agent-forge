@@ -47,11 +47,11 @@ GitHub：https://github.com/wxsimon2022/metaontic-video/releases/download/vVERSI
 两个地址内容相同，Gitee通常国内更快。要粘贴的是这种.tgz附件地址，
 不是发布页网址，也不要选Source code源码包。
 
-第5步：填写Key并保存
+第5步：填写 API密钥并保存
 打开 插件 → 已安装插件 → MetaOnticVideo → 查看。
-选择 MetaOntic AI。没有Key时，到 https://ai.bileego.com/ 注册并获取API Key。
-填写Key，选好视频和图片模型，再点保存。
-两个模型共用Key时，这把Key需要同时支持两个模型；不共用则分别填写。
+选择 MetaOntic AI。没有 API密钥时，到 https://ai.bileego.com 注册并获取 API密钥。
+填写 API密钥，选好视频和图片模型，再点保存。
+两个模型共用 API密钥时，这把 API密钥需要同时支持两个模型；不共用则分别填写。
 
 第6步：开始创作
 新建会话，把会话模式改为“视频创作助手”。
@@ -75,13 +75,13 @@ GitHub：https://github.com/wxsimon2022/metaontic-video/releases/download/vVERSI
   完全退出软件，删除C:\\Users\\你的用户名\\.dsh\\profiles\\desktop\\pnpm-lock.yaml，再安装一次。
 • 立即更新后原package目录空了/报locale缺失？先停下，不要反复更新。
   把本包完整package文件夹复制回错误提示的原路径，确保其中有locale/en.json和locale/zh.json。
-  不要复制成package/package，不要只新建一个空locale文件夹，不要重置Key或直接卸载。
+  不要复制成package/package，不要只新建一个空locale文件夹，不要重置 API密钥或直接卸载。
   恢复后先核对实际安装来源；新版会拦截本地目录直接在线替换，不会自动迁移旧安装。
 • 成品安装是否支持更新？支持在设置页“检查更新”。先等视频任务结束，再按提示处理。
 • 多段视频合并提示缺工具？让助手检查ffmpeg/ffprobe，并在你同意后安装。
 
 完整图文说明：package/MetaOnticVideo使用说明书.pdf。
-本包不包含账号和Key，生成时需要联网。
+本包不包含账号和 API密钥，生成时需要联网。
 """
 steps = steps.replace('VERSION', version)
 with tarfile.open(source, 'r:gz') as archive:
@@ -107,8 +107,8 @@ body = ('<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="vie
         'summary{cursor:pointer;font-weight:bold}a{color:#15649b}</style><img src="package/logo.svg" width="280" alt="MetaOnticVideo">'
         '<h1>Windows安装：照着这六步做</h1><p class="tip">先解压ZIP → 找到.tgz → 复制文件路径 → 粘贴到插件安装框。<br>新装填.tgz文件；恢复旧安装才复制package目录。</p>'
         '<pre>' + html.escape(basic) + '</pre><h2>安装操作示意</h2><img src="package/docs/guide/install.svg" alt="打开插件添加入口并填写安装地址">'
-        '<h2>Key填在这里</h2><p>共用Key：</p><img src="package/docs/guide/models-shared.png" alt="两个模型共用Key的设置位置">'
-        '<p>分别填写Key：</p><img src="package/docs/guide/models-separate.png" alt="视频和图片分别填写Key的位置">'
+        '<h2>API密钥填在这里</h2><p>共用 API密钥：</p><img src="package/docs/guide/models-shared.png" alt="两个模型共用 API密钥的设置位置">'
+        '<p>分别填写 API密钥：</p><img src="package/docs/guide/models-separate.png" alt="视频和图片分别填写 API密钥的位置">'
         '<details><summary>安装报错或旧目录空了？点这里</summary><pre>' + html.escape(faq) + '</pre></details>'
         '<p><a href="package/MetaOnticVideo使用说明书.pdf">打开完整使用说明书PDF</a></p></html>')
 

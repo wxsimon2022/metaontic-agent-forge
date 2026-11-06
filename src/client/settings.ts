@@ -71,7 +71,7 @@ function makePage({ form, t, manager }) {
         }
         const [registerStatus, setRegisterStatus] = React.useState('idle');
         const [registerMessage, setRegisterMessage] = React.useState('');
-        // 注册用「邮箱（账号）+ 邮件验证码」：邮箱一次只发一把 Key
+        // 注册用「邮箱（账号）+ 邮件验证码」：邮箱一次只发一把 API密钥
         const [registerEmail, setRegisterEmail] = React.useState(() => {
           const saved = form.getSnapshot().value || {};
           return String(saved.registerEmail || '');
@@ -82,7 +82,7 @@ function makePage({ form, t, manager }) {
         const [codeCooldown, setCodeCooldown] = React.useState(0);
         // 发过码之后的冷却期里邮箱置灰（倒计时结束就放开，可以改邮箱重发）
         const emailLocked = codeCooldown > 0;
-        // 额度：设置页展示这把 Key 的剩余 / 已用
+        // 额度：设置页展示这把 API密钥的剩余 / 已用
         const [quota, setQuota] = React.useState(null);
         const [quotaStatus, setQuotaStatus] = React.useState('idle');
         const [quotaMessage, setQuotaMessage] = React.useState('');
@@ -101,7 +101,7 @@ function makePage({ form, t, manager }) {
           if (rechargeOpen && rechargeDialog.current && !rechargeDialog.current.open) rechargeDialog.current.showModal();
         }, [rechargeOpen]);
         React.useEffect(() => { setRechargeOpen(false); }, [selectedMode]);
-        // 使用记录：本机那把 Key 最近几次出片（服务端按设备认人，只给自己的）
+        // 使用记录：本机那把 API密钥最近几次出片（服务端按设备认人，只给自己的）
         const [usage, setUsage] = React.useState(null);
         const [usageStatus, setUsageStatus] = React.useState('idle');
         const [usageMessage, setUsageMessage] = React.useState('');
@@ -184,7 +184,7 @@ function makePage({ form, t, manager }) {
           get UPDATE_ATTEMPTS() { return UPDATE_ATTEMPTS; },
         });
 
-        // 打开设置页时，若本机还没配 Key，就先问服务端要回自己那把（设备绑定过就能取回）；
+        // 打开设置页时，若本机还没配 API密钥，就先问服务端要回自己那把（设备绑定过就能取回）；
         // 但刚点过「重置插件」的不算——那时要保持未登录，等用户自己再点「登录」。
         const restoreTried = React.useRef(false);
         React.useEffect(() => {
@@ -322,9 +322,9 @@ function makePage({ form, t, manager }) {
 
         /**
          * 重置插件 = 回到「刚装上」的样子：
-         * ① 把配置里这台机器写过的项全部移除（Key、来源标记、上游地址、邮箱、设备凭据、模型…），
+         * ① 把配置里这台机器写过的项全部移除（API密钥、来源标记、上游地址、邮箱、设备凭据、模型…），
          *    宿主重载配置后就退回插件默认值；
-         * ② 抹掉本机设备凭据，并打上「已登出」标记——否则重开设置页会自动向服务端取回那把 Key，
+         * ② 抹掉本机设备凭据，并打上「已登出」标记——否则重开设置页会自动向服务端取回那把 API密钥，
          *    看着就像重置没生效（这个标记在下次登录成功时清掉）。
          */
         async function reset() {
@@ -376,13 +376,16 @@ function makePage({ form, t, manager }) {
             const hiddenModel = field.key === 'model' && /seedance-2(?:-5|\.5)/i.test(String(current || ''));
             const hiddenMode = field.key === 'connectionMode' && HIDDEN_CONNECTION_MODES.includes(String(current || ''));
             const legacyMerge = field.key === 'mergeMode' && current === 'seamless';
-            const list = current && !options.includes(current) && !hiddenModel && !hiddenMode && !legacyMerge ? [...options, current] : options;
+            // 图片模型的旧型号已下线：存量配置按实际生效的在售型号显示，用户不用自己改；
+            // 归一只发生在读取时，用户不动这项就不会写回配置。
+            const retiredImageModel = field.key === 'imageModel' && !options.includes(String(current || ''));
+            const list = current && !options.includes(current) && !hiddenModel && !hiddenMode && !legacyMerge && !retiredImageModel ? [...options, current] : options;
             return h('select', {
               id,
               'data-field': field.key,
               className: `mov-input${field.mono ? ' mov-mono' : ''}`,
               style: inputStyle,
-              value: legacyMerge ? 'copy' : current ?? '',
+              value: legacyMerge ? 'copy' : retiredImageModel ? options[0] ?? '' : current ?? '',
               onChange: (event) => edit(field.key, event.target.value),
             }, [
               hiddenModel ? h('option', { key: 'hidden-current', value: current, hidden: true }, t('modelHiddenCurrent')) : null,
@@ -431,7 +434,7 @@ function makePage({ form, t, manager }) {
         // 少数需要解释的字段：模型选哪个（mini 便宜 / fast 贵一些）
         const hints = {
           connectionMode: selectedMode === 'metaontic'
-            ? [t('connectionMetaonticHint'), ' ', h('a', { key: 'metaontic-register', href: 'https://ai.bileego.com/', target: '_blank', rel: 'noopener noreferrer', style: { textDecoration: 'underline' } }, t('connectionMetaonticRegister'))]
+            ? [t('connectionMetaonticHint'), ' ', h('a', { key: 'metaontic-register', href: 'https://ai.bileego.com/sign-up?aff=VzYr', target: '_blank', rel: 'noopener noreferrer', style: { textDecoration: 'underline' } }, t('connectionMetaonticRegister'))]
             : serviceMode && !SERVICE_MODE_AVAILABLE ? t('connectionServiceUnavailable')
               : directMode && !VOLCENGINE_MODE_AVAILABLE ? t('connectionVolcengineUnavailable') : t('connectionModeHint'),
           metaonticApiKey: t('metaonticKeyHint'),
@@ -585,14 +588,14 @@ function makePage({ form, t, manager }) {
           disabled: TOKENS.error,
           failed: TOKENS.error,
         };
-        // 上游 / 地址 / Key 现在由注册流程写入，页面上不让手填。
-        // 只有「服务端下发的」才算配好：手改到配置里的 Key 拿不到额度、调用也会被拒，
+        // 上游 / 地址 / API密钥现在由注册流程写入，页面上不让手填。
+        // 只有「服务端下发的」才算配好：手改到配置里的 API密钥拿不到额度、调用也会被拒，
         // 这种情况要把注册区露出来，让用户点「登录」换回自己那把。
         const serverIssuedKey = value.keyOrigin === 'register'
           || Boolean(value.deviceId && value.deviceSecret && value.registerEmail);
         const keyReady = serviceMode && Boolean(snapshot.secrets?.apiKey || value.apiKey) && serverIssuedKey;
-        // 邮箱是唯一标识，只发一把：已经配好 Key 的（注册过的或手填的）整块注册区直接隐藏，
-        // 连「已经领到 Key 了」这类说明也不显示；要换 Key 只能找管理员。
+        // 邮箱是唯一标识，只发一把：已经配好 API密钥的（注册过的或手填的）整块注册区直接隐藏，
+        // 连「已经领到 API密钥了」这类说明也不显示；要换 API密钥只能找管理员。
         const registerText = registerStatus === 'ok'
           ? t('registerOk')
           : (registerStatus === 'partial'
@@ -605,14 +608,14 @@ function makePage({ form, t, manager }) {
         const quotaSymbol = quota && quota.currency_symbol ? quota.currency_symbol : '¥';
         const money = (field) => `${quotaSymbol}${formatMoney(quota ? quota[field] : 0)}`;
         const quotaReady = quotaStatus === 'ok' && quota;
-        // 没读到余额时给一句话（读取中 / 还没领 Key），读到了就显示金额。
+        // 没读到余额时给一句话（读取中 / 还没领 API密钥），读到了就显示金额。
         const quotaFallback = keyReady ? t('quotaLoading') : t('quotaNoKey');
         // 服务端开没开钱包（充值上下限、到账提示要用）：off 时充值入口整体不出现
         const walletReady = walletStatus === 'ok' && wallet && wallet.enabled;
         // 充值入口还受服务端后台的运行时开关控制：关掉时只剩余额与刷新，不显示「充值」
         const rechargeReady = rechargeEntryVisible(walletReady, wallet);
         const walletSymbol = wallet && wallet.currency_symbol ? wallet.currency_symbol : quotaSymbol;
-        // 余额就是中转站那把 Key 的额度（充值回调直接给 Key 加额度）：只显示这一个数，
+        // 余额就是中转站那把 API密钥的额度（充值回调直接给 API密钥加额度）：只显示这一个数，
         // 不再单独摆服务端的钱包余额，免得两个数字对不上。
         const balanceText = quotaReady
           ? (quota.unlimited_quota ? t('quotaUnlimited') : money('remain_amount'))
@@ -704,7 +707,7 @@ function makePage({ form, t, manager }) {
             const done = await waitRecharge(String(order && order.out_trade_no));
             if (done && done.credited) {
               setRechargeState('ok');
-              // 余额就是那把 Key 的额度：到账后按中转站的实时额度显示，不用本地账本的数字
+              // 余额就是那把 API密钥的额度：到账后按中转站的实时额度显示，不用本地账本的数字
               const fresh = await loadQuota().catch(() => null);
               const shown = fresh
                 ? `${quotaSymbol}${formatMoney(Number(fresh.remain_amount) || 0)}`
@@ -755,7 +758,7 @@ function makePage({ form, t, manager }) {
           });
         }
 
-        // 使用记录：本机那把 Key 最近几次出片（一次任务一行，含消耗多少钱）。
+        // 使用记录：本机那把 API密钥最近几次出片（一次任务一行，含消耗多少钱）。
         const usageRows = usage && Array.isArray(usage.items) ? usage.items : [];
         const usageSymbol = usage && usage.currency_symbol ? usage.currency_symbol : '¥';
         const usageSummaryText = usage
@@ -928,7 +931,7 @@ function makePage({ form, t, manager }) {
             : null,
         ]);
 
-        // 有 Key 就整块不渲染（连标题、提示文字都没有），页面上只剩配置项 + 额度卡片。
+        // 有 API密钥就整块不渲染（连标题、提示文字都没有），页面上只剩配置项 + 额度卡片。
         const registerBox = keyReady || !serviceMode || !SERVICE_MODE_AVAILABLE ? null : h('div', {
           key: 'register',
           className: 'mov-card',

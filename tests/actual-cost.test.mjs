@@ -18,7 +18,7 @@ test('final actual_quota used once, never summed with precharge, adjustment or d
  assert.equal(api.settledTaskCosts([row(2,0)],['task-a'])[0].quota,0);
  assert.equal(api.settledTaskCosts([row(1,null)],['task-a'])[0].status,'pending');
 });
-test('MetaOntic AI uses the video credential and same base; public conversion has no Key; correct amount returned',async()=>{
+test('MetaOntic AI uses the video credential and same base; public conversion has no API key; correct amount returned',async()=>{
  for(const mode of ['metaontic']){
  const calls=[];await mock(async(url,opts)=>{calls.push([url,opts]);return Response.json(url.endsWith('/api/status')?settings:{success:true,data:[row(2,231470),row(1)]});},async()=>{
  const r=await api.fetchActualCost({...config,connectionMode:mode},['task-a']);assert.equal(r.status,'settled');assert.equal(r.amount,3.379462);assert.equal(r.currency,'CNY');

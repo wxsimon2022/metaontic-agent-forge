@@ -80,7 +80,7 @@ export async function readSubmission(id) {
 export async function reconcileSubmission(config, id, taskId, confirmedNotCreated) {
   const record = await readSubmission(id);
   if (/\/tasks\/doubao$/.test(record.requestPath)) config = imageConfig(config);
-  if (record.identity !== submissionIdentity(config)) throw new Error('请恢复原接入方式、地址和 Key 后核对提交。');
+  if (record.identity !== submissionIdentity(config)) throw new Error('请恢复原接入方式、地址和 API密钥后核对提交。');
   const file = path.join(directory(), `${id}.json`);
   // 防止运行中的提交被另一工具解锁；进程崩溃残留需等请求超时预算过去。
   if (record.status === 'submitting' && Date.now() - Date.parse(record.createdAt) < 150000) throw new Error('原提交仍可能正在执行，请等待其返回后再核对。');

@@ -1,5 +1,5 @@
 import { timedStage } from '../utils/timing.js';
-/** A/B视频完成后的真实结算查询。只读本Key日志，绝不用预扣或估价冒充实际金额。 */
+/** A/B视频完成后的真实结算查询。只读本 API密钥日志，绝不用预扣或估价冒充实际金额。 */
 import { snapshotConfig, isVolcengine, resolveApiKey, resolveBaseUrl } from '../providers/connection.js';
 
 function number(value) {
@@ -42,13 +42,13 @@ export async function fetchActualCost(config, taskIds, signal) {
     return body;
   }
   try {
-    // 与生成共用同一连接快照和视频Key，绝不读取图片Key或管理端凭证。
+    // 与生成共用同一连接快照和视频 API密钥，绝不读取图片 API密钥或管理端凭证。
     const body = await get('/api/log/token', true);
     const rows = Array.isArray(body.data) ? body.data : body.data?.items;
     if (!Array.isArray(rows)) return pending('费用待查询：中转站未返回有效消费日志。');
     const settled = settledTaskCosts(rows, taskIds);
     const known = settled.filter(x => x.status === 'settled');
-    if (!known.length) return pending('待结算：本Key最近日志中尚未找到该任务的最终结算，可用video_status补查。');
+    if (!known.length) return pending('待结算：本 API密钥最近日志中尚未找到该任务的最终结算，可用video_status补查。');
     let conversion;
     try {
       const settings = (await get('/api/status', false)).data;

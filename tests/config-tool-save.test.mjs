@@ -6,6 +6,7 @@ const source = readFileSync(new URL('../index.js', import.meta.url), 'utf8');
 function harness() {
   const c = vm.createContext({
     SERVICE_MODE_AVAILABLE: true, VOLCENGINE_MODE_AVAILABLE: false,
+    IMAGE_MODEL: 'doubao-seedream-5-0-pro-260628',
     CONFIG_FIELDS: ['connectionMode', 'apiKey', 'baseUrl'],
     READ_ONLY_CONFIG_FIELDS: new Set(['apiKey']),
     ref: (config, key, fallback) => config[key] ?? fallback,

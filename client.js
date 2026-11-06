@@ -309,6 +309,13 @@
   var METAONTIC_BASE_URL = "https://ai.bileego.com";
   var SERVICE_MODE_AVAILABLE = true;
   var VOLCENGINE_MODE_AVAILABLE = false;
+  var IMAGE_MODEL = "doubao-seedream-5-0-pro-260628";
+  var RETIRED_IMAGE_MODELS = ["doubao-seedream-5-0-260128"];
+  function resolveImageModel(value) {
+    const model = String(value ?? "").trim();
+    if (!model || RETIRED_IMAGE_MODELS.includes(model)) return IMAGE_MODEL;
+    return model;
+  }
   function connectionDefaults(values) {
     const text = (key, fallback) => String(values[key] ?? "").trim() || fallback;
     const volc = values.connectionMode === "volcengine";
@@ -317,7 +324,7 @@
       submitPath: volc ? "/api/v3/contents/generations/tasks" : text("submitPath", "/doubao/api/v3/contents/generations/tasks"),
       queryPath: volc ? "/api/v3/contents/generations/tasks/{task_id}" : text("queryPath", "/doubao/api/v3/contents/generations/tasks/{task_id}"),
       model: text("model", "doubao-seedance-2-0-mini-260615"),
-      imageModel: text("imageModel", "doubao-seedream-5-0-260128"),
+      imageModel: resolveImageModel(text("imageModel", IMAGE_MODEL)),
       imageUseVideoKey: values.imageUseVideoKey !== false
     };
   }
@@ -331,13 +338,14 @@
       "doubao-seedance-2-0-fast-260128"
     ];
     const SELECTS = {
-      // 接入方式：A 服务端（邮箱登录领 Key）、B MetaOntic AI（手填 Key）、C 火山直连。
+      // 接入方式：A 服务端（邮箱登录领 API密钥）、B MetaOntic AI（手填 API密钥）、C 火山直连。
       // 临时下架某个方式时，先关掉 connection-defaults.ts 里对应的开关，再把它从这里去掉：
       // 设置页会改用隐藏项显示已有取值（见 settings.ts 的 HIDDEN_CONNECTION_MODES），
       // 列表里选不到它，也不会把已有配置静默换成别的渠道。
-      connectionMode: VOLCENGINE_MODE_AVAILABLE ? ["service", "metaontic", "volcengine"] : ["service", "metaontic"],
+      connectionMode: VOLCENGINE_MODE_AVAILABLE ? ["metaontic", "service", "volcengine"] : ["metaontic", "service"],
       model: MODEL_OPTIONS,
-      imageModel: ["doubao-seedream-5-0-260128", "doubao-seedream-5-0-pro-260628"],
+      // 图片模型只提供在售的 pro 版；旧型号已下线，存量配置由 resolveImageModel 归一到这一项。
+      imageModel: [IMAGE_MODEL],
       ratio: ["16:9", "9:16", "4:3", "3:4", "1:1", "adaptive"],
       mergeMode: ["copy", "reencode"]
     };
@@ -432,22 +440,22 @@
   // src/client/locale.ts
   function createDictionaries() {
     const zh = {
-      summaryEmpty: "\u8BF7\u9009\u62E9\u63A5\u5165\u65B9\u5F0F\uFF0C\u767B\u5F55\u6216\u586B\u5199 API Key \u540E\u4FDD\u5B58\u3002",
+      summaryEmpty: "\u8BF7\u9009\u62E9\u63A5\u5165\u65B9\u5F0F\uFF0C\u767B\u5F55\u6216\u586B\u5199 API\u5BC6\u94A5\u540E\u4FDD\u5B58\u3002",
       summary: "{provider} \xB7 {model}",
-      apiKeyConfigured: "\u5DF2\u914D\u7F6E\uFF0C\u7559\u7A7A\u4FDD\u7559\u73B0\u6709\u5BC6\u94A5",
+      apiKeyConfigured: "\u5DF2\u914D\u7F6E\uFF0C\u7559\u7A7A\u4FDD\u7559\u73B0\u6709 API\u5BC6\u94A5",
       connectionMode: "\u63A5\u5165\u65B9\u5F0F",
-      connectionModeHint: "\u90AE\u7BB1\u767B\u5F55\u9886\u53D6\u5BC6\u94A5\uFF0C\u6216\u4F7F\u7528\u81EA\u5DF1\u7684 MetaOntic AI \u5BC6\u94A5\u3002\u5207\u6362\u540E\u4FDD\u5B58\u751F\u6548\u3002",
-      connectionServiceUnavailable: "MetaOnticVideo \u670D\u52A1\u7AEF\u65B9\u5F0F\u6682\u65F6\u4E0D\u53EF\u7528\uFF1A\u8BF7\u6539\u7528 MetaOntic AI \u6216\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\uFF0C\u586B\u597D Key \u4FDD\u5B58\u540E\u751F\u6548\u3002",
+      connectionModeHint: "\u90AE\u7BB1\u767B\u5F55\u9886\u53D6 API\u5BC6\u94A5\uFF0C\u6216\u4F7F\u7528\u81EA\u5DF1\u7684 MetaOntic AI API\u5BC6\u94A5\u3002\u5207\u6362\u540E\u4FDD\u5B58\u751F\u6548\u3002",
+      connectionServiceUnavailable: "MetaOnticVideo \u670D\u52A1\u7AEF\u65B9\u5F0F\u6682\u65F6\u4E0D\u53EF\u7528\uFF1A\u8BF7\u6539\u7528 MetaOntic AI \u6216\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\uFF0C\u586B\u597D API\u5BC6\u94A5\u4FDD\u5B58\u540E\u751F\u6548\u3002",
       connectionVolcengineUnavailable: "\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\u5F53\u524D\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF1A\u5DF2\u6709\u7684\u914D\u7F6E\u4ECD\u53EF\u7EE7\u7EED\u751F\u6210\uFF1B\u5982\u9700\u66F4\u6362\uFF0C\u8BF7\u5728\u300C\u63A5\u5165\u65B9\u5F0F\u300D\u91CC\u9009\u62E9 MetaOnticVideo \u6216 MetaOntic AI\u3002",
-      connectionMetaonticHint: "\u4F7F\u7528 MetaOntic AI \u7684 API Key\uFF0C\u586B\u5199\u540E\u4FDD\u5B58\u751F\u6548\u3002",
-      connectionMetaonticRegister: "\u6CE8\u518C\u83B7\u53D6 Key",
-      volcengineKeyHint: "\u586B\u5199\u706B\u5C71\u65B9\u821F\u63A7\u5236\u53F0\u7684 API Key \u540E\u4FDD\u5B58\uFF0C\u8D39\u7528\u7531\u706B\u5C71\u5F15\u64CE\u8D26\u6237\u627F\u62C5\u3002\u9700\u8981\u81EA\u884C\u6838\u5BF9\u597D Key \u7684\u6A21\u578B\u80FD\u529B\u3002",
+      connectionMetaonticHint: "\u4F7F\u7528 MetaOntic AI \u7684 API\u5BC6\u94A5\uFF0C\u586B\u5199\u540E\u4FDD\u5B58\u751F\u6548\u3002",
+      connectionMetaonticRegister: "\u6CE8\u518C\u83B7\u53D6 API\u5BC6\u94A5",
+      volcengineKeyHint: "\u586B\u5199\u706B\u5C71\u65B9\u821F\u63A7\u5236\u53F0\u7684 API\u5BC6\u94A5\u540E\u4FDD\u5B58\uFF0C\u8D39\u7528\u7531\u706B\u5C71\u5F15\u64CE\u8D26\u6237\u627F\u62C5\u3002\u9700\u8981\u81EA\u884C\u6838\u5BF9\u597D API\u5BC6\u94A5\u7684\u6A21\u578B\u80FD\u529B\u3002",
       metaontic: "MetaOntic AI",
-      metaonticApiKey: "MetaOntic AI API Key",
-      showKey: "\u663E\u793A\u5BC6\u94A5",
-      hideKey: "\u9690\u85CF\u5BC6\u94A5",
-      metaonticKeyHint: "\u586B\u5199 API Key \u540E\u4FDD\u5B58\uFF0C\u65E0\u9700\u90AE\u7BB1\u767B\u5F55\u3002\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39\uFF0C\u8D39\u7528\u4E0E\u7528\u91CF\u8BF7\u5728\u6E20\u9053\u5E73\u53F0\u67E5\u770B\u3002",
-      volcengineApiKey: "\u706B\u5C71\u5F15\u64CE API Key",
+      metaonticApiKey: "MetaOntic AI API\u5BC6\u94A5",
+      showKey: "\u663E\u793A API\u5BC6\u94A5",
+      hideKey: "\u9690\u85CF API\u5BC6\u94A5",
+      metaonticKeyHint: "\u586B\u5199 API\u5BC6\u94A5\u540E\u4FDD\u5B58\uFF0C\u65E0\u9700\u90AE\u7BB1\u767B\u5F55\u3002\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39\uFF0C\u8D39\u7528\u4E0E\u7528\u91CF\u8BF7\u5728\u6E20\u9053\u5E73\u53F0\u67E5\u770B\u3002",
+      volcengineApiKey: "\u706B\u5C71\u5F15\u64CE API\u5BC6\u94A5",
       service: "MetaOnticVideo",
       serviceUnavailable: "MetaOnticVideo\uFF08\u6682\u65F6\u4E0D\u53EF\u7528\uFF09",
       volcengine: "\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE",
@@ -456,15 +464,15 @@
       modelHiddenCurrent: "\u5F53\u524D\u6A21\u578B\uFF08\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF09",
       releaseNotesTitle: "\u66F4\u65B0\u5185\u5BB9",
       releaseUpdatedAt: "{time}",
-      resetConfirm: "\u786E\u5B9A\u91CD\u7F6E\u63D2\u4EF6\u5417\uFF1F\u8FD9\u4F1A\u6E05\u9664\u672C\u63D2\u4EF6\u4FDD\u5B58\u7684\u914D\u7F6E\u3001API Key \u548C\u767B\u5F55\u72B6\u6001\uFF0C\u9700\u8981\u91CD\u65B0\u914D\u7F6E\u3002\u5DF2\u751F\u6210\u7684\u89C6\u9891\u4E0D\u4F1A\u5220\u9664\u3002",
+      resetConfirm: "\u786E\u5B9A\u91CD\u7F6E\u63D2\u4EF6\u5417\uFF1F\u8FD9\u4F1A\u6E05\u9664\u672C\u63D2\u4EF6\u4FDD\u5B58\u7684\u914D\u7F6E\u3001API\u5BC6\u94A5\u548C\u767B\u5F55\u72B6\u6001\uFF0C\u9700\u8981\u91CD\u65B0\u914D\u7F6E\u3002\u5DF2\u751F\u6210\u7684\u89C6\u9891\u4E0D\u4F1A\u5220\u9664\u3002",
       model: "\u89C6\u9891\u6A21\u578B",
       imageModel: "\u56FE\u7247\u6A21\u578B",
-      imageUseVideoKey: "\u56FE\u7247\u6A21\u578B\u4E0E\u89C6\u9891\u6A21\u578B\u5171\u7528 Key",
-      sharedModelKey: "\u5171\u7528 Key",
+      imageUseVideoKey: "\u56FE\u7247\u6A21\u578B\u4E0E\u89C6\u9891\u6A21\u578B\u5171\u7528 API\u5BC6\u94A5",
+      sharedModelKey: "\u5171\u7528 API\u5BC6\u94A5",
       serviceKeyConfigured: "\u5DF2\u914D\u7F6E\uFF08\u767B\u5F55\u4E0B\u53D1\uFF09",
-      serviceKeyMissing: "\u8BF7\u5148\u767B\u5F55\u83B7\u53D6 Key",
-      videoModelKey: "\u89C6\u9891\u6A21\u578B Key",
-      imageApiKey: "\u56FE\u7247\u6A21\u578B Key",
+      serviceKeyMissing: "\u8BF7\u5148\u767B\u5F55\u83B7\u53D6 API\u5BC6\u94A5",
+      videoModelKey: "\u89C6\u9891\u6A21\u578B API\u5BC6\u94A5",
+      imageApiKey: "\u56FE\u7247\u6A21\u578B API\u5BC6\u94A5",
       resolution: "\u89C6\u9891\u6E05\u6670\u5EA6",
       imageModelHint: "\u771F\u4EBA\u53C2\u8003\u56FE\u5148\u7528 Seedream \u8F6C\u4E3A\u975E\u771F\u4EBA\u98CE\u683C\uFF0C\u56FE\u7247\u8C03\u7528\u53E6\u884C\u8BA1\u8D39\u3002",
       modelHint: "mini \u4FA7\u91CD\u6210\u672C\uFF0Cfast \u4FA7\u91CD\u751F\u6210\u901F\u5EA6\u3002\u5B9E\u9645\u4EF7\u683C\u4EE5\u6240\u9009\u6E20\u9053\u4E3A\u51C6\u3002",
@@ -485,7 +493,7 @@
       ffmpegManual: "\u60F3\u81EA\u5DF1\u88C5\uFF1AmacOS \u7528 Homebrew\uFF0CWindows \u7528 winget\uFF0CLinux \u7528\u7CFB\u7EDF\u5305\u7BA1\u7406\u5668\uFF1B\u88C5\u5B8C\u786E\u8BA4\u547D\u4EE4\u884C\u91CC\u80FD\u8DD1 ffmpeg -version \u5C31\u884C\u3002",
       registerEmail: "\u90AE\u7BB1",
       registerTitle: "\u90AE\u7BB1\u767B\u5F55",
-      registerHint: "\u4F7F\u7528\u90AE\u7BB1\u9A8C\u8BC1\u7801\u767B\u5F55\uFF0C\u9996\u6B21\u767B\u5F55\u81EA\u52A8\u6CE8\u518C\u5E76\u9886\u53D6\u5BC6\u94A5\u3002",
+      registerHint: "\u4F7F\u7528\u90AE\u7BB1\u9A8C\u8BC1\u7801\u767B\u5F55\uFF0C\u9996\u6B21\u767B\u5F55\u81EA\u52A8\u6CE8\u518C\u5E76\u9886\u53D6 API\u5BC6\u94A5\u3002",
       registerEmailPlaceholder: "\u4F60\u7684\u90AE\u7BB1\uFF0C\u4F8B\u5982 name@example.com",
       registerCode: "\u9A8C\u8BC1\u7801",
       registerCodePlaceholder: "\u9A8C\u8BC1\u7801",
@@ -496,7 +504,7 @@
       registerEmailLocked: "\u5012\u8BA1\u65F6\u7ED3\u675F\u540E\u53EF\u4FEE\u6539\u90AE\u7BB1\u3002",
       registerNeedEmail: "\u8BF7\u5148\u586B\u5199\u90AE\u7BB1\uFF0C\u518D\u83B7\u53D6\u9A8C\u8BC1\u7801\u3002",
       registerNeedCode: "\u8BF7\u8F93\u5165\u90AE\u4EF6\u4E2D\u7684\u9A8C\u8BC1\u7801\u3002",
-      registerRestored: "\u5DF2\u6062\u590D\u672C\u673A\u5BC6\u94A5\u5E76\u4FDD\u5B58\u8FDE\u63A5\u914D\u7F6E\u3002",
+      registerRestored: "\u5DF2\u6062\u590D\u672C\u673A API\u5BC6\u94A5\u5E76\u4FDD\u5B58\u8FDE\u63A5\u914D\u7F6E\u3002",
       quotaTitle: "\u989D\u5EA6",
       quotaRemain: "\u5269\u4F59",
       quotaUsed: "\u5DF2\u7528",
@@ -541,7 +549,7 @@
       usageRefresh: "\u5237\u65B0\u8BB0\u5F55",
       usageFailed: "\u8BFB\u53D6\u4F7F\u7528\u8BB0\u5F55\u5931\u8D25\uFF1A{message}",
       usageMore: "\u4EC5\u663E\u793A\u6700\u8FD1 {count} \u6761\u8BB0\u5F55\u3002",
-      usageKeyMissing: "\u767B\u5F55\u540E\u53EF\u67E5\u770B\u6B64\u5BC6\u94A5\u7684\u4F7F\u7528\u8BB0\u5F55\u3002",
+      usageKeyMissing: "\u767B\u5F55\u540E\u53EF\u67E5\u770B\u6B64 API\u5BC6\u94A5\u7684\u4F7F\u7528\u8BB0\u5F55\u3002",
       usageStatusOk: "\u6210\u529F",
       usageStatusFailed: "\u5931\u8D25",
       versionTitle: "\u63D2\u4EF6\u7248\u672C",
@@ -555,7 +563,7 @@
       versionOptional: "\u8FD9\u662F\u666E\u901A\u66F4\u65B0\uFF0C\u4F60\u53EF\u4EE5\u81EA\u884C\u51B3\u5B9A\u662F\u5426\u5347\u7EA7\u3002\u7A0D\u540E\u5904\u7406\u4E0D\u5F71\u54CD\u7EE7\u7EED\u4F7F\u7528\uFF0C\u63D2\u4EF6\u4E0D\u4F1A\u81EA\u52A8\u5B89\u88C5\u3002",
       versionLater: "\u7A0D\u540E\u518D\u8BF4",
       versionUpdateConfirm: "\u786E\u8BA4\u66F4\u65B0\u5230 v{version}",
-      versionUpdateConfirmHint: "\u66F4\u65B0\u671F\u95F4\u8BBE\u7F6E\u9875\u53EF\u80FD\u77ED\u6682\u5173\u95ED\uFF0C\u73B0\u6709\u914D\u7F6E\u4E0E\u5BC6\u94A5\u4F1A\u4FDD\u7559\u3002",
+      versionUpdateConfirmHint: "\u66F4\u65B0\u671F\u95F4\u8BBE\u7F6E\u9875\u53EF\u80FD\u77ED\u6682\u5173\u95ED\uFF0C\u73B0\u6709\u914D\u7F6E\u4E0E API\u5BC6\u94A5\u4F1A\u4FDD\u7559\u3002",
       versionUpdating: "\u66F4\u65B0\u4E2D\u2026",
       versionUpdateDone: "\u5DF2\u66F4\u65B0\u5230 v{version}\uFF0C\u5DF2\u901A\u8FC7\u70ED\u52A0\u8F7D\u751F\u6548\uFF0C\u65E0\u9700\u91CD\u542F\u3002\u73B0\u6709\u5BF9\u8BDD\u4E0B\u4E00\u8F6E\u4F7F\u7528\u6700\u65B0\u63D2\u4EF6\u89C4\u5219\u3002",
       versionUpdatePending: "v{version} \u5DF2\u5B89\u88C5\uFF0C\u5F53\u524D\u914D\u7F6E\u5C1A\u672A\u542F\u7528\u65B0\u7248\uFF0C\u8BF7\u5728\u63D2\u4EF6\u9875\u68C0\u67E5\u542F\u7528\u72B6\u6001\u3002",
@@ -564,13 +572,13 @@
       versionUpdateRetry: "\u66F4\u65B0\u672A\u5B8C\u6210\uFF0C\u6B63\u5728\u91CD\u8BD5\uFF08{attempt}/{total}\uFF09\u2026",
       versionUpdateFailed: "\u5728\u7EBF\u66F4\u65B0\u5931\u8D25\uFF1A{message}",
       versionUpdateRemoved: "\u63D2\u4EF6\u5DF2\u5378\u8F7D\uFF0C\u4F46\u91CD\u65B0\u5B89\u88C5\u5931\u8D25\u3002\u8BF7\u5230\u300C\u63D2\u4EF6\u300D\u9875\u91CD\u65B0\u6DFB\u52A0\u3002",
-      versionUpdateRateLimited: "Gitee \u8BF7\u6C42\u8FC7\u4E8E\u9891\u7E41\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u3002\u73B0\u6709\u914D\u7F6E\u4E0E\u5BC6\u94A5\u4F1A\u4FDD\u7559\u3002",
+      versionUpdateRateLimited: "Gitee \u8BF7\u6C42\u8FC7\u4E8E\u9891\u7E41\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u3002\u73B0\u6709\u914D\u7F6E\u4E0E API\u5BC6\u94A5\u4F1A\u4FDD\u7559\u3002",
       versionUpdateLockfile: "\u5B89\u88C5\u76EE\u5F55\u7684 pnpm-lock.yaml \u91CC\u6709\u4E00\u6761\u672C\u63D2\u4EF6\u7F3A\u5C11 integrity \u7684\u65E7\u8BB0\u5F55\uFF0Cpnpm \u56E0\u6B64\u62D2\u7EDD\u5B89\u88C5\uFF08ERR_PNPM_MISSING_TARBALL_INTEGRITY\uFF09\u3002\u63D2\u4EF6\u4F1A\u6BCF 2 \u79D2\u68C0\u67E5\u4E00\u6B21\u3001\u81EA\u52A8\u6E05\u6389\u8FD9\u6761\u8BB0\u5F55\u5E76\u4FDD\u7559\u5907\u4EFD\uFF0C\u66F4\u65B0\u5931\u8D25\u540E\u4E5F\u4F1A\u7B49\u6E05\u7406\u5B8C\u6210\u81EA\u52A8\u91CD\u8BD5\uFF1B\u82E5\u4ECD\u7136\u5931\u8D25\uFF0C\u5B8C\u5168\u9000\u51FA Harness \u540E\u624B\u52A8\u5220\u9664\u63D2\u4EF6\u5B89\u88C5\u76EE\u5F55\u4E0B\u7684 pnpm-lock.yaml \u518D\u8BD5\u3002",
       versionUpdateUnavailable: "\u5F53\u524D Harness \u4E0D\u652F\u6301\u5728\u7EBF\u66F4\u65B0\uFF0C\u8BF7\u5230\u300C\u63D2\u4EF6\u300D\u9875\u5378\u8F7D\u540E\u91CD\u65B0\u6DFB\u52A0\u3002",
-      versionHint: "\u53EF\u5728\u6B64\u68C0\u67E5\u5E76\u5B89\u88C5\u65B0\u7248\u672C\uFF0C\u73B0\u6709\u914D\u7F6E\u4E0E\u5BC6\u94A5\u4F1A\u4FDD\u7559\u3002",
+      versionHint: "\u53EF\u5728\u6B64\u68C0\u67E5\u5E76\u5B89\u88C5\u65B0\u7248\u672C\uFF0C\u73B0\u6709\u914D\u7F6E\u4E0E API\u5BC6\u94A5\u4F1A\u4FDD\u7559\u3002",
       versionCheckedAt: "\u68C0\u67E5\u4E8E {time}",
       sectionGeneration: "\u751F\u6210\u53C2\u6570",
-      sectionConnection: "\u63A5\u5165\u4E0E\u5BC6\u94A5",
+      sectionConnection: "\u63A5\u5165\u4E0E API\u5BC6\u94A5",
       sectionVideo: "\u753B\u9762\u4E0E\u58F0\u97F3",
       sectionModels: "\u6A21\u578B\u914D\u7F6E",
       sectionCombined: "\u66F4\u591A\u8BBE\u7F6E",
@@ -583,11 +591,11 @@
       segmentsRetained: "\u6240\u6709\u539F\u59CB\u5206\u6BB5\u81EA\u52A8\u4FDD\u7559\uFF0C\u4FBF\u4E8E\u9884\u89C8\u3001\u7EED\u505A\u548C\u91CD\u65B0\u526A\u8F91\u3002",
       register: "\u767B\u5F55",
       registerWorking: "\u767B\u5F55\u4E2D\u2026",
-      registerOk: "\u767B\u5F55\u6210\u529F\uFF0C\u5BC6\u94A5\u4E0E\u8FDE\u63A5\u914D\u7F6E\u5DF2\u4FDD\u5B58\u3002",
-      registerPartial: "\u5DF2\u83B7\u53D6\u5BC6\u94A5\uFF0C\u4F46\u90E8\u5206\u8BBE\u7F6E\u4FDD\u5B58\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u540E\u91CD\u8BD5\u3002",
+      registerOk: "\u767B\u5F55\u6210\u529F\uFF0CAPI\u5BC6\u94A5\u4E0E\u8FDE\u63A5\u914D\u7F6E\u5DF2\u4FDD\u5B58\u3002",
+      registerPartial: "\u5DF2\u83B7\u53D6 API\u5BC6\u94A5\uFF0C\u4F46\u90E8\u5206\u8BBE\u7F6E\u4FDD\u5B58\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u540E\u91CD\u8BD5\u3002",
       registerFailed: "\u767B\u5F55\u5931\u8D25\uFF1A{message}",
       registerDisabled: "\u767B\u5F55\u670D\u52A1\u6682\u4E0D\u53EF\u7528\uFF1A{message}",
-      registerNoKey: "\u767B\u5F55\u670D\u52A1\u672A\u8FD4\u56DE\u5BC6\u94A5\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u6216\u8054\u7CFB\u7BA1\u7406\u5458\u3002",
+      registerNoKey: "\u767B\u5F55\u670D\u52A1\u672A\u8FD4\u56DE API\u5BC6\u94A5\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u6216\u8054\u7CFB\u7BA1\u7406\u5458\u3002",
       ratio: "\u753B\u9762\u6BD4\u4F8B",
       audioSettings: "\u58F0\u97F3\u8BBE\u7F6E",
       ratioLayoutHint: "\u9009\u62E9\u6A2A\u5C4F\u3001\u7AD6\u5C4F\u6216\u81EA\u52A8\u9002\u914D\u753B\u9762\u3002",
@@ -598,7 +606,7 @@
       maxWaitMs: "\u5355\u4E2A\u4EFB\u52A1\u6700\u957F\u7B49\u5F85\u65F6\u95F4\uFF08\u79D2\uFF09",
       save: "\u4FDD\u5B58",
       reset: "\u91CD\u7F6E\u63D2\u4EF6",
-      resetHint: "\u6E05\u9664\u672C\u673A\u4FDD\u5B58\u7684\u5BC6\u94A5\u4E0E\u81EA\u5B9A\u4E49\u8BBE\u7F6E\uFF0C\u6062\u590D\u9ED8\u8BA4\u914D\u7F6E\u3002",
+      resetHint: "\u6E05\u9664\u672C\u673A\u4FDD\u5B58\u7684 API\u5BC6\u94A5\u4E0E\u81EA\u5B9A\u4E49\u8BBE\u7F6E\uFF0C\u6062\u590D\u9ED8\u8BA4\u914D\u7F6E\u3002",
       saving: "\u4FDD\u5B58\u4E2D\u2026",
       saved: "\u8BBE\u7F6E\u5DF2\u4FDD\u5B58\uFF0C\u914D\u7F6E\u91CD\u65B0\u52A0\u8F7D\u540E\u751F\u6548\u3002",
       saveFailed: "\u4FDD\u5B58\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u8BBE\u7F6E\u540E\u91CD\u8BD5\u3002",
@@ -633,11 +641,11 @@
       connectionMetaonticRegister: "Register to get a key",
       volcengineKeyHint: "Enter an API key from the Volcano Ark console and save. No email login required. Billed to your Volcano Engine account. Check which models your key can access.",
       metaontic: "MetaOntic AI",
-      metaonticApiKey: "MetaOntic AI API Key",
+      metaonticApiKey: "MetaOntic AI API key",
       showKey: "Show key",
       hideKey: "Hide key",
       metaonticKeyHint: "Enter an API key and save. No email login required. Check actual charges and usage on your provider platform.",
-      volcengineApiKey: "Volcano Engine API Key",
+      volcengineApiKey: "Volcano Engine API key",
       service: "MetaOnticVideo",
       serviceUnavailable: "MetaOnticVideo (unavailable)",
       volcengine: "Volcano Engine",
@@ -746,7 +754,7 @@
       register: "Log in",
       registerWorking: "Logging in\u2026",
       registerOk: "Logged in. Your key and connection settings have been saved.",
-      registerPartial: "Key received, but some settings could not be saved. Review them and try again.",
+      registerPartial: "API key received, but some settings could not be saved. Review them and try again.",
       registerFailed: "Log in failed: {message}",
       registerDisabled: "Login service unavailable: {message}",
       registerNoKey: "The login service returned no key. Try again later or contact an administrator.",
@@ -1081,13 +1089,13 @@
         const local = /^(?:file:|[a-z]:[\\/]|[\\/]|~[\\/])/i.test(source);
         if (linked || local && !/\.(?:tgz|tar\.gz)(?:[?#].*)?$/i.test(source)) {
           context.setUpdateStatus("failed");
-          context.setUpdateMessage("\u5F53\u524D\u4E3A\u672C\u5730\u76EE\u5F55\u94FE\u63A5\u5B89\u88C5\uFF0C\u5DF2\u505C\u6B62\u5728\u7EBF\u66F4\u65B0\uFF0C\u672A\u6267\u884C\u66FF\u6362\u3002\u76EE\u5F55\u94FE\u63A5\u5207\u6362\u4E3A\u6210\u54C1\u5305\u5B58\u5728\u6587\u4EF6\u88AB\u6E05\u7A7A\u6216\u4ECD\u52A0\u8F7D\u65E7\u76EE\u5F55\u7684\u98CE\u9669\u3002\u8BF7\u5148\u5907\u4EFD\u5E76\u4FDD\u7559\u539F\u76EE\u5F55\uFF0C\u4F7F\u7528\u6210\u54C1\u5305\u8FC1\u79FB\u6D41\u7A0B\uFF1B\u82E5\u76EE\u5F55\u5DF2\u7A7A\uFF0C\u5148\u6062\u590D\u5B8C\u6574package\u3002\u4E0D\u8981\u91CD\u7F6EKey\u6216\u76F4\u63A5\u5378\u8F7D\u3002");
+          context.setUpdateMessage("\u5F53\u524D\u4E3A\u672C\u5730\u76EE\u5F55\u94FE\u63A5\u5B89\u88C5\uFF0C\u5DF2\u505C\u6B62\u5728\u7EBF\u66F4\u65B0\uFF0C\u672A\u6267\u884C\u66FF\u6362\u3002\u76EE\u5F55\u94FE\u63A5\u5207\u6362\u4E3A\u6210\u54C1\u5305\u5B58\u5728\u6587\u4EF6\u88AB\u6E05\u7A7A\u6216\u4ECD\u52A0\u8F7D\u65E7\u76EE\u5F55\u7684\u98CE\u9669\u3002\u8BF7\u5148\u5907\u4EFD\u5E76\u4FDD\u7559\u539F\u76EE\u5F55\uFF0C\u4F7F\u7528\u6210\u54C1\u5305\u8FC1\u79FB\u6D41\u7A0B\uFF1B\u82E5\u76EE\u5F55\u5DF2\u7A7A\uFF0C\u5148\u6062\u590D\u5B8C\u6574package\u3002\u4E0D\u8981\u91CD\u7F6E API\u5BC6\u94A5\u6216\u76F4\u63A5\u5378\u8F7D\u3002");
           return;
         }
         if (bundle.error || bundle.meta?.error) throw new Error("metadata-unavailable");
       } catch {
         context.setUpdateStatus("failed");
-        context.setUpdateMessage("\u65E0\u6CD5\u6838\u5B9E\u63D2\u4EF6\u5B89\u88C5\u6765\u6E90\u6216\u5143\u4FE1\u606F\uFF0C\u5DF2\u505C\u6B62\u66F4\u65B0\uFF0C\u672A\u6267\u884C\u66FF\u6362\u3002\u8BF7\u4FDD\u7559\u73B0\u6709\u914D\u7F6E\u548C\u5B89\u88C5\u76EE\u5F55\uFF0C\u6838\u5BF9\u5B89\u88C5\u72B6\u6001\u540E\u518D\u5904\u7406\uFF1B\u4E0D\u8981\u91CD\u7F6EKey\u6216\u5148\u5378\u8F7D\u3002");
+        context.setUpdateMessage("\u65E0\u6CD5\u6838\u5B9E\u63D2\u4EF6\u5B89\u88C5\u6765\u6E90\u6216\u5143\u4FE1\u606F\uFF0C\u5DF2\u505C\u6B62\u66F4\u65B0\uFF0C\u672A\u6267\u884C\u66FF\u6362\u3002\u8BF7\u4FDD\u7559\u73B0\u6709\u914D\u7F6E\u548C\u5B89\u88C5\u76EE\u5F55\uFF0C\u6838\u5BF9\u5B89\u88C5\u72B6\u6001\u540E\u518D\u5904\u7406\uFF1B\u4E0D\u8981\u91CD\u7F6E API\u5BC6\u94A5\u6216\u5148\u5378\u8F7D\u3002");
         return;
       }
       const requestId = `${context.PLUGIN_PACKAGE}-update-${Date.now()}`;
@@ -2221,13 +2229,14 @@
             const hiddenModel = field.key === "model" && /seedance-2(?:-5|\.5)/i.test(String(current || ""));
             const hiddenMode = field.key === "connectionMode" && HIDDEN_CONNECTION_MODES.includes(String(current || ""));
             const legacyMerge = field.key === "mergeMode" && current === "seamless";
-            const list = current && !options.includes(current) && !hiddenModel && !hiddenMode && !legacyMerge ? [...options, current] : options;
+            const retiredImageModel = field.key === "imageModel" && !options.includes(String(current || ""));
+            const list = current && !options.includes(current) && !hiddenModel && !hiddenMode && !legacyMerge && !retiredImageModel ? [...options, current] : options;
             return h("select", {
               id,
               "data-field": field.key,
               className: `mov-input${field.mono ? " mov-mono" : ""}`,
               style: inputStyle,
-              value: legacyMerge ? "copy" : current ?? "",
+              value: legacyMerge ? "copy" : retiredImageModel ? options[0] ?? "" : current ?? "",
               onChange: (event) => edit(field.key, event.target.value)
             }, [
               hiddenModel ? h("option", { key: "hidden-current", value: current, hidden: true }, t("modelHiddenCurrent")) : null,
@@ -2273,7 +2282,7 @@
           ]);
         }
         const hints = {
-          connectionMode: selectedMode === "metaontic" ? [t("connectionMetaonticHint"), " ", h("a", { key: "metaontic-register", href: "https://ai.bileego.com/", target: "_blank", rel: "noopener noreferrer", style: { textDecoration: "underline" } }, t("connectionMetaonticRegister"))] : serviceMode && !SERVICE_MODE_AVAILABLE ? t("connectionServiceUnavailable") : directMode && !VOLCENGINE_MODE_AVAILABLE ? t("connectionVolcengineUnavailable") : t("connectionModeHint"),
+          connectionMode: selectedMode === "metaontic" ? [t("connectionMetaonticHint"), " ", h("a", { key: "metaontic-register", href: "https://ai.bileego.com/sign-up?aff=VzYr", target: "_blank", rel: "noopener noreferrer", style: { textDecoration: "underline" } }, t("connectionMetaonticRegister"))] : serviceMode && !SERVICE_MODE_AVAILABLE ? t("connectionServiceUnavailable") : directMode && !VOLCENGINE_MODE_AVAILABLE ? t("connectionVolcengineUnavailable") : t("connectionModeHint"),
           metaonticApiKey: t("metaonticKeyHint"),
           volcengineApiKey: t("volcengineKeyHint"),
           model: t("modelHint"),

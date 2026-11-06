@@ -1,6 +1,6 @@
 /** providers/connection：从宿主入口拆出的独立职责模块。 */
 import { RELAY_PRESET, ref, KEY_ORIGIN_REGISTER, envValue, DEFAULT_REGISTER_API } from '../config.js';
-import { SERVICE_MODE_AVAILABLE, SERVICE_UNAVAILABLE_MESSAGE } from '../connection-defaults.js';
+import { SERVICE_MODE_AVAILABLE, SERVICE_UNAVAILABLE_MESSAGE, IMAGE_MODEL, resolveImageModel } from '../connection-defaults.js';
 
 export function relayPreset() {
   // 只走 New API 中转站，路径/模型都取这一份预设。
@@ -36,15 +36,15 @@ export function connectionLabel(config) {
 export function resolveApiKey(config) {
   if (isMetaontic(config)) return String(ref(config, 'metaonticApiKey', '')).trim();
   if (isVolcengine(config)) return String(ref(config, 'volcengineApiKey', '')).trim();
-  // 停用期间不交出这把 Key，任何绕开 assertServiceAvailable 的路径也不会带着它发请求。
+  // 停用期间不交出这把 API密钥，任何绕开 assertServiceAvailable 的路径也不会带着它发请求。
   if (!SERVICE_MODE_AVAILABLE) return '';
   // 只认配置里那一把——它只能由设置页「登录」时服务端下发写入，
-  // 不读环境变量、也不认手填，避免用到没绑设备 / 没额度的野 Key。
+  // 不读环境变量、也不认手填，避免用到没绑设备 / 没额度的野 API密钥。
   return String(ref(config, 'apiKey', '')).trim();
 }
 
 /**
- * 这把 Key 是不是服务端下发的。
+ * 这把 API密钥是不是服务端下发的。
  *
  * 登录成功后设置页会写 keyOrigin=register；更早的版本没写这个标记，
  * 用「设备凭据 + 邮箱」兜底认出来（这两项也只有登录流程会写）。
@@ -102,18 +102,18 @@ export function parseExtraParams(config) {
 
 export function assertConfigured(config, apiKey) {
   if (isMetaontic(config)) {
-    if (!apiKey) throw new Error('请在 MetaOntic AI 模式中配置 API Key。');
+    if (!apiKey) throw new Error('请在 MetaOntic AI 模式中配置 API密钥。');
     return;
   }
   if (isVolcengine(config)) {
-    if (!apiKey) throw new Error('请在火山引擎直连模式中配置火山 API Key。');
+    if (!apiKey) throw new Error('请在火山引擎直连模式中配置火山 API密钥。');
     return;
   }
   assertServiceAvailable(config);
   if (!apiKey) {
     throw new Error(
-      '未配置 API Key（重置后需重新登录，无需重装或重启）：打开「插件 → 已安装插件 → MetaOnticVideo → 查看」，点「登录」领一把——'
-      + '服务端会把 Key、上游地址和模型直接写进配置，不用手填。',
+      '未配置 API密钥（重置后需重新登录，无需重装或重启）：打开「插件 → 已安装插件 → MetaOnticVideo → 查看」，点「登录」领一把——'
+      + '服务端会把 API密钥、上游地址和模型直接写进配置，不用手填。',
     );
   }
   if (!isServerIssuedKey(config)) {
@@ -142,16 +142,17 @@ export function snapshotConfig(config) {
   snapshot.connectionMode = isVolcengine(config) ? 'volcengine' : isMetaontic(config) ? 'metaontic' : 'service';
   snapshot.baseUrl = resolveBaseUrl(config);
   snapshot.model = resolveModel(config);
+  snapshot.imageModel = resolveImageModel(ref(config, 'imageModel', IMAGE_MODEL));
   snapshot.submitPath = resolveSubmitPath(config);
   snapshot.queryPath = isVolcengine(config) ? '/api/v3/contents/generations/tasks/{task_id}' : String(ref(config, 'queryPath', '')).trim() || relayPreset().queryPath;
   return Object.freeze(snapshot);
 }
 
-/** 图片沿用当前地址，独立 Key 仅替换本次图片连接快照。 */
+/** 图片沿用当前地址，独立 API密钥仅替换本次图片连接快照。 */
 export function imageConfig(config) {
   const snapshot = snapshotConfig(config);
   if (!isMetaontic(snapshot) || ref(snapshot, 'imageUseVideoKey', true) !== false) return snapshot;
   const key = String(ref(snapshot, 'imageApiKey', '')).trim();
-  if (!key) throw new Error('已关闭图片与视频共用 Key，请单独填写图片模型 API Key。');
+  if (!key) throw new Error('已关闭图片与视频共用 API密钥，请单独填写图片模型 API密钥。');
   return Object.freeze({ ...snapshot, [isMetaontic(snapshot) ? 'metaonticApiKey' : 'apiKey']: key });
 }

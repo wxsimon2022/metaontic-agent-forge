@@ -59,10 +59,14 @@ test('unknown models, unsupported ratios and unresolved resolution fail rather t
  for(const bad of [{...args,resolution:undefined},{...args,ratio:'1:1'},{...args,duration:121},{...args,duration:5.5},{...args,groupRatio:NaN}])await assert.rejects(()=>tool.execute(bad));
  await assert.rejects(()=>setup({...base,model:'unknown'}).tool.execute(args),/可靠价目/);
 });
-test('all connection modes instruct the assistant to show both estimates before script review',()=>{
+test('all connection modes instruct the assistant to estimate while writing the script',()=>{
  for(const connectionMode of ['service','metaontic','volcengine']) {
-  const h=setup({...base,connectionMode});assert.ok(h.tool);assert.match(h.prompt(),/每次脚本审核前先调用只读video_estimate/);
+  const h=setup({...base,connectionMode});assert.ok(h.tool);assert.match(h.prompt(),/写脚本时就一并调用只读video_estimate/);
   assert.match(h.prompt(),/最低用量补足未计入/);
+  // 画幅不再默认 9:16：没写明时必须问用户，和清晰度一起确认
+  assert.match(h.prompt(),/画幅和清晰度都必须由用户明确选择或确认/);
+  assert.match(h.prompt(),/16:9 横屏 \/ 9:16 竖屏/);
+  assert.doesNotMatch(h.prompt(),/默认15秒、9:16/);
  }
 });
 

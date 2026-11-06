@@ -16,6 +16,7 @@ The project planner supports up to 120 seconds and 10 segments. Longer videos re
 
 - **Image-to-video and text-to-video:** prompts, reference images, first frames or first/last frames, depending on the model and provider.
 - **Script and storyboard review:** review the full script, a local storyboard illustration and cost estimates before confirming production.
+- **Visual style choice:** when your idea does not name a style, the assistant proposes a few styles that fit it and refines the script along the one you pick; a style you already specified (or asked the assistant to choose) is used as-is without asking again.
 - **Video continuation:** describe transitions and extend the previous video while retaining the approved subject, action and audio plan.
 - **Segment previews and resume:** review each completed segment and continue using the saved task state; reuse completed segments after an interruption.
 - **Local FFmpeg merging:** deliver the merged video first, followed by the original numbered segments.
@@ -29,9 +30,9 @@ The project planner supports up to 120 seconds and 10 segments. Longer videos re
 
 1. Open [the latest GitHub release](https://github.com/wxsimon2022/metaontic-video/releases/latest) or [Gitee Releases](https://gitee.com/hackloop/metaontic-video/releases). Copy the download link for the `metaontic-video-<version>.tgz` asset and paste it into **DeepSeek Harness → Plugins → Add plugin**. Use the packaged asset rather than a Git repository or Source code archive. Alternatively, download and extract the asset, then install its local `package` directory. On Windows, `ERR_PNPM_GIT_RESOLVE_FAILED` indicates a Git source failed to resolve; switch to the packaged asset without changing global Git settings or disabling supply-chain checks.
 
-2. Open the plugin settings, select **MetaOntic AI**, register at [ai.bileego.com](https://ai.bileego.com/), obtain an API key and save it in the plugin. A shared key must support both selected video and image models; separate keys are also supported.
+2. Open the plugin settings, select **MetaOntic AI**, register at [ai.bileego.com](https://ai.bileego.com), obtain an API key and save it in the plugin. A shared key must support both selected video and image models; separate keys are also supported.
 3. Start a **new conversation** and select **视频创作助手 (Video Creation Assistant)**.
-4. Describe your video, including duration, aspect ratio and resolution. Review the script and storyboard, then separately confirm production and costs.
+4. Describe your video, including duration, aspect ratio and resolution — add a visual style if you have one, otherwise the assistant offers a few suitable styles to choose from. If you leave out the aspect ratio, the assistant asks whether you want 16:9 landscape or 9:16 portrait before writing the script (and asks for 480P/720P the same way; both go into one question). Review the script and storyboard, then separately confirm production and costs.
 
 Example:
 

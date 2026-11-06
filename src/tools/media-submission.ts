@@ -16,7 +16,7 @@ export function submissionTool(liveConfig) {
       const config = snapshotConfig(liveConfig);
       if (args?.action === 'get') {
         const record = await readSubmission(args.submissionId);
-        if (record.identity !== submissionIdentity(/\/tasks\/doubao$/.test(record.requestPath) ? imageConfig(config) : config)) throw new Error('请恢复原连接和 Key 后核对。');
+        if (record.identity !== submissionIdentity(/\/tasks\/doubao$/.test(record.requestPath) ? imageConfig(config) : config)) throw new Error('请恢复原连接和 API密钥后核对。');
         return { submissionId: record.id, status: record.status, taskId: record.taskId, model: record.model, createdAt: record.createdAt };
       }
       if (args?.action !== 'reconcile') throw new Error('未知操作。');

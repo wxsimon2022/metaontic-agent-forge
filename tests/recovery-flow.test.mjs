@@ -167,7 +167,7 @@ test('service preflight estimates only the segment that this call will execute',
     fetchDeviceQuota: async () => ({ status: 'ok', data: { remain_quota: 10000, remain_amount: 100, quota_per_unit: 1, usd_exchange_rate: 1 } }),
     finiteNumber: value => typeof value === 'number' ? value : null,
     // preflightGate 之前定义的辅助函数不在截取范围内，按里面用到的语义注入：
-    // unlimitedQuota 认不限额度的 Key（这份数据不是），imageQuotaNotice 只服务图片调用。
+    // unlimitedQuota 认不限额度的 API密钥（这份数据不是），imageQuotaNotice 只服务图片调用。
     unlimitedQuota: data => Boolean(data && data.unlimited_quota === true),
     imageQuotaNotice: async () => null,
     DEFAULT_QUOTA_PER_UNIT: 1, DEFAULT_USD_EXCHANGE_RATE: 1, formatMoney: String, planSummary: () => 'one segment',

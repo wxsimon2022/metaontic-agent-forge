@@ -7,7 +7,7 @@ function harness({ serviceAvailable = true } = {}) {
   const context = vm.createContext({ characterChoiceGate: async () => null,
     METAONTIC_BASE_URL: 'https://ai.bileego.com',
     SERVICE_MODE_AVAILABLE: serviceAvailable,
-    SERVICE_UNAVAILABLE_MESSAGE: 'MetaOnticVideo 服务端方式暂时不可用：请在插件设置页把「接入方式」改为 MetaOntic AI 或火山引擎直连，填好 Key 保存后重试。',
+    SERVICE_UNAVAILABLE_MESSAGE: 'MetaOnticVideo 服务端方式暂时不可用：请在插件设置页把「接入方式」改为 MetaOntic AI 或火山引擎直连，填好 API密钥保存后重试。',
     ref: (config, key, fallback) => config[key] ?? fallback,
     envValue: () => '',
     relayPreset: () => ({ baseUrl: 'https://ai.bileego.com', submitPath: '/doubao/api/v3/contents/generations/tasks', queryPath: '/doubao/api/v3/contents/generations/tasks/{task_id}' }),
@@ -75,12 +75,12 @@ for (const connectionMode of ['metaontic', 'volcengine']) test(`${connectionMode
   const h = harness(), config = { connectionMode, metaonticApiKey: 'm', volcengineApiKey: 'v' };
   assert.equal((await h.fetchDeviceQuota(config)).status, 'unknown');
   assert.equal((await h.remainingCostText(config, {}, [])).remain, '');
-  // 手填 Key 的接入方式不判断额度：预检任何一步都不该去查这把 Key 的额度。
+  // 手填 API密钥的接入方式不判断额度：预检任何一步都不该去查这把 API密钥的额度。
   h.fetchDeviceQuota = async () => { throw new Error('metaontic/volcengine must not query service quota'); };
   for (const name of ['video_generate', 'video_extend']) {
     const gate = await h.preflightGate({}, config, { name, arguments: { resume: '/tmp/progress' } });
     assert.equal(gate.kind, 'ask');
-    assert.match(gate.displayReason.zh, /按当前 Key 在渠道的实际用量计费。确认后开始。/);
+    assert.match(gate.displayReason.zh, /按当前 API密钥在渠道的实际用量计费。确认后开始。/);
     assert.doesNotMatch(gate.displayReason.zh, /预估|核对|额度/);
     assert.doesNotMatch(gate.displayReason.en, /estimate|balance/i);
   }
@@ -99,7 +99,7 @@ const estimateOf = usd => () => ({
   tokens: 1000, seconds: 15, segments: [{ seconds: 15, usd, tokens: 1000 }],
 });
 
-test('service 模式调用前先读这把 Key 的额度，够就弹人工确认', async () => {
+test('service 模式调用前先读这把 API密钥的额度，够就弹人工确认', async () => {
   const h = harness(), config = serviceConfig();
   let asked = 0;
   h.fetchDeviceQuota = async (...args) => { asked += 1; return okQuota()(...args); };
@@ -150,9 +150,9 @@ test('service 模式查额度带登录令牌：服务端现在只认它', async 
   assert.equal(seen[0].headers['X-Register-Token'], 'metaontic-video-register-v1');
 });
 
-test('service 模式不限额度（unlimited_quota）的 Key 不比较余额、不误拦', async () => {
+test('service 模式不限额度（unlimited_quota）的 API密钥不比较余额、不误拦', async () => {
   const h = harness(), config = serviceConfig();
-  // 服务端创建不限额度 Key 时 remain_quota 只是占位数字：按它比较会误判成「额度不足、请充值」。
+  // 服务端创建不限额度 API密钥时 remain_quota 只是占位数字：按它比较会误判成「额度不足、请充值」。
   h.fetchDeviceQuota = okQuota({ unlimited_quota: true, remain_quota: 5000, remain_amount: 0.01 });
   h.estimateUsage = estimateOf(1);
   const gate = await h.preflightGate({}, config, { name: 'video_generate', arguments: {} });

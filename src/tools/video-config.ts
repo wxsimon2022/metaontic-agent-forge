@@ -1,4 +1,4 @@
-import { SERVICE_MODE_AVAILABLE, VOLCENGINE_MODE_AVAILABLE } from '../connection-defaults.js';
+import { SERVICE_MODE_AVAILABLE, VOLCENGINE_MODE_AVAILABLE, IMAGE_MODEL, resolveImageModel } from '../connection-defaults.js';
 /** tools/video-config：从宿主入口拆出的独立职责模块。 */
 import { ref } from '../config.js';
 import { isMetaontic, isVolcengine, resolveBaseUrl, resolveSubmitPath, relayPreset, resolveModel, resolveApiKey, isServerIssuedKey } from '../providers/connection.js';
@@ -17,7 +17,7 @@ export const CONFIG_FIELDS = [
 
 /**
  * 只读字段：密钥一律由服务端在「登录」时下发写入，页面和工具都不许改，
- * 免得手填一把没绑设备、查不到额度的 Key 出去瞎调。
+ * 免得手填一把没绑设备、查不到额度的 API密钥出去瞎调。
  */
 export const READ_ONLY_CONFIG_FIELDS = new Set(['apiKey', 'keyOrigin', 'deviceId', 'deviceSecret']);
 
@@ -45,7 +45,7 @@ export function configView(config) {
       queryPath: isVolcengine(config) ? '/api/v3/contents/generations/tasks/{task_id}' : String(ref(config, 'queryPath', '')).trim() || relayPreset().queryPath,
       model: resolveModel(config),
       imageUseVideoKey: !isMetaontic(config) || ref(config, 'imageUseVideoKey', true),
-      imageModel: ref(config, 'imageModel', 'doubao-seedream-5-0-260128'),
+      imageModel: resolveImageModel(ref(config, 'imageModel', IMAGE_MODEL)),
       // 密钥只有一种合法来源：设置页「登录」时服务端下发
       apiKeySource: isMetaontic(config) ? (resolveApiKey(config) ? 'metaontic' : 'missing') : isVolcengine(config) ? (resolveApiKey(config) ? 'volcengine' : 'missing') : ref(config, 'apiKey', '')
         ? (isServerIssuedKey(config) ? 'register' : 'unverified')
@@ -63,10 +63,10 @@ export function configTool(config, settings) {
       + 'watermark、extraParams、pollIntervalMs、maxWaitMs、mergeMode、'
       + 'outputDir、resumeLockStaleMinutes、'
       + 'ffmpegBinary、ffprobeBinary、registerEmail、registerApi、estimateGroupRatio）。'
-      + '对话里禁止改配置：接入方式、Key、模型、地址、时长等任何一项都只能由用户在插件设置页'
+      + '对话里禁止改配置：接入方式、API密钥、模型、地址、时长等任何一项都只能由用户在插件设置页'
       + '（「插件 → 已安装插件 → MetaOnticVideo → 查看」）修改并保存，宿主重载后生效；'
       + '本工具没有修改能力，action=set 会被直接拒绝。'
-      + '用户要改配置时，说明改的是哪一项并引导他去设置页改，不要代改、不要索取或展示 Key（apiKey 只能由设置页「登录」时服务端下发）。'
+      + '用户要改配置时，说明改的是哪一项并引导他去设置页改，不要代改、不要索取或展示 API密钥（apiKey 只能由设置页「登录」时服务端下发）。'
       + '看当前值用 action=get；'
       + 'duration 是每段新增秒数上限（4 至模型上限（2.0 为 15、2.5 为 30），默认按模型上限、段数最少），singleMaxSeconds 为兼容旧配置保留，直出上限由模型映射。',
     parameters: {
@@ -81,23 +81,23 @@ export function configTool(config, settings) {
           type: 'string', enum: ['service', 'metaontic', 'volcengine'],
           description: SERVICE_MODE_AVAILABLE
             ? (VOLCENGINE_MODE_AVAILABLE
-              ? '接入方式：MetaOnticVideo 服务端（邮箱登录领 Key）/ MetaOntic AI / 火山引擎直连'
-              : '接入方式：MetaOnticVideo 服务端（service，邮箱登录领 Key）/ MetaOntic AI（metaontic）；火山引擎直连当前暂不提供选择，不要主动设置')
+              ? '接入方式：MetaOntic AI / MetaOnticVideo 服务端（邮箱登录领 API密钥）/ 火山引擎直连'
+              : '接入方式：MetaOntic AI（metaontic）/ MetaOnticVideo 服务端（service，邮箱登录领 API密钥）；火山引擎直连当前暂不提供选择，不要主动设置')
             : (VOLCENGINE_MODE_AVAILABLE
               ? '接入方式：MetaOntic AI（metaontic）/ 火山引擎直连（volcengine）；service 服务端方式暂时不可用，不要设置'
               : '接入方式：MetaOntic AI（metaontic）；service 服务端方式与火山引擎直连当前都暂不提供，不要设置'),
         },
-        metaonticApiKey: { type: 'string', description: 'MetaOntic AI 手动 API Key，无需登录' },
-        volcengineApiKey: { type: 'string', description: '火山引擎直连模式的火山 API Key' },
+        metaonticApiKey: { type: 'string', description: 'MetaOntic AI 手动 API密钥，无需登录' },
+        volcengineApiKey: { type: 'string', description: '火山引擎直连模式的火山 API密钥' },
         baseUrl: { type: 'string', description: '基础地址，即中转站站址，例如 https://ai.bileego.com。' },
-        registerEmail: { type: 'string', description: '领 Key 用的邮箱（账号）；注册要邮箱验证码，一个邮箱只发一把。' },
-        registerApi: { type: 'string', description: '插件服务地址（领 Key / 查额度 / 使用记录）；留空用内置域名。' },
+        registerEmail: { type: 'string', description: '领 API密钥用的邮箱（账号）；注册要邮箱验证码，一个邮箱只发一把。' },
+        registerApi: { type: 'string', description: '插件服务地址（领 API密钥 / 查额度 / 使用记录）；留空用内置域名。' },
         estimateGroupRatio: { type: 'number', description: '预估费用用的分组折扣（中转站 group_ratio：默认 0.8）。' },
         submitPath: { type: 'string', description: '创建任务路径，例如 /doubao/api/v3/contents/generations/tasks。' },
         queryPath: { type: 'string', description: '查询任务路径，{task_id} 会被替换。' },
-        imageUseVideoKey: { type: 'boolean', description: '仅 B 方式可选择是否共用 Key，默认 true；A 固定共用登录下发的 Key' },
-        imageApiKey: { type: 'string', description: '关闭共用时必须填写的图片模型 Key，地址仍沿用当前 A/B 连接' },
-        imageModel: { type: 'string', enum: ['doubao-seedream-5-0-260128', 'doubao-seedream-5-0-pro-260628'], description: 'A/B 真人参考图非真人化模型' },
+        imageUseVideoKey: { type: 'boolean', description: '仅 B 方式可选择是否共用 API密钥，默认 true；A 固定共用登录下发的 API密钥' },
+        imageApiKey: { type: 'string', description: '关闭共用时必须填写的图片模型 API密钥，地址仍沿用当前 A/B 连接' },
+        imageModel: { type: 'string', enum: [IMAGE_MODEL], description: 'A/B 真人参考图非真人化模型（旧型号已下线，按 pro 版调用）' },
         model: { type: 'string', description: '模型 ID，例如 doubao-seedance-2-0-mini-260615。' },
         duration: { type: 'integer', minimum: 4, maximum: modelMaxSeconds(config), description: '每段新增秒数上限（4 至模型上限（2.0 为 15、2.5 为 30） 的整数，默认按模型上限、段数最少）。' },
         ratio: {
@@ -185,9 +185,9 @@ export function configTool(config, settings) {
       }
       if (action === 'set') {
         throw new Error(
-          '插件配置不能在对话里改：video_config 是只读的，接入方式、Key、模型、地址、时长等任何一项都只能由用户'
+          '插件配置不能在对话里改：video_config 是只读的，接入方式、API密钥、模型、地址、时长等任何一项都只能由用户'
           + '在插件设置页（「插件 → 已安装插件 → MetaOnticVideo → 查看」）修改并保存。'
-          + '请说明要改的是哪一项并引导用户去设置页，不要代改、不要索取或展示 Key。',
+          + '请说明要改的是哪一项并引导用户去设置页，不要代改、不要索取或展示 API密钥。',
         );
       }
       throw new Error('action 只能是 get：插件配置只能在设置页修改，本工具不提供写入。');

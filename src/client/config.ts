@@ -1,5 +1,5 @@
 /** 浏览器端 config：由入口注入宿主 React 与共享依赖。 */
-import { VOLCENGINE_MODE_AVAILABLE } from '../connection-defaults.js';
+import { VOLCENGINE_MODE_AVAILABLE, IMAGE_MODEL } from '../connection-defaults.js';
 
 export function createClientConfig() {
 /** Host 侧条目的 id，与 cordis.patch.yml 里那条覆盖项一致。 */
@@ -18,15 +18,16 @@ export function createClientConfig() {
     ];
     /** 可编辑字段；kind 决定控件，标注 secret 的字段宿主只会告知是否已配置。 */
     const SELECTS = {
-      // 接入方式：A 服务端（邮箱登录领 Key）、B MetaOntic AI（手填 Key）、C 火山直连。
+      // 接入方式：A 服务端（邮箱登录领 API密钥）、B MetaOntic AI（手填 API密钥）、C 火山直连。
       // 临时下架某个方式时，先关掉 connection-defaults.ts 里对应的开关，再把它从这里去掉：
       // 设置页会改用隐藏项显示已有取值（见 settings.ts 的 HIDDEN_CONNECTION_MODES），
       // 列表里选不到它，也不会把已有配置静默换成别的渠道。
       connectionMode: VOLCENGINE_MODE_AVAILABLE
-        ? ['service', 'metaontic', 'volcengine']
-        : ['service', 'metaontic'],
+        ? ['metaontic', 'service', 'volcengine']
+        : ['metaontic', 'service'],
       model: MODEL_OPTIONS,
-      imageModel: ['doubao-seedream-5-0-260128', 'doubao-seedream-5-0-pro-260628'],
+      // 图片模型只提供在售的 pro 版；旧型号已下线，存量配置由 resolveImageModel 归一到这一项。
+      imageModel: [IMAGE_MODEL],
       ratio: ['16:9', '9:16', '4:3', '3:4', '1:1', 'adaptive'],
       mergeMode: ['copy', 'reencode'],
     };

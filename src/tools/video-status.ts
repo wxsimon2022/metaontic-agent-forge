@@ -62,7 +62,7 @@ export function taskTool(liveConfig) {
             {
               type: 'text',
               text: `任务 ${taskId} 这次没查到状态：${detail}。`
-                + '这不代表任务没有生成——稍后重试，或检查 Key / 额度后再查一次，不要重新提交。',
+                + '这不代表任务没有生成——稍后重试，或检查 API密钥 / 额度后再查一次，不要重新提交。',
             },
           ];
         }

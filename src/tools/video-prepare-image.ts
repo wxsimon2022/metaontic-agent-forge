@@ -4,8 +4,9 @@ import { ref } from '../config.js';
 import { assertConfigured, resolveApiKey, isVolcengine, imageConfig } from '../providers/connection.js';
 import { resolveImageInput } from '../media/references.js';
 import { generateSeedreamImage } from '../providers/seedream.js';
+import { IMAGE_MODEL } from '../connection-defaults.js';
 
-const IMAGE_MODELS = ['doubao-seedream-5-0-260128', 'doubao-seedream-5-0-pro-260628'];
+const IMAGE_MODELS = [IMAGE_MODEL];
 
 export function prepareImageTool(liveConfig, progress = {}) {
   return {

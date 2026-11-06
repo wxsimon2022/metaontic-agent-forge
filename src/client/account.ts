@@ -71,7 +71,7 @@ function deviceIdentity() {
     return { id, secret };
 }
 
-/** 设备指纹：只做登记，让后台看得出这把 Key 是哪台机器领的。 */
+/** 设备指纹：只做登记，让后台看得出这把 API密钥是哪台机器领的。 */
 function deviceFingerprint() {
     const pick = (read) => {
         try {
@@ -104,7 +104,7 @@ function deviceLabel(info) {
 /**
  * 设备凭据（设备标识 + 设备密钥）要同步进插件配置。
  *
- * 生成视频前，主进程那侧的工具会拿它去服务端查当前账号余额（中转站那把 Key 的额度），
+ * 生成视频前，主进程那侧的工具会拿它去服务端查当前账号余额（中转站那把 API密钥的额度），
  * 在人工确认框里展示余额，余额不足直接拦下并提示去设置页充值；设备凭据平时只存在
  * 浏览器 localStorage 里，主进程读不到，所以这里写一份到配置里。
  * 值与配置一致时不重复写。
@@ -124,7 +124,7 @@ function deviceWrites(device = undefined) {
     return writes;
 }
 
-/** 进设置页时补一次设备凭据（老版本没存过，注册过的人不用重新领 Key）。 */
+/** 进设置页时补一次设备凭据（老版本没存过，注册过的人不用重新领 API密钥）。 */
 async function syncDeviceIdentity() {
     if (!context.serviceActive())
         return;
@@ -194,7 +194,7 @@ async function callRegister(url: string, init: RequestInit = {}) {
 /** 把服务端给的那把密钥写回配置（注册、取回都走这里）。 */
 async function applyRegistration(result, fallbackBase, device) {
     // keyOrigin 是给宿主那侧看的标记：只有带这个标记（或早期版本的设备凭据 + 邮箱）
-    // 的 Key 才被当成「服务端下发的」，手填的一律拒绝调用。
+    // 的 API密钥才被当成「服务端下发的」，手填的一律拒绝调用。
     if (context.connectionBusy.current) {
         if (!context.connectionBusy.pending)
             throw new Error(context.settingsError('settingsUnavailable'));
@@ -368,7 +368,7 @@ async function register() {
 }
 
 /**
- * 额度：服务端拿管理端凭据去中转站读这把 Key 的用量。
+ * 额度：服务端拿管理端凭据去中转站读这把 API密钥的用量。
  * 只有本机（设备标识 + 设备密钥都对上）才拿得到，展示的必然是自己那把。
  */
 async function loadQuota() {
@@ -478,7 +478,7 @@ async function waitRecharge(outTradeNo, { tries = 40, intervalMs = 3000 } = {}) 
 }
 
 /**
- * 使用记录：服务端按「设备标识 + 设备密钥」认出是本机那把 Key，
+ * 使用记录：服务端按「设备标识 + 设备密钥」认出是本机那把 API密钥，
  * 再去读它的调用日志（谁什么时候出了片、消耗多少），一次任务只显示一行。
  */
 async function loadUsage() {

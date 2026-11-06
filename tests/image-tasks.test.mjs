@@ -203,7 +203,7 @@ test('B independent image key snapshot survives settings edits during submission
 for(const mode of ['service','metaontic','volcengine']) test(`${mode}: missing video key never falls back to another model key`,()=>fixture(async h=>{
  h.config.connectionMode=mode;h.config.imageApiKey='not-video';
  h.config[mode==='service'?'apiKey':mode==='metaontic'?'metaonticApiKey':'volcengineApiKey']='';
- await assert.rejects(()=>h.tools.get('video_generate').execute({prompt:'test',duration:5,merge:false},h.exec),/Key/);
+ await assert.rejects(()=>h.tools.get('video_generate').execute({prompt:'test',duration:5,merge:false},h.exec),/API密钥/);
  assert.equal(h.calls.length,0);
 }));
 

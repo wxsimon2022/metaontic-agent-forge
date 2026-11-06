@@ -9,7 +9,7 @@ import { sumStepSeconds, resolveSegmentSeconds, modelMaxSeconds } from './planni
 import { ffmpegInstallOptions, hasFfmpeg, resolveBinary } from '../media/ffmpeg.js';
 import { resumeDirOf, readPauseFile, resumePlanFrom, assertResumeConnection } from './resume.js';
 
-/** 服务端回的不限额度的 Key：不做余额比较，也不能把 0 当成「只剩 ¥0」。 */
+/** 服务端回的不限额度的 API密钥：不做余额比较，也不能把 0 当成「只剩 ¥0」。 */
 function unlimitedQuota(data) {
   return Boolean(data && typeof data === 'object' && data.unlimited_quota === true);
 }
@@ -21,7 +21,7 @@ function unlimitedQuota(data) {
  * 「额度够不够」必须看同一份数据，也不该为了一句话多打一次接口。
  */
 export async function remainingCostText(config, exec, remainingSteps, inputVideoSeconds = undefined, readQuota = null) {
-  if (isManualKey(config)) return { cost: `${connectionLabel(config)}按当前 Key 在渠道的实际用量计费`, remain: '' };
+  if (isManualKey(config)) return { cost: `${connectionLabel(config)}按当前 API密钥在渠道的实际用量计费`, remain: '' };
   try {
     const estimated = estimateSteps(
       config,
@@ -64,12 +64,12 @@ export function segmentContinueLine({ toolName = 'video_generate', done, lastSec
 }
 
 /**
- * 问插件服务要「本机这把 Key 还剩多少额度」。
+ * 问插件服务要「本机这把 API密钥还剩多少额度」。
  * 服务端按设备凭据去中转站读密钥详情，只回剩余 / 已用额度。
  * 拿不到（没设备凭据、服务不可用）就回 unknown，由调用方决定怎么写进确认框。
  */
 export async function fetchDeviceQuota(config, signal) {
-  if (isManualKey(config)) return { status: 'unknown', reason: `${connectionLabel(config)}按当前 Key 在渠道的实际用量计费，费用与余额请在渠道控制台查看` };
+  if (isManualKey(config)) return { status: 'unknown', reason: `${connectionLabel(config)}按当前 API密钥在渠道的实际用量计费，费用与余额请在渠道控制台查看` };
   if (!SERVICE_MODE_AVAILABLE) return { status: 'unknown', reason: SERVICE_UNAVAILABLE_MESSAGE };
   const api = resolveRegisterApi(config);
   const deviceId = String(ref(config, 'deviceId', '')).trim();
@@ -234,7 +234,7 @@ export async function ffmpegConsentGate(config, exec, args) {
 }
 
 /**
- * 图片调用前的额度预检：服务端方式的图片与视频共用同一把 Key 的额度。
+ * 图片调用前的额度预检：服务端方式的图片与视频共用同一把 API密钥的额度。
  *
  * 图片没有可靠单价，所以这里只拦「余额明确为 0 及以下」这一种必然白跑的情况；
  * 不限额度、读不到额度、余额为正都照常弹确认，只把余额写进确认框给用户看。
@@ -263,10 +263,10 @@ async function imageQuotaNotice(config, exec) {
 }
 
 /**
- * 真正调用模型前的卡口：先读这把 Key 的额度，再人工确认。
+ * 真正调用模型前的卡口：先读这把 API密钥的额度，再人工确认。
  *
  * - 审批提示被关掉（完全访问模式）：拒绝，并说明怎么打开；
- * - 预估费用超过这把 Key 的剩余额度：直接拒绝，不去调用（避免白扣 / 报错）；
+ * - 预估费用超过这把 API密钥的剩余额度：直接拒绝，不去调用（避免白扣 / 报错）；
  * - 读不到剩余额度：照常弹确认框，但把「读不到额度」的原因写清楚；
  * - 其余情况：返回 ask，宿主弹审批面板给用户看预估费用，点「允许」才会执行。
  */
@@ -315,7 +315,7 @@ export async function preflightGate(ctx, config, exec) {
     if (approvalPolicy(ctx, exec) === 'never') return { kind: 'deny', reason: '当前权限模式无法进行图片调用确认。' };
     if (!creating && exec.arguments?.characterType === 'realistic') return { kind: 'deny', reason: '真人限制转换必须使用非真人风格，不能转换为真人写实。' };
     const characterLabel = exec.arguments?.characterType === 'realistic' ? '真人写实' : '非真人';
-    // 图片也调用模型：服务端方式先看一眼这把 Key 的余额，明确没钱就别让上游白拒。
+    // 图片也调用模型：服务端方式先看一眼这把 API密钥的余额，明确没钱就别让上游白拒。
     const imageQuota = await imageQuotaNotice(config, exec);
     if (imageQuota?.blocked) return { kind: 'deny', reason: imageQuota.reason };
     const imageRemainZh = imageQuota?.remainZh ? `（${imageQuota.remainZh}）` : '';
@@ -398,9 +398,9 @@ export async function preflightGate(ctx, config, exec) {
     assertConfigured(config, resolveApiKey(config));
     return {
       kind: 'ask',
-      reason: `${resumeLead ? resumeLead.zh : ''}调用${connectionLabel(config)} ${resolveModel(config)} · ${resolveResolution(config, effectiveArgs)}，按当前 Key 在渠道的实际用量计费。`,
+      reason: `${resumeLead ? resumeLead.zh : ''}调用${connectionLabel(config)} ${resolveModel(config)} · ${resolveResolution(config, effectiveArgs)}，按当前 API密钥在渠道的实际用量计费。`,
       displayReason: {
-        zh: `${resumeLead ? resumeLead.zh : ''}本次将通过${connectionLabel(config)}生成 ${resolveResolution(config, effectiveArgs)} 视频，按当前 Key 在渠道的实际用量计费。确认后开始。${resumeLead ? resumeLead.tailZh : ''}`,
+        zh: `${resumeLead ? resumeLead.zh : ''}本次将通过${connectionLabel(config)}生成 ${resolveResolution(config, effectiveArgs)} 视频，按当前 API密钥在渠道的实际用量计费。确认后开始。${resumeLead ? resumeLead.tailZh : ''}`,
         en: `${resumeLead ? resumeLead.en : ''}Generate ${resolveResolution(config, effectiveArgs)} video via ${connectionLabel(config)}, billed by this key's actual usage on the channel. Confirm to continue.${resumeLead ? resumeLead.tailEn : ''}`,
       },
     };
@@ -414,7 +414,7 @@ export async function preflightGate(ctx, config, exec) {
     estimate = null;
   }
 
-  // 服务端方式在调用模型前读一次额度：够不够由这把 Key 的中转站余额说话。
+  // 服务端方式在调用模型前读一次额度：够不够由这把 API密钥的中转站余额说话。
   // （MetaOntic AI / 火山直连在本函数前面就返回了，不会被这里查到。）
   const quota = await readQuota();
   const data = quota?.status === 'ok' ? quota.data : {};
@@ -443,8 +443,8 @@ export async function preflightGate(ctx, config, exec) {
       : `this account has ${remainMoneyText} left`);
 
   // 额度不够就别调用：中转站也会拒，但那样只会白等一轮还看不到原因。提示去充值再重试。
-  // 不限额度（unlimited_quota）的 Key 不比较余额：它的 remain_quota 只是个占位数字，
-  // 按它拦会把这把本来能用的 Key 误判成「额度不足、请充值」。
+  // 不限额度（unlimited_quota）的 API密钥不比较余额：它的 remain_quota 只是个占位数字，
+  // 按它拦会把这把本来能用的 API密钥误判成「额度不足、请充值」。
   if (!unlimited && needQuota !== null && remainQuota !== null && remainQuota < needQuota) {
     return {
       kind: 'deny',

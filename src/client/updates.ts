@@ -199,13 +199,13 @@ async function runOnlineUpdate() {
         const local = /^(?:file:|[a-z]:[\\/]|[\\/]|~[\\/])/i.test(source);
         if (linked || (local && !/\.(?:tgz|tar\.gz)(?:[?#].*)?$/i.test(source))) {
             context.setUpdateStatus('failed');
-            context.setUpdateMessage('当前为本地目录链接安装，已停止在线更新，未执行替换。目录链接切换为成品包存在文件被清空或仍加载旧目录的风险。请先备份并保留原目录，使用成品包迁移流程；若目录已空，先恢复完整package。不要重置Key或直接卸载。');
+            context.setUpdateMessage('当前为本地目录链接安装，已停止在线更新，未执行替换。目录链接切换为成品包存在文件被清空或仍加载旧目录的风险。请先备份并保留原目录，使用成品包迁移流程；若目录已空，先恢复完整package。不要重置 API密钥或直接卸载。');
             return;
         }
         if (bundle.error || bundle.meta?.error) throw new Error('metadata-unavailable');
     } catch {
         context.setUpdateStatus('failed');
-        context.setUpdateMessage('无法核实插件安装来源或元信息，已停止更新，未执行替换。请保留现有配置和安装目录，核对安装状态后再处理；不要重置Key或先卸载。');
+        context.setUpdateMessage('无法核实插件安装来源或元信息，已停止更新，未执行替换。请保留现有配置和安装目录，核对安装状态后再处理；不要重置 API密钥或先卸载。');
         return;
     }
     const requestId = `${context.PLUGIN_PACKAGE}-update-${Date.now()}`;

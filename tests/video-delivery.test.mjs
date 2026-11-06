@@ -47,7 +47,7 @@ for(const status of ['timeout','unknown','failed','cancelled']) test(`partial ${
  assert.ok(!text.includes('[第二段]')); assert.ok(!text.includes('](<undefined>)'));
 });
 test('status query and standalone image processing provide actual Markdown links',()=>{
- const tools=vm.createContext({resolve,formatSeconds:n=>n});
+ const tools=vm.createContext({resolve,formatSeconds:n=>n,IMAGE_MODEL:'doubao-seedream-5-0-pro-260628'});
  vm.runInContext(sourceOf('tools/results','tools/video-status','tools/video-prepare-image'),tools);
  const status=tools.taskTool({}).output.render({}, {status:'succeeded',taskId:'existing',videoUrl:'https://media.invalid/done.mp4'})[0].text;
  assert.ok(status.includes('[观看视频](<https://media.invalid/done.mp4>)'));
