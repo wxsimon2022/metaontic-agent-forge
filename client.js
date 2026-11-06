@@ -520,6 +520,7 @@
       walletRechargeFailed: "\u5145\u503C\u672A\u5B8C\u6210\uFF1A{message}",
       walletRechargeBadAmount: "\u8BF7\u8F93\u5165\u6B63\u786E\u7684\u91D1\u989D\uFF0C\u6BD4\u5982 30\u3002",
       walletRechargeLink: "\u6CA1\u5F39\u51FA\u6536\u94F6\u53F0\uFF1F\u70B9\u8FD9\u91CC\u6253\u5F00",
+      walletRechargeClosed: "\u5728\u7EBF\u5145\u503C\u5DF2\u5173\u95ED\uFF1A\u9700\u8981\u5145\u503C\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\uFF0C\u6216\u70B9\u300C\u5BA2\u670D\u300D\u4EBA\u5DE5\u5145\u503C\u3002",
       supportRecharge: "\u5BA2\u670D",
       supportClose: "\u5173\u95ED",
       supportScan: "\u8BF7\u7528\u5FAE\u4FE1\u626B\u63CF\u4E8C\u7EF4\u7801\uFF0C\u8054\u7CFB\u5BA2\u670D\u5145\u503C\u3002\u9875\u9762\u672A\u52A0\u8F7D\u65F6\u53EF\u70B9\u51FB\u4E0B\u65B9\u94FE\u63A5\u3002",
@@ -708,6 +709,7 @@
       walletRechargeFailed: "Top-up failed: {message}",
       walletRechargeBadAmount: "Enter a valid amount, e.g. 30.",
       walletRechargeLink: "Checkout did not open? Click here",
+      walletRechargeClosed: 'Online top-up is closed: ask an administrator to recharge, or use "Support".',
       supportRecharge: "Support",
       supportClose: "Close",
       supportScan: "Scan the QR code with WeChat to contact support for a top-up. If it does not load, use the link below.",
@@ -922,7 +924,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.15.1".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.15.2".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1641,7 +1643,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.15.1",
+    version: "3.15.2",
     description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, image-to-video, text-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects through the MetaOnticVideo relay with email sign-in and wallet top-up, or your own MetaOntic AI key.",
     license: "MIT",
     type: "module",
@@ -1738,16 +1740,19 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.15.1",
+      version: "3.15.2",
       prerelease: false,
-      publishedAt: "2026-11-05T14:58:37.264Z",
+      publishedAt: "2026-11-06T04:17:04.251Z",
       items: [
-        "\u4F18\u5316\uFF1A\u63D2\u4EF6\u9875\u63CF\u8FF0\u6539\u4E3A\u300C\u767B\u5F55\u5F00\u901A\u8D26\u53F7\u300D\uFF0C\u66F4\u8D34\u5408\u90AE\u7BB1\u767B\u5F55\u540E\u81EA\u52A8\u4E0B\u53D1 Key \u7684\u5B9E\u9645\u6D41\u7A0B\u3002"
+        "\u4F18\u5316\uFF1A\u5145\u503C\u5165\u53E3\u6539\u7531\u670D\u52A1\u7AEF\u540E\u53F0\u63A7\u5236\uFF0C\u5173\u95ED\u540E\u8BBE\u7F6E\u9875\u4E0D\u518D\u663E\u793A\u300C\u5145\u503C\u300D\uFF0C\u53EA\u63D0\u793A\u8054\u7CFB\u7BA1\u7406\u5458\uFF0C\u4F59\u989D\u4E0E\u751F\u6210\u4E0D\u53D7\u5F71\u54CD\u3002"
       ]
     }
   };
 
   // src/client/settings.ts
+  function rechargeEntryVisible(walletReady, wallet) {
+    return Boolean(walletReady && wallet && wallet.recharge_enabled !== false);
+  }
   function createSettingsPage(deps) {
     const {
       useSnapshot,
@@ -2395,6 +2400,7 @@
         const quotaReady = quotaStatus === "ok" && quota;
         const quotaFallback = keyReady ? t("quotaLoading") : t("quotaNoKey");
         const walletReady = walletStatus === "ok" && wallet && wallet.enabled;
+        const rechargeReady = rechargeEntryVisible(walletReady, wallet);
         const walletSymbol = wallet && wallet.currency_symbol ? wallet.currency_symbol : quotaSymbol;
         const balanceText = quotaReady ? quota.unlimited_quota ? t("quotaUnlimited") : money("remain_amount") : null;
         const quotaBox = serviceMode && SERVICE_MODE_AVAILABLE && keyReady ? h("div", {
@@ -2418,6 +2424,7 @@
           quotaReady ? h("span", { key: "at", className: "mov-foot-note" }, t("quotaUpdatedAt", { time: quotaAt })) : null,
           quotaMessage ? h("span", { key: "message", className: "mov-hint" }, quotaMessage) : null,
           walletMessage ? h("span", { key: "wallet-message", className: "mov-hint" }, walletMessage) : null,
+          walletReady && !rechargeReady ? h("span", { key: "recharge-closed", className: "mov-hint" }, t("walletRechargeClosed")) : null,
           h("div", { key: "actions", className: "mov-quota-actions mov-trailing" }, [
             h("button", {
               key: "refresh",
@@ -2432,7 +2439,7 @@
                 });
               }
             }, t("quotaRefresh")),
-            walletReady ? h("button", {
+            rechargeReady ? h("button", {
               key: "recharge",
               "data-action": "wallet-recharge",
               type: "button",

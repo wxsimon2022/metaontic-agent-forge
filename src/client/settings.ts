@@ -4,6 +4,14 @@ import { createUpdateActions, renderUpdateNotice, formatReleaseTime } from './up
 /** 浏览器端 settings：由入口注入宿主 React 与共享依赖。 */
 import packageInfo from '../../package.json';
 /**
+ * 「充值」按钮要不要显示：钱包本身开着，且服务端后台的运行时开关没关掉充值
+ * （`/wallet/status` 的 `recharge_enabled`）。老服务端不回这个字段，按开着处理。
+ */
+function rechargeEntryVisible(walletReady, wallet) {
+  return Boolean(walletReady && wallet && wallet.recharge_enabled !== false);
+}
+
+/**
  * 设置页工厂。依赖统一走一个 deps 对象（和 createAccountActions 一样），
  * 入口在 src/client.ts 装配：宿主 React（React/h）、主题与字段（TOKENS/inputStyle/SELECTS/
  * optionLabel/FIELD_BY_KEY/SECTIONS/formatMoney/PAGE_CSS）、设置状态（useSnapshot/same/
@@ -601,6 +609,8 @@ function makePage({ form, t, manager }) {
         const quotaFallback = keyReady ? t('quotaLoading') : t('quotaNoKey');
         // 服务端开没开钱包（充值上下限、到账提示要用）：off 时充值入口整体不出现
         const walletReady = walletStatus === 'ok' && wallet && wallet.enabled;
+        // 充值入口还受服务端后台的运行时开关控制：关掉时只剩余额与刷新，不显示「充值」
+        const rechargeReady = rechargeEntryVisible(walletReady, wallet);
         const walletSymbol = wallet && wallet.currency_symbol ? wallet.currency_symbol : quotaSymbol;
         // 余额就是中转站那把 Key 的额度（充值回调直接给 Key 加额度）：只显示这一个数，
         // 不再单独摆服务端的钱包余额，免得两个数字对不上。
@@ -633,6 +643,9 @@ function makePage({ form, t, manager }) {
             : null,
           quotaMessage ? h('span', { key: 'message', className: 'mov-hint' }, quotaMessage) : null,
           walletMessage ? h('span', { key: 'wallet-message', className: 'mov-hint' }, walletMessage) : null,
+          walletReady && !rechargeReady
+            ? h('span', { key: 'recharge-closed', className: 'mov-hint' }, t('walletRechargeClosed'))
+            : null,
           h('div', { key: 'actions', className: 'mov-quota-actions mov-trailing' }, [
             h('button', {
               key: 'refresh', 'data-action': 'quota-refresh', type: 'button',
@@ -642,7 +655,7 @@ function makePage({ form, t, manager }) {
                 loadWallet().catch(() => {});
               },
             }, t('quotaRefresh')),
-            walletReady
+            rechargeReady
               ? h('button', {
                 key: 'recharge', 'data-action': 'wallet-recharge', type: 'button',
                 className: 'mov-btn mov-btn-sm mov-btn-primary', 'aria-haspopup': 'dialog',
