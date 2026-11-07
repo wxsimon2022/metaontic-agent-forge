@@ -1,6 +1,6 @@
 name: clean-releases
 
-# 定期清理历史标签、发行版及发行版附件：发行版与标签各保留最近 10 个（可调），两个仓库执行同一计划。
+# 定期清理历史标签、发行版及发行版附件：发行版与标签各保留最近 5 个（可调），两个仓库执行同一计划。
 # 默认只演练；把仓库变量 CLEANUP_APPLY 设为 true（或手动运行时勾选 apply）才会真正删除。
 on:
   schedule:
@@ -14,7 +14,7 @@ on:
       keep:
         description: 保留最近几个正式版
         type: string
-        default: '10'
+        default: '5'
       keep_tags:
         description: 保留最近几个标签
         type: string
@@ -40,7 +40,7 @@ jobs:
           GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
         run: |
           KEEP='${{ github.event.inputs.keep }}'
-          [ -n "$KEEP" ] || KEEP=10
+          [ -n "$KEEP" ] || KEEP=5
           KEEP_TAGS='${{ github.event.inputs.keep_tags }}'
           [ -n "$KEEP_TAGS" ] || KEEP_TAGS="$KEEP"
           APPLY=false

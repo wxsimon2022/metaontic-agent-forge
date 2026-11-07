@@ -18,7 +18,7 @@ const USAGE = `清理历史标签、发行版及附件（默认演练，加 --ap
   npm run clean:releases                    # 演练：打印保留与待删清单
   npm run clean:releases -- --apply         # 按计划删除
 
-  --keep <n>            保留最近 n 个正式版发行版，默认 10，最小 1
+  --keep <n>            保留最近 n 个正式版发行版，默认 5，最小 1
   --keep-tags <n>       保留最近 n 个标签，默认与 --keep 相同
   --max-age-days <n>    只清理 n 天以前发布的版本，默认 0（不限）
   --patterns <a,b>      参与清理的标签模式，默认 v*
@@ -26,7 +26,7 @@ const USAGE = `清理历史标签、发行版及附件（默认演练，加 --ap
   --keep-drafts         保留 GitHub 草稿发行版
   --prune-assets        删除保留版本里与该版本不符的多余附件
   --host <name>         github、gitee 或 all，默认 all
-  --remote <name>       标签来源远端，默认 origin
+  --remote <name>       可选的额外 Git 标签来源；默认用所选平台 API
   --github/--gitee <url>  仓库地址
   --json                以 JSON 输出计划
   --dry-run             只演练（默认）
@@ -96,7 +96,7 @@ export function documentedTags(contents) {
  * 当前 package.json 版本和文档引用的版本；其余符合 patterns 的标签连同发行版、附件一起删除，
  * maxAgeDays > 0 时跳过太新的版本。
  */
-export function planCleanup({ tags = [], releases = {}, keep = 10, keepTags = keep, keepPrerelease = false, maxAgeDays = 0, patterns = ['v*'], currentVersion = '', protectedTags = [], drafts = true, now = Date.now() } = {}) {
+export function planCleanup({ tags = [], releases = {}, keep = 5, keepTags = keep, keepPrerelease = false, maxAgeDays = 0, patterns = ['v*'], currentVersion = '', protectedTags = [], drafts = true, now = Date.now() } = {}) {
   if (!Number.isInteger(keep) || keep < 1) throw new Error('保留数量必须是不小于 1 的整数，避免删掉最新版本。');
   if (!Number.isInteger(keepTags) || keepTags < 1) throw new Error('保留标签数量必须是不小于 1 的整数。');
   if (!Number.isInteger(maxAgeDays) || maxAgeDays < 0) throw new Error('--max-age-days 必须是不小于 0 的整数。');
@@ -236,6 +236,8 @@ export function createGithubClient({ slug, run = defaultRun }) {
     listReleases: async () => api(['--paginate', '--jq', '.[]', `/repos/${slug}/releases?per_page=100`])
       .split('\n').filter(Boolean).map(line => JSON.parse(line))
       .map(item => ({ id: item.id, tag: item.tag_name, draft: Boolean(item.draft), prerelease: Boolean(item.prerelease), createdAt: item.created_at, assets: (item.assets || []).map(asset => ({ id: asset.id, name: asset.name, size: asset.size })) })),
+    listTags: async () => api(['--paginate', '--jq', '.[]', `/repos/${slug}/tags?per_page=100`])
+      .split('\n').filter(Boolean).map(line => JSON.parse(line).name).filter(Boolean),
     remove: async path => {
       const result = run('gh', ['api', '--method', 'DELETE', path]);
       if (result.status === 0) return true;
@@ -399,10 +401,36 @@ export function remoteTags(remote, run = defaultRun) {
   return result.stdout.split('\n').map(line => line.split('\t')[1]).filter(Boolean).map(ref => ref.replace(/^refs\/tags\//, ''));
 }
 
+/** 默认由平台 API 提供真实标签；读取失败时停止，不以不完整本地数据执行删除。 */
+export async function collectTags({ github, gitee, remote, run = defaultRun, log = console.log }) {
+  const tags = new Set();
+  const platforms = [];
+  for (const [name, client] of [['GitHub', github], ['Gitee', gitee]]) {
+    if (!client) continue;
+    const listed = await client.listTags();
+    if (!Array.isArray(listed)) throw new Error(`${name} 标签接口返回格式异常，已停止。`);
+    for (const tag of listed) tags.add(tag);
+    platforms.push(name);
+  }
+  if (remote) {
+    const listed = remoteTags(remote, run);
+    if (listed !== null) for (const tag of listed) tags.add(tag);
+    else if (platforms.length) log(`提示：指定 Git 远端标签读取失败，已使用 ${platforms.join(' / ')} 标签接口，不依赖本地标签。`);
+    else throw new Error('指定 Git 远端标签读取失败，且没有可用的平台接口，已停止。');
+  }
+  if (!platforms.length && !remote) {
+    const local = run('git', ['tag']);
+    if (local.status !== 0) throw new Error('本地标签读取失败。');
+    for (const tag of local.stdout.split('\n').filter(Boolean)) tags.add(tag);
+    log('提示：没有可用的平台标签接口，仅使用本地标签生成演练计划。');
+  }
+  return [...tags];
+}
+
 export function parseArgs(argv) {
   const options = {
-    keep: 10, keepTags: null, keepPrerelease: false, maxAgeDays: 0, patterns: ['v*'], hosts: ['github', 'gitee'],
-    apply: false, pruneAssets: false, keepDrafts: false, json: false, help: false, remote: 'origin',
+    keep: 5, keepTags: null, keepPrerelease: false, maxAgeDays: 0, patterns: ['v*'], hosts: ['github', 'gitee'],
+    apply: false, pruneAssets: false, keepDrafts: false, json: false, help: false, remote: null,
     github: 'git@github.com:wxsimon2022/metaontic-video.git', gitee: 'git@gitee.com:hackloop/metaontic-video.git',
   };
   for (let index = 0; index < argv.length; index += 1) {
@@ -450,12 +478,9 @@ export async function main(argv = process.argv.slice(2), deps = {}) {
   if (options.hosts.includes('gitee')) {
     const slug = parseRepository(options.gitee, 'gitee.com').slug;
     if (token || options.apply) gitee = createGiteeClient({ slug, token, request: deps.request || fetch, run });
-    else log('提示：未设置 GITEE_TOKEN，演练只列出本地可见的标签，不读取 Gitee 发行版与附件。');
+    else log('提示：未设置 GITEE_TOKEN，演练不读取 Gitee 标签、发行版与附件，仅列出其他可用来源。');
   }
-  const listed = remoteTags(options.remote, run);
-  if (!listed) log(`警告：读取 ${options.remote} 远端标签失败，改用本地标签列表，结果可能不是最新。`);
-  // 只在 Gitee 推过的标签不会出现在别的远端列表里，必须合并后再进计划，否则永远清不掉。
-  const tags = [...new Set([...(listed || (run('git', ['tag']).stdout || '').split('\n').filter(Boolean)), ...(gitee ? await gitee.listTags() : [])])];
+  const tags = await collectTags({ github, gitee, remote: options.remote, run, log });
   const giteeReleases = gitee ? await gitee.listReleases() : [];
   // Gitee 的发行版列表不含附件，逐个补读，计划与删除都以实际附件为准。
   await mapPool(giteeReleases, 5, async release => { release.assets = await gitee.listAttachments(release.id); });

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { compareVersions, parseVersion, matchesPattern, expectedAssets, documentedTags, planCleanup, formatPlan, applyCleanup, parseArgs, mapPool, main, createGiteeClient, createGithubClient, isolatedGitEnv } from '../scripts/clean-releases.mjs';
+import { collectTags, compareVersions, parseVersion, matchesPattern, expectedAssets, documentedTags, planCleanup, formatPlan, applyCleanup, parseArgs, mapPool, main, createGiteeClient, createGithubClient, isolatedGitEnv } from '../scripts/clean-releases.mjs';
 
 const release = (tag, extra = {}) => ({ id: Number(String(tag).replace(/\D/g, '').slice(0, 6)) || 1, tag, draft: false, prerelease: false, createdAt: '2026-01-01T00:00:00Z', assets: [], ...extra });
 
@@ -172,6 +172,7 @@ test('只在 Gitee 存在的标签也会进入清理计划', async () => {
   const githubReleases = ['v3.13.11', 'v3.13.10'].map((tag, index) => JSON.stringify({ id: index + 1, tag_name: tag, draft: false, prerelease: false, created_at: '2026-01-01T00:00:00Z', assets: [] })).join('\n');
   const run = (command, args) => {
     if (command === 'git' && args[0] === 'ls-remote') return { status: 0, stdout: tagLines, stderr: '' };
+    if (command === 'gh' && args.some(a => a.includes('/tags?'))) return { status: 0, stdout: tagLines.split('\n').map(line => JSON.stringify({name:line.split('refs/tags/')[1]})).join('\n'), stderr: '' };
     if (command === 'gh' && args.includes('--paginate')) return { status: 0, stdout: githubReleases, stderr: '' };
     return { status: 0, stdout: '', stderr: '' };
   };
@@ -225,7 +226,7 @@ test('文档里写死的下载地址对应版本受保护，不会被回收', ()
   assert.deepEqual(plan.remove, []);
 });
 
-test('发行版与标签各保留最近 10 个，取并集', () => {
+test('发行版与标签各保留最近 5 个，取并集', () => {
   const versions = Array.from({ length: 12 }, (_, index) => `v1.0.${index}`);
   const withReleases = versions.slice(-3);
   const plan = planCleanup({
@@ -233,12 +234,12 @@ test('发行版与标签各保留最近 10 个，取并集', () => {
     releases: { github: withReleases.map((tag, index) => release(tag, { id: index + 1 })) },
     currentVersion: '1.0.11',
   });
-  assert.deepEqual(plan.remove.map(item => item.tag), ['v1.0.1', 'v1.0.0'], '只删掉两条保留线之外的版本');
+  assert.deepEqual(plan.remove.map(item => item.tag), ['v1.0.6', 'v1.0.5', 'v1.0.4', 'v1.0.3', 'v1.0.2', 'v1.0.1', 'v1.0.0'], '只删掉两条保留线之外的版本');
   const reasons = Object.fromEntries(plan.keep.map(item => [item.tag, item.reason]));
   assert.ok(reasons['v1.0.11'].includes('发行版'), '有发行版的按发行版保留');
-  assert.ok(reasons['v1.0.2'].includes('标签'), '没有发行版但仍在最近 10 个标签里的也要保留');
+  assert.ok(reasons['v1.0.7'].includes('标签'), '没有发行版但仍在最近 5 个标签里的也要保留');
   const loose = planCleanup({ tags: versions, releases: {}, currentVersion: '1.0.11' });
-  assert.deepEqual(loose.remove.map(item => item.tag), ['v1.0.1', 'v1.0.0']);
+  assert.deepEqual(loose.remove.map(item => item.tag), ['v1.0.6', 'v1.0.5', 'v1.0.4', 'v1.0.3', 'v1.0.2', 'v1.0.1', 'v1.0.0']);
   const tight = planCleanup({
     tags: versions,
     releases: { github: withReleases.map((tag, index) => release(tag, { id: index + 1 })) },
@@ -264,8 +265,8 @@ test('计划统计预计释放的附件体积', () => {
 
 test('命令行参数校验默认值并拒绝危险输入', () => {
   const options = parseArgs([]);
-  assert.equal(options.keep, 10);
-  assert.equal(options.keepTags, 10, '默认与 --keep 保持一致');
+  assert.equal(options.keep, 5);
+  assert.equal(options.keepTags, 5, '默认与 --keep 保持一致');
   assert.equal(options.apply, false);
   assert.deepEqual(options.patterns, ['v*']);
   assert.deepEqual(options.hosts, ['github', 'gitee']);
@@ -295,6 +296,7 @@ test('演练不删除任何东西，加 --apply 才真正下发删除', async ()
     const line = `${command} ${args.join(' ')}`;
     if (command === 'git' && args[0] === 'ls-remote') return { status: 0, stdout: tagLines, stderr: '' };
     if (command === 'git' && args[0] === 'tag' && args[1] === '-d') { commands.push(line); return { status: 0, stdout: '', stderr: '' }; }
+    if (command === 'gh' && args.some(a => a.includes('/tags?'))) return { status: 0, stdout: tagLines.split('\n').map(line => JSON.stringify({name:line.split('refs/tags/')[1]})).join('\n'), stderr: '' };
     if (command === 'gh' && args.includes('--paginate')) return { status: 0, stdout: githubReleases, stderr: '' };
     if (command === 'gh') { commands.push(line); return { status: 0, stdout: '', stderr: '' }; }
     return { status: 0, stdout: '', stderr: '' };
@@ -318,4 +320,21 @@ test('演练不删除任何东西，加 --apply 才真正下发删除', async ()
   } finally {
     if (previous === undefined) delete process.env.GITEE_TOKEN; else process.env.GITEE_TOKEN = previous;
   }
+});
+
+test('默认从平台API合并标签，不读取origin或依赖SSH',async()=>{
+ const logs=[];
+ const tags=await collectTags({github:{listTags:async()=>['v3.17.0','v3.16.0']},gitee:{listTags:async()=>['v3.17.0','v3.15.2']},run:()=>{throw Error('must not call git');},log:x=>logs.push(x)});
+ assert.deepEqual(tags,['v3.17.0','v3.16.0','v3.15.2']);assert.deepEqual(logs,[]);assert.equal(parseArgs([]).remote,null);
+});
+
+test('显式远端失败时使用新鲜平台数据，不谎报回退本地标签',async()=>{
+ const logs=[];
+ const tags=await collectTags({remote:'origin',gitee:{listTags:async()=>['v3.17.0']},run:()=>({status:128,stdout:'',stderr:'SSH unavailable'}),log:x=>logs.push(x)});
+ assert.deepEqual(tags,['v3.17.0']);assert.match(logs[0],/使用 Gitee 标签接口/);assert.doesNotMatch(logs[0],/改用本地/);
+});
+
+test('平台标签查询失败则停止，不使用不完整列表继续删除',async()=>{
+ await assert.rejects(collectTags({gitee:{listTags:async()=>{throw Error('network failed');}},run:()=>{throw Error('must not fallback');}}),/network failed/);
+ await assert.rejects(collectTags({remote:'origin',run:()=>({status:128,stdout:'',stderr:''})}),/已停止/);
 });
