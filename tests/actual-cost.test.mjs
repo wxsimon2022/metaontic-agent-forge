@@ -25,11 +25,6 @@ test('MetaOntic AI uses the video credential and same base; public conversion ha
  assert.equal(calls[0][0],'https://relay.example/api/log/token');assert.equal(calls[0][1].headers.Authorization,'Bearer video-b');assert.equal(calls[1][1].headers.Authorization,undefined);assert.equal(calls[0][1].redirect,'error');
  });}
 });
-test('service mode reads settlement from the relay like the other relay modes',async()=>{
- const calls=[];
- const r=await mock(async(url,opts)=>{calls.push([url,opts]);return Response.json(url.endsWith('/api/status')?settings:{success:true,data:[row(2,231470)]});},async()=>api.fetchActualCost({...config,connectionMode:'service'},['task-a']));
- assert.equal(r.status,'settled');assert.equal(r.amount,3.379462);assert.ok(calls.length>=1);
-});
 test('missing settlement, auth failure and missing conversion never turn precharge into actual money',async()=>{
  await mock(async()=>Response.json({success:true,data:[row(1)]}),async()=>{
  const r=await api.fetchActualCost(config,['task-a']);assert.equal(r.status,'pending');assert.equal(r.amount,null);

@@ -5,7 +5,7 @@ import { test } from 'node:test';
 const source = sourceOf('connection-defaults', 'client/state');
 const context = vm.createContext({});
 vm.runInContext(source + '\nObject.assign(globalThis, createSettingsState({}));', context);
-const modes = ['service', 'metaontic', 'volcengine'];
+const modes = ['metaontic', 'volcengine'];
 const keyFor = { service: 'apiKey', metaontic: 'metaonticApiKey', volcengine: 'volcengineApiKey' };
 for (const from of modes) for (const to of modes) test(`atomic save ${from} -> ${to} clears inherited credentials`, async () => {
   const inherited = { apiKey: 'old-service', metaonticApiKey: 'old-meta', volcengineApiKey: 'old-volcano', deviceSecret: 'old-device' };

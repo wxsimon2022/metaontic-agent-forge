@@ -1,3 +1,5 @@
+import path from 'node:path';
+import { stat } from 'node:fs/promises';
 /** workflow/segment-run：video_generate 与 video_extend 的分段循环共用逻辑。 */
 import { CONTENT_REJECTION_HINT } from '../config.js';
 import { downloadSegmentsAndMerge } from '../media/merge.js';
@@ -92,10 +94,17 @@ export function skipMergeDelivery({ result, paused, remainingSeconds, notes, seg
  */
 export async function runSegmentDelivery({
   config, exec, interrupted, completed, segments, segmentsDir, outDir, stamp, notes, result,
-  paused, remainingSeconds, pauseNote, toolName,
+  paused, remainingSeconds, pauseNote, toolName, cumulativePreview = false,
 }) {
+  const previewOnly = paused && !cumulativePreview;
+  if (previewOnly) {
+    for (const segment of completed.slice(0, -1)) {
+      const file = path.join(segmentsDir, `${String(segment.index).padStart(2, '0')}-${segment.kind}.mp4`);
+      try { if ((await stat(file)).isFile()) segment.localPath = file; } catch { /* 不补造不存在的文件 */ }
+    }
+  }
   const delivery = await downloadSegmentsAndMerge(config, {
-    segments: completed,
+    segments: previewOnly ? completed.slice(-1) : completed,
     segmentsDir,
     outDir,
     stamp,
@@ -125,7 +134,7 @@ export async function runSegmentDelivery({
     if (notes.length) result.note = notes.join('\n');
     return result;
   }
-  if (delivery.merged) {
+  if (delivery.merged && !previewOnly) {
     result.merged = true;
     result.videoPath = delivery.videoPath;
     result.mergeMode = delivery.mergeMode;
@@ -140,9 +149,10 @@ export async function runSegmentDelivery({
     result.paused = true;
     result.nextAction = 'show_video_then_wait_for_user';
     result.previewPath = completed.at(-1)?.localPath || result.videoPath;
+    if (previewOnly) { result.merged = false; result.previewOnly = true; }
     await appendRequestLog({ event: 'preview_required', previewPath: result.previewPath, resumeDir: result.resumeDir });
     result.remainingSeconds = remainingSeconds;
-    notes.push(pauseNote);
+    notes.push(previewOnly ? '本次只下载并交付新段；最终完成后再合并完整成片。需要累计预览时可用原resume并传cumulativePreview:true，不新增生成费用。' : pauseNote);
     notes.push(resumeHint(segmentsDir, remainingSeconds, toolName));
     result.note = notes.join('\n');
     return result;

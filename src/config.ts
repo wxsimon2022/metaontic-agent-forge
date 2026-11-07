@@ -1,28 +1,15 @@
-import { METAONTIC_BASE_URL, SERVICE_MODE_AVAILABLE } from './connection-defaults.js';
+import { METAONTIC_BASE_URL } from './connection-defaults.js';
 /** config：从宿主入口拆出的独立职责模块。 */
 import z from '@deepseek-ai/schemastery';
 
 export const Config = z.object({
-  // 服务端方式停用期间，新装默认落到 MetaOntic AI（否则新用户一进来就是不可用的方式）；
-  // 已有配置的取值不受默认值影响，按停用规则被拒绝调用。
-  connectionMode: z.union(['service', 'metaontic', 'volcengine']).default(SERVICE_MODE_AVAILABLE ? 'service' : 'metaontic')
-    .description('接入方式：MetaOnticVideo 服务端领 API密钥（service）；MetaOntic AI（metaontic）；火山引擎直连（volcengine，当前设置页暂不提供选择）').volatile(),
+  connectionMode: z.union(['metaontic', 'volcengine']).default('metaontic')
+    .description('接入方式：MetaOntic AI（metaontic）；火山引擎直连（volcengine，当前设置页暂不提供选择）').volatile(),
   metaonticApiKey: z.string().default('').description('MetaOntic AI API密钥').volatile(),
   volcengineApiKey: z.string().default('').description('火山引擎直连模式的火山 API密钥').volatile(),
   entryId: z.string()
     .default('metaontic-video')
     .description('本插件在 profile patch 里的条目 id；配置工具用它把改动写回')
-    .volatile(),
-  apiKey: z.string()
-    .default('')
-    .description(
-      'API密钥：只在设置页点「登录」时由服务端下发并直接写进配置，不支持手填、'
-      + '也不读环境变量；手改这里的值会被拒绝调用',
-    )
-    .volatile(),
-  keyOrigin: z.string()
-    .default('')
-    .description("密钥来源标记：设置页「登录」成功后写入 'register'，插件只认服务端下发的 API密钥")
     .volatile(),
   baseUrl: z.string()
     .default('')
@@ -47,30 +34,6 @@ export const Config = z.object({
   model: z.string()
     .default('')
     .description('视频生成用的模型 ID（seedance 2.0 / 2.5 系列）；留空读 NEWAPI_VIDEO_MODEL 或内置默认值')
-    .volatile(),
-  registerEmail: z.string()
-    .default('')
-    .description('领 API密钥用的邮箱（账号）：中转站里的密钥名由服务端生成唯一串，与这个邮箱绑定')
-    .volatile(),
-  registerToken: z.string()
-    .default('metaontic-video-register-v1')
-    .description('注册请求头 X-Register-Token 的值，要与服务端 REGISTER_CLIENT_TOKEN 一致；页面不显示')
-    .volatile(),
-  registerApi: z.string()
-    .default('')
-    .description('插件服务地址（领 API密钥 / 查额度 / 使用记录）；留空用内置的视频服务域名')
-    .volatile(),
-  deviceId: z.string()
-    .default('')
-    .description('本机设备标识：设置页点「登录」时写入，用来查这把 API密钥的剩余额度')
-    .volatile(),
-  deviceSecret: z.string()
-    .default('')
-    .description('本机设备密钥：与设备标识一起绑定归属；页面不显示')
-    .volatile(),
-  loginKey: z.string()
-    .default('')
-    .description('登录令牌（服务端下发，JWT）：之后每个服务端请求都带它证明账号身份；页面不显示')
     .volatile(),
   estimateGroupRatio: z.number().min(0).max(10)
     .default(0.8)
@@ -189,14 +152,6 @@ export const CUMULATIVE_TOLERANCE_RATIO = 0.25;
 
 export const CUMULATIVE_TOLERANCE_MIN_SECONDS = 1.5;
 
-/** 插件服务地址（领 API密钥、查额度、使用记录）：配置留空时用这个固定域名。 */
-export const DEFAULT_REGISTER_API = 'https://video.mybfs.cn';
-
-/** 服务端握手头的兜底值（与服务端 REGISTER_CLIENT_TOKEN 对齐）。 */
-export const DEFAULT_REGISTER_TOKEN = 'metaontic-video-register-v1';
-
-/** 密钥来源标记：设置页「登录」成功后写进配置，表示这把 API密钥是服务端下发的。 */
-export const KEY_ORIGIN_REGISTER = 'register';
 
 /** 额度/汇率兜底：服务端会回真实值，只有拿不到时才用这两个。 */
 export const DEFAULT_QUOTA_PER_UNIT = 500000;

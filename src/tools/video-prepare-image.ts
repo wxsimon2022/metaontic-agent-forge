@@ -33,7 +33,7 @@ export function prepareImageTool(liveConfig, progress = {}) {
     isConcurrencySafe() { return true; },
     async execute(args, exec) {
       const config = imageConfig(liveConfig);
-      if (isVolcengine(config)) throw new Error('角色图生成与参考图处理目前支持服务端或MetaOntic AI接入；火山直连暂不提供此图片通道，可使用已准备好的角色参考图。');
+      if (isVolcengine(config)) throw new Error('角色图生成与参考图处理目前支持MetaOntic AI接入；火山直连暂不提供此图片通道，可使用已准备好的角色参考图。');
       assertConfigured(config, resolveApiKey(config));
       const model = String(ref(config, 'imageModel', IMAGE_MODELS[0]));
       if (!IMAGE_MODELS.includes(model)) throw new Error('请选择受支持的 Seedream 图片模型。');

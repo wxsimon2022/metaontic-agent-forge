@@ -1,3 +1,4 @@
+import { workflowApi } from './workflow-test-api.mjs';
 // Mocked API integration tests: no network or paid generation.
 import assert from 'node:assert/strict';
 import { test, after } from 'node:test';
@@ -29,6 +30,7 @@ async function fixture(run) {
  let asks=0;
  const ctx={get:()=>({request:async()=>{asks++;return flags.allow;}}),tools:{register(t){tools.set(t.name,t);return ()=>{};}},inject(){},on(){return ()=>{};}};
  api.apply(ctx,config);
+ for(const name of ['video_generate','video_extend'])tools.set(name,workflowApi.lowLevelVideo(name,config,ctx));
  globalThis.fetch=async(url,options={})=>{
   const body=options.body?JSON.parse(options.body):undefined;calls.push({url,body,key:options.headers?.Authorization});
   if(url.endsWith('/tasks/doubao'))return Response.json({task_id:'image-'+(++imageCount)});
@@ -159,12 +161,6 @@ test('missing independent image key stops before network and shared mode ignores
  assert.ok(h.calls.every(c=>c.key==='Bearer b'));
 }));
 
-test('service method carries image traffic with the service-issued key',()=>fixture(async h=>{
- h.config.connectionMode='service';
- await api.prepareImageTool(h.config).execute({image:'https://example.com/ref.png',style:'动画'},{});
- assert.ok(h.calls.length>=1);assert.ok(h.calls.every(c=>c.key==='Bearer a'));
-}));
-
 test('B recovery uses image key only for image traffic and video key for original/retry/status',()=>fixture(async h=>{
  h.config.imageUseVideoKey=false;h.config.imageApiKey='image-secret';h.config.volcengineApiKey='wrong-c';
  const progress={state:{},saveState:async()=>{},ctx:h.ctx,exec:h.exec};
@@ -200,7 +196,7 @@ test('B independent image key snapshot survives settings edits during submission
  await api.prepareImageTool(h.config).execute({image:'https://example.com/ref.png',style:'动画'},{});
  assert.ok(h.calls.every(c=>c.key==='Bearer original-image'));
 }));
-for(const mode of ['service','metaontic','volcengine']) test(`${mode}: missing video key never falls back to another model key`,()=>fixture(async h=>{
+for(const mode of ['metaontic','volcengine']) test(`${mode}: missing video key never falls back to another model key`,()=>fixture(async h=>{
  h.config.connectionMode=mode;h.config.imageApiKey='not-video';
  h.config[mode==='service'?'apiKey':mode==='metaontic'?'metaonticApiKey':'volcengineApiKey']='';
  await assert.rejects(()=>h.tools.get('video_generate').execute({prompt:'test',duration:5,merge:false},h.exec),/API密钥/);
@@ -246,7 +242,7 @@ test('speech instructions reach generation and both extension directions without
  assert.match(silent.body.content[0].text,/无对白时不新增人声/);
 }));
 
-for(const connectionMode of ['service','metaontic','volcengine']) test(`${connectionMode}: reviewed transition enters the native video request without a new API parameter`,()=>fixture(async h=>{
+for(const connectionMode of ['metaontic','volcengine']) test(`${connectionMode}: reviewed transition enters the native video request without a new API parameter`,()=>fixture(async h=>{
  h.config.connectionMode=connectionMode;h.config.volcengineApiKey='c';
  const transition='承接视频1中男子放下茶杯的动作，切到女子近景，环境声连续。';
  const {body}=api.buildRequestBody(h.config,{prompt:'镜头1：女子抬头说{我知道了。}',duration:15,resolution:'480p',mode:'continuous',transitionDescription:transition},'https://example.com/source.mp4');

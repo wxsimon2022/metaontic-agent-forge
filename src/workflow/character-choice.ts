@@ -1,3 +1,4 @@
+import { readProject, writeProject, projectCharacterGate } from './project.js';
 /** 文生视频提交前强制取得角色图选择；不依赖模型是否遵守提示词。 */
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile, rename, rm } from 'node:fs/promises';
@@ -17,16 +18,19 @@ function hasImages(args) {
 }
 export async function characterChoiceGate(ctx, config, exec, args) {
   if (exec.name !== 'video_generate' || String(args?.resume || '').trim() || hasImages(args)) return null;
+  if (args?.projectId && !args.preparation) return projectCharacterGate(config, exec, args);
+  const project = args?.projectId ? await readProject(args.projectId, exec) : null;
   const session = exec.agent?.session;
   const deny = reason => ({ kind: 'deny', reason });
   if (!session || typeof session !== 'object') return deny('提交已停止：纯文生视频须先询问是否生成角色参考图，当前缺少可交互会话。');
   const stableId = typeof session.id === 'string' ? session.id : typeof session.header?.id === 'string' ? session.header.id : null;
   if (!localIds.has(session)) localIds.set(session, `live-${++nextId}`);
-  const key = createHash('sha256').update(JSON.stringify([stableId || localIds.get(session), args?.prompt || '', args?.duration, args?.resolution, args?.ratio])).digest('hex');
+  const key = createHash('sha256').update(JSON.stringify(project ? [project.id] : [stableId || localIds.get(session), args?.prompt || '', args?.duration, args?.resolution, args?.ratio])).digest('hex');
   const file = path.join(dshHome(), 'metaontic-video', 'character-choices', key + '.json');
   try {
     async function choose() {
-      if (stableId && args?.resetCharacterChoice !== true) {
+      if (project?.choice && args?.resetCharacterChoice !== true) return project.choice;
+      if (!project && stableId && args?.resetCharacterChoice !== true) {
         try { const saved = JSON.parse(await readFile(file, 'utf8')); if (saved.version === 1 && ['text_only', 'generate_first'].includes(saved.choice)) return saved.choice; }
         catch (error) { if (error?.code !== 'ENOENT') return null; }
       }
@@ -44,7 +48,8 @@ export async function characterChoiceGate(ctx, config, exec, args) {
       const selected = answer?.custom ? answer.custom.trim() : answer?.selected?.length === 1 ? answer.selected[0] : '';
       const choice = selected === first ? 'generate_first' : selected === TEXT ? 'text_only' : null;
       if (!choice) return null;
-      if (stableId) {
+      if (project) { project.choice = choice; project.approved = null; await writeProject(project); }
+      else if (stableId) {
         await mkdir(path.dirname(file), { recursive: true, mode: 0o700 });
         const temp = file + '.' + Date.now() + '.tmp';
         try { await writeFile(temp, JSON.stringify({ version: 1, choice, time: new Date().toISOString() }), { mode: 0o600, flag: 'wx' }); await rename(temp, file); }

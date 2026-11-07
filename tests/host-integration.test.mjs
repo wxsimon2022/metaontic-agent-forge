@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { test } from 'node:test';
@@ -16,7 +16,7 @@ function assertScalarSchemaTypes(schema) {
 
 function harness(config, directory) {
   const tools = new Map();
-  let prompt, gate;
+  let prompt, gate; const observers = [];
   let disposed = 0;
   const ctx = {
     tools: { register(tool) { assertScalarSchemaTypes(tool.output?.schema); tools.set(tool.name, tool); return () => { disposed++; }; } },
@@ -28,10 +28,11 @@ function harness(config, directory) {
       };
       return install({ ...ctx, ...services });
     },
-    on(_event, listener) { gate = listener; return () => {}; },
+    get(name) { return name === 'userQuestions' ? { ask: async () => ({answers:[{id:'script_review',selected:['脚本通过']}]}) } : undefined; },
+    on(event, listener) { if (event === 'session/event') observers.push(listener); else gate = listener; return () => {}; },
   };
   const dispose = plugin.apply(ctx, config);
-  return { tools, prompt: () => prompt.text(), gate: (...args) => gate(...args), dispose, disposed: () => disposed };
+  return { tools, observe: (session, event) => Promise.all(observers.map(f => f(session, event))), prompt: () => prompt.text({agent:{session:{header:{agentPreset:'video-director'}}}}), gate: (...args) => gate(...args), dispose, disposed: () => disposed };
 }
 
 test('published host preserves schema, tool registration, live configuration and cleanup', async () => {
@@ -39,15 +40,15 @@ test('published host preserves schema, tool registration, live configuration and
   assert.ok(plugin.Config);
   const config = { connectionMode: 'metaontic', metaonticApiKey: 'test', model: 'seedance-2-0' };
   const host = harness(config, '/tmp');
-  assert.deepEqual([...host.tools.keys()].sort(), ['media_submission', 'video_config', 'video_estimate', 'video_extend', 'video_generate', 'video_prepare_image', 'video_setup', 'video_stage', 'video_status']);
+  assert.deepEqual([...host.tools.keys()].sort(), ['media_submission', 'video_config', 'video_estimate', 'video_extend', 'video_generate', 'video_prepare_image', 'video_project', 'video_setup', 'video_stage', 'video_status']);
   assert.match(host.prompt(), /直出上限 15 秒/);
   config.model = 'seedance-2-5';
   assert.match(host.prompt(), /直出上限 30 秒/);
   const decision = await host.gate({ name: 'video_generate', arguments: { duration: 5, referenceImages: ['https://media.invalid/approved.png'] } });
-  assert.equal(decision.kind, 'ask');
-  assert.match(decision.displayReason.zh, /实际用量计费/);
+  assert.equal(decision.kind, 'deny');
+  assert.match(decision.reason, /projectId/);
   host.dispose();
-  assert.equal(host.disposed(), 9);
+  assert.equal(host.disposed(), 10);
 });
 
 test('conversation stays inside video creation and configuration is read-only in chat', async () => {
@@ -108,8 +109,19 @@ for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools sub
       outputDir: directory, ffmpegBinary: '/missing/ffmpeg', ffprobeBinary: '/missing/ffprobe',
     };
     const host = harness(config, directory);
-    const exec = { callId: 'test-call', agent: {} };
-    const generated = await host.tools.get('video_generate').execute({ prompt: 'A title', duration: 5 }, exec);
+    const exec = { callId: 'test-call', agent: {session:{id:'integration',header:{cwd:directory}}} };
+    async function reviewed(name, supplied) {
+      const spec = {ratio:'9:16',resolution:'720p',...supplied};
+      const project = await host.tools.get('video_project').execute({action:'prepare',subjectType:'scenery'},exec);
+      const scriptPath=path.join(directory,project.projectId+'.md'), image=path.join(directory,'storyboard.svg');
+      await writeFile(scriptPath,'Script '+spec.prompt); await writeFile(image,'<svg/>');
+      await host.observe(exec.agent.session,{type:'tool/call',data:{turn:1,name:'video_project'}});
+      await host.observe(exec.agent.session,{type:'assistant/message',data:{turn:1,message:{content:[{type:'text',text:`Script ${spec.prompt}\n![分镜](<${image}>)`}]}}});
+      const review=await host.tools.get('video_project').execute({action:'review',projectId:project.projectId,scriptPath,specification:spec,toolName:name},exec);
+      assert.equal(review.status,'approved');
+      return host.tools.get(name).execute({...spec,projectId:project.projectId},exec);
+    }
+    const generated = await reviewed('video_generate', { prompt: 'A title', duration: 5 });
     assert.equal(generated.status, 'succeeded');
     assert.equal(submissions.length, 1);
     assert.equal(submissions[0].duration, 5);
@@ -119,9 +131,9 @@ for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools sub
     assert.equal(queried.status, 'succeeded');
     assert.equal(submissions.length, 1);
 
-    const first = await host.tools.get('video_generate').execute({
+    const first = await reviewed('video_generate', {
       prompt: 'Continuous story', duration: 20, segmentPrompts: ['First part', 'Second part'], merge: false,
-    }, exec);
+    });
     assert.equal(first.paused, true);
     assert.equal(submissions.length, 2);
     const record = JSON.parse(await readFile(path.join(first.resumeDir, 'paused-plan.json'), 'utf8'));
@@ -130,7 +142,7 @@ for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools sub
     // 而不是只靠提示词让模型自己问。
     const resumeGate = await host.gate({
       name: 'video_generate',
-      arguments: { resume: first.resumeDir, merge: false, referenceImages: ['https://media.invalid/approved.png'] },
+      agent: exec.agent, arguments: { resume: first.resumeDir, merge: false },
     });
     assert.equal(resumeGate.kind, 'ask');
     assert.match(resumeGate.displayReason.zh, /第 1 段（15 秒）已经生成好/);
@@ -142,8 +154,8 @@ for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools sub
       name: 'video_generate',
       arguments: { duration: 5, referenceImages: ['https://media.invalid/approved.png'] },
     });
-    assert.equal(freshGate.kind, 'ask');
-    assert.doesNotMatch(freshGate.displayReason.zh, /已经生成好/);
+    assert.equal(freshGate.kind, 'deny');
+    assert.match(freshGate.reason, /projectId/);
     const continued = await host.tools.get('video_generate').execute({ resume: first.resumeDir, merge: false }, exec);
     assert.equal(continued.status, 'succeeded');
     assert.equal(continued.paused, undefined);
@@ -152,9 +164,9 @@ for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools sub
     assert.equal(submissions[2].content.find(part => part.type === 'video_url').video_url.url, 'https://media.invalid/task-2.mp4');
     await assert.rejects(stat(path.join(first.resumeDir, 'resume.lock')), { code: 'ENOENT' });
 
-    const extended = await host.tools.get('video_extend').execute({
+    const extended = await reviewed('video_extend', {
       videoUrl: 'https://media.invalid/task-1.mp4', prompt: 'Continue walking', duration: 5, merge: false,
-    }, exec);
+    });
     assert.equal(extended.status, 'succeeded');
     assert.equal(submissions.length, 4);
     assert.equal(submissions[3].content.find(part => part.type === 'video_url').video_url.url, 'https://media.invalid/task-1.mp4');
@@ -186,7 +198,7 @@ test('service: bundled host serves the server method again instead of refusing i
     const decision = await host.gate({ name: 'video_generate', arguments: { duration: 5 } });
     assert.doesNotMatch(String(decision.reason || ''), /暂时不可用/);
     assert.equal(decision.kind, 'deny');
-    assert.match(decision.reason, /角色参考图/);
+    assert.match(decision.reason, /projectId/);
     assert.ok(host.tools.has('video_config'));
     assert.equal(requests, 0);
     host.dispose();

@@ -18,13 +18,10 @@ export function createClientConfig() {
     ];
     /** 可编辑字段；kind 决定控件，标注 secret 的字段宿主只会告知是否已配置。 */
     const SELECTS = {
-      // 接入方式：A 服务端（邮箱登录领 API密钥）、B MetaOntic AI（手填 API密钥）、C 火山直连。
-      // 临时下架某个方式时，先关掉 connection-defaults.ts 里对应的开关，再把它从这里去掉：
-      // 设置页会改用隐藏项显示已有取值（见 settings.ts 的 HIDDEN_CONNECTION_MODES），
-      // 列表里选不到它，也不会把已有配置静默换成别的渠道。
+      // MetaOntic AI；火山直连按开关提供。
       connectionMode: VOLCENGINE_MODE_AVAILABLE
-        ? ['metaontic', 'service', 'volcengine']
-        : ['metaontic', 'service'],
+        ? ['metaontic', 'volcengine']
+        : ['metaontic'],
       model: MODEL_OPTIONS,
       // 图片模型只提供在售的 pro 版；旧型号已下线，存量配置由 resolveImageModel 归一到这一项。
       imageModel: [IMAGE_MODEL],
@@ -43,7 +40,6 @@ export function createClientConfig() {
     ];
     const FIELDS = [
       { key: 'connectionMode', kind: 'select', wide: true },
-      { key: 'apiKey', kind: 'text', secret: true, wide: true },
       { key: 'metaonticApiKey', kind: 'text', secret: true, wide: true },
       { key: 'volcengineApiKey', kind: 'text', secret: true, wide: true },
       // 模型用下拉选（候选见 MODEL_OPTIONS），占一整行显示完整型号
@@ -63,16 +59,10 @@ export function createClientConfig() {
     ];
     const FIELD_BY_KEY = Object.fromEntries(FIELDS.map((field) => [field.key, field]));
 
-    /** 插件设置页「注册」按钮调用的服务地址：固定这个，不显示也不允许改。 */
-    const DEFAULT_REGISTER_API = 'https://video.mybfs.cn';
-    /** 本机「已登出」标记：点过「重置插件」后置上，登录成功时清掉。 */
-    const LOGGED_OUT_KEY = 'metaontic-video.logged-out';
     /** 插件自己会写进配置的项：重置时兜底一起清，免得宿主没把它们列进 user。 */
     const PLUGIN_OWNED_KEYS = [
       'connectionMode', 'metaonticApiKey', 'volcengineApiKey', 'apiKey', 'keyOrigin', 'baseUrl', 'registerEmail', 'deviceId', 'deviceSecret', 'loginKey', 'model', 'imageModel', 'imageUseVideoKey', 'imageApiKey',
     ];
-    /** 注册接口的握手请求头 X-Register-Token：与服务端 REGISTER_CLIENT_TOKEN 一致。 */
-    const DEFAULT_REGISTER_TOKEN = 'metaontic-video-register-v1';
 
     /** 这台机器的系统（浏览器半侧只能这么看）：用来挑默认展示的 ffmpeg 安装命令。 */
     function currentOs() {
@@ -120,5 +110,5 @@ export function createClientConfig() {
       }
       return option;
     }
-  return { PLUGIN_OWNED_KEYS, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE };
+  return { PLUGIN_OWNED_KEYS, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE };
 }

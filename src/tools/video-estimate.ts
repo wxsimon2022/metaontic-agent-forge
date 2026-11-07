@@ -73,3 +73,22 @@ export function estimateTool(config) {
     async execute(args) { return compareVideoCosts(config, args); },
   };
 }
+
+/** 制作审批与脚本试算共用价目、像素和输入计费规则；未知信息明确返回失败。 */
+export function estimateSegmentCosts(config, args, plan) {
+  const model = resolveModel(config);
+  const entry = RATES.find(([prefix]) => model.startsWith(prefix));
+  if (!entry) throw new Error(`尚无${model}的可靠价目`);
+  const ratio = args.ratio ?? ref(config, 'ratio', '9:16');
+  if (!['16:9', '9:16'].includes(ratio)) throw new Error('此画幅缺少可靠像素计费依据');
+  if (!['480p', '720p'].includes(args.resolution)) throw new Error('未明确480P或720P');
+  const pixels = args.resolution === '720p' ? [1280, 720] : model.startsWith('doubao-seedance-2-5') ? [854, 480] : [864, 496];
+  const segments = plan.map((step, index) => {
+    const input = step.kind === 'extend' || step.usesVideoInput === true
+      ? Number(step.inputSeconds ?? (index ? plan[index - 1].seconds : args.inputVideoSeconds)) : 0;
+    if (!Number.isFinite(input) || input < 0 || (step.kind === 'extend' && input <= 0)) throw new Error('缺少已核实的输入视频时长');
+    const tokens = (input + step.seconds) * pixels[0] * pixels[1] * 24 / 1024;
+    return { seconds: step.seconds, inputSeconds: input, cny: tokens * entry[1][input ? 1 : 0] / 1e6 };
+  });
+  return { segments, cny: segments.reduce((sum, item) => sum + item.cny, 0), priceDate: PRICE_DATE };
+}

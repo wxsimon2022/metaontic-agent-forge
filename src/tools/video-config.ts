@@ -1,25 +1,22 @@
-import { SERVICE_MODE_AVAILABLE, VOLCENGINE_MODE_AVAILABLE, IMAGE_MODEL, resolveImageModel } from '../connection-defaults.js';
+import { VOLCENGINE_MODE_AVAILABLE, IMAGE_MODEL, resolveImageModel } from '../connection-defaults.js';
 /** tools/video-config：从宿主入口拆出的独立职责模块。 */
 import { ref } from '../config.js';
-import { isMetaontic, isVolcengine, resolveBaseUrl, resolveSubmitPath, relayPreset, resolveModel, resolveApiKey, isServerIssuedKey } from '../providers/connection.js';
+import { isMetaontic, isVolcengine, resolveBaseUrl, resolveSubmitPath, relayPreset, resolveModel, resolveApiKey } from '../providers/connection.js';
 import { modelMaxSeconds } from '../workflow/planning.js';
 
 /** 用户可在插件内改的配置字段。 */
 export const CONFIG_FIELDS = [
-  'connectionMode', 'metaonticApiKey', 'volcengineApiKey', 'apiKey', 'baseUrl', 'submitPath', 'queryPath', 'model', 'imageModel', 'imageUseVideoKey', 'imageApiKey',
+  'connectionMode', 'metaonticApiKey', 'volcengineApiKey', 'baseUrl', 'submitPath', 'queryPath', 'model', 'imageModel', 'imageUseVideoKey', 'imageApiKey',
   'duration', 'singleMaxSeconds', 'ratio', 'generateAudio', 'watermark',
   'extraParams', 'pollIntervalMs', 'maxWaitMs',
   'pollErrorRetries',
   'seamTrimSeconds', 'mergeMode', 'outputDir', 'resumeLockStaleMinutes',
   'ffmpegBinary', 'ffprobeBinary',
-  'registerEmail', 'registerApi', 'deviceId', 'estimateGroupRatio',
+  'estimateGroupRatio',
 ];
 
-/**
- * 只读字段：密钥一律由服务端在「登录」时下发写入，页面和工具都不许改，
- * 免得手填一把没绑设备、查不到额度的 API密钥出去瞎调。
- */
-export const READ_ONLY_CONFIG_FIELDS = new Set(['apiKey', 'keyOrigin', 'deviceId', 'deviceSecret']);
+/** 配置工具仅允许读取，密钥以配置状态显示。 */
+export const READ_ONLY_CONFIG_FIELDS = new Set();
 
 export function maskSecrets(view) {
   return {
@@ -27,8 +24,6 @@ export function maskSecrets(view) {
     metaonticApiKey: view.metaonticApiKey ? '（已配置）' : '',
     volcengineApiKey: view.volcengineApiKey ? '（已配置）' : '',
     imageApiKey: view.imageApiKey ? '（已配置）' : '',
-    apiKey: view.apiKey ? '（已配置）' : '',
-    deviceSecret: view.deviceSecret ? '（已配置）' : '',
   };
 }
 
@@ -39,17 +34,14 @@ export function configView(config) {
   return {
     stored: maskSecrets(stored),
     effective: {
-      connectionMode: isMetaontic(config) ? 'metaontic' : isVolcengine(config) ? 'volcengine' : 'service',
+      connectionMode: isVolcengine(config) ? 'volcengine' : 'metaontic',
       baseUrl: resolveBaseUrl(config),
       submitPath: resolveSubmitPath(config),
       queryPath: isVolcengine(config) ? '/api/v3/contents/generations/tasks/{task_id}' : String(ref(config, 'queryPath', '')).trim() || relayPreset().queryPath,
       model: resolveModel(config),
       imageUseVideoKey: !isMetaontic(config) || ref(config, 'imageUseVideoKey', true),
       imageModel: resolveImageModel(ref(config, 'imageModel', IMAGE_MODEL)),
-      // 密钥只有一种合法来源：设置页「登录」时服务端下发
-      apiKeySource: isMetaontic(config) ? (resolveApiKey(config) ? 'metaontic' : 'missing') : isVolcengine(config) ? (resolveApiKey(config) ? 'volcengine' : 'missing') : ref(config, 'apiKey', '')
-        ? (isServerIssuedKey(config) ? 'register' : 'unverified')
-        : 'missing',
+      apiKeySource: resolveApiKey(config) ? (isVolcengine(config) ? 'volcengine' : 'metaontic') : 'missing',
     },
   };
 }
@@ -62,11 +54,11 @@ export function configTool(config, settings) {
       + 'duration、singleMaxSeconds、ratio、generateAudio、'
       + 'watermark、extraParams、pollIntervalMs、maxWaitMs、mergeMode、'
       + 'outputDir、resumeLockStaleMinutes、'
-      + 'ffmpegBinary、ffprobeBinary、registerEmail、registerApi、estimateGroupRatio）。'
+      + 'ffmpegBinary、ffprobeBinary、estimateGroupRatio）。'
       + '对话里禁止改配置：接入方式、API密钥、模型、地址、时长等任何一项都只能由用户在插件设置页'
       + '（「插件 → 已安装插件 → MetaOnticVideo → 查看」）修改并保存，宿主重载后生效；'
       + '本工具没有修改能力，action=set 会被直接拒绝。'
-      + '用户要改配置时，说明改的是哪一项并引导他去设置页改，不要代改、不要索取或展示 API密钥（apiKey 只能由设置页「登录」时服务端下发）。'
+      + '用户要改配置时，说明改的是哪一项并引导他去设置页改，不要代改、不要索取或展示 API密钥。'
       + '看当前值用 action=get；'
       + 'duration 是每段新增秒数上限（4 至模型上限（2.0 为 15、2.5 为 30），默认按模型上限、段数最少），singleMaxSeconds 为兼容旧配置保留，直出上限由模型映射。',
     parameters: {
@@ -78,26 +70,18 @@ export function configTool(config, settings) {
           description: 'get=查看当前配置；配置改动只能在插件设置页完成，本工具不提供修改。',
         },
         connectionMode: {
-          type: 'string', enum: ['service', 'metaontic', 'volcengine'],
-          description: SERVICE_MODE_AVAILABLE
-            ? (VOLCENGINE_MODE_AVAILABLE
-              ? '接入方式：MetaOntic AI / MetaOnticVideo 服务端（邮箱登录领 API密钥）/ 火山引擎直连'
-              : '接入方式：MetaOntic AI（metaontic）/ MetaOnticVideo 服务端（service，邮箱登录领 API密钥）；火山引擎直连当前暂不提供选择，不要主动设置')
-            : (VOLCENGINE_MODE_AVAILABLE
-              ? '接入方式：MetaOntic AI（metaontic）/ 火山引擎直连（volcengine）；service 服务端方式暂时不可用，不要设置'
-              : '接入方式：MetaOntic AI（metaontic）；service 服务端方式与火山引擎直连当前都暂不提供，不要设置'),
+          type: 'string', enum: ['metaontic', 'volcengine'],
+          description: '接入方式：MetaOntic AI / 火山引擎直连（当前设置页隐藏）',
         },
         metaonticApiKey: { type: 'string', description: 'MetaOntic AI 手动 API密钥，无需登录' },
         volcengineApiKey: { type: 'string', description: '火山引擎直连模式的火山 API密钥' },
         baseUrl: { type: 'string', description: '基础地址，即中转站站址，例如 https://ai.bileego.com。' },
-        registerEmail: { type: 'string', description: '领 API密钥用的邮箱（账号）；注册要邮箱验证码，一个邮箱只发一把。' },
-        registerApi: { type: 'string', description: '插件服务地址（领 API密钥 / 查额度 / 使用记录）；留空用内置域名。' },
         estimateGroupRatio: { type: 'number', description: '预估费用用的分组折扣（中转站 group_ratio：默认 0.8）。' },
         submitPath: { type: 'string', description: '创建任务路径，例如 /doubao/api/v3/contents/generations/tasks。' },
         queryPath: { type: 'string', description: '查询任务路径，{task_id} 会被替换。' },
-        imageUseVideoKey: { type: 'boolean', description: '仅 B 方式可选择是否共用 API密钥，默认 true；A 固定共用登录下发的 API密钥' },
-        imageApiKey: { type: 'string', description: '关闭共用时必须填写的图片模型 API密钥，地址仍沿用当前 A/B 连接' },
-        imageModel: { type: 'string', enum: [IMAGE_MODEL], description: 'A/B 真人参考图非真人化模型（旧型号已下线，按 pro 版调用）' },
+        imageUseVideoKey: { type: 'boolean', description: '图片与视频是否共用 API密钥，默认 true' },
+        imageApiKey: { type: 'string', description: '关闭共用时必须填写的图片模型 API密钥，地址仍沿用当前 MetaOntic AI 连接' },
+        imageModel: { type: 'string', enum: [IMAGE_MODEL], description: 'MetaOntic AI 真人参考图非真人化模型（旧型号已下线，按 pro 版调用）' },
         model: { type: 'string', description: '模型 ID，例如 doubao-seedance-2-0-mini-260615。' },
         duration: { type: 'integer', minimum: 4, maximum: modelMaxSeconds(config), description: '每段新增秒数上限（4 至模型上限（2.0 为 15、2.5 为 30） 的整数，默认按模型上限、段数最少）。' },
         ratio: {
@@ -162,9 +146,7 @@ export function configTool(config, settings) {
           `生效值：baseUrl=${effective?.baseUrl} model=${effective?.model}`,
           `  submitPath=${effective?.submitPath}`,
           `  apiKey 来源：${{
-            register: '服务端下发（登录写入）',
-            unverified: '非服务端下发——调用会被拒绝，请到设置页点「登录」',
-            missing: '未配置——请到设置页点「登录」',
+            missing: '未配置——请到设置页填写 API密钥',
           }[effective?.apiKeySource] || effective?.apiKeySource}`,
           patchPath ? `配置文件：${patchPath}` : '',
         ].filter(Boolean);

@@ -2,7 +2,7 @@ import { sourceOf } from './source.mjs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-const source = sourceOf('connection-defaults', 'client/state', 'client/settings', 'client/account', 'client/updates');
+const source = sourceOf('connection-defaults', 'client/state', 'client/settings', 'client/updates');
 function extract(name) {
   const start = source.search(new RegExp(`(?:async )?function ${name}\\(`));
   assert.ok(start >= 0, name);
@@ -12,7 +12,7 @@ function extract(name) {
   return 'var context = globalThis;\n' + source.slice(start, end + indent.length + 2);
 }
 function setup(fail = false, options = {}) {
-  const state = { connectionMode: 'service', apiKey: 'previous', deviceSecret: 'device', model: 'model', ...(options.state || {}) };
+  const state = { connectionMode: 'metaontic', apiKey: 'previous', deviceSecret: 'device', model: 'model', ...(options.state || {}) };
   const events = []; let calls = 0;
   const connectionBusy = options.connectionBusy || { current: false };
   const ctx = vm.createContext({
@@ -30,57 +30,12 @@ function setup(fail = false, options = {}) {
     loadQuota: async () => {}, loadUsage: async () => {},
   });
   vm.runInContext(sourceOf('connection-defaults'), ctx);
-  for (const name of ['persistBatch', 'persistConnection', 'validateSettings', 'reset', 'applyRegistration']) vm.runInContext(extract(name), ctx);
+  for (const name of ['persistBatch', 'persistConnection', 'validateSettings', 'reset']) vm.runInContext(extract(name), ctx);
   return { ctx, state, events, calls: () => calls };
 }
-test('login writes credentials together and only marks login after acceptance', async () => {
-  const h = setup();
-  assert.equal(await h.ctx.applyRegistration({ api_key: 'new', email: 'test@example.invalid', model: 'new-model' }), true);
-  assert.equal(h.calls(), 1); assert.equal(h.state.apiKey, 'new'); assert.equal(h.state.deviceSecret, 'new-secret');
-  assert.equal(h.state.metaonticApiKey, ''); assert.ok(h.events.includes('logged-in'));
-  const rejected = setup(true);
-  await assert.rejects(rejected.ctx.applyRegistration({ api_key: 'new' }), /atomicRejected/);
-  assert.equal(rejected.calls(), 1); assert.equal(rejected.state.apiKey, 'previous'); assert.ok(!rejected.events.includes('logged-in'));
-  assert.equal(rejected.ctx.connectionBusy.current, false);
-});
-test('login switches a saved non-service channel to service instead of stopping silently', async () => {
-  const h = setup(false, {
-    state: { connectionMode: 'metaontic', metaonticApiKey: 'old-channel' },
-    serviceActive: () => false,
-  });
-  assert.equal(await h.ctx.applyRegistration({ api_key: 'new', email: 'test@example.invalid' }), true);
-  assert.equal(h.calls(), 1);
-  assert.equal(h.state.connectionMode, 'service');
-  assert.equal(h.state.apiKey, 'new');
-  assert.equal(h.state.metaonticApiKey, '');
-  assert.equal(h.state.registerEmail, 'test@example.invalid');
-  assert.ok(h.events.includes('logged-in'));
-  assert.ok(h.events.some(e => Array.isArray(e) && e[0] === 'register' && e[1] === 'ok'));
-});
-test('login waits for an in-flight settings write and reports a busy form instead of returning silently', async () => {
-  const h = setup();
-  let release;
-  const pending = new Promise((resolve) => { release = resolve; });
-  h.ctx.connectionBusy.current = true;
-  h.ctx.connectionBusy.pending = pending;
-  const registration = h.ctx.applyRegistration({ api_key: 'new' });
-  await new Promise(resolve => setImmediate(resolve));
-  assert.equal(h.calls(), 0);
-  h.ctx.connectionBusy.current = false;
-  h.ctx.connectionBusy.pending = null;
-  release();
-  await registration;
-  assert.equal(h.calls(), 1);
-
-  const busy = setup();
-  busy.ctx.connectionBusy.current = true;
-  await assert.rejects(busy.ctx.applyRegistration({ api_key: 'new' }), /settingsUnavailable/);
-  assert.equal(busy.calls(), 0);
-  assert.ok(!busy.events.includes('logged-in'));
-});
 test('reset clears in one operation and preserves local identity if rejected', async () => {
   const h = setup(); await h.ctx.reset();
-  assert.equal(h.calls(), 1); assert.deepEqual(h.state, {}); assert.ok(h.events.includes('forgot-device'));
+  assert.equal(h.calls(), 1); assert.deepEqual(h.state, {});
   assert.ok(h.events.some(e => Array.isArray(e) && e[0] === 'flash' && e[1] === 'reset'));
   const rejected = setup(true); await rejected.ctx.reset();
   assert.equal(rejected.calls(), 1); assert.equal(rejected.state.apiKey, 'previous'); assert.ok(!rejected.events.includes('forgot-device'));
@@ -202,17 +157,6 @@ test('first Save waits for background device synchronization instead of silently
   assert.equal(h.state.metaonticApiKey, 'video-key'); assert.equal(h.state.apiKey, '');
   assert.equal(h.ctx.saveInFlight.current, false);
   assert.ok(h.events.some(e => Array.isArray(e) && e[0] === 'flash' && e[1] === 'saved'));
-});
-
-test('registration exposes its pending write so Save can wait instead of dropping a click', async () => {
-  const h = setup(); let release;
-  h.ctx.form.mutate = () => new Promise(resolve => { release = resolve; });
-  const registration = h.ctx.applyRegistration({api_key:'new'});
-  await new Promise(resolve => setImmediate(resolve));
-  assert.equal(h.ctx.connectionBusy.current, true);
-  assert.equal(typeof h.ctx.connectionBusy.pending?.then, 'function');
-  release(true); await registration;
-  assert.equal(h.ctx.connectionBusy.current, false); assert.equal(h.ctx.connectionBusy.pending, null);
 });
 
 test('save retains edits made while the write is in flight', async () => {

@@ -58,6 +58,8 @@ export function videoTool(liveConfig, deps, ctx) {
     parameters: {
       type: 'object',
       properties: {
+        projectId: { type: 'string', description: 'video_project返回的项目ID。新建生成/延长前须prepare并review通过；续做默认沿用。' },
+        cumulativePreview: { type: 'boolean', description: '默认暂停只下载展示新段，最终再合并；明确需要累计预览时传true，不新增生成费用。' },
         resetCharacterChoice: { type: 'boolean', description: '仅在用户明确改变已确认的角色图方案时设true，重新弹出选择；不会直接改为纯文生，也不能绕过确认。' },
         characterReferenceImages: { type: 'array', items: { type: 'string' }, description: '已审核的最初角色参考图，按固定顺序用于每段续拍；未提供时沿用首段参考图或首帧。支持URL、本地图片或data URI。断点固定此套图，不自动重画或替换。真人转换仍需单独同意及结果审核。' },
         prompt: {
@@ -227,7 +229,7 @@ export function videoTool(liveConfig, deps, ctx) {
           segmentSeconds,
         })
         : null;
-      const plan = resume?.deliveryPending ? [] : restarted ? restarted.plan : target.plan;
+      const plan = (resume?.deliveryPending || (resume && args.cumulativePreview === true)) ? [] : restarted ? restarted.plan : target.plan;
       const fullPlan = restarted ? restarted.fullPlan : target.plan;
       const total = restarted ? restarted.total : target.total;
       const doneBefore = restarted ? (Number(resume.done) || 0) : 0;
@@ -280,7 +282,7 @@ export function videoTool(liveConfig, deps, ctx) {
       let referenceUrl = restarted ? String(resume.lastVideoUrl || '') : '';
       let cursor = restarted ? restarted.cursor : 0;
       // 用户选择先不继续（确认框里点了拒绝/取消）：先交付已经生成的部分。
-      let paused = false;
+      let paused = Boolean(resume && args.cumulativePreview === true && fullPlan.length > (Number(resume.done) || 0));
       // 上次那轮用的参数（续做时调用方可以只传 resume）
       const resumeOptions = restarted ? (resume.options || {}) : {};
       const suppliedPrompts = resolveSegmentPrompts(
@@ -449,10 +451,10 @@ export function videoTool(liveConfig, deps, ctx) {
         return skipMergeDelivery({ result, paused, remainingSeconds, notes, segmentsDir, toolName: TOOL_NAME });
       }
       return runSegmentDelivery({
-        config, exec, interrupted, completed, segments, segmentsDir, outDir, stamp, notes, result,
+        config, exec, interrupted, completed, segments, segmentsDir, outDir, stamp, notes, result, cumulativePreview: args.cumulativePreview === true,
         paused,
         remainingSeconds,
-        pauseNote: `已交付的成片是从头到第 ${segments.length} 段，分段仍保留在 ${segmentsDir}。`,
+        pauseNote: `已完成从头到第 ${segments.length} 段，分段仍保留在 ${segmentsDir}。`,
         toolName: TOOL_NAME,
       });
     },

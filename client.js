@@ -307,7 +307,6 @@
 
   // src/connection-defaults.ts
   var METAONTIC_BASE_URL = "https://ai.bileego.com";
-  var SERVICE_MODE_AVAILABLE = true;
   var VOLCENGINE_MODE_AVAILABLE = false;
   var IMAGE_MODEL = "doubao-seedream-5-0-pro-260628";
   var RETIRED_IMAGE_MODELS = ["doubao-seedream-5-0-260128"];
@@ -338,11 +337,8 @@
       "doubao-seedance-2-0-fast-260128"
     ];
     const SELECTS = {
-      // 接入方式：A 服务端（邮箱登录领 API密钥）、B MetaOntic AI（手填 API密钥）、C 火山直连。
-      // 临时下架某个方式时，先关掉 connection-defaults.ts 里对应的开关，再把它从这里去掉：
-      // 设置页会改用隐藏项显示已有取值（见 settings.ts 的 HIDDEN_CONNECTION_MODES），
-      // 列表里选不到它，也不会把已有配置静默换成别的渠道。
-      connectionMode: VOLCENGINE_MODE_AVAILABLE ? ["metaontic", "service", "volcengine"] : ["metaontic", "service"],
+      // MetaOntic AI；火山直连按开关提供。
+      connectionMode: VOLCENGINE_MODE_AVAILABLE ? ["metaontic", "volcengine"] : ["metaontic"],
       model: MODEL_OPTIONS,
       // 图片模型只提供在售的 pro 版；旧型号已下线，存量配置由 resolveImageModel 归一到这一项。
       imageModel: [IMAGE_MODEL],
@@ -356,7 +352,6 @@
     ];
     const FIELDS = [
       { key: "connectionMode", kind: "select", wide: true },
-      { key: "apiKey", kind: "text", secret: true, wide: true },
       { key: "metaonticApiKey", kind: "text", secret: true, wide: true },
       { key: "volcengineApiKey", kind: "text", secret: true, wide: true },
       // 模型用下拉选（候选见 MODEL_OPTIONS），占一整行显示完整型号
@@ -375,8 +370,6 @@
       { key: "ffprobeBinary", kind: "text", mono: true }
     ];
     const FIELD_BY_KEY = Object.fromEntries(FIELDS.map((field) => [field.key, field]));
-    const DEFAULT_REGISTER_API = "https://video.mybfs.cn";
-    const LOGGED_OUT_KEY = "metaontic-video.logged-out";
     const PLUGIN_OWNED_KEYS = [
       "connectionMode",
       "metaonticApiKey",
@@ -393,7 +386,6 @@
       "imageUseVideoKey",
       "imageApiKey"
     ];
-    const DEFAULT_REGISTER_TOKEN = "metaontic-video-register-v1";
     function currentOs() {
       const nav = window.navigator || {};
       const raw = String(
@@ -434,13 +426,13 @@
       }
       return option;
     }
-    return { PLUGIN_OWNED_KEYS, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE };
+    return { PLUGIN_OWNED_KEYS, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE };
   }
 
   // src/client/locale.ts
   function createDictionaries() {
     const zh = {
-      summaryEmpty: "\u8BF7\u9009\u62E9\u63A5\u5165\u65B9\u5F0F\uFF0C\u767B\u5F55\u6216\u586B\u5199 API\u5BC6\u94A5\u540E\u4FDD\u5B58\u3002",
+      summaryEmpty: "\u8BF7\u9009\u62E9\u63A5\u5165\u65B9\u5F0F\uFF0C\u586B\u5199 API\u5BC6\u94A5\u540E\u4FDD\u5B58\u3002",
       panelTitle: "\u89C6\u9891\u521B\u4F5C",
       panelSidebarLabel: "\u89C6\u9891\u521B\u4F5C\u52A9\u624B",
       panelIntro: "\u5728\u5BF9\u8BDD\u91CC\u8BF4\u6E05\u521B\u610F\u3001\u65F6\u957F\u4E0E\u753B\u5E45\uFF0C\u811A\u672C\u3001\u5206\u955C\u3001\u751F\u6210\u548C\u672C\u673A\u5408\u5E76\u90FD\u7531\u63D2\u4EF6\u5B8C\u6210\u3002",
@@ -465,8 +457,7 @@
       summary: "{provider} \xB7 {model}",
       apiKeyConfigured: "\u5DF2\u914D\u7F6E\uFF0C\u7559\u7A7A\u4FDD\u7559\u73B0\u6709 API\u5BC6\u94A5",
       connectionMode: "\u63A5\u5165\u65B9\u5F0F",
-      connectionModeHint: "\u90AE\u7BB1\u767B\u5F55\u9886\u53D6 API\u5BC6\u94A5\uFF0C\u6216\u4F7F\u7528\u81EA\u5DF1\u7684 MetaOntic AI API\u5BC6\u94A5\u3002\u5207\u6362\u540E\u4FDD\u5B58\u751F\u6548\u3002",
-      connectionServiceUnavailable: "MetaOnticVideo \u670D\u52A1\u7AEF\u65B9\u5F0F\u6682\u65F6\u4E0D\u53EF\u7528\uFF1A\u8BF7\u6539\u7528 MetaOntic AI \u6216\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\uFF0C\u586B\u597D API\u5BC6\u94A5\u4FDD\u5B58\u540E\u751F\u6548\u3002",
+      connectionModeHint: "\u4F7F\u7528\u81EA\u5DF1\u7684 MetaOntic AI API\u5BC6\u94A5\u3002\u5207\u6362\u540E\u4FDD\u5B58\u751F\u6548\u3002",
       connectionVolcengineUnavailable: "\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\u5F53\u524D\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF1A\u5DF2\u6709\u7684\u914D\u7F6E\u4ECD\u53EF\u7EE7\u7EED\u751F\u6210\uFF1B\u5982\u9700\u66F4\u6362\uFF0C\u8BF7\u5728\u300C\u63A5\u5165\u65B9\u5F0F\u300D\u91CC\u9009\u62E9 MetaOnticVideo \u6216 MetaOntic AI\u3002",
       connectionMetaonticHint: "\u4F7F\u7528 MetaOntic AI \u7684 API\u5BC6\u94A5\uFF0C\u586B\u5199\u540E\u4FDD\u5B58\u751F\u6548\u3002",
       connectionMetaonticRegister: "\u6CE8\u518C\u83B7\u53D6 API\u5BC6\u94A5",
@@ -477,21 +468,17 @@
       hideKey: "\u9690\u85CF API\u5BC6\u94A5",
       metaonticKeyHint: "\u586B\u5199 API\u5BC6\u94A5\u540E\u4FDD\u5B58\uFF0C\u65E0\u9700\u90AE\u7BB1\u767B\u5F55\u3002\u6309\u5B9E\u9645\u8C03\u7528\u8BA1\u8D39\uFF0C\u8D39\u7528\u4E0E\u7528\u91CF\u8BF7\u5728\u6E20\u9053\u5E73\u53F0\u67E5\u770B\u3002",
       volcengineApiKey: "\u706B\u5C71\u5F15\u64CE API\u5BC6\u94A5",
-      service: "MetaOnticVideo",
-      serviceUnavailable: "MetaOnticVideo\uFF08\u6682\u65F6\u4E0D\u53EF\u7528\uFF09",
       volcengine: "\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE",
       volcengineUnavailable: "\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\uFF08\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF09",
       seamTrimSeconds: "\u63A5\u7F1D\u88C1\u526A\u79D2\u6570\uFF08\u5982 0.5,0\uFF09",
       modelHiddenCurrent: "\u5F53\u524D\u6A21\u578B\uFF08\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF09",
       releaseNotesTitle: "\u66F4\u65B0\u5185\u5BB9",
       releaseUpdatedAt: "{time}",
-      resetConfirm: "\u786E\u5B9A\u91CD\u7F6E\u63D2\u4EF6\u5417\uFF1F\u8FD9\u4F1A\u6E05\u9664\u672C\u63D2\u4EF6\u4FDD\u5B58\u7684\u914D\u7F6E\u3001API\u5BC6\u94A5\u548C\u767B\u5F55\u72B6\u6001\uFF0C\u9700\u8981\u91CD\u65B0\u914D\u7F6E\u3002\u5DF2\u751F\u6210\u7684\u89C6\u9891\u4E0D\u4F1A\u5220\u9664\u3002",
+      resetConfirm: "\u786E\u5B9A\u91CD\u7F6E\u63D2\u4EF6\u5417\uFF1F\u8FD9\u4F1A\u6E05\u9664\u672C\u63D2\u4EF6\u4FDD\u5B58\u7684\u914D\u7F6E\u548CAPI\u5BC6\u94A5\uFF0C\u9700\u8981\u91CD\u65B0\u914D\u7F6E\u3002\u5DF2\u751F\u6210\u7684\u89C6\u9891\u4E0D\u4F1A\u5220\u9664\u3002",
       model: "\u89C6\u9891\u6A21\u578B",
       imageModel: "\u56FE\u7247\u6A21\u578B",
       imageUseVideoKey: "\u56FE\u7247\u6A21\u578B\u4E0E\u89C6\u9891\u6A21\u578B\u5171\u7528 API\u5BC6\u94A5",
       sharedModelKey: "\u5171\u7528 API\u5BC6\u94A5",
-      serviceKeyConfigured: "\u5DF2\u914D\u7F6E\uFF08\u767B\u5F55\u4E0B\u53D1\uFF09",
-      serviceKeyMissing: "\u8BF7\u5148\u767B\u5F55\u83B7\u53D6 API\u5BC6\u94A5",
       videoModelKey: "\u89C6\u9891\u6A21\u578B API\u5BC6\u94A5",
       imageApiKey: "\u56FE\u7247\u6A21\u578B API\u5BC6\u94A5",
       resolution: "\u89C6\u9891\u6E05\u6670\u5EA6",
@@ -512,67 +499,10 @@
       ffmpegLess: "\u6536\u8D77\u5176\u4ED6\u7CFB\u7EDF",
       ffmpegAfter: "\u4E0D\u60F3\u81EA\u5DF1\u6572\u547D\u4EE4\u7684\u8BDD\uFF0C\u76F4\u63A5\u5728\u5BF9\u8BDD\u91CC\u8BF4\u300C\u5E2E\u6211\u88C5 ffmpeg\u300D\u2014\u2014\u63D2\u4EF6\u4F1A\u6267\u884C\u5B89\u88C5\uFF08\u547D\u4EE4\u4F1A\u5148\u8BA9\u4F60\u786E\u8BA4\uFF09\uFF1B\u88C5\u597D\u540E\u91CD\u8DD1\u4E00\u6B21\u5C31\u4F1A\u81EA\u52A8\u5408\u5E76\uFF08\u4E0D\u7528\u91CD\u65B0\u751F\u6210\uFF09\u3002ffmpeg \u88C5\u5728\u975E\u9ED8\u8BA4\u4F4D\u7F6E\u7684\u8BDD\uFF0C\u628A\u7EDD\u5BF9\u8DEF\u5F84\u586B\u5230\u4E0A\u9762\u7684\u300Cffmpeg \u8DEF\u5F84\u300D\u4E5F\u4E00\u6837\u7BA1\u7528\u3002\u5B89\u88C5\u5305\u81EA\u5E26 ffprobe\uFF0C\u5206\u6BB5\u65F6\u957F\u63A2\u6D4B\u4F1A\u4E00\u8D77\u89E3\u51B3\u3002",
       ffmpegManual: "\u60F3\u81EA\u5DF1\u88C5\uFF1AmacOS \u7528 Homebrew\uFF0CWindows \u7528 winget\uFF0CLinux \u7528\u7CFB\u7EDF\u5305\u7BA1\u7406\u5668\uFF1B\u88C5\u5B8C\u786E\u8BA4\u547D\u4EE4\u884C\u91CC\u80FD\u8DD1 ffmpeg -version \u5C31\u884C\u3002",
-      registerEmail: "\u90AE\u7BB1",
-      registerTitle: "\u90AE\u7BB1\u767B\u5F55",
-      registerHint: "\u4F7F\u7528\u90AE\u7BB1\u9A8C\u8BC1\u7801\u767B\u5F55\uFF0C\u9996\u6B21\u767B\u5F55\u81EA\u52A8\u6CE8\u518C\u5E76\u9886\u53D6 API\u5BC6\u94A5\u3002",
-      registerEmailPlaceholder: "\u4F60\u7684\u90AE\u7BB1\uFF0C\u4F8B\u5982 name@example.com",
-      registerCode: "\u9A8C\u8BC1\u7801",
-      registerCodePlaceholder: "\u9A8C\u8BC1\u7801",
-      registerCodeSend: "\u83B7\u53D6\u9A8C\u8BC1\u7801",
-      registerCodeSending: "\u53D1\u9001\u4E2D\u2026",
-      registerCodeCooldown: "{seconds} \u79D2\u540E\u91CD\u53D1",
-      registerCodeSent: "\u9A8C\u8BC1\u7801\u5DF2\u53D1\u9001\u81F3 {email}\uFF0C5 \u5206\u949F\u5185\u6709\u6548\u3002",
-      registerEmailLocked: "\u5012\u8BA1\u65F6\u7ED3\u675F\u540E\u53EF\u4FEE\u6539\u90AE\u7BB1\u3002",
-      registerNeedEmail: "\u8BF7\u5148\u586B\u5199\u90AE\u7BB1\uFF0C\u518D\u83B7\u53D6\u9A8C\u8BC1\u7801\u3002",
-      registerNeedCode: "\u8BF7\u8F93\u5165\u90AE\u4EF6\u4E2D\u7684\u9A8C\u8BC1\u7801\u3002",
-      registerRestored: "\u5DF2\u6062\u590D\u672C\u673A API\u5BC6\u94A5\u5E76\u4FDD\u5B58\u8FDE\u63A5\u914D\u7F6E\u3002",
-      quotaTitle: "\u989D\u5EA6",
-      quotaRemain: "\u5269\u4F59",
-      quotaUsed: "\u5DF2\u7528",
-      quotaTotal: "\u603B\u989D\u5EA6",
-      quotaUnlimited: "\u4E0D\u9650\u989D\u5EA6",
-      quotaLoading: "\u8BFB\u53D6\u989D\u5EA6\u4E2D\u2026",
-      quotaRefresh: "\u5237\u65B0",
-      // 余额（钱包）：登录后显示，可在设置页充值；生成只做人工确认
-      walletBalance: "\u4F59\u989D",
-      walletRecharge: "\u5145\u503C",
-      walletRechargeTitle: "\u5145\u503C\u4F59\u989D",
-      walletRechargeAmount: "\u5145\u503C\u91D1\u989D\uFF08\u5143\uFF09",
-      walletRechargeRange: "\u5355\u6B21\u53EF\u5145 {min} ~ {max} \u5143\uFF0C\u4ED8\u6B3E\u6210\u529F\u5373\u65F6\u5230\u8D26\u3002",
-      walletRechargeConfirm: "\u786E\u8BA4\u5145\u503C",
-      walletRechargeCancel: "\u53D6\u6D88",
-      walletRechargeWorking: "\u6B63\u5728\u4E0B\u5355\uFF0C\u8BF7\u7A0D\u5019\u2026",
-      walletRechargeOpening: "\u5DF2\u6253\u5F00\u652F\u4ED8\u5B9D\u6536\u94F6\u53F0\uFF1A\u8BF7\u5728\u6D4F\u89C8\u5668\u91CC\u5B8C\u6210\u4ED8\u6B3E\uFF0C\u5230\u8D26\u540E\u4F59\u989D\u4F1A\u81EA\u52A8\u66F4\u65B0\u3002",
-      walletRechargePending: "\u7B49\u5F85\u4ED8\u6B3E\u5230\u8D26\u2026\uFF08\u4ED8\u6B3E\u5B8C\u6210\u540E\u4F59\u989D\u4F1A\u81EA\u52A8\u5237\u65B0\uFF0C\u4E5F\u53EF\u4EE5\u76F4\u63A5\u5173\u6389\u8FD9\u4E2A\u7A97\u53E3\uFF09",
-      walletRechargeDone: "\u5145\u503C\u5230\u8D26\uFF1A\u5F53\u524D\u4F59\u989D {balance}",
-      walletRechargeTimeout: "\u8FD8\u6CA1\u67E5\u5230\u4ED8\u6B3E\u7ED3\u679C\uFF1A\u4ED8\u6B3E\u5B8C\u6210\u540E\u56DE\u5230\u8FD9\u91CC\u70B9\u300C\u5237\u65B0\u300D\u5373\u53EF\u786E\u8BA4\u3002",
-      walletRechargeFailed: "\u5145\u503C\u672A\u5B8C\u6210\uFF1A{message}",
-      walletRechargeBadAmount: "\u8BF7\u8F93\u5165\u6B63\u786E\u7684\u91D1\u989D\uFF0C\u6BD4\u5982 30\u3002",
-      walletRechargeLink: "\u6CA1\u5F39\u51FA\u6536\u94F6\u53F0\uFF1F\u70B9\u8FD9\u91CC\u6253\u5F00",
-      walletRechargeClosed: "\u5728\u7EBF\u5145\u503C\u5DF2\u5173\u95ED\uFF1A\u9700\u8981\u5145\u503C\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\uFF0C\u6216\u70B9\u300C\u5BA2\u670D\u300D\u4EBA\u5DE5\u5145\u503C\u3002",
       supportRecharge: "\u5BA2\u670D",
       supportClose: "\u5173\u95ED",
       supportScan: "\u8BF7\u7528\u5FAE\u4FE1\u626B\u63CF\u4E8C\u7EF4\u7801\uFF0C\u8054\u7CFB\u5BA2\u670D\u5145\u503C\u3002\u9875\u9762\u672A\u52A0\u8F7D\u65F6\u53EF\u70B9\u51FB\u4E0B\u65B9\u94FE\u63A5\u3002",
       supportOpenPage: "\u6253\u5F00\u5BA2\u670D\u9875\u9762",
-      quotaNoKey: "\u767B\u5F55\u540E\u53EF\u67E5\u770B\u5269\u4F59\u989D\u5EA6\u4E0E\u5DF2\u7528\u989D\u5EA6\u3002",
-      quotaNotRegistered: "\u672A\u627E\u5230\u672C\u673A\u7684\u767B\u5F55\u8BB0\u5F55\uFF0C\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u5904\u7406\u540E\u91CD\u65B0\u767B\u5F55\u3002",
-      quotaFailed: "\u8BFB\u53D6\u989D\u5EA6\u5931\u8D25\uFF1A{message}",
-      quotaUpdatedAt: "\u66F4\u65B0\u4E8E {time}",
-      usageTitle: "\u4F7F\u7528\u8BB0\u5F55\uFF08\u6700\u8FD1 {days} \u5929\uFF09",
-      usageSummary: "{count} \u6761 \xB7 \u8D39\u7528\u5408\u8BA1 {amount}",
-      usageColTime: "\u65F6\u95F4",
-      usageColKind: "\u7C7B\u578B",
-      usageColModel: "\u6A21\u578B",
-      usageColCost: "\u8D39\u7528",
-      usageColStatus: "\u7ED3\u679C",
-      usageEmpty: "\u6682\u65E0\u4F7F\u7528\u8BB0\u5F55\uFF0C\u751F\u6210\u6216\u7EED\u62CD\u89C6\u9891\u540E\u53EF\u5728\u6B64\u67E5\u770B\u3002",
-      usageLoading: "\u8BFB\u53D6\u4F7F\u7528\u8BB0\u5F55\u4E2D\u2026",
-      usageRefresh: "\u5237\u65B0\u8BB0\u5F55",
-      usageFailed: "\u8BFB\u53D6\u4F7F\u7528\u8BB0\u5F55\u5931\u8D25\uFF1A{message}",
-      usageMore: "\u4EC5\u663E\u793A\u6700\u8FD1 {count} \u6761\u8BB0\u5F55\u3002",
-      usageKeyMissing: "\u767B\u5F55\u540E\u53EF\u67E5\u770B\u6B64 API\u5BC6\u94A5\u7684\u4F7F\u7528\u8BB0\u5F55\u3002",
-      usageStatusOk: "\u6210\u529F",
-      usageStatusFailed: "\u5931\u8D25",
       versionTitle: "\u63D2\u4EF6\u7248\u672C",
       versionCurrent: "\u5F53\u524D\u7248\u672C v{version}",
       versionCheck: "\u68C0\u67E5\u66F4\u65B0",
@@ -610,13 +540,6 @@
       sectionCombinedHint: "\u753B\u9762 \xB7 \u5408\u5E76 \xB7 \u7B49\u5F85 \xB7 \u672C\u5730\u5DE5\u5177",
       toolsHint: "\u901A\u5E38\u65E0\u9700\u586B\u5199\uFF1B\u5DF2\u5B89\u88C5\u4F46\u65E0\u6CD5\u81EA\u52A8\u8BC6\u522B\u65F6\uFF0C\u53EF\u6307\u5B9A\u53EF\u6267\u884C\u6587\u4EF6\u8DEF\u5F84\u3002",
       segmentsRetained: "\u6240\u6709\u539F\u59CB\u5206\u6BB5\u81EA\u52A8\u4FDD\u7559\uFF0C\u4FBF\u4E8E\u9884\u89C8\u3001\u7EED\u505A\u548C\u91CD\u65B0\u526A\u8F91\u3002",
-      register: "\u767B\u5F55",
-      registerWorking: "\u767B\u5F55\u4E2D\u2026",
-      registerOk: "\u767B\u5F55\u6210\u529F\uFF0CAPI\u5BC6\u94A5\u4E0E\u8FDE\u63A5\u914D\u7F6E\u5DF2\u4FDD\u5B58\u3002",
-      registerPartial: "\u5DF2\u83B7\u53D6 API\u5BC6\u94A5\uFF0C\u4F46\u90E8\u5206\u8BBE\u7F6E\u4FDD\u5B58\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u540E\u91CD\u8BD5\u3002",
-      registerFailed: "\u767B\u5F55\u5931\u8D25\uFF1A{message}",
-      registerDisabled: "\u767B\u5F55\u670D\u52A1\u6682\u4E0D\u53EF\u7528\uFF1A{message}",
-      registerNoKey: "\u767B\u5F55\u670D\u52A1\u672A\u8FD4\u56DE API\u5BC6\u94A5\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u6216\u8054\u7CFB\u7BA1\u7406\u5458\u3002",
       ratio: "\u753B\u9762\u6BD4\u4F8B",
       audioSettings: "\u58F0\u97F3\u8BBE\u7F6E",
       ratioLayoutHint: "\u9009\u62E9\u6A2A\u5C4F\u3001\u7AD6\u5C4F\u6216\u81EA\u52A8\u9002\u914D\u753B\u9762\u3002",
@@ -677,7 +600,6 @@
       apiKeyConfigured: "Configured; leave blank to keep the current key",
       connectionMode: "Connection",
       connectionModeHint: "Log in by email to receive a key, or use your own MetaOntic AI key. Save to apply a change.",
-      connectionServiceUnavailable: "The MetaOnticVideo server method is temporarily unavailable. Switch to MetaOntic AI or Volcano Engine, enter a key and save.",
       connectionVolcengineUnavailable: 'Volcano Engine direct is not offered right now. An existing configuration keeps working; switch to MetaOnticVideo or MetaOntic AI in "Connection" to change it.',
       connectionMetaonticHint: "Use your MetaOntic AI API key, then save to apply.",
       connectionMetaonticRegister: "Register to get a key",
@@ -688,8 +610,6 @@
       hideKey: "Hide key",
       metaonticKeyHint: "Enter an API key and save. No email login required. Check actual charges and usage on your provider platform.",
       volcengineApiKey: "Volcano Engine API key",
-      service: "MetaOnticVideo",
-      serviceUnavailable: "MetaOnticVideo (unavailable)",
       volcengine: "Volcano Engine",
       volcengineUnavailable: "Volcano Engine (not offered right now)",
       seamTrimSeconds: "Seam head trims (e.g. 0.5,0)",
@@ -701,8 +621,6 @@
       imageModel: "Image model",
       imageUseVideoKey: "Use video API key for images",
       sharedModelKey: "Shared key",
-      serviceKeyConfigured: "Configured (provided at sign-in)",
-      serviceKeyMissing: "Sign in to obtain a key",
       videoModelKey: "Video model key",
       imageApiKey: "Image model key",
       resolution: "Video resolution",
@@ -723,51 +641,10 @@
       ffmpegLess: "Hide other systems",
       ffmpegAfter: 'Rather not touch a terminal? Just say "\u5E2E\u6211\u88C5 ffmpeg" in the chat and the plugin runs the install for you (it asks you to confirm the command first). Re-run the generation afterwards and the merge happens automatically \u2014 no need to regenerate. Installed somewhere unusual? Put the absolute path in the "ffmpeg path" field above. The package ships ffprobe too, so segment probing is fixed at the same time.',
       ffmpegManual: "Installing by hand: Homebrew on macOS, winget on Windows, your distro package manager on Linux \u2014 you are set once `ffmpeg -version` works in a terminal.",
-      registerEmail: "Email",
-      registerTitle: "Email login",
-      registerHint: "Log in with an email verification code. Your first login creates an account and issues a key.",
-      registerEmailPlaceholder: "you@example.com",
-      registerCode: "Verification code",
-      registerCodePlaceholder: "verification code",
-      registerCodeSend: "Send code",
-      registerCodeSending: "Sending\u2026",
-      registerCodeCooldown: "Resend in {seconds}s",
-      registerCodeSent: "Code sent to {email} \u2014 valid for 5 minutes.",
-      registerEmailLocked: "You can change the email after the countdown.",
-      registerNeedEmail: "Type your email before requesting a code.",
-      registerNeedCode: "Type the code from the email first.",
-      registerRestored: "Device key restored and connection settings saved.",
-      quotaTitle: "Quota",
-      quotaRemain: "Remaining",
-      quotaUsed: "Used",
-      quotaTotal: "Total",
-      quotaUnlimited: "Unlimited",
-      quotaLoading: "Reading quota\u2026",
-      quotaRefresh: "Refresh",
-      walletBalance: "Balance",
-      walletRecharge: "Top up",
-      walletRechargeTitle: "Top up balance",
-      walletRechargeAmount: "Amount (CNY)",
-      walletRechargeRange: "{min} ~ {max} CNY per top-up. The balance updates right after payment.",
-      walletRechargeConfirm: "Confirm",
-      walletRechargeCancel: "Cancel",
-      walletRechargeWorking: "Creating the order\u2026",
-      walletRechargeOpening: "Alipay checkout opened: finish the payment in your browser. The balance updates automatically.",
-      walletRechargePending: "Waiting for the payment\u2026 (the balance refreshes automatically; you can close this dialog)",
-      walletRechargeDone: "Top-up credited: balance {balance}",
-      walletRechargeTimeout: 'No payment result yet: click "Refresh" here once the payment is done.',
-      walletRechargeFailed: "Top-up failed: {message}",
-      walletRechargeBadAmount: "Enter a valid amount, e.g. 30.",
-      walletRechargeLink: "Checkout did not open? Click here",
-      walletRechargeClosed: 'Online top-up is closed: ask an administrator to recharge, or use "Support".',
       supportRecharge: "Support",
       supportClose: "Close",
       supportScan: "Scan the QR code with WeChat to contact support for a top-up. If it does not load, use the link below.",
       supportOpenPage: "Open support page",
-      quotaNoKey: "Log in to view remaining and used quota.",
-      quotaNotRegistered: "No login record found for this device. Contact an administrator before logging in again.",
-      quotaFailed: "Failed to read quota: {message}",
-      quotaUpdatedAt: "updated {time}",
       versionTitle: "Plugin version",
       versionCurrent: "Installed v{version}",
       versionCheck: "Check for updates",
@@ -793,13 +670,6 @@
       versionUpdateUnavailable: "This version of Harness does not support online updates. Uninstall and re-add the plugin from the Plugins page.",
       versionHint: "Check for and install updates here. Your settings and keys will be kept.",
       versionCheckedAt: "checked {time}",
-      register: "Log in",
-      registerWorking: "Logging in\u2026",
-      registerOk: "Logged in. Your key and connection settings have been saved.",
-      registerPartial: "API key received, but some settings could not be saved. Review them and try again.",
-      registerFailed: "Log in failed: {message}",
-      registerDisabled: "Login service unavailable: {message}",
-      registerNoKey: "The login service returned no key. Try again later or contact an administrator.",
       sectionGeneration: "Generation",
       sectionConnection: "Connection & credentials",
       sectionVideo: "Picture & audio",
@@ -932,7 +802,7 @@
       }
     }
     async function persistConnection(form, pending, nextMode) {
-      if (!["service", "metaontic", "volcengine"].includes(nextMode)) throw new Error("unknownConnection");
+      if (!["metaontic", "volcengine"].includes(nextMode)) throw new Error("unknownConnection");
       const inactiveKeys = nextMode === "volcengine" ? [
         "metaonticApiKey",
         "apiKey",
@@ -974,7 +844,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.16.0".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.17.0".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1260,441 +1130,11 @@
     return new Date(date.getTime() + 8 * 60 * 60 * 1e3).toISOString().slice(0, 16).replace("T", " ");
   }
 
-  // src/client/account.ts
-  function createAccountActions(context) {
-    function registerApiRoot() {
-      const configured = String(context.value.registerApi || "").trim();
-      return (configured || context.DEFAULT_REGISTER_API).replace(/\/+$/, "");
-    }
-    function loggedOut() {
-      try {
-        return window.localStorage.getItem(context.LOGGED_OUT_KEY) === "1";
-      } catch {
-        return false;
-      }
-    }
-    function setLoggedOut() {
-      try {
-        window.localStorage.setItem(context.LOGGED_OUT_KEY, "1");
-      } catch {
-      }
-    }
-    function clearLoggedOut() {
-      try {
-        window.localStorage.removeItem(context.LOGGED_OUT_KEY);
-      } catch {
-      }
-    }
-    function forgetDevice() {
-      try {
-        window.localStorage.removeItem("metaontic-video.device-id");
-        window.localStorage.removeItem("metaontic-video.device-secret");
-      } catch {
-      }
-      setLoggedOut();
-    }
-    function deviceIdentity() {
-      const ID_KEY = "metaontic-video.device-id";
-      const SECRET_KEY = "metaontic-video.device-secret";
-      const rand = () => Math.random().toString(36).slice(2, 10);
-      let id = `dsh-${rand()}${Date.now().toString(36)}`;
-      let secret = `dsk-${rand()}${rand()}${rand()}`;
-      try {
-        const savedId = window.localStorage.getItem(ID_KEY);
-        const savedSecret = window.localStorage.getItem(SECRET_KEY);
-        if (savedId)
-          id = savedId;
-        else
-          window.localStorage.setItem(ID_KEY, id);
-        if (savedSecret)
-          secret = savedSecret;
-        else
-          window.localStorage.setItem(SECRET_KEY, secret);
-      } catch {
-      }
-      return { id, secret };
-    }
-    function deviceFingerprint() {
-      const pick = (read) => {
-        try {
-          const value = read();
-          return value ? String(value).slice(0, 120) : void 0;
-        } catch {
-          return void 0;
-        }
-      };
-      const nav = () => window.navigator;
-      const info = {
-        app: "Harness",
-        plugin: "metaontic-video",
-        platform: pick(() => nav().userAgentData?.platform || nav().platform),
-        os: pick(() => nav().userAgentData?.platform || nav().platform),
-        language: pick(() => nav().language),
-        timezone: pick(() => window.Intl?.DateTimeFormat().resolvedOptions().timeZone),
-        screen: pick(() => `${window.screen?.width}x${window.screen?.height}`),
-        agent: pick(() => nav().userAgent)
-      };
-      return Object.fromEntries(Object.entries(info).filter(([, v]) => v !== void 0));
-    }
-    function deviceLabel(info) {
-      const platform = info?.platform || info?.os;
-      return platform ? `Harness-${platform}` : "Harness";
-    }
-    function deviceWrites(device = void 0) {
-      const identity = device || deviceIdentity();
-      const current = context.form.getSnapshot().value || {};
-      const writes = [];
-      if (!context.same(current.deviceId, identity.id))
-        writes.push(["deviceId", identity.id]);
-      if (!context.same(current.deviceSecret, identity.secret)) {
-        writes.push(["deviceSecret", identity.secret]);
-      }
-      return writes;
-    }
-    async function syncDeviceIdentity() {
-      if (!context.serviceActive())
-        return;
-      const writes = deviceWrites();
-      if (!writes.length)
-        return;
-      context.connectionBusy.current = true;
-      try {
-        const pending = context.persistBatch(context.form, writes.map(([key, next]) => ({ op: "set", path: [key], value: next })));
-        context.connectionBusy.pending = pending;
-        await pending;
-        for (const [key] of writes)
-          context.clear(key);
-      } catch {
-      } finally {
-        context.connectionBusy.current = false;
-        context.connectionBusy.pending = null;
-      }
-    }
-    async function callRegister(url, init = {}) {
-      const controller = typeof AbortController === "function" ? new AbortController() : null;
-      const timer = controller ? window.setTimeout(() => controller.abort(), 9e4) : null;
-      const token = String(context.value.registerToken || context.DEFAULT_REGISTER_TOKEN);
-      const loginKey = String(context.value.loginKey || "").trim();
-      const options = { ...init || {} };
-      options.headers = {
-        accept: "application/json",
-        "x-register-token": token,
-        ...loginKey ? { "x-login-key": loginKey } : {},
-        // 本插件版本：服务端会记进请求日志，便于回溯「这版有没有问题」
-        ...context.PLUGIN_VERSION ? { "x-plugin-version": context.PLUGIN_VERSION } : {},
-        ...init && init.headers || {}
-      };
-      let response;
-      try {
-        response = await fetch(url, {
-          signal: controller ? controller.signal : void 0,
-          ...options
-        });
-      } finally {
-        if (timer)
-          window.clearTimeout(timer);
-      }
-      const text = await response.text();
-      let body = null;
-      try {
-        body = text ? JSON.parse(text) : null;
-      } catch {
-        body = null;
-      }
-      const payload = body && typeof body === "object" && "data" in body ? body.data : body;
-      if (!response.ok || body && typeof body === "object" && body.code) {
-        const failure = new Error(body && (body.message || body.detail) || text.slice(0, 200) || `HTTP ${response.status}`);
-        failure.status = response.status;
-        throw failure;
-      }
-      return payload || {};
-    }
-    async function applyRegistration(result, fallbackBase, device) {
-      if (context.connectionBusy.current) {
-        if (!context.connectionBusy.pending)
-          throw new Error(context.settingsError("settingsUnavailable"));
-        await context.connectionBusy.pending;
-      }
-      const writes = [
-        ["apiKey", result.api_key],
-        ["keyOrigin", "register"],
-        ["baseUrl", result.base_url || fallbackBase || registerApiRoot()],
-        ...await deviceWrites(device)
-      ];
-      const account = result.email || result.display_name || "";
-      if (account)
-        writes.push(["registerEmail", account]);
-      if (result.login_key)
-        writes.push(["loginKey", result.login_key]);
-      if (result.model)
-        writes.push(["model", result.model]);
-      if (context.connectionBusy.current)
-        throw new Error(context.settingsError("settingsUnavailable"));
-      context.connectionBusy.current = true;
-      try {
-        const pending = context.persistConnection(context.form, writes, "service");
-        context.connectionBusy.pending = pending;
-        await pending;
-        clearLoggedOut();
-        for (const [key] of writes)
-          context.clear(key);
-        context.setRegisterStatus("ok");
-      } catch (error) {
-        throw new Error(context.settingsError(error));
-      } finally {
-        context.connectionBusy.current = false;
-        context.connectionBusy.pending = null;
-      }
-      loadQuota().catch(() => {
-      });
-      loadUsage().catch(() => {
-      });
-      return true;
-    }
-    async function lookupOwnKey() {
-      const device = deviceIdentity();
-      const result = await callRegister(`${registerApiRoot()}/api/v1/register/lookup`, {
-        method: "POST",
-        headers: { "content-type": "application/json", accept: "application/json" },
-        body: JSON.stringify({ device_id: device.id, device_secret: device.secret })
-      });
-      if (!result.api_key)
-        throw new Error(context.t("registerNoKey"));
-      if (!await applyRegistration(result, null, device))
-        return;
-      context.setRegisterStatus("restored");
-      return result;
-    }
-    function startCooldown(seconds) {
-      const total = Math.max(Math.round(Number(seconds) || 0), 0);
-      if (!total)
-        return;
-      context.setCodeCooldown(total);
-      const tick = (left) => {
-        if (left <= 0) {
-          context.setCodeCooldown(0);
-          return;
-        }
-        context.setCodeCooldown(left);
-        window.setTimeout(() => tick(left - 1), 1e3);
-      };
-      window.setTimeout(() => tick(total - 1), 1e3);
-    }
-    async function sendEmailCode() {
-      const account = context.registerEmail.trim();
-      if (!account) {
-        context.setCodeStatus("failed");
-        context.setCodeMessage(context.t("registerNeedEmail"));
-        return;
-      }
-      context.setCodeStatus("working");
-      context.setCodeMessage("");
-      try {
-        const status = await callRegister(`${registerApiRoot()}/api/v1/register/status`);
-        if (!status.enabled) {
-          context.setCodeStatus("failed");
-          context.setCodeMessage(context.t("registerDisabled", { message: status.hint || "-" }));
-          return;
-        }
-        const result = await callRegister(`${registerApiRoot()}/api/v1/register/email/code`, {
-          method: "POST",
-          headers: { "content-type": "application/json", accept: "application/json" },
-          body: JSON.stringify({ email: account })
-        });
-        context.setCodeStatus("sent");
-        context.setCodeMessage(context.t("registerCodeSent", { email: result.email || account }));
-        startCooldown(result.retry_after ?? 60);
-        context.setRegisterStatus("idle");
-        context.setRegisterMessage("");
-      } catch (error) {
-        context.setCodeStatus("failed");
-        context.setCodeMessage(error?.message || String(error));
-      }
-    }
-    async function register() {
-      const root = registerApiRoot();
-      const account = context.registerEmail.trim();
-      const code = context.registerCode.trim();
-      if (!account) {
-        context.setRegisterStatus("failed");
-        context.setRegisterMessage(context.t("registerNeedEmail"));
-        return;
-      }
-      if (!code) {
-        context.setRegisterStatus("failed");
-        context.setRegisterMessage(context.t("registerNeedCode"));
-        return;
-      }
-      context.setRegisterStatus("working");
-      context.setRegisterMessage("");
-      const device = deviceIdentity();
-      const fingerprint = deviceFingerprint();
-      try {
-        const status = await callRegister(`${root}/api/v1/register/status`);
-        if (!status.enabled) {
-          context.setRegisterStatus("disabled");
-          context.setRegisterMessage(context.t("registerDisabled", { message: status.hint || "-" }));
-          return;
-        }
-        const result = await callRegister(`${root}/api/v1/register`, {
-          method: "POST",
-          headers: { "content-type": "application/json", accept: "application/json" },
-          body: JSON.stringify({
-            email: account,
-            code,
-            device_id: device.id,
-            device_secret: device.secret,
-            device_info: fingerprint,
-            note: `Harness \u63D2\u4EF6\u8BBE\u7F6E\u9875\u6CE8\u518C\uFF08${deviceLabel(fingerprint)}\uFF09`
-          })
-        });
-        if (!result.api_key) {
-          context.setRegisterStatus("failed");
-          context.setRegisterMessage(context.t("registerNoKey"));
-          return;
-        }
-        await applyRegistration(result, status.base_url || root, device);
-      } catch (error) {
-        if (error?.status === 409 || error?.status === 404) {
-          try {
-            await lookupOwnKey();
-            return;
-          } catch {
-          }
-        }
-        context.setRegisterStatus("failed");
-        context.setRegisterMessage(context.t("registerFailed", { message: error?.message || String(error) }));
-      }
-    }
-    async function loadQuota() {
-      if (!context.serviceMode || !context.serviceActive())
-        return;
-      const device = deviceIdentity();
-      context.setQuotaStatus("working");
-      context.setQuotaMessage("");
-      try {
-        const result = await callRegister(`${registerApiRoot()}/api/v1/register/quota`, {
-          method: "POST",
-          headers: { "content-type": "application/json", accept: "application/json" },
-          body: JSON.stringify({ device_id: device.id, device_secret: device.secret })
-        });
-        if (!context.serviceActive())
-          return;
-        context.setQuota(result);
-        context.setQuotaAt((/* @__PURE__ */ new Date()).toLocaleTimeString());
-        context.setQuotaStatus("ok");
-        return result;
-      } catch (error) {
-        context.setQuota(null);
-        context.setQuotaStatus("failed");
-        context.setQuotaMessage(error?.status === 404 ? context.t("quotaNotRegistered") : context.t("quotaFailed", { message: error?.message || String(error) }));
-        throw error;
-      }
-    }
-    async function loadWallet() {
-      if (!context.serviceMode || !context.serviceActive())
-        return;
-      const device = deviceIdentity();
-      context.setWalletStatus("working");
-      try {
-        const result = await callRegister(`${registerApiRoot()}/api/v1/wallet/status`, {
-          method: "POST",
-          headers: { "content-type": "application/json", accept: "application/json" },
-          body: JSON.stringify({ device_id: device.id, device_secret: device.secret })
-        });
-        if (!context.serviceActive())
-          return;
-        context.setWallet(result);
-        context.setWalletStatus("ok");
-        return result;
-      } catch (error) {
-        context.setWallet(null);
-        context.setWalletStatus(error?.status === 404 ? "off" : "failed");
-        if (error?.status !== 404)
-          context.setWalletMessage(context.t("quotaFailed", { message: error?.message || String(error) }));
-        return null;
-      }
-    }
-    async function startRecharge(amount) {
-      const device = deviceIdentity();
-      return callRegister(`${registerApiRoot()}/api/v1/wallet/recharge`, {
-        method: "POST",
-        headers: { "content-type": "application/json", accept: "application/json" },
-        body: JSON.stringify({
-          device_id: device.id,
-          device_secret: device.secret,
-          amount: String(amount)
-        })
-      });
-    }
-    async function fetchRecharge(outTradeNo) {
-      const device = deviceIdentity();
-      return callRegister(`${registerApiRoot()}/api/v1/wallet/recharge/status`, {
-        method: "POST",
-        headers: { "content-type": "application/json", accept: "application/json" },
-        body: JSON.stringify({
-          device_id: device.id,
-          device_secret: device.secret,
-          out_trade_no: outTradeNo
-        })
-      });
-    }
-    async function waitRecharge(outTradeNo, { tries = 40, intervalMs = 3e3 } = {}) {
-      for (let index = 0; index < tries; index += 1) {
-        const result = await fetchRecharge(outTradeNo).catch(() => null);
-        if (result && result.credited) {
-          await loadWallet().catch(() => {
-          });
-          await loadQuota().catch(() => {
-          });
-          return result;
-        }
-        if (result && result.status === "CLOSED") return result;
-        await new Promise((resolve) => {
-          window.setTimeout(resolve, intervalMs);
-        });
-      }
-      return null;
-    }
-    async function loadUsage() {
-      if (!context.serviceMode || !context.serviceActive() || context.usageInFlight.current)
-        return;
-      context.usageInFlight.current = true;
-      const device = deviceIdentity();
-      context.setUsageStatus("working");
-      context.setUsageMessage("");
-      try {
-        const result = await callRegister(`${registerApiRoot()}/api/v1/usage/list`, {
-          method: "POST",
-          headers: { "content-type": "application/json", accept: "application/json" },
-          body: JSON.stringify({
-            device_id: device.id,
-            device_secret: device.secret,
-            limit: 10
-          })
-        });
-        if (!context.serviceActive())
-          return;
-        context.setUsage(result);
-        context.setUsageAt((/* @__PURE__ */ new Date()).toLocaleTimeString());
-        context.setUsageStatus("ok");
-        return result;
-      } catch (error) {
-        context.setUsageStatus("failed");
-        context.setUsageMessage(error?.status === 404 ? context.t("quotaNotRegistered") : context.t("usageFailed", { message: error?.message || String(error) }));
-        throw error;
-      } finally {
-        context.usageInFlight.current = false;
-      }
-    }
-    return { registerApiRoot, loggedOut, setLoggedOut, clearLoggedOut, forgetDevice, deviceIdentity, deviceFingerprint, deviceLabel, deviceWrites, syncDeviceIdentity, callRegister, applyRegistration, lookupOwnKey, startCooldown, sendEmailCode, register, loadQuota, loadUsage, loadWallet, startRecharge, waitRecharge };
-  }
-
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.16.0",
-    description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, image-to-video, text-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects through the MetaOnticVideo relay with email sign-in and wallet top-up, or your own MetaOntic AI key.",
+    version: "3.17.0",
+    description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, image-to-video, text-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects with your own MetaOntic AI key.",
     license: "SEE LICENSE IN LICENSE",
     type: "module",
     keywords: [
@@ -1790,20 +1230,17 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.16.0",
+      version: "3.17.0",
       prerelease: false,
-      publishedAt: "2026-11-07T01:45:13.030Z",
+      publishedAt: "2026-11-07T03:12:14.052Z",
       items: [
-        "\u65B0\u589E\uFF1A\u5DE6\u4FA7\u680F\u65B0\u589E\u300C\u89C6\u9891\u521B\u4F5C\u52A9\u624B\u300D\u5165\u53E3\u4E0E\u5F15\u5BFC\u9875\uFF0C\u53EF\u4E00\u952E\u65B0\u5EFA\u4F1A\u8BDD\uFF0C\u5E76\u5C55\u793A\u4E0A\u624B\u6D41\u7A0B\u4E0E\u957F\u89C6\u9891\u4F4E\u6210\u672C\u65B9\u6848\u3002",
-        "\u4F18\u5316\uFF1A\u8BB8\u53EF\u534F\u8BAE\u8C03\u6574\u4E3A\u4EC5\u5141\u8BB8\u4F7F\u7528\u3001\u7981\u6B62\u4FEE\u6539\uFF0C\u8F6C\u53D1\u9700\u4FDD\u7559\u5B8C\u6574\u5B89\u88C5\u5305\u3002"
+        "\u65B0\u589E\uFF1A\u9879\u76EE\u5BA1\u6838\u8BB0\u5F55\u4E0E\u7D2F\u8BA1\u89C6\u9891\u9884\u89C8\u3002",
+        "\u4F18\u5316\uFF1A\u89D2\u8272\u56FE\u9009\u62E9\u524D\u7F6E\uFF0C\u5408\u5E76\u5236\u4F5C\u786E\u8BA4\uFF0C\u8865\u9F50\u5206\u6BB5\u8D39\u7528\uFF1B\u6682\u505C\u4EC5\u9884\u89C8\u65B0\u6BB5\uFF1B\u521B\u4F5C\u9650\u5236\u4EC5\u4F5C\u7528\u4E8E\u89C6\u9891\u521B\u4F5C\u52A9\u624B\uFF1B\u79FB\u9664\u670D\u52A1\u7AEF\u63A5\u5165\u53CA\u767B\u5F55\u5145\u503C\u3002"
       ]
     }
   };
 
   // src/client/settings.ts
-  function rechargeEntryVisible(walletReady, wallet) {
-    return Boolean(walletReady && wallet && wallet.recharge_enabled !== false);
-  }
   function createSettingsPage(deps) {
     const {
       useSnapshot,
@@ -1815,9 +1252,6 @@
       persistConnection,
       PLUGIN_OWNED_KEYS,
       persistBatch,
-      DEFAULT_REGISTER_API,
-      LOGGED_OUT_KEY,
-      DEFAULT_REGISTER_TOKEN,
       PLUGIN_VERSION,
       UPDATE_CACHE_KEY,
       UPDATE_MAX_AGE_MS,
@@ -1835,13 +1269,10 @@
       updateBell,
       PAGE_CSS
     } = deps;
-    const SHOW_USAGE_RECORD = false;
     const HIDDEN_CONNECTION_MODES = [
-      ...SERVICE_MODE_AVAILABLE ? [] : ["service"],
       ...VOLCENGINE_MODE_AVAILABLE ? [] : ["volcengine"]
     ];
     function hiddenConnectionLabel(t, mode) {
-      if (mode === "service") return t(SERVICE_MODE_AVAILABLE ? "service" : "serviceUnavailable");
       if (mode === "volcengine") return t(VOLCENGINE_MODE_AVAILABLE ? "volcengine" : "volcengineUnavailable");
       return t(mode);
     }
@@ -1850,9 +1281,8 @@
         const snapshot = useSnapshot(form);
         const value = snapshot.value || {};
         const [draft, setDraft] = React.useState({});
-        const selectedMode = draft.connectionMode ?? value.connectionMode ?? "service";
+        const selectedMode = draft.connectionMode ?? value.connectionMode ?? "metaontic";
         const directMode = selectedMode === "volcengine";
-        const serviceMode = selectedMode === "service";
         const [visibleKey, setVisibleKey] = React.useState("");
         const [supportOpen, setSupportOpen] = React.useState(false);
         const supportDialog = React.useRef(null);
@@ -1870,44 +1300,6 @@
         const statusTimer = React.useRef(null);
         const connectionBusy = React.useRef(false);
         const saveInFlight = React.useRef(false);
-        function serviceActive() {
-          return SERVICE_MODE_AVAILABLE && !connectionBusy.current && (form.getSnapshot().value?.connectionMode || "service") === "service";
-        }
-        const [registerStatus, setRegisterStatus] = React.useState("idle");
-        const [registerMessage, setRegisterMessage] = React.useState("");
-        const [registerEmail, setRegisterEmail] = React.useState(() => {
-          const saved = form.getSnapshot().value || {};
-          return String(saved.registerEmail || "");
-        });
-        const [registerCode, setRegisterCode] = React.useState("");
-        const [codeStatus, setCodeStatus] = React.useState("idle");
-        const [codeMessage, setCodeMessage] = React.useState("");
-        const [codeCooldown, setCodeCooldown] = React.useState(0);
-        const emailLocked = codeCooldown > 0;
-        const [quota, setQuota] = React.useState(null);
-        const [quotaStatus, setQuotaStatus] = React.useState("idle");
-        const [quotaMessage, setQuotaMessage] = React.useState("");
-        const [quotaAt, setQuotaAt] = React.useState("");
-        const [wallet, setWallet] = React.useState(null);
-        const [walletStatus, setWalletStatus] = React.useState("idle");
-        const [walletMessage, setWalletMessage] = React.useState("");
-        const [rechargeOpen, setRechargeOpen] = React.useState(false);
-        const [rechargeAmount, setRechargeAmount] = React.useState("30");
-        const [rechargeState, setRechargeState] = React.useState("idle");
-        const [rechargeMessage, setRechargeMessage] = React.useState("");
-        const [rechargeLink, setRechargeLink] = React.useState("");
-        const rechargeDialog = React.useRef(null);
-        React.useEffect(() => {
-          if (rechargeOpen && rechargeDialog.current && !rechargeDialog.current.open) rechargeDialog.current.showModal();
-        }, [rechargeOpen]);
-        React.useEffect(() => {
-          setRechargeOpen(false);
-        }, [selectedMode]);
-        const [usage, setUsage] = React.useState(null);
-        const [usageStatus, setUsageStatus] = React.useState("idle");
-        const [usageMessage, setUsageMessage] = React.useState("");
-        const usageInFlight = React.useRef(false);
-        const [usageAt, setUsageAt] = React.useState("");
         const [showAllFfmpeg, setShowAllFfmpeg] = React.useState(false);
         const [copiedFfmpeg, setCopiedFfmpeg] = React.useState("");
         const [updateStatus, setUpdateStatus] = React.useState("idle");
@@ -1922,110 +1314,6 @@
             return window.localStorage.getItem(`${UPDATE_CACHE_KEY}.deferred`) || "";
           } catch {
             return "";
-          }
-        });
-        const { registerApiRoot, loggedOut, setLoggedOut, clearLoggedOut, forgetDevice, deviceIdentity, deviceFingerprint, deviceLabel, deviceWrites, syncDeviceIdentity, callRegister, applyRegistration, lookupOwnKey, startCooldown, sendEmailCode, register, loadQuota, loadUsage, loadWallet, startRecharge, waitRecharge } = createAccountActions({
-          get value() {
-            return value;
-          },
-          get DEFAULT_REGISTER_API() {
-            return DEFAULT_REGISTER_API;
-          },
-          get LOGGED_OUT_KEY() {
-            return LOGGED_OUT_KEY;
-          },
-          get form() {
-            return form;
-          },
-          get same() {
-            return same;
-          },
-          get serviceActive() {
-            return serviceActive;
-          },
-          get connectionBusy() {
-            return connectionBusy;
-          },
-          get persistBatch() {
-            return persistBatch;
-          },
-          get clear() {
-            return clear;
-          },
-          get DEFAULT_REGISTER_TOKEN() {
-            return DEFAULT_REGISTER_TOKEN;
-          },
-          get PLUGIN_VERSION() {
-            return PLUGIN_VERSION;
-          },
-          get persistConnection() {
-            return persistConnection;
-          },
-          get setRegisterStatus() {
-            return setRegisterStatus;
-          },
-          get settingsError() {
-            return settingsError;
-          },
-          get t() {
-            return t;
-          },
-          get setCodeCooldown() {
-            return setCodeCooldown;
-          },
-          get registerEmail() {
-            return registerEmail;
-          },
-          get setCodeStatus() {
-            return setCodeStatus;
-          },
-          get setCodeMessage() {
-            return setCodeMessage;
-          },
-          get setRegisterMessage() {
-            return setRegisterMessage;
-          },
-          get registerCode() {
-            return registerCode;
-          },
-          get serviceMode() {
-            return serviceMode;
-          },
-          get setQuotaStatus() {
-            return setQuotaStatus;
-          },
-          get setQuotaMessage() {
-            return setQuotaMessage;
-          },
-          get setQuota() {
-            return setQuota;
-          },
-          get setQuotaAt() {
-            return setQuotaAt;
-          },
-          get setWallet() {
-            return setWallet;
-          },
-          get setWalletStatus() {
-            return setWalletStatus;
-          },
-          get setWalletMessage() {
-            return setWalletMessage;
-          },
-          get usageInFlight() {
-            return usageInFlight;
-          },
-          get setUsageStatus() {
-            return setUsageStatus;
-          },
-          get setUsageMessage() {
-            return setUsageMessage;
-          },
-          get setUsage() {
-            return setUsage;
-          },
-          get setUsageAt() {
-            return setUsageAt;
           }
         });
         const { readUpdateCache, rememberUpdateCheck, forgetUpdateCheck, checkForUpdate, runOnlineUpdate, deferUpdate } = createUpdateActions({
@@ -2087,47 +1375,6 @@
             return UPDATE_ATTEMPTS;
           }
         });
-        const restoreTried = React.useRef(false);
-        React.useEffect(() => {
-          if (!SERVICE_MODE_AVAILABLE || restoreTried.current) return;
-          restoreTried.current = true;
-          const snap = form.getSnapshot() || {};
-          if (((snap.value || {}).connectionMode || "service") !== "service") return;
-          if (loggedOut()) {
-            setRegisterStatus("idle");
-            return;
-          }
-          syncDeviceIdentity().catch(() => {
-          });
-          if (snap.secrets?.apiKey || (snap.value || {}).apiKey) {
-            loadQuota().catch(() => {
-            });
-            loadWallet().catch(() => {
-            });
-            if (SHOW_USAGE_RECORD) loadUsage().catch(() => {
-            });
-            return;
-          }
-          lookupOwnKey().catch(() => {
-          });
-        }, []);
-        React.useEffect(() => {
-          if (!serviceMode || !SHOW_USAGE_RECORD || props?.view === "summary" || !(snapshot.secrets?.apiKey || value.apiKey)) return;
-          const refresh = () => {
-            if (window.document?.visibilityState === "hidden") return;
-            loadUsage().catch(() => {
-            });
-          };
-          refresh();
-          const timer = window.setInterval(refresh, 6e4);
-          window.addEventListener("focus", refresh);
-          window.document?.addEventListener("visibilitychange", refresh);
-          return () => {
-            window.clearInterval(timer);
-            window.removeEventListener("focus", refresh);
-            window.document?.removeEventListener("visibilitychange", refresh);
-          };
-        }, [serviceMode, Boolean(snapshot.secrets?.apiKey || value.apiKey), value.deviceId, props?.view]);
         const updateTried = React.useRef(false);
         React.useEffect(() => {
           if (props?.view === "summary") {
@@ -2200,18 +1447,10 @@
             });
             connectionBusy.current = true;
             const latest = form.getSnapshot().value || {};
-            const nextMode = draft.connectionMode ?? latest.connectionMode ?? "service";
+            const nextMode = draft.connectionMode ?? latest.connectionMode ?? "metaontic";
             const changes = Object.entries(draft).filter(([key, next]) => !same(latest[key], next));
             validateSettings({ ...latest, ...draft });
             await persistConnection(form, changes, nextMode);
-            if (nextMode !== "service") {
-              forgetDevice();
-              setRegisterEmail("");
-              setRegisterCode("");
-              setRegisterStatus("idle");
-              setRegisterMessage("");
-              setQuota(null);
-            }
             setDraft((current) => Object.fromEntries(Object.entries(current).filter(([key, next]) => !Object.prototype.hasOwnProperty.call(draft, key) || !same(draft[key], next))));
             flashStatus("saved");
           } catch (error) {
@@ -2231,14 +1470,8 @@
           try {
             const targets = /* @__PURE__ */ new Set([...Object.keys(snapshot.user || {}), ...PLUGIN_OWNED_KEYS]);
             await persistBatch(form, [...targets].map((key) => ({ op: "unset", path: [key] })));
-            forgetDevice();
             setDraft({});
             setVisibleKey("");
-            setRegisterEmail("");
-            setRegisterStatus("idle");
-            setRegisterMessage("");
-            setRegisterCode("");
-            setQuota(null);
             flashStatus("reset");
           } catch (error) {
             setSaveError(t("resetFailed", { message: settingsError(error) }));
@@ -2248,7 +1481,6 @@
           }
         }
         function control(field) {
-          if (field.key === "apiKey") return h("input", { key: "control", id: "metaontic-video-apiKey", className: "mov-input", style: inputStyle, type: "text", readOnly: true, value: snapshot.secrets?.apiKey || value.apiKey ? t("serviceKeyConfigured") : t("serviceKeyMissing") });
           const current = draft[field.key] !== void 0 ? draft[field.key] : value[field.key] ?? (field.key === "imageUseVideoKey" ? true : field.key === "pollIntervalMs" ? 5e3 : field.key === "maxWaitMs" ? 6e5 : void 0);
           const secondsField = field.key === "pollIntervalMs" || field.key === "maxWaitMs";
           const displayed = secondsField && current !== void 0 && current !== "" ? Number(current) / 1e3 : current;
@@ -2273,16 +1505,18 @@
             const hiddenMode = field.key === "connectionMode" && HIDDEN_CONNECTION_MODES.includes(String(current || ""));
             const legacyMerge = field.key === "mergeMode" && current === "seamless";
             const retiredImageModel = field.key === "imageModel" && !options.includes(String(current || ""));
-            const list = current && !options.includes(current) && !hiddenModel && !hiddenMode && !legacyMerge && !retiredImageModel ? [...options, current] : options;
+            const removedMode = field.key === "connectionMode" && !["metaontic", "volcengine"].includes(String(current || ""));
+            const list = !removedMode && current && !options.includes(current) && !hiddenModel && !hiddenMode && !legacyMerge && !retiredImageModel ? [...options, current] : options;
             return h("select", {
               key: "control",
               id,
               "data-field": field.key,
               className: `mov-input${field.mono ? " mov-mono" : ""}`,
               style: inputStyle,
-              value: legacyMerge ? "copy" : retiredImageModel ? options[0] ?? "" : current ?? "",
+              value: removedMode ? "" : legacyMerge ? "copy" : retiredImageModel ? options[0] ?? "" : current ?? "",
               onChange: (event) => edit(field.key, event.target.value)
             }, [
+              removedMode ? h("option", { key: "select-connection", value: "", disabled: true }, t("unknownConnection")) : null,
               hiddenModel ? h("option", { key: "hidden-current", value: current, hidden: true }, t("modelHiddenCurrent")) : null,
               // 下架期间直接标出不可用；恢复后这一支不会走到（该方式会回到候选里）。
               hiddenMode ? h("option", { key: "hidden-current", value: current, hidden: true }, hiddenConnectionLabel(t, String(current || ""))) : null,
@@ -2329,7 +1563,7 @@
           ]);
         }
         const hints = {
-          connectionMode: selectedMode === "metaontic" ? [t("connectionMetaonticHint"), " ", h("a", { key: "metaontic-register", href: "https://ai.bileego.com/sign-up?aff=VzYr", target: "_blank", rel: "noopener noreferrer", style: { textDecoration: "underline" } }, t("connectionMetaonticRegister"))] : serviceMode && !SERVICE_MODE_AVAILABLE ? t("connectionServiceUnavailable") : directMode && !VOLCENGINE_MODE_AVAILABLE ? t("connectionVolcengineUnavailable") : t("connectionModeHint"),
+          connectionMode: selectedMode === "metaontic" ? [t("connectionMetaonticHint"), " ", h("a", { key: "metaontic-register", href: "https://ai.bileego.com/sign-up?aff=VzYr", target: "_blank", rel: "noopener noreferrer", style: { textDecoration: "underline" } }, t("connectionMetaonticRegister"))] : directMode && !VOLCENGINE_MODE_AVAILABLE ? t("connectionVolcengineUnavailable") : t("connectionModeHint"),
           metaonticApiKey: t("metaonticKeyHint"),
           volcengineApiKey: t("volcengineKeyHint"),
           model: t("modelHint"),
@@ -2342,16 +1576,16 @@
           if (field.kind === "switch") classes.push("mov-field-switch");
           if (field.wide) classes.push("mov-field-wide");
           return h("div", { key: field.key, className: classes.join(" ") }, [
-            field.kind === "switch" ? null : h("label", { key: "label", className: "mov-label", htmlFor: `metaontic-video-${field.key}` }, t(["apiKey", "metaonticApiKey", "volcengineApiKey"].includes(field.key) ? !directMode && (serviceMode || (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false) ? "sharedModelKey" : "videoModelKey" : field.key)),
+            field.kind === "switch" ? null : h("label", { key: "label", className: "mov-label", htmlFor: `metaontic-video-${field.key}` }, t(["metaonticApiKey", "volcengineApiKey"].includes(field.key) ? !directMode && (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false ? "sharedModelKey" : "videoModelKey" : field.key)),
             control(field),
             hints[field.key] ? h("span", { key: "hint", className: "mov-hint", style: { marginTop: 4 } }, hints[field.key]) : null
           ]);
         }
         const renderGrid = (section) => {
           if (section.key === "sectionModels") {
-            const shared2 = serviceMode || (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false;
-            const common = !serviceMode && !directMode ? [fieldCell(FIELD_BY_KEY.imageUseVideoKey), ...shared2 ? [fieldCell(FIELD_BY_KEY.metaonticApiKey)] : []] : [];
-            const videoFields = ["model", ...!serviceMode && (directMode || !shared2) ? [directMode ? "volcengineApiKey" : "metaonticApiKey"] : []];
+            const shared2 = (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false;
+            const common = !directMode ? [fieldCell(FIELD_BY_KEY.imageUseVideoKey), ...shared2 ? [fieldCell(FIELD_BY_KEY.metaonticApiKey)] : []] : [];
+            const videoFields = ["model", ...directMode || !shared2 ? [directMode ? "volcengineApiKey" : "metaonticApiKey"] : []];
             const imageFields = ["imageModel", ...!shared2 ? ["imageApiKey"] : []];
             return h("div", { key: section.key, className: "mov-model-settings" }, [
               ...common,
@@ -2374,9 +1608,9 @@
               ])
             ]);
           }
-          const shared = serviceMode || (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false;
-          const videoKey = directMode ? "volcengineApiKey" : serviceMode ? "apiKey" : "metaonticApiKey";
-          const fields = section.key === "sectionModels" ? directMode ? ["model", videoKey] : serviceMode ? ["model", "imageModel"] : shared ? ["imageUseVideoKey", videoKey, "model", "imageModel"] : ["imageUseVideoKey", "model", videoKey, "imageModel", "imageApiKey"] : section.fields;
+          const shared = (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false;
+          const videoKey = directMode ? "volcengineApiKey" : "metaonticApiKey";
+          const fields = section.key === "sectionModels" ? directMode ? ["model", videoKey] : shared ? ["imageUseVideoKey", videoKey, "model", "imageModel"] : ["imageUseVideoKey", "model", videoKey, "imageModel", "imageApiKey"] : section.fields;
           return h(
             "div",
             { key: section.key, className: "mov-grid" },
@@ -2388,8 +1622,7 @@
             h("div", { key: "title", className: "mov-section-title" }, t("sectionGeneration")),
             ...SECTIONS.map((section) => h("div", { key: section.key, className: "mov-parameter-group" }, [
               h("div", { key: "heading", className: "mov-parameter-heading" }, t(section.key)),
-              renderGrid(section),
-              section.key === "sectionConnection" ? registerBox : null
+              renderGrid(section)
             ]))
           ]),
           h("details", { key: "advanced", className: "mov-section mov-advanced" }, [
@@ -2440,238 +1673,6 @@
             disabled: status === "saving" || snapshot.writable === false,
             onClick: reset
           }, t("reset"))
-        ]) : null;
-        const registerMessageColors = {
-          ok: TOKENS.success,
-          restored: TOKENS.success,
-          partial: TOKENS.success,
-          disabled: TOKENS.error,
-          failed: TOKENS.error
-        };
-        const serverIssuedKey = value.keyOrigin === "register" || Boolean(value.deviceId && value.deviceSecret && value.registerEmail);
-        const keyReady = serviceMode && Boolean(snapshot.secrets?.apiKey || value.apiKey) && serverIssuedKey;
-        const registerText = registerStatus === "ok" ? t("registerOk") : registerStatus === "partial" ? t("registerPartial") : registerStatus === "restored" ? t("registerRestored") : registerMessage;
-        const quotaSymbol = quota && quota.currency_symbol ? quota.currency_symbol : "\xA5";
-        const money = (field) => `${quotaSymbol}${formatMoney(quota ? quota[field] : 0)}`;
-        const quotaReady = quotaStatus === "ok" && quota;
-        const quotaFallback = keyReady ? t("quotaLoading") : t("quotaNoKey");
-        const walletReady = walletStatus === "ok" && wallet && wallet.enabled;
-        const rechargeReady = rechargeEntryVisible(walletReady, wallet);
-        const walletSymbol = wallet && wallet.currency_symbol ? wallet.currency_symbol : quotaSymbol;
-        const balanceText = quotaReady ? quota.unlimited_quota ? t("quotaUnlimited") : money("remain_amount") : null;
-        const quotaBox = serviceMode && SERVICE_MODE_AVAILABLE && keyReady ? h("div", {
-          key: "quota",
-          "data-field": "quota",
-          className: "mov-card mov-quota-compact"
-        }, [
-          h("div", { key: "head", className: "mov-card-head" }, [
-            h("span", { key: "title", className: "mov-card-title" }, t("walletBalance"))
-          ]),
-          balanceText !== null ? h("span", {
-            key: "text",
-            "data-field": "quotaValue",
-            className: "mov-stat-value",
-            style: { color: TOKENS.primaryFill }
-          }, balanceText) : h("span", {
-            key: "text",
-            "data-field": "quotaValue",
-            className: "mov-hint"
-          }, quotaFallback),
-          quotaReady ? h("span", { key: "at", className: "mov-foot-note" }, t("quotaUpdatedAt", { time: quotaAt })) : null,
-          quotaMessage ? h("span", { key: "message", className: "mov-hint" }, quotaMessage) : null,
-          walletMessage ? h("span", { key: "wallet-message", className: "mov-hint" }, walletMessage) : null,
-          walletReady && !rechargeReady ? h("span", { key: "recharge-closed", className: "mov-hint" }, t("walletRechargeClosed")) : null,
-          h("div", { key: "actions", className: "mov-quota-actions mov-trailing" }, [
-            h("button", {
-              key: "refresh",
-              "data-action": "quota-refresh",
-              type: "button",
-              className: "mov-btn mov-btn-sm",
-              disabled: quotaStatus === "working",
-              onClick: () => {
-                loadQuota().catch(() => {
-                });
-                loadWallet().catch(() => {
-                });
-              }
-            }, t("quotaRefresh")),
-            rechargeReady ? h("button", {
-              key: "recharge",
-              "data-action": "wallet-recharge",
-              type: "button",
-              className: "mov-btn mov-btn-sm mov-btn-primary",
-              "aria-haspopup": "dialog",
-              onClick: () => {
-                setRechargeState("idle");
-                setRechargeMessage("");
-                setRechargeLink("");
-                if (wallet && wallet.recharge_min) {
-                  const current = Number(rechargeAmount);
-                  const min = Number(wallet.recharge_min);
-                  if (!Number.isFinite(current) || current < min) setRechargeAmount(String(min));
-                }
-                setRechargeOpen(true);
-              }
-            }, t("walletRecharge")) : null,
-            h("button", {
-              key: "support",
-              "data-action": "support-recharge",
-              type: "button",
-              className: "mov-btn mov-btn-sm",
-              "aria-haspopup": "dialog",
-              onClick: () => setSupportOpen(true)
-            }, t("supportRecharge"))
-          ])
-        ]) : null;
-        async function submitRecharge() {
-          const amount = Number(String(rechargeAmount).trim());
-          if (!Number.isFinite(amount) || amount <= 0) {
-            setRechargeState("failed");
-            setRechargeMessage(t("walletRechargeBadAmount"));
-            return;
-          }
-          setRechargeState("working");
-          setRechargeMessage("");
-          setRechargeLink("");
-          try {
-            const order = await startRecharge(amount);
-            const link = order && order.pay_url ? String(order.pay_url) : "";
-            setRechargeLink(link);
-            if (link) {
-              try {
-                window.open(link, "_blank", "noopener");
-              } catch {
-              }
-            }
-            setRechargeState("pending");
-            setRechargeMessage(t("walletRechargeOpening"));
-            const done = await waitRecharge(String(order && order.out_trade_no));
-            if (done && done.credited) {
-              setRechargeState("ok");
-              const fresh = await loadQuota().catch(() => null);
-              const shown = fresh ? `${quotaSymbol}${formatMoney(Number(fresh.remain_amount) || 0)}` : `${walletSymbol}${formatMoney(Number(done.balance) || 0)}`;
-              setRechargeMessage(t("walletRechargeDone", { balance: shown }));
-            } else {
-              setRechargeState("failed");
-              setRechargeMessage(t("walletRechargeTimeout"));
-            }
-          } catch (error) {
-            setRechargeState("failed");
-            setRechargeMessage(t("walletRechargeFailed", { message: error?.message || String(error) }));
-          }
-        }
-        function copyText(text, mark) {
-          try {
-            const result = window.navigator?.clipboard?.writeText(text);
-            if (result && typeof result.then === "function") {
-              result.then(() => {
-                mark(text);
-                window.setTimeout(() => mark(""), 2e3);
-              }, () => {
-              });
-            }
-          } catch {
-          }
-        }
-        function copyCommand(command) {
-          copyText(command, setCopiedFfmpeg);
-        }
-        function usageTime(value2) {
-          if (!value2) return "-";
-          const at = new Date(value2);
-          if (Number.isNaN(at.getTime())) return "-";
-          return at.toLocaleString(void 0, {
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit"
-          });
-        }
-        const usageRows = usage && Array.isArray(usage.items) ? usage.items : [];
-        const usageSymbol = usage && usage.currency_symbol ? usage.currency_symbol : "\xA5";
-        const usageSummaryText = usage ? usageRows.length ? `${t("usageSummary", {
-          count: usage.count,
-          amount: `${usageSymbol}${formatMoney(usage.amount_sum)}`
-        })}${usage.truncated ? ` \xB7 ${t("usageMore", { count: usage.count })}` : ""}` : t("usageEmpty") : usageStatus === "working" ? t("usageLoading") : t("usageKeyMissing");
-        const usageBox = SHOW_USAGE_RECORD && serviceMode && keyReady ? h("div", {
-          key: "usage",
-          "data-field": "usage",
-          className: "mov-card"
-        }, [
-          h("div", { key: "head", className: "mov-card-head" }, [
-            h(
-              "span",
-              { key: "title", className: "mov-card-title" },
-              t("usageTitle", { days: usage ? usage.window_days : 7 })
-            ),
-            h("span", {
-              key: "summary",
-              "data-field": "usageSummary",
-              className: "mov-hint",
-              style: { flex: "1 1 160px" }
-            }, usageSummaryText),
-            h("button", {
-              key: "refresh",
-              "data-action": "usage-refresh",
-              type: "button",
-              className: "mov-btn mov-btn-sm",
-              disabled: usageStatus === "working",
-              onClick: () => {
-                loadUsage().catch(() => {
-                });
-              }
-            }, t("usageRefresh"))
-          ]),
-          usageRows.length ? h("div", {
-            key: "table",
-            className: "mov-table"
-          }, [
-            h("div", {
-              key: "head-row",
-              "data-field": "usage-head",
-              className: "mov-table-head"
-            }, [
-              h("span", { key: "time" }, t("usageColTime")),
-              h("span", { key: "kind" }, t("usageColKind")),
-              h("span", { key: "model" }, t("usageColModel")),
-              h("span", { key: "cost" }, t("usageColCost")),
-              h("span", { key: "status" }, t("usageColStatus"))
-            ]),
-            ...usageRows.map((row, index) => h("div", {
-              key: `${row.id}-${index}`,
-              "data-field": "usage-row",
-              className: "mov-table-row"
-            }, [
-              h(
-                "span",
-                { key: "time", className: "mov-num", style: { color: TOKENS.muted } },
-                usageTime(row.created_at)
-              ),
-              h("span", { key: "kind" }, row.kind_label || ""),
-              // 模型 ID 是这一行最有用的信息之一（换过模型一眼能看出来是哪次用的哪个）
-              h("span", {
-                key: "model",
-                className: "mov-model",
-                title: row.model || ""
-              }, row.model || "\u2014"),
-              h("span", {
-                key: "amount",
-                "data-field": "usage-amount",
-                className: "mov-num",
-                style: { color: row.status === "succeeded" ? TOKENS.success : TOKENS.muted }
-              }, `${usageSymbol}${formatMoney(row.amount)}`),
-              h(
-                "span",
-                { key: "status" },
-                h("span", {
-                  key: "chip",
-                  className: `mov-chip ${row.status === "succeeded" ? "mov-chip-ok" : "mov-chip-bad"}`
-                }, row.status === "succeeded" ? t("usageStatusOk") : t("usageStatusFailed"))
-              )
-            ]))
-          ]) : null,
-          usageAt ? h("span", { key: "updated-at", className: "mov-foot-note" }, t("quotaUpdatedAt", { time: usageAt })) : null,
-          usageMessage ? h("span", { key: "message", className: "mov-hint" }, usageMessage) : null
         ]) : null;
         const updateAvailable = Boolean(updateLatest) && Boolean(PLUGIN_VERSION) && isNewerVersion(updateLatest, PLUGIN_VERSION);
         const updateText = updateStatus === "working" ? t("versionChecking") : updateStatus === "failed" ? updateMessage : updateStatus === "installing" ? t("versionUpdating") : updateStatus === "restart" || updateStatus === "applied" ? updateMessage : updateStatus === "ok" ? updateAvailable ? t("versionNew", { version: updateLatest }) : t("versionLatest") : "";
@@ -2744,92 +1745,11 @@
           updateAvailable ? h("span", { key: "hint", className: "mov-hint" }, t("versionHint")) : null,
           updateStatus === "ok" && updateAt ? h("span", { key: "at", className: "mov-foot-note" }, t("versionCheckedAt", { time: updateAt })) : null
         ]);
-        const registerBox = keyReady || !serviceMode || !SERVICE_MODE_AVAILABLE ? null : h("div", {
-          key: "register",
-          className: "mov-card",
-          style: { gap: 10 }
-        }, [
-          h("div", { key: "text", style: { display: "flex", flexDirection: "column", gap: 4 } }, [
-            h(
-              "span",
-              { key: "title", className: "mov-card-title" },
-              t("registerTitle")
-            ),
-            h("span", { key: "hint", className: "mov-hint" }, t("registerHint"))
-          ]),
-          h("div", { key: "form", className: "mov-register-form" }, [
-            h("input", {
-              key: "email",
-              "data-field": "registerEmail",
-              type: "text",
-              className: "mov-input",
-              value: registerEmail,
-              placeholder: t("registerEmailPlaceholder"),
-              "aria-label": t("registerEmail"),
-              // 验证码已经发出去了：冷却期内不让改邮箱，免得「码发到 A、注册填 B」
-              disabled: emailLocked,
-              "data-locked": emailLocked ? "true" : "false",
-              title: emailLocked ? t("registerEmailLocked") : void 0,
-              onChange: (event) => setRegisterEmail(event.target.value),
-              style: {
-                ...inputStyle,
-                flex: "1 1 220px",
-                width: "auto",
-                opacity: emailLocked ? 0.6 : 1,
-                cursor: emailLocked ? "not-allowed" : "text"
-              }
-            }),
-            h("button", {
-              key: "code",
-              "data-action": "send-code",
-              type: "button",
-              className: "mov-btn",
-              disabled: codeStatus === "working" || codeCooldown > 0 || !registerEmail.trim(),
-              onClick: () => {
-                sendEmailCode().catch(() => {
-                });
-              }
-            }, codeCooldown > 0 ? t("registerCodeCooldown", { seconds: codeCooldown }) : codeStatus === "working" ? t("registerCodeSending") : t("registerCodeSend")),
-            h("input", {
-              key: "code-input",
-              "data-field": "registerCode",
-              type: "text",
-              inputMode: "numeric",
-              className: "mov-input",
-              value: registerCode,
-              placeholder: t("registerCodePlaceholder"),
-              "aria-label": t("registerCode"),
-              onChange: (event) => setRegisterCode(event.target.value),
-              style: { ...inputStyle, flex: "0 1 130px", width: "auto" }
-            }),
-            h("button", {
-              key: "button",
-              "data-action": "register",
-              type: "button",
-              className: "mov-btn mov-btn-primary",
-              disabled: registerStatus === "working" || !registerEmail.trim() || !registerCode.trim() || snapshot.writable === false,
-              onClick: register
-            }, registerStatus === "working" ? t("registerWorking") : t("register"))
-          ]),
-          codeMessage ? h("span", {
-            key: "code-message",
-            "data-field": "codeMessage",
-            style: {
-              flex: "1 1 100%",
-              fontSize: 12,
-              color: codeStatus === "failed" ? TOKENS.error : TOKENS.success
-            }
-          }, codeMessage) : null,
-          registerText ? h("span", {
-            key: "message",
-            style: { flex: "1 1 100%", fontSize: 12, color: registerMessageColors[registerStatus] || TOKENS.muted }
-          }, registerText) : null
-        ]);
         let notice = null;
         if (snapshot.status === "loading") notice = t("loading");
         else if (snapshot.value === void 0) notice = t("unavailable");
         else if (snapshot.writable === false) notice = t("readOnly");
-        const blobs = notice && !snapshot.value ? [] : [footer, ...serviceMode ? [quotaBox, usageBox] : [], versionBox, resetRow];
+        const blobs = notice && !snapshot.value ? [] : [footer, versionBox, resetRow];
         return h("div", { className: "mov-page" }, [
           // hover / focus 这类效果内联样式写不出来，集中在这张样式表里（class 都带 mov- 前缀）。
           h("style", { key: "styles" }, PAGE_CSS),
@@ -2851,57 +1771,6 @@
           notice ? h("p", { key: "notice", className: "mov-notice" }, notice) : null,
           ...notice && !snapshot.value ? [] : settingsRows(),
           ...blobs,
-          rechargeOpen ? h("dialog", {
-            key: "recharge-dialog",
-            ref: rechargeDialog,
-            className: "mov-support-dialog",
-            "aria-labelledby": "mov-recharge-title",
-            onCancel: () => setRechargeOpen(false),
-            onClose: () => setRechargeOpen(false),
-            onClick: (event) => {
-              if (event.target === event.currentTarget) {
-                const rect = event.currentTarget.getBoundingClientRect();
-                if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) setRechargeOpen(false);
-              }
-            }
-          }, h("div", { className: "mov-support-content" }, [
-            h("div", { key: "heading", className: "mov-card-head" }, [
-              h("strong", { key: "title", id: "mov-recharge-title" }, t("walletRechargeTitle")),
-              h("button", { key: "close", type: "button", className: "mov-btn mov-btn-sm mov-trailing", "aria-label": t("walletRechargeCancel"), onClick: () => setRechargeOpen(false) }, t("walletRechargeCancel"))
-            ]),
-            h("p", { key: "hint", className: "mov-hint" }, walletReady ? t("walletRechargeRange", {
-              min: walletSymbol + formatMoney(Number(wallet.recharge_min) || 0),
-              max: walletSymbol + formatMoney(Number(wallet.recharge_max) || 0)
-            }) : ""),
-            h("div", { key: "form", style: { display: "flex", gap: 8, alignItems: "center" } }, [
-              h("input", {
-                key: "amount",
-                "data-field": "rechargeAmount",
-                type: "text",
-                inputMode: "decimal",
-                className: "mov-input",
-                value: rechargeAmount,
-                placeholder: t("walletRechargeAmount"),
-                "aria-label": t("walletRechargeAmount"),
-                disabled: rechargeState === "working" || rechargeState === "pending",
-                onChange: (event) => setRechargeAmount(event.target.value),
-                style: { ...inputStyle, flex: "1 1 auto" }
-              }),
-              h("button", {
-                key: "confirm",
-                "data-action": "wallet-recharge-confirm",
-                type: "button",
-                className: "mov-btn mov-btn-primary",
-                disabled: rechargeState === "working" || rechargeState === "pending" || !String(rechargeAmount).trim(),
-                onClick: () => {
-                  submitRecharge().catch(() => {
-                  });
-                }
-              }, rechargeState === "working" ? t("walletRechargeWorking") : t("walletRechargeConfirm"))
-            ]),
-            rechargeMessage ? h("p", { key: "message", className: "mov-hint" }, rechargeMessage) : null,
-            rechargeLink ? h("a", { key: "link", href: rechargeLink, target: "_blank", rel: "noopener noreferrer" }, t("walletRechargeLink")) : null
-          ])) : null,
           supportOpen ? h("dialog", {
             key: "support-dialog",
             ref: supportDialog,
@@ -3155,7 +2024,7 @@
 
   // src/client.ts
   var PANEL_ID = "metaontic-video";
-  var GUIDE_URL = "https://video.mybfs.cn";
+  var GUIDE_URL = "https://ai.mybfs.cn";
   window.__ModuleLoader__.load({
     id: "metaontic-video",
     factory(require2) {
@@ -3163,11 +2032,11 @@
       const h = React.createElement;
       const { TOKENS, inputStyle, PAGE_CSS } = createTheme();
       const { videoExecutionSource, VideoTaskProgress, VideoProgressDock } = createVideoProgress({ React, h, TOKENS });
-      const { PLUGIN_OWNED_KEYS, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE } = createClientConfig();
+      const { PLUGIN_OWNED_KEYS, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE } = createClientConfig();
       const { zh, en } = createDictionaries();
       const { useSnapshot, same, validateSettings, persistConnection, persistBatch } = createSettingsState({ React });
       const { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell } = createUpdates({ h });
-      const { makePage } = createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, DEFAULT_REGISTER_API, LOGGED_OUT_KEY, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS });
+      const { makePage } = createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS });
       return {
         inject: ["slots", "locale", "configForms", "uiSession"],
         apply(ctx) {

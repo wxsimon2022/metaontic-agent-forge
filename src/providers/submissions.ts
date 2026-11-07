@@ -10,7 +10,7 @@ import { abortError } from '../utils/errors.js';
 
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 export function submissionIdentity(config) {
-  return hash(JSON.stringify([isVolcengine(config) ? 'volcengine' : isMetaontic(config) ? 'metaontic' : 'service', resolveBaseUrl(config), hash(resolveApiKey(config))]));
+  return hash(JSON.stringify([isVolcengine(config) ? 'volcengine' : 'metaontic', resolveBaseUrl(config), hash(resolveApiKey(config))]));
 }
 function directory() { return path.join(dshHome(), 'state', 'metaontic-video', 'submissions'); }
 async function save(file, record) {

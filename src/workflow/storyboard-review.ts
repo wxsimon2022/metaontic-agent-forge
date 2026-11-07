@@ -8,7 +8,7 @@ const STORYBOARD_FILE = /storyboard|分镜|示意/i;
 const IMAGE_FILE = /\.(png|jpe?g|webp|svg)$/i;
 
 export function createStoryboardReviewGuard({ log = appendRequestLog } = {}) {
-  const sessions = new WeakMap<object, { turn: number; active: boolean; files: string[]; shown: Set<string>; awaitingReview: boolean }>();
+  const sessions = new WeakMap<object, { turn: number; active: boolean; files: string[]; shown: Set<string>; awaitingReview: boolean; text: string }>();
   /** 上一轮展示过本版脚本却没弹审核窗时留痕：正文单独成一条消息时助手常直接结束回合。 */
   async function reportMissing(state) {
     state.awaitingReview = false;
@@ -18,7 +18,7 @@ export function createStoryboardReviewGuard({ log = appendRequestLog } = {}) {
     let state = sessions.get(session);
     if (state && Number.isInteger(turn) && turn !== state.turn && state.awaitingReview) void reportMissing(state);
     if (!state || (Number.isInteger(turn) && turn !== state.turn)) {
-      state = { turn, active: false, files: [], shown: new Set(), awaitingReview: false };
+      state = { turn, active: false, files: [], shown: new Set(), awaitingReview: false, text: '' };
       sessions.set(session, state);
     }
     return state;
@@ -32,7 +32,7 @@ export function createStoryboardReviewGuard({ log = appendRequestLog } = {}) {
       if (state.awaitingReview) void reportMissing(state);
       return;
     }
-    if (event.type === 'tool/call' && ['video_estimate', 'video_stage'].includes(data.name)) state.active = true;
+    if (event.type === 'tool/call' && ['video_estimate', 'video_stage', 'video_project'].includes(data.name)) state.active = true;
     if (event.type === 'deliverables/presented') {
       // present 只登记最终成片，分镜图不走卡片；这里仅把登记过的分镜图留作提示用。
       const files = (data.files || []).filter(file => typeof file.path === 'string'
@@ -43,6 +43,7 @@ export function createStoryboardReviewGuard({ log = appendRequestLog } = {}) {
       // reasoning、工具参数、工具看图结果都不是用户可见正文。
       const content = data.message?.content;
       const text = Array.isArray(content) ? content.filter(block => block.type === 'text').map(block => block.text || '').join('\n') : '';
+      state.text = (state.text + '\n' + text).slice(-250000);
       let storyboard = false;
       for (const match of text.matchAll(/!\[[^\]]*\]\(\s*(?:<([^>]+)>|([^\s)]+))\s*\)/g)) {
         const target = match[1] || match[2];
@@ -100,8 +101,10 @@ export function createStoryboardReviewGuard({ log = appendRequestLog } = {}) {
     const state = sessions.get(exec.agent.session);
     // 只要真的发起了审核提问就不再算漏问；放行与否仍由下面的展示检查决定。
     if (review && state) state.awaitingReview = false;
-    if (!review || !state?.active) return null;
-    const embedded = [...state.shown].filter(target => STORYBOARD_FILE.test(path.basename(target)));
+    if (!review || (!args.requireStoryboard && !state?.active)) return null;
+    const normalized = value => String(value || '').replace(/\s+/g, '');
+    if (args.requiredScriptText && !normalized(state?.text).includes(normalized(args.requiredScriptText))) return { kind: 'deny', reason: '请先在本轮用户可见正文完整展示script.md正文，再调用review；文件链接或摘要不能代替完整脚本。' };
+    const embedded = [...(state?.shown || [])].filter(target => STORYBOARD_FILE.test(path.basename(target)));
     let ready = embedded.length > 0;
     if (ready) {
       for (const file of embedded) {
@@ -110,7 +113,7 @@ export function createStoryboardReviewGuard({ log = appendRequestLog } = {}) {
     }
     const stale = ready ? await newerVersion(embedded) : '';
     if (ready && !stale) return null;
-    const target = stale || state.files[0] || '';
+    const target = stale || state?.files[0] || '';
     await appendRequestLog({ event: 'storyboard_review_blocked', reason: !ready ? 'missing_inline_storyboard' : 'stale_storyboard_version' });
     return { kind: 'deny', reason: (!ready
       ? '脚本审核暂未打开：本版分镜图还没有在用户可见正文里内嵌展示。交付卡片只登记最终成片，分镜图不走卡片，'

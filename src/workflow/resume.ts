@@ -159,7 +159,7 @@ export function withResumeLock(tool, toolName, config) {
         const started = Date.now();
         const dir = resumeDirOf(args?.resume);
         let lock;
-        await appendRequestLog({ event: 'tool_started', provider: isMetaontic(config) ? 'metaontic' : isVolcengine(config) ? 'volcengine' : 'service',
+        await appendRequestLog({ event: 'tool_started', provider: isVolcengine(config) ? 'volcengine' : 'metaontic',
           model: resolveModel(config), duration: args?.duration, segmentSeconds: args?.segmentSeconds,
           resuming: Boolean(dir), resumeDir: dir || undefined });
         try {
@@ -168,7 +168,7 @@ export function withResumeLock(tool, toolName, config) {
             await appendRequestLog({ event: 'resume_lock_acquired', resumeDir: dir });
           }
           const result = await tool.execute(args, exec);
-          if (result?.resumeDir) {
+          if (result?.resumeDir && args?.cumulativePreview !== true) {
             const record = await readPauseFile(result.resumeDir);
             record.deliveryPending = Boolean(result.deliveryError || result.ffmpegMissing);
             await writePauseFile(result.resumeDir, record);
@@ -227,7 +227,7 @@ export function resumePlanFrom(data, { askedTotal, segmentSeconds }) {
 
 /** 续做时要沿用的参数：调用方只传 resume 时，靠这份记录还原上次的口径。 */
 export function pickResumeOptions(args) {
-  const keys = [
+  const keys = ['projectId',
     'mode', 'ratio', 'generateAudio', 'watermark', 'segmentPrompts', 'transitionDescription', 'merge',
     // 这几个是 video_extend 的口径（延长方向、提示词写法、整片时间轴位置）
     'direction', 'wording', 'startAt', 'inputVideoSeconds',
@@ -273,7 +273,7 @@ export function resumeHint(dir, remainingSeconds, toolName = 'video_generate') {
 /** Non-secret connection identity. Never copy API keys into progress files. */
 function progressConnection(config) {
   return {
-    provider: isMetaontic(config) ? 'metaontic' : isVolcengine(config) ? 'volcengine' : 'service',
+    provider: isVolcengine(config) ? 'volcengine' : 'metaontic',
     model: resolveModel(config), baseUrl: resolveBaseUrl(config),
     submitPath: resolveSubmitPath(config), queryPath: resolveQueryPath(config, '{task_id}'),
   };

@@ -1,3 +1,6 @@
+import { isVideoDirector } from './prompts/scope.js';
+import { projectTool } from './tools/video-project.js';
+import { assertProjectApproved, withProjectApproval } from './workflow/project.js';
 import { createStoryboardReviewGuard } from './workflow/storyboard-review.js';
 import { createDeliveryOrderGuard } from './workflow/delivery-order.js';
 import { createScriptTracker } from './workflow/script-tracking.js';
@@ -52,11 +55,12 @@ export function apply(ctx: DshContext, config: any = {}) {
     ...(typeof deliveryObserver === 'function' ? [deliveryObserver] : []),
     ...(typeof scriptObserver === 'function' ? [scriptObserver] : []),
     register(jsonSafeTool(stageTool())),
+    register(jsonSafeTool(projectTool(config, ctx, storyboardReview, videoTool(config, deps, ctx).parameters.properties, extendTool(config, deps, ctx).parameters.properties))),
     register(jsonSafeTool(estimateTool(config))),
     register(jsonSafeTool(submissionTool(config))),
     register(jsonSafeTool(prepareImageTool(config))),
-    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(videoTool(config, deps, ctx), config)), 'video_generate', config), deliveryOrder.remember)),
-    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(extendTool(config, deps, ctx), config)), 'video_extend', config), deliveryOrder.remember)),
+    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(withProjectApproval(videoTool(config, deps, ctx), config), config)), 'video_generate', config), deliveryOrder.remember)),
+    register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(withProjectApproval(extendTool(config, deps, ctx), config), config)), 'video_extend', config), deliveryOrder.remember)),
     register(withVideoExecution(jsonSafeTool(withActualCost(taskTool(config), config)))),
     register(jsonSafeTool(setupTool(config))),
   ];
@@ -86,7 +90,7 @@ export function apply(ctx: DshContext, config: any = {}) {
   const promptCleanup = ctx.inject(['systemPrompt'], (promptCtx) => promptCtx.systemPrompt.section({
     name: 'plugin:metaontic-video',
     order: 5200,
-    text: () => buildPromptGuidance(config),
+    text: context => isVideoDirector(context, ctx) ? buildPromptGuidance(config) : '',
   }));
   for (const dispose of [asDisposer(promptCleanup)]) if (dispose) disposers.push(dispose);
   // 会话工作目录也是可选的：宿主不提供时合并结果落在进程 cwd 下。
@@ -95,16 +99,20 @@ export function apply(ctx: DshContext, config: any = {}) {
     return () => { deps.workdir = undefined; };
   });
   for (const dispose of [asDisposer(workdirCleanup)]) if (dispose) disposers.push(dispose);
-  // 每次真正调用视频模型前卡一道：宿主弹人工确认（含预估费用与余额展示）；MetaOnticVideo 接入余额不足会直接拦下并提示充值。
+  // 每次调用视频模型前由宿主弹人工费用确认。
   // 注册或预检本身出问题都不该把生成堵死：那样退回「没有预估数字」的人工确认。
   let gateCleanup;
   try {
     gateCleanup = ctx.on('tools/pre-execute', async (exec, next) => {
-      const storyboardGate = await storyboardReview.gate(exec);
+      const storyboardGate = isVideoDirector({ agent: exec.agent }, ctx) ? await storyboardReview.gate(exec) : null;
       if (storyboardGate) return storyboardGate;
       const orderGate = await deliveryOrder.gate(exec);
       if (orderGate) return orderGate;
       if (!GATED_TOOLS.includes(exec.name)) return next();
+      if (['video_generate', 'video_extend'].includes(exec.name)) {
+        try { await assertProjectApproved(config, exec, exec.arguments || {}); }
+        catch (error) { return { kind: 'deny', reason: error?.message || String(error) }; }
+      }
       try {
         return await preflightGate(ctx, config, exec);
       } catch (error) {

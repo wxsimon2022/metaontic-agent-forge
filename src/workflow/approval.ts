@@ -1,58 +1,22 @@
+import { estimateSegmentCosts } from '../tools/video-estimate.js';
 import { characterChoiceGate } from './character-choice.js';
 /** workflow/approval：从宿主入口拆出的独立职责模块。 */
-import { isManualKey, connectionLabel, resolveRegisterApi, assertConfigured, resolveApiKey, resolveModel } from '../providers/connection.js';
-import { SERVICE_MODE_AVAILABLE, SERVICE_UNAVAILABLE_MESSAGE } from '../connection-defaults.js';
-import { estimateSteps, formatMoney, estimatePlan, estimateUsage } from './costs.js';
-import { finiteNumber, clampInteger } from '../utils/validation.js';
-import { ref, DEFAULT_USD_EXCHANGE_RATE, DEFAULT_REGISTER_TOKEN, PLUGIN_VERSION, MIN_SECONDS, MAX_SEGMENTS, DEFAULT_QUOTA_PER_UNIT, resolveResolution } from '../config.js';
+import { isManualKey, connectionLabel, assertConfigured, resolveApiKey, resolveModel } from '../providers/connection.js';
+import { estimatePlan } from './costs.js';
+import { clampInteger } from '../utils/validation.js';
+import { ref, MIN_SECONDS, MAX_SEGMENTS, resolveResolution } from '../config.js';
 import { sumStepSeconds, resolveSegmentSeconds, modelMaxSeconds } from './planning.js';
 import { ffmpegInstallOptions, hasFfmpeg, resolveBinary } from '../media/ffmpeg.js';
 import { resumeDirOf, readPauseFile, resumePlanFrom, assertResumeConnection } from './resume.js';
 
-/** 服务端回的不限额度的 API密钥：不做余额比较，也不能把 0 当成「只剩 ¥0」。 */
-function unlimitedQuota(data) {
-  return Boolean(data && typeof data === 'object' && data.unlimited_quota === true);
-}
-
-/**
- * 剩下这几段的预估费用文案（确认框里给用户看钱）。
- *
- * `readQuota` 由调用方传进来复用同一次额度读取：同一次预检里「还差多少」和
- * 「额度够不够」必须看同一份数据，也不该为了一句话多打一次接口。
- */
-export async function remainingCostText(config, exec, remainingSteps, inputVideoSeconds = undefined, readQuota = null) {
-  if (isManualKey(config)) return { cost: `${connectionLabel(config)}按当前 API密钥在渠道的实际用量计费`, remain: '' };
+/** 续做仍需明确确认当前渠道的实际调用费用。 */
+export async function remainingCostText(config, exec, remainingSteps, inputVideoSeconds = undefined) {
   try {
-    const estimated = estimateSteps(
-      config,
-      remainingSteps.map((step, index) => ({ ...step, inputSeconds: index ? remainingSteps[index - 1].seconds : inputVideoSeconds })),
-      resolveResolution(config, exec?.arguments || {}),
-    );
-    const groupRatio = finiteNumber(ref(config, 'estimateGroupRatio', 0.8)) ?? 1;
-    const usd = estimated.segments.reduce((sum, item) => sum + item.usd, 0) * groupRatio;
-    const quota = await (readQuota ? readQuota() : fetchDeviceQuota(config, exec?.signal));
-    const data = quota?.status === 'ok' ? quota.data : {};
-    const symbol = String(data.currency_symbol || '¥');
-    const exchange = finiteNumber(data.usd_exchange_rate) ?? DEFAULT_USD_EXCHANGE_RATE;
-    const remainAmount = finiteNumber(data.remain_amount);
-    return {
-      cost: `预估 ${formatMoney(usd * exchange, symbol)}`,
-      remain: unlimitedQuota(data) ? '当前账号余额不限额度'
-        : (remainAmount === null ? '' : `当前账号余额 ${formatMoney(remainAmount, symbol)}`),
-    };
-  } catch (error) {
-    return { cost: `预估费用没算出来（${error?.message || error}）`, remain: '' };
-  }
+    const estimate = estimateSegmentCosts(config, { ...(exec?.arguments || {}), resolution: resolveResolution(config, exec?.arguments || {}), inputVideoSeconds }, remainingSteps);
+    return { cost: `剩余计划基础估价约¥${estimate.cny.toFixed(4)}`, remain: '' };
+  } catch (error) { return { cost: `剩余计划无法可靠估价（${error?.message || error}）`, remain: '' }; }
 }
 
-/**
- * 续做入口（用户点「继续」之后、提交下一段之前）确认框里的「第几段 / 还差多少」说明。
- *
- * 每段生成完停下、等用户确认再 resume，是插件的既定时序；所以每段确认挂在 resume 入口，
- * 由 preflightGate 统一弹一次（同一份进度只出现一个确认框）。不在生成循环中间阻塞：
- * 工具内部卡在审批框时宿主拿不到工具输出，没法先把刚生成好的分段展示给用户，
- * 那样用户是「没看到成果就先被问要不要继续」。
- */
 export function segmentContinueLine({ toolName = 'video_generate', done, lastSeconds, nextSeconds }) {
   const action = toolName === 'video_extend' ? '延长' : '生成';
   const finished = done > 0 ? `第 ${done} 段（${lastSeconds} 秒）已经生成好` : '还没有生成任何分段';
@@ -63,63 +27,6 @@ export function segmentContinueLine({ toolName = 'video_generate', done, lastSec
   };
 }
 
-/**
- * 问插件服务要「本机这把 API密钥还剩多少额度」。
- * 服务端按设备凭据去中转站读密钥详情，只回剩余 / 已用额度。
- * 拿不到（没设备凭据、服务不可用）就回 unknown，由调用方决定怎么写进确认框。
- */
-export async function fetchDeviceQuota(config, signal) {
-  if (isManualKey(config)) return { status: 'unknown', reason: `${connectionLabel(config)}按当前 API密钥在渠道的实际用量计费，费用与余额请在渠道控制台查看` };
-  if (!SERVICE_MODE_AVAILABLE) return { status: 'unknown', reason: SERVICE_UNAVAILABLE_MESSAGE };
-  const api = resolveRegisterApi(config);
-  const deviceId = String(ref(config, 'deviceId', '')).trim();
-  const deviceSecret = String(ref(config, 'deviceSecret', '')).trim();
-  const loginKey = String(ref(config, 'loginKey', '')).trim();
-  if (!deviceId || !deviceSecret) {
-    return {
-      status: 'unknown',
-      reason: '插件里没有本机设备凭据（在设置页点一次「登录」会写进来，之后就能自动校验额度）',
-    };
-  }
-  const timeout = AbortSignal.timeout(15000);
-  const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
-  try {
-    const response = await fetch(`${api}/api/v1/register/quota`, {
-      method: 'POST',
-      headers: {
-        accept: 'application/json',
-        'content-type': 'application/json',
-        'X-Register-Token': String(ref(config, 'registerToken', '')).trim() || DEFAULT_REGISTER_TOKEN,
-        // 服务端现在按登录令牌认人（只带设备凭据会被 401 login_required 挡回来），
-        // 老版本服务端仍认设备凭据，所以两者一起带。
-        ...(loginKey ? { 'X-Login-Key': loginKey } : {}),
-        ...(PLUGIN_VERSION ? { 'X-Plugin-Version': PLUGIN_VERSION } : {}),
-      },
-      body: JSON.stringify({ device_id: deviceId, device_secret: deviceSecret }),
-      signal: requestSignal,
-    });
-    const text = await response.text();
-    let body: any = {};
-    if (text) {
-      try {
-        body = JSON.parse(text);
-      } catch {
-        body = { message: text.slice(0, 200) };
-      }
-    }
-    if (!response.ok || (body && typeof body === 'object' && body.code)) {
-      return {
-        status: 'unknown',
-        reason: (body && (body.message || body.detail)) || `HTTP ${response.status}`,
-      };
-    }
-    return { status: 'ok', data: (body && body.data) || body || {} };
-  } catch (error) {
-    return { status: 'unknown', reason: error?.message || String(error) };
-  }
-}
-
-/** 宿主当前的审批策略：never 表示「审批提示被关掉」，这时候没法人工确认。 */
 export function approvalPolicy(ctx, exec) {
   try {
     const approval = ctx.get('approval');
@@ -234,43 +141,6 @@ export async function ffmpegConsentGate(config, exec, args) {
 }
 
 /**
- * 图片调用前的额度预检：服务端方式的图片与视频共用同一把 API密钥的额度。
- *
- * 图片没有可靠单价，所以这里只拦「余额明确为 0 及以下」这一种必然白跑的情况；
- * 不限额度、读不到额度、余额为正都照常弹确认，只把余额写进确认框给用户看。
- * 返回 null 表示不用在确认框里提额度。
- */
-async function imageQuotaNotice(config, exec) {
-  // MetaOntic AI / 火山直连不判断额度（fetchDeviceQuota 对它们直接返回 unknown，这里再挡一层更明确）。
-  if (isManualKey(config)) return null;
-  const quota = await fetchDeviceQuota(config, exec.signal);
-  const data = quota?.status === 'ok' ? quota.data : {};
-  if (unlimitedQuota(data)) return { remainZh: '当前账号余额不限额度', remainEn: 'this account has no balance limit' };
-  const remainQuota = finiteNumber(data.remain_quota);
-  if (remainQuota === null) return null;
-  const symbol = String(data.currency_symbol || '¥');
-  const remainAmount = formatMoney(finiteNumber(data.remain_amount) ?? 0, symbol);
-  if (remainQuota <= 0) {
-    return {
-      blocked: true,
-      reason: `额度不足，已停止调用：当前账号余额只剩 ${remainAmount}，图片生成会白跑一趟。`
-        + '请在插件设置页点「充值」按金额完成支付宝付款（服务端没开在线收款，或设置页没有「充值」按钮，就点「客服」联系人工充值），到账后再重试；'
-        + '这次没有调用模型、没有产生费用。'
-        + '\n请把这条原因如实告诉用户（额度不足、先充值再重试），不要用其他方式绕开这一步继续调用模型。',
-    };
-  }
-  return { remainZh: `当前账号余额 ${remainAmount}`, remainEn: `this account has ${remainAmount} left` };
-}
-
-/**
- * 真正调用模型前的卡口：先读这把 API密钥的额度，再人工确认。
- *
- * - 审批提示被关掉（完全访问模式）：拒绝，并说明怎么打开；
- * - 预估费用超过这把 API密钥的剩余额度：直接拒绝，不去调用（避免白扣 / 报错）；
- * - 读不到剩余额度：照常弹确认框，但把「读不到额度」的原因写清楚；
- * - 其余情况：返回 ask，宿主弹审批面板给用户看预估费用，点「允许」才会执行。
- */
-/**
  * 读取本次真实剩余计划；费用只估当前会执行的一段，环境预检检查完整计划。
  * 续做使用暂停记录，不把剩余秒数重新拆段。待查询任务和交付重试不新增生成费用。
  */
@@ -315,15 +185,11 @@ export async function preflightGate(ctx, config, exec) {
     if (approvalPolicy(ctx, exec) === 'never') return { kind: 'deny', reason: '当前权限模式无法进行图片调用确认。' };
     if (!creating && exec.arguments?.characterType === 'realistic') return { kind: 'deny', reason: '真人限制转换必须使用非真人风格，不能转换为真人写实。' };
     const characterLabel = exec.arguments?.characterType === 'realistic' ? '真人写实' : '非真人';
-    // 图片也调用模型：服务端方式先看一眼这把 API密钥的余额，明确没钱就别让上游白拒。
-    const imageQuota = await imageQuotaNotice(config, exec);
-    if (imageQuota?.blocked) return { kind: 'deny', reason: imageQuota.reason };
-    const imageRemainZh = imageQuota?.remainZh ? `（${imageQuota.remainZh}）` : '';
-    const imageRemainEn = imageQuota?.remainEn ? ` (${imageQuota.remainEn})` : '';
-    if (creating) return { kind: 'ask', reason: '调用Seedream按文字生成角色参考图，图片单独计费。完成后先展示并核对角色和风格，确认后才用于视频；视频生成另行确认和计费。', displayReason: { zh: `先生成一张${characterLabel}角色参考图，图片调用单独计费${imageRemainZh}。生成后先看图确认，再用于视频；现在不会生成视频。是否同意？`, en: `Generate one ${exec.arguments?.characterType === 'realistic' ? 'photorealistic' : 'stylized'} character reference image, billed separately. Review it before any separately confirmed video generation.${imageRemainEn}` } };
-    return { kind: 'ask', reason: '调用 Seedream 将真人参考图转为非真人风格；图片生成单独按实际调用计费，视频费用另计。', displayReason: { zh: `将调用 Seedream 处理参考图，图片调用单独计费，视频费用另计${imageRemainZh}。确认后开始处理。`, en: `Use Seedream to stylize the reference. Image calls are billed separately from video. Confirm to proceed.${imageRemainEn}` } };
+    if (creating) return { kind: 'ask', reason: '调用Seedream按文字生成角色参考图，图片单独计费。完成后先展示并核对角色和风格，确认后才用于视频；视频生成另行确认和计费。', displayReason: { zh: `先生成一张${characterLabel}角色参考图，图片调用单独计费。生成后先看图确认，再用于视频；现在不会生成视频。是否同意？`, en: `Generate one ${exec.arguments?.characterType === 'realistic' ? 'photorealistic' : 'stylized'} character reference image, billed separately. Review it before any separately confirmed video generation.` } };
+    return { kind: 'ask', reason: '调用 Seedream 将真人参考图转为非真人风格；图片生成单独按实际调用计费，视频费用另计。', displayReason: { zh: `将调用 Seedream 处理参考图，图片调用单独计费，视频费用另计。确认后开始处理。`, en: `Use Seedream to stylize the reference. Image calls are billed separately from video. Confirm to proceed.` } };
   }
 
+  if (exec.arguments?.resume && exec.arguments?.cumulativePreview === true) return { kind: 'allow' };
   const rawArgs = exec.arguments && typeof exec.arguments === 'object' ? exec.arguments : {};
   let effectiveArgs = rawArgs;
   // 续做入口就是「每段确认」那一关：这一步拿到暂停记录里的进度，确认框才说得清是第几段。
@@ -353,11 +219,6 @@ export async function preflightGate(ctx, config, exec) {
     } catch (error) { return { kind: 'deny', reason: error?.message || String(error) }; }
   }
 
-  // 这次预检只读一次额度：续做确认里的「还差多少」和下面「够不够」共用同一份数据，
-  // 也避免为了确认框多打一次服务端接口（每次最多等 15 秒）。
-  let quotaResult = null;
-  const readQuota = () => (quotaResult ??= fetchDeviceQuota(config, exec.signal));
-
   // 续做确认框的前半句：第几段做完了、接下来第几段、整条还差多少、还要花多少。
   // 算不出钱就只报秒数，确认框照常弹（不能让估价失败挡住已经确认过的续做）。
   let resumeLead = null;
@@ -365,7 +226,7 @@ export async function preflightGate(ctx, config, exec) {
     const line = segmentContinueLine(resumeSegment);
     let rest = `整条还差 ${resumeSegment.remainingSeconds} 秒`;
     try {
-      const measured = await remainingCostText(config, exec, resumeSegment.remainingSteps, resumeSegment.inputVideoSeconds, readQuota);
+      const measured = await remainingCostText(config, { ...exec, arguments: effectiveArgs }, resumeSegment.remainingSteps, resumeSegment.inputVideoSeconds);
       rest += `（${measured.cost}${measured.remain ? `；${measured.remain}` : ''}）`;
     } catch { /* 估价失败不影响确认框 */ }
     resumeLead = {
@@ -385,8 +246,6 @@ export async function preflightGate(ctx, config, exec) {
   }
 
   const args = exec.arguments && typeof exec.arguments === 'object' ? exec.arguments : {};
-  // A 服务端方式停用期间先拦住：不让用户走完脚本审核和确认，再在提交阶段失败。
-  if (!SERVICE_MODE_AVAILABLE && !isManualKey(config)) return { kind: 'deny', reason: SERVICE_UNAVAILABLE_MESSAGE };
   const characterChoice = await characterChoiceGate(ctx, config, exec, args);
   if (characterChoice) return characterChoice;
 
@@ -396,84 +255,25 @@ export async function preflightGate(ctx, config, exec) {
   if (consent) return consent;
   if (isManualKey(config)) {
     assertConfigured(config, resolveApiKey(config));
+    const plan = effectiveArgs.remainingPlan ?? estimatePlan(config, exec.name, effectiveArgs);
+    const ratio = effectiveArgs.ratio ?? ref(config, 'ratio', '9:16');
+    const resolution = resolveResolution(config, effectiveArgs);
+    const audio = effectiveArgs.generateAudio ?? ref(config, 'generateAudio', true);
+    let costZh, costEn;
+    try {
+      const measured = estimateSegmentCosts(config, { ...effectiveArgs, ratio, resolution }, plan);
+      costZh = `本段基础估价约¥${measured.segments[0].cny.toFixed(4)}，剩余计划${plan.length}段合计约¥${measured.cny.toFixed(4)}（价目日期${measured.priceDate}，倍率1，最低用量补足未计入）`;
+      costEn = `This segment ~CNY ${measured.segments[0].cny.toFixed(4)}; remaining ${plan.length} segments ~CNY ${measured.cny.toFixed(4)} (base estimate, multiplier 1; minimum billing excluded)`;
+    } catch (error) { costZh = `无法可靠估价（${error?.message || error}）`; costEn = 'A reliable cost estimate is unavailable'; }
+    const summary = `${resolveModel(config)} · ${ratio} · ${resolution} · ${audio ? '有音频' : '无音频'} · 本段${plan[0]?.seconds ?? '未知'}秒 · 剩余${plan.map(s => s.seconds).join('+')}秒`;
     return {
       kind: 'ask',
-      reason: `${resumeLead ? resumeLead.zh : ''}调用${connectionLabel(config)} ${resolveModel(config)} · ${resolveResolution(config, effectiveArgs)}，按当前 API密钥在渠道的实际用量计费。`,
+      reason: `${resumeLead?.zh || ''}制作确认：${connectionLabel(config)} ${summary}；${costZh}。按当前 API密钥在渠道的实际用量计费。`,
       displayReason: {
-        zh: `${resumeLead ? resumeLead.zh : ''}本次将通过${connectionLabel(config)}生成 ${resolveResolution(config, effectiveArgs)} 视频，按当前 API密钥在渠道的实际用量计费。确认后开始。${resumeLead ? resumeLead.tailZh : ''}`,
-        en: `${resumeLead ? resumeLead.en : ''}Generate ${resolveResolution(config, effectiveArgs)} video via ${connectionLabel(config)}, billed by this key's actual usage on the channel. Confirm to continue.${resumeLead ? resumeLead.tailEn : ''}`,
+        zh: `${resumeLead?.zh || ''}${summary}；${costZh}。图片及重做另计，按当前 API密钥在渠道的实际用量计费。点「允许」开始本段制作，拒绝则保留已有成果。`,
+        en: `${resumeLead?.en || ''}${summary}. ${costEn}. Images and retries cost extra; billed by actual usage. Allow to start this segment; reject to keep existing results.`,
       },
     };
   }
-  let estimate = null;
-  try {
-    const prepared = await estimateArgsFor(config, exec.name, args);
-    const plan = prepared.remainingPlan ?? estimatePlan(config, exec.name, prepared);
-    estimate = estimateUsage(config, exec.name, prepared, plan.slice(0, 1));
-  } catch {
-    estimate = null;
-  }
-
-  // 服务端方式在调用模型前读一次额度：够不够由这把 API密钥的中转站余额说话。
-  // （MetaOntic AI / 火山直连在本函数前面就返回了，不会被这里查到。）
-  const quota = await readQuota();
-  const data = quota?.status === 'ok' ? quota.data : {};
-  const symbol = String(data.currency_symbol || '¥');
-  const perUnit = finiteNumber(data.quota_per_unit) || DEFAULT_QUOTA_PER_UNIT;
-  const exchange = finiteNumber(data.usd_exchange_rate) ?? DEFAULT_USD_EXCHANGE_RATE;
-  const unlimited = unlimitedQuota(data);
-
-  const needQuota = estimate ? Math.round(estimate.usd * perUnit) : null;
-  const needMoney = estimate ? formatMoney(estimate.usd * exchange, symbol) : null;
-
-  const remainQuota = finiteNumber(data.remain_quota);
-  const remainAmount = finiteNumber(data.remain_amount);
-
-  // 用户看到的只有钱：额度数字（「约 65.7 万额度」这种）是内部口径，确认框里不显示。
-  const costText = needMoney === null ? '这次调用的费用没法预估' : `预估 ${needMoney}`;
-  const remainMoneyText = `${formatMoney(remainAmount === null ? 0 : remainAmount, symbol)}`;
-  // 用户看的只有钱；额度数字只留在下面那条审计文本里
-  const remainZh = unlimited ? '当前账号余额不限额度'
-    : (remainQuota === null
-      ? `当前账号余额读不到（${quota.reason || '服务端没回额度'}）`
-      : `当前账号余额 ${remainMoneyText}`);
-  const remainEn = unlimited ? 'this account has no balance limit'
-    : (remainQuota === null
-      ? `this account's balance could not be read (${quota.reason || 'the service returned none'})`
-      : `this account has ${remainMoneyText} left`);
-
-  // 额度不够就别调用：中转站也会拒，但那样只会白等一轮还看不到原因。提示去充值再重试。
-  // 不限额度（unlimited_quota）的 API密钥不比较余额：它的 remain_quota 只是个占位数字，
-  // 按它拦会把这把本来能用的 API密钥误判成「额度不足、请充值」。
-  if (!unlimited && needQuota !== null && remainQuota !== null && remainQuota < needQuota) {
-    return {
-      kind: 'deny',
-      reason: `额度不足，已停止调用：本次预估需要 ${needMoney ?? '无法预估'}，当前账号余额只剩 ${remainMoneyText}。`
-        + '请在插件设置页点「充值」按金额完成支付宝付款（服务端没开在线收款，或设置页没有「充值」按钮，就点「客服」联系人工充值），到账后再重试；'
-        + '这次没有调用模型、没有产生费用。'
-        + '\n请把这条原因如实告诉用户（额度不足、先充值再重试），不要重复提交，也不要用其他方式绕开这一步继续调用模型。',
-    };
-  }
-
-  const total = estimate
-    ? `${estimate.model} · ${estimate.resolution} · ${planSummary(estimate)}`
-    : `${resolveModel(config)} · ${resolveResolution(config, effectiveArgs)}`;
-  // 审计那条（模型看）保留 token / 额度这类内部口径，方便对着中转站日志核对
-  const auditTax = estimate
-    ? `预估消耗 ${estimate.tokens.toLocaleString('en-US')} token ≈ ${needMoney ?? '无法预估'}`
-      + `（${needQuota === null ? '额度未知' : `${needQuota.toLocaleString('en-US')} 额度`}）`
-    : '这次调用的费用无法预估';
-  return {
-    kind: 'ask',
-    reason: `${resumeLead ? resumeLead.zh : ''}人工确认：调用视频模型（${total}）。${auditTax}；当前账号余额 `
-      + `${unlimited ? '不限额度（服务端这个账号不按余额计）'
-        : (remainQuota === null ? '额度读不到' : `${remainMoneyText} / `
-          + `${remainQuota.toLocaleString('en-US')} 额度`)}。`,
-    displayReason: {
-      zh: `${resumeLead ? resumeLead.zh : ''}本次会调用视频模型：${total}；${costText}，${remainZh}。点了「允许」才会真正调用。${resumeLead ? resumeLead.tailZh : ''}`,
-      en: `${resumeLead ? resumeLead.en : ''}This will call the video model: ${total}. Estimated cost `
-        + `${needMoney === null ? 'unknown' : needMoney}; ${remainEn}. `
-        + 'The call runs only after you allow it.' + (resumeLead ? resumeLead.tailEn : ''),
-    },
-  };
+  throw new Error('请在设置页选择有效接入方式并保存。');
 }

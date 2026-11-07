@@ -78,7 +78,7 @@ export function createSettingsState({ React }: any) {
 
     // 先写当前 API密钥、清空其他渠道凭据，最后提交模式。空值覆盖继承配置，避免 unset 后旧 API密钥回流。
     async function persistConnection(form, pending, nextMode) {
-      if (!['service', 'metaontic', 'volcengine'].includes(nextMode)) throw new Error('unknownConnection');
+      if (!['metaontic', 'volcengine'].includes(nextMode)) throw new Error('unknownConnection');
       const inactiveKeys = nextMode === 'volcengine'
         ? ['metaonticApiKey', 'apiKey', 'keyOrigin', 'baseUrl', 'submitPath', 'queryPath',
           'registerEmail', 'deviceId', 'deviceSecret', 'registerApi', 'registerToken']

@@ -22,7 +22,7 @@ export async function relayRequest(config, requestPath, options: { method?: stri
   const operation = method === 'POST' ? 'create_task' : 'query_task';
   const info: Record<string, any> = {
     requestId, operation, method,
-    provider: isMetaontic(config) ? 'metaontic' : isVolcengine(config) ? 'volcengine' : 'service',
+    provider: isVolcengine(config) ? 'volcengine' : 'metaontic',
     model: body?.model || resolveModel(config),
     ...(method === 'POST' ? {
       duration: body?.duration, resolution: body?.resolution,

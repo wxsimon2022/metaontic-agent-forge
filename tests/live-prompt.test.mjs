@@ -11,12 +11,14 @@ test('an existing prompt registration reads current configuration on each reques
   let section;
   const config = { model: 'first-model' };
   vm.runInNewContext(source.slice(start, end), {
-    config,
+    config, isVideoDirector: context => context?.agent?.session?.header?.agentPreset === 'video-director',
     buildPromptGuidance: current => `Current video model: ${current.model}`,
     ctx: { inject(_services, install) { return install({ systemPrompt: { section(value) { section = value; return () => {}; } } }); } },
   });
   assert.equal(typeof section.text, 'function');
-  assert.equal(section.text({}), 'Current video model: first-model');
+  assert.equal(section.text({agent:{session:{header:{agentPreset:'video-director'}}}}), 'Current video model: first-model');
+  assert.equal(section.text({}), '');
+  assert.equal(section.text({agent:{session:{header:{agentPreset:null}}}}), '');
   config.model = 'updated-model';
-  assert.equal(section.text({}), 'Current video model: updated-model');
+  assert.equal(section.text({agent:{session:{header:{agentPreset:'video-director'}}}}), 'Current video model: updated-model');
 });

@@ -45,7 +45,7 @@ test('settings no longer provide a global continuation mode control',()=>{
 
 test('Volcano Engine direct is hidden from the connection list while existing configs keep working',()=>{
  const settings=vm.createContext({});vm.runInContext(sourceOf('connection-defaults','client/config')+'\nObject.assign(globalThis,createClientConfig());',settings);
- assert.equal(Array.from(settings.SELECTS.connectionMode).join(','),'metaontic,service');
+ assert.equal(Array.from(settings.SELECTS.connectionMode).join(','),'metaontic');
  // 隐藏只在设置页：默认值、旧配置校验与运行端都不受影响的取值仍在 schema 里。
  assert.equal(settings.FIELD_BY_KEY.volcengineApiKey.kind,'text');
 });

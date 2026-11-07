@@ -1,3 +1,4 @@
+import { workflowApi } from './workflow-test-api.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
@@ -21,6 +22,7 @@ async function fixture(run) {
       if (names.includes('workingDirectory')) return install({ workingDirectory: { ensure: async () => directory } });
     }, on(_name, listener) { gate = listener; return () => {}; } };
   const dispose = plugin.apply(ctx, config);
+  for (const name of ['video_generate','video_extend']) tools.set(name,workflowApi.lowLevelVideo(name,config,ctx));
   const state = { creates: 0, downloads: 0, failDownload: false, stopController: null, queryFailure: false };
   globalThis.fetch = async (input, options = {}) => {
     const url = String(input);
@@ -57,7 +59,7 @@ for (const name of ['video_generate', 'video_extend']) {
     assert.equal((await h.record(first.resumeDir)).deliveryPending, true);
     h.state.failDownload = false;
     const delivered = await h.execute(name, { resume: first.resumeDir });
-    assert.ok(delivered.videoPath);
+    assert.ok(delivered.previewPath || delivered.videoPath);
     assert.equal(delivered.paused, true);
     assert.equal(h.state.creates, 1);
     assert.equal((await h.record(first.resumeDir)).deliveryPending, false);
@@ -155,27 +157,15 @@ for (const name of ['video_generate', 'video_extend']) test(`${name}: final-segm
   assert.equal((await h.record(first.resumeDir)).deliveryPending, false);
 }));
 
-test('service preflight estimates only the segment that this call will execute', async () => {
-  const calls = [];
-  const context = vm.createContext({ characterChoiceGate: async () => null,
-    // 服务端方式的估价口径：插件已恢复该方式，这里直接按可用态注入。
-    SERVICE_MODE_AVAILABLE: true, SERVICE_UNAVAILABLE_MESSAGE: 'unavailable',
-    resumeDirOf: value => value || '', approvalPolicy: () => 'ask', ffmpegConsentGate: async () => null,
-    isManualKey: () => false, estimateArgsFor: async () => ({ remainingPlan: [{ kind: 'extend', seconds: 7 }, { kind: 'extend', seconds: 12 }] }),
-    estimatePlan: () => { throw new Error('must use saved plan'); },
-    estimateUsage: (_config, _name, _args, plan) => { calls.push(plan); return { usd: 1, tokens: 100, model: 'test', resolution: '720p', segments: plan }; },
-    fetchDeviceQuota: async () => ({ status: 'ok', data: { remain_quota: 10000, remain_amount: 100, quota_per_unit: 1, usd_exchange_rate: 1 } }),
-    finiteNumber: value => typeof value === 'number' ? value : null,
-    // preflightGate 之前定义的辅助函数不在截取范围内，按里面用到的语义注入：
-    // unlimitedQuota 认不限额度的 API密钥（这份数据不是），imageQuotaNotice 只服务图片调用。
-    unlimitedQuota: data => Boolean(data && data.unlimited_quota === true),
-    imageQuotaNotice: async () => null,
-    DEFAULT_QUOTA_PER_UNIT: 1, DEFAULT_USD_EXCHANGE_RATE: 1, formatMoney: String, planSummary: () => 'one segment',
-  });
-  const source = sourceOf('workflow/approval');
-  const start = source.indexOf('async function preflightGate(');
-  vm.runInContext(source.slice(start), context);
-  const result = await context.preflightGate({}, {}, { name: 'video_extend', arguments: {} });
-  assert.equal(result.kind, 'ask');
-  assert.deepEqual(calls.map(plan => Array.from(plan, step => step.seconds)), [[7]]);
-});
+test('paused runs download only new clips; cumulative preview never creates the next segment',()=>fixture(async h=>{
+  const first=await h.execute('video_generate',{prompt:'three parts',duration:45,segmentPrompts:['one','two','three']});
+  assert.equal(first.previewOnly,true);assert.equal(first.merged,false);assert.ok(first.previewPath);assert.equal(first.videoPath,undefined);
+  assert.equal(h.state.creates,1);assert.equal(h.state.downloads,1);
+  const second=await h.execute('video_generate',{resume:first.resumeDir});
+  assert.equal(second.previewOnly,true);assert.equal(h.state.creates,2);assert.equal(h.state.downloads,2);assert.equal(second.remainingSeconds,15);
+  const preview=await h.execute('video_generate',{resume:first.resumeDir,cumulativePreview:true});
+  assert.equal(h.state.creates,2);assert.equal(preview.paused,true);assert.equal(preview.remainingSeconds,15);
+  assert.equal((await h.record(first.resumeDir)).done,2);
+  const final=await h.execute('video_generate',{resume:first.resumeDir,merge:false});
+  assert.equal(h.state.creates,3);assert.equal(final.paused,undefined);assert.equal(final.segments.length,3);
+}));

@@ -2,18 +2,6 @@
 export const METAONTIC_BASE_URL = 'https://ai.bileego.com';
 
 /**
- * A 服务端方式（service，邮箱登录领 API密钥）开关。
- *
- * true（当前）：设置页正常提供该方式，登录后领 API密钥并展示额度与使用情况。
- * 需要临时停用时改成 false：设置页不再提供该方式、也不显示登录与额度区，运行时拒绝按该方式
- * 发起调用；已有配置保持原值不动，不会静默改成别的渠道。
- */
-export const SERVICE_MODE_AVAILABLE = true;
-
-/** 该方式被停用时对用户说的话：设置页提示与运行时错误共用一份，避免两处措辞不一致。 */
-export const SERVICE_UNAVAILABLE_MESSAGE = 'MetaOnticVideo 服务端方式暂时不可用：请在插件设置页把「接入方式」改为 MetaOntic AI 或火山引擎直连，填好 API密钥保存后重试。';
-
-/**
  * C 火山引擎直连方式开关。
  *
  * true：设置页正常提供该方式；false（当前）时只在设置页隐藏：下拉里选不到它，

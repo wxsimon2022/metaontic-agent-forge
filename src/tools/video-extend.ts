@@ -41,6 +41,8 @@ export function extendTool(liveConfig, deps, ctx) {
     parameters: {
       type: 'object',
       properties: {
+        projectId: { type: 'string', description: 'video_project返回的项目ID。新建生成/延长前须prepare并review通过；续做默认沿用。' },
+        cumulativePreview: { type: 'boolean', description: '默认暂停只下载展示新段，最终再合并；明确需要累计预览时传true，不新增生成费用。' },
         characterReferenceImages: { type: 'array', items: { type: 'string' }, description: '已审核的最初角色参考图，按固定顺序用于每段续拍；未提供时沿用首段参考图或首帧。支持URL、本地图片或data URI。断点固定此套图，不自动重画或替换。真人转换仍需单独同意及结果审核。' },
         prompt: {
           type: 'string',
@@ -244,7 +246,7 @@ export function extendTool(liveConfig, deps, ctx) {
           fullPlan.push({ kind: 'extend', seconds: secondsPerSegment });
         }
       }
-      const plan = resume?.deliveryPending ? [] : fullPlan.slice(doneBefore);
+      const plan = (resume?.deliveryPending || (resume && args.cumulativePreview === true)) ? [] : fullPlan.slice(doneBefore);
       const plannedSeconds = plan.reduce((sum, step) => sum + step.seconds, 0);
 
       let cursor = resume
@@ -271,7 +273,7 @@ export function extendTool(liveConfig, deps, ctx) {
       let error;
       let errorCode;
       // 用户选择先不继续（确认框里点了拒绝/取消）：先把已经延长好的部分交付
-      let paused = false;
+      let paused = Boolean(resume && args.cumulativePreview === true && fullPlan.length > (Number(resume.done) || 0));
 
       // 被停止 / 超时也一样：已经延长好的部分先交付，留暂停记录给 resume。
       const outDir = await resolveOutputDir(config, exec, deps);
@@ -408,7 +410,7 @@ export function extendTool(liveConfig, deps, ctx) {
         return skipMergeDelivery({ result, paused, remainingSeconds, notes, segmentsDir, toolName: TOOL_NAME });
       }
       return runSegmentDelivery({
-        config, exec, interrupted, completed, segments, segmentsDir, outDir, stamp, notes, result,
+        config, exec, interrupted, completed, segments, segmentsDir, outDir, stamp, notes, result, cumulativePreview: args.cumulativePreview === true,
         paused,
         remainingSeconds,
         pauseNote: `已交付的成片是到第 ${segments.length} 段，分段仍保留在 ${segmentsDir}。`,
