@@ -1,3 +1,4 @@
+import { videoResultState } from '../workflow/result-state.js';
 import { resolve } from 'node:path';
 /** tools/results：从宿主入口拆出的独立职责模块。 */
 import { formatSeconds } from '../utils/files.js';
@@ -27,12 +28,12 @@ export function deliveryInstruction(value) {
   const linkRule = '正文里每项都要有 Markdown 可点击链接：[观看视频](<绝对文件路径或真实播放URL>)。不能用反引号路径或普通文本路径代替链接；卡片未验证时不得声称上方卡片可直接播放。已有文件直接交付，不重新生成。';
   const cardRule = '交付卡片只登记最终成片：宿主的卡片按本轮首次出现顺序排列、超过四个还会折叠，中途登记脚本、分镜、参考图、分段预览或部分合并会把成片挤到后面，事后补发也挪不回来——这些过程材料只用正文（内嵌图片或链接）交付。';
   // 只有「整条生成结束 + 成片在本机合并成功」才是最终交付，才允许登记卡片。
-  const final = value?.status === 'succeeded' && !value?.paused && !value?.partial;
+  const final = videoResultState(value).isFinal;
   if (!multiPart) {
     const segment = completed[0];
     const film = value?.videoPath || segment?.localPath || '';
     const parts = ['【视频交付：正文必须有可点击链接】', artifactLink('观看视频', film, segment?.videoUrl || value?.videoUrl)];
-    parts.push(film && final
+    parts.push(film && final && videoResultState(value).canPresent
       ? '正文链接发完后，用 present 登记一次卡片：files 只放这条成片，不登记脚本、分镜、参考图等过程材料。'
       : film
         ? '这次还不是最终交付（暂停、部分交付或还没出结果）：不要调用 present，先用正文链接把这条视频交付给用户。'
@@ -48,7 +49,7 @@ export function deliveryInstruction(value) {
   });
   const mergedPath = completed.length > 1 && value?.merged && value?.videoPath
     && !completed.some(segment => segment.localPath === value.videoPath) ? value.videoPath : '';
-  if (mergedPath) items.unshift(artifactLink('打开合并视频', mergedPath, ''), `${value.paused || value.partial || value.status !== 'succeeded' ? '已完成部分合并视频' : '合并后完整视频'}：${mergedPath}`);
+  if (mergedPath) items.unshift(artifactLink('打开合并视频', mergedPath, ''), `${final ? '合并后完整视频' : '已完成部分合并视频'}：${mergedPath}`);
   else if (completed.length > 1) items.push('合并结果尚未交付：如实说明未合并、合并失败或等待交付，不将最后一段当作完整成片。');
   const tail = !final
     ? '这次还不是最终交付（还有分段没做完，或成片还没合并）：不要调用 present，交付卡片只登记最终成片。先用正文链接把已完成的部分交付给用户，等整条视频生成结束、成片合并成功后再登记一次卡片。'
@@ -153,31 +154,33 @@ function renderVideoText(value, variant) {
       : `${head} → ${segment.videoUrl}`;
   });
 
-  const parts = [deliveryInstruction(value), recoveryInstruction(value, wording.toolName), ...(paused ? [previewInstruction(value)] : [])];
-  if (status === 'succeeded') {
-    if (paused) {
-      const doneSegments = segments.filter(item => item.status === 'succeeded');
-      const totalSeconds = doneSegments.reduce((sum, item) => sum + (item.seconds || 0), 0);
-      parts.push(
-        `${wording.pausedHead} ${doneSegments.length} 段（共 ${formatSeconds(totalSeconds)} 秒）：${wording.pausedTail}`
-        + '。',
-      );
-    } else {
-      parts.push(wording.success(value));
-    }
-  } else if (status === 'timeout') {
-    parts.push(wording.timeout);
-  } else if (status === 'unknown') {
-    parts.push(wording.unknown);
+  const state = videoResultState(value);
+  const parts = [deliveryInstruction(value), recoveryInstruction(value, wording.toolName), ...(state.phase === 'segment_review' ? [previewInstruction(value)] : [])];
+  if (state.phase === 'segment_review') {
+    const doneSegments = segments.filter(item => item.status === 'succeeded');
+    const totalSeconds = doneSegments.reduce((sum, item) => sum + (item.seconds || 0), 0);
+    parts.push(`${wording.pausedHead} ${doneSegments.length} 段（共 ${formatSeconds(totalSeconds)} 秒）：${wording.pausedTail}。`);
+  } else if (state.phase === 'task_pending') {
+    parts.push(status === 'timeout' ? wording.timeout : wording.unknown);
+  } else if (state.phase === 'delivery_pending') {
+    parts.push('已生成分段的下载或合并尚未完成，请保留原任务和进度。');
+  } else if (state.phase === 'partial') {
+    parts.push(`已有部分分段生成成功，整条视频尚未完成${error ? `：${error}` : ''}。`);
+    if (status === 'cancelled') parts.push(wording.cancelled);
+    else if (status === 'failed') parts.push(wording.failed(error));
+  } else if (state.isFinal) {
+    parts.push(wording.success(value));
   } else if (status === 'cancelled') {
     parts.push(wording.cancelled);
-  } else {
+  } else if (status === 'failed') {
     parts.push(wording.failed(error));
+  } else {
+    parts.push('尚未取得可交付的视频结果。');
   }
   // 成片行排在分段逐条列表之前：正文、交付清单与结果卡片统一成片在前。
   if (status === 'succeeded') {
     if (videoPath) {
-      parts.push(`${paused || value?.partial ? (value?.merged ? '已完成部分合并视频' : '本段视频') : value?.deliveryError || value?.ffmpegMissing ? '已有本地视频（下载或合并尚未完成）' : '成片'}（本地文件）：${videoPath}（${mergeModeLabel(mergeMode)}）`);
+      parts.push(`${state.phase === 'delivery_pending' ? '已有本地视频（下载或合并尚未完成）' : !state.isFinal ? (value?.merged ? '已完成部分合并视频' : '本段视频') : '成片'}（本地文件）：${videoPath}（${mergeModeLabel(mergeMode)}）`);
     } else if (segmentsDir) {
       parts.push(`未提供完整合并视频，分段目录：${segmentsDir}；已下载文件以各段的本地路径为准。`);
     } else if (wording.noMergedFile) {

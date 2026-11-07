@@ -1,4 +1,14 @@
 (() => {
+  // src/client/tool-result.ts
+  function createToolResultView({ h, MediaPreview, VideoTaskProgress }) {
+    function ToolResultView(props) {
+      if (props.block && "kind" in props.block) return h(MediaPreview, props);
+      if (!["video_generate", "video_extend"].includes(props.toolName)) return null;
+      return h(VideoTaskProgress, props);
+    }
+    return { ToolResultView };
+  }
+
   // src/client/media-preview.ts
   function localMediaUrl(file, base) {
     if (typeof file !== "string" || /[\u0000-\u001f\u007f]/.test(file) || !/^(?:\/(?!\/)|[a-z]:[/\\])/i.test(file)) return "";
@@ -266,40 +276,90 @@
   }
 
   // src/client/progress.ts
-  function createVideoProgress({ React, h, TOKENS, MediaPreview }) {
-    function estimatedVideoWait(duration) {
-      const seconds = Number(duration);
-      return Number.isFinite(seconds) && seconds > 0 ? 105 + seconds * 3 : 180;
+  function estimatedVideoWait(duration) {
+    const seconds = Number(duration);
+    return Number.isFinite(seconds) && seconds > 0 ? 105 + seconds * 3 : 180;
+  }
+  function estimatedVideoProgress(elapsed, duration) {
+    const seconds = Math.max(0, Number(elapsed) || 0);
+    return Math.min(99, Math.max(1, Math.floor(seconds / estimatedVideoWait(duration) * 100)));
+  }
+  function activeVideoCalls(chat) {
+    const calls = [];
+    const seen = /* @__PURE__ */ new Set();
+    function visit(block) {
+      if (!block)
+        return;
+      const done = "kind" in block;
+      const name = done ? block.call?.name : block.name;
+      if (!done && ["video_generate", "video_extend"].includes(name) && !seen.has(block.callId)) {
+        seen.add(block.callId);
+        calls.push({ block, toolName: name, callId: block.callId });
+      }
+      for (const child of block.subCalls || [])
+        visit(child);
     }
-    function estimatedVideoProgress(elapsed, succeeded, duration) {
-      if (succeeded) return 100;
-      const seconds = Math.max(0, Number(elapsed) || 0);
-      return Math.min(99, Math.max(1, Math.floor(seconds / estimatedVideoWait(duration) * 100)));
+    const nodes = chat?.nodes?.values?.() ?? (chat?.order || []).map((key) => chat.nodes?.get(key));
+    for (const node of nodes) {
+      if (node?.kind === "tool-call")
+        visit(node.data?.root);
     }
+    return calls;
+  }
+  function videoExecutionSource(eventSource) {
+    let previous;
+    let snapshot = /* @__PURE__ */ new Map();
+    return {
+      subscribe: (listener) => eventSource.subscribe(listener),
+      getSnapshot() {
+        const window2 = eventSource.getSnapshot();
+        if (window2 === previous)
+          return snapshot;
+        const next = /* @__PURE__ */ new Map();
+        for (const { event } of window2.entries) {
+          if (event.type === "plugin:metaontic-video/execution") {
+            const { callId, phase } = event.data || {};
+            if (typeof callId !== "string")
+              continue;
+            if (phase === "start")
+              next.set(callId, event.time);
+            else if (phase === "end")
+              next.delete(callId);
+          } else if (event.type === "turn/end")
+            next.clear();
+        }
+        previous = window2;
+        if (next.size !== snapshot.size || [...next].some(([id, time]) => snapshot.get(id) !== time))
+          snapshot = next;
+        return snapshot;
+      }
+    };
+  }
+  function createVideoProgress({ React, h, TOKENS }) {
     function VideoTaskProgress({ block = {}, toolName = "video_generate", callId, useVideoExecutions, startedAt }) {
       const done = "kind" in block;
       const executions = useVideoExecutions?.((snapshot) => snapshot);
       const beganAt = startedAt ?? executions?.get(callId);
       const [elapsed, setElapsed] = React.useState(0);
       React.useEffect(() => {
-        if (done || beganAt === void 0) return;
+        if (done || beganAt === void 0)
+          return;
         const tick = () => setElapsed(Math.max(0, Math.floor((Date.now() - beganAt) / 1e3)));
         tick();
         const timer = window.setInterval(tick, 1e3);
         return () => window.clearInterval(timer);
       }, [done, callId, beganAt]);
-      if (done) return MediaPreview ? h(MediaPreview, { block, toolName }) : null;
-      if (!["video_generate", "video_extend"].includes(toolName) || block.phase !== "start" || beganAt === void 0) return null;
-      const failed = Boolean(block.isError || block.error);
-      const status = done ? failed ? "\u6267\u884C\u5931\u8D25\u6216\u5DF2\u505C\u6B62" : "\u672C\u6B21\u4EFB\u52A1\u5DF2\u8FD4\u56DE" : block.phase === "preparing" ? "\u51C6\u5907\u53C2\u6570 / \u7B49\u5F85\u6388\u6743" : "\u6B63\u5728\u6267\u884C \xB7 \u7B49\u5F85\u751F\u6210\u7ED3\u679C";
-      const output = Array.isArray(block.content) ? block.content.filter((part) => part.type === "text").map((part) => part.text).join("\n") : "";
-      const succeeded = done && !failed && /视频生成成功|视频延长成功|已生成并交付|已延长并交付|succeeded/.test(output);
+      if (done)
+        return null;
+      if (!["video_generate", "video_extend"].includes(toolName) || block.phase !== "start" || beganAt === void 0)
+        return null;
+      const status = "\u6B63\u5728\u751F\u6210 \xB7 \u7B49\u5F85\u7ED3\u679C";
       const duration = block.args?.duration;
       const estimatedWait = estimatedVideoWait(duration);
-      const progress = estimatedVideoProgress(elapsed, succeeded, duration);
+      const progress = estimatedVideoProgress(elapsed, duration);
       const waitingDots = ".".repeat(elapsed % 3 + 1);
-      const title = toolName === "video_prepare_image" ? "\u56FE\u7247\u751F\u6210" : toolName === "video_extend" ? "\u89C6\u9891\u7EED\u62CD" : toolName === "video_status" ? "\u67E5\u8BE2\u89C6\u9891\u72B6\u6001" : "\u89C6\u9891\u751F\u6210";
-      return h("div", { className: `mov-task${!done ? " mov-task-running" : ""}`, "data-field": "video-task-progress" }, [
+      const title = toolName === "video_extend" ? "\u89C6\u9891\u7EED\u62CD" : "\u89C6\u9891\u751F\u6210";
+      return h("div", { className: "mov-task mov-task-running", "data-field": "video-task-progress" }, [
         h("style", { key: "style" }, `
           @keyframes mov-task-spin { to { transform: rotate(360deg); } }
           @keyframes mov-task-flow { from { background-position:0 0; } to { background-position:32px 0; } }
@@ -319,107 +379,44 @@
           .mov-task-active .mov-task-fill::after { content:''; position:absolute; inset:0; width:30%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent); animation:mov-task-shimmer 2s linear infinite; }
           .mov-task-live { display:inline-block; width:6px; height:6px; border-radius:50%; background:${TOKENS.primaryFill}; margin-right:6px; animation:mov-task-pulse 1.4s ease-in-out infinite; }
           .mov-task-dots { display:inline-block; width:18px; text-align:left; }
-          .mov-task-output { white-space:pre-wrap; overflow-wrap:anywhere; font-size:12px; max-height:320px; overflow:auto; }
           @media(prefers-reduced-motion:reduce) { .mov-task-spinner, .mov-task-live, .mov-task-active .mov-task-fill, .mov-task-active .mov-task-fill::after { animation:none; } .mov-task-turtle { transition:none; } .mov-task-running { animation:none; } }
         `),
         h("div", { key: "head", className: "mov-task-head" }, [
-          !done ? h("span", { key: "spinner", className: "mov-task-spinner", "aria-hidden": true }) : null,
+          h("span", { key: "spinner", className: "mov-task-spinner", "aria-hidden": true }),
           h("strong", { key: "title" }, title),
-          h("span", { key: "status", role: "status" }, [status, !done ? h("span", { key: "dots", className: "mov-task-dots", "aria-hidden": true }, waitingDots) : null]),
-          !done ? h(
-            "span",
-            { key: "elapsed", style: { marginLeft: "auto", fontVariantNumeric: "tabular-nums" } },
-            `\u5DF2\u7B49\u5F85 ${Math.floor(elapsed / 60)}\u5206${String(elapsed % 60).padStart(2, "0")}\u79D2`
-          ) : null
+          h("span", { key: "status", role: "status" }, [status, h("span", { key: "dots", className: "mov-task-dots", "aria-hidden": true }, waitingDots)]),
+          h("span", { key: "elapsed", style: { marginLeft: "auto", fontVariantNumeric: "tabular-nums" } }, `\u5DF2\u7B49\u5F85 ${Math.floor(elapsed / 60)}\u5206${String(elapsed % 60).padStart(2, "0")}\u79D2`)
         ]),
         h("div", { key: "progress", className: "mov-task-rail" }, [
-          h(
-            "div",
-            { className: `mov-task-track${!done ? " mov-task-active" : ""}`, role: "progressbar", "aria-label": "\u4F30\u7B97\u8FDB\u5EA6", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": progress },
-            h("div", { className: "mov-task-fill", style: { width: `${progress}%`, background: failed ? TOKENS.error : void 0 } })
-          ),
+          h("div", { className: "mov-task-track mov-task-active", role: "progressbar", "aria-label": "\u4F30\u7B97\u8FDB\u5EA6", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": progress }, h("div", { className: "mov-task-fill", style: { width: `${progress}%` } })),
           // 装饰用的小乌龟：跟着进度条填充的右端一起从左往右爬，只表示「还在忙」，不代表真实进度；屏幕阅读器不读它。
-          !done ? h("span", { key: "turtle", className: "mov-task-turtle", style: { left: `${progress}%` }, "aria-hidden": true }, "\u{1F422}") : null
+          h("span", { key: "turtle", className: "mov-task-turtle", style: { left: `${progress}%` }, "aria-hidden": true }, "\u{1F422}")
         ]),
-        h("div", { key: "percent", className: "mov-task-note" }, `${progress}%${succeeded ? " \xB7 \u672C\u6B21\u751F\u6210\u5B8C\u6210" : " \xB7 \u4F30\u7B97\u8FDB\u5EA6"}${failed ? " \xB7 \u6267\u884C\u5931\u8D25\u6216\u5DF2\u505C\u6B62" : ""}`),
-        !done ? h(
-          "div",
-          { key: "note", className: "mov-task-note" },
-          [
-            h("span", { key: "live", className: "mov-task-live", "aria-hidden": true }),
-            `${duration ? `\u76EE\u6807 ${duration} \u79D2 \xB7 \u9884\u8BA1\u7B49\u5F85\u7EA6 ${Math.round(estimatedWait)} \u79D2 \xB7 ` : ""}${progress >= 99 ? "\u4EFB\u52A1\u4ECD\u5728\u7B49\u5F85\u7ED3\u679C\uFF0C\u8FDB\u5EA6\u505C\u572899%\u4E0D\u8868\u793A\u5931\u8D25\u3002" : "\u4EFB\u52A1\u5904\u7406\u4E2D\uFF0C\u5B8C\u6210\u540E\u81EA\u52A8\u663E\u793A\u7ED3\u679C\u3002"}\u8BF7\u52FF\u91CD\u590D\u63D0\u4EA4\u3002`
-          ]
-        ) : null,
-        done && MediaPreview ? h(MediaPreview, { key: "media", block, toolName }) : null,
-        done && output ? h("details", { key: "output", open: failed }, [
-          h("summary", { key: "toggle", className: "mov-task-note" }, failed ? "\u67E5\u770B\u9519\u8BEF\u8BE6\u60C5" : "\u67E5\u770B\u7ED3\u679C\u8BE6\u60C5\u4E0E\u6587\u4EF6\u8DEF\u5F84"),
-          h("pre", { key: "text", className: "mov-task-output" }, output)
-        ]) : null
+        h("div", { key: "percent", className: "mov-task-note" }, `${progress}% \xB7 \u4F30\u7B97\u8FDB\u5EA6`),
+        h("div", { key: "note", className: "mov-task-note" }, [
+          h("span", { key: "live", className: "mov-task-live", "aria-hidden": true }),
+          `${duration ? `\u76EE\u6807 ${duration} \u79D2 \xB7 \u9884\u8BA1\u7B49\u5F85\u7EA6 ${Math.round(estimatedWait)} \u79D2 \xB7 ` : ""}${progress >= 99 ? "\u4EFB\u52A1\u4ECD\u5728\u7B49\u5F85\u7ED3\u679C\uFF0C\u8FDB\u5EA6\u505C\u572899%\u4E0D\u8868\u793A\u5931\u8D25\u3002" : "\u4EFB\u52A1\u5904\u7406\u4E2D\uFF0C\u5B8C\u6210\u540E\u81EA\u52A8\u663E\u793A\u7ED3\u679C\u3002"}\u8BF7\u52FF\u91CD\u590D\u63D0\u4EA4\u3002`
+        ])
       ]);
-    }
-    function activeVideoCalls(chat) {
-      const calls = [];
-      const seen = /* @__PURE__ */ new Set();
-      function visit(block) {
-        if (!block) return;
-        const done = "kind" in block;
-        const name = done ? block.call?.name : block.name;
-        if (!done && ["video_generate", "video_extend"].includes(name) && !seen.has(block.callId)) {
-          seen.add(block.callId);
-          calls.push({ block, toolName: name, callId: block.callId });
-        }
-        for (const child of block.subCalls || []) visit(child);
-      }
-      const nodes = chat?.nodes?.values?.() ?? (chat?.order || []).map((key) => chat.nodes?.get(key));
-      for (const node of nodes) {
-        if (node?.kind === "tool-call") visit(node.data?.root);
-      }
-      return calls;
-    }
-    function videoExecutionSource(eventSource) {
-      let previous;
-      let snapshot = /* @__PURE__ */ new Map();
-      return {
-        subscribe: (listener) => eventSource.subscribe(listener),
-        getSnapshot() {
-          const window2 = eventSource.getSnapshot();
-          if (window2 === previous) return snapshot;
-          const next = /* @__PURE__ */ new Map();
-          for (const { event } of window2.entries) {
-            if (event.type === "plugin:metaontic-video/execution") {
-              const { callId, phase } = event.data || {};
-              if (typeof callId !== "string") continue;
-              if (phase === "start") next.set(callId, event.time);
-              else if (phase === "end") next.delete(callId);
-            } else if (event.type === "turn/end") next.clear();
-          }
-          previous = window2;
-          if (next.size !== snapshot.size || [...next].some(([id, time]) => snapshot.get(id) !== time)) snapshot = next;
-          return snapshot;
-        }
-      };
     }
     function VideoProgressDock({ useChat, useVideoExecutions }) {
       const chat = useChat((snapshot) => snapshot);
       const executions = useVideoExecutions?.((snapshot) => snapshot);
       const calls = activeVideoCalls(chat).filter((call) => call.block.phase === "start" && executions?.has(call.callId));
-      if (!calls.length) return null;
-      return h(
-        "div",
-        {
-          "data-field": "video-progress-dock",
-          "aria-live": "polite",
-          style: {
-            boxSizing: "border-box",
-            width: "calc(100% - var(--dsh-composer-side-clearance, 0px) - var(--dsh-composer-side-clearance, 0px))",
-            maxWidth: "var(--dsh-composer-card-max-width, 100%)",
-            minWidth: 0,
-            margin: "0 auto",
-            flex: "none"
-          }
-        },
-        calls.map((call) => h(VideoTaskProgress, { ...call, startedAt: executions.get(call.callId), key: call.callId }))
-      );
+      if (!calls.length)
+        return null;
+      return h("div", {
+        "data-field": "video-progress-dock",
+        "aria-live": "polite",
+        style: {
+          boxSizing: "border-box",
+          width: "calc(100% - var(--dsh-composer-side-clearance, 0px) - var(--dsh-composer-side-clearance, 0px))",
+          maxWidth: "var(--dsh-composer-card-max-width, 100%)",
+          minWidth: 0,
+          margin: "0 auto",
+          flex: "none"
+        }
+      }, calls.map((call) => h(VideoTaskProgress, { ...call, startedAt: executions.get(call.callId), key: call.callId })));
     }
     return { videoExecutionSource, VideoTaskProgress, VideoProgressDock };
   }
@@ -957,13 +954,13 @@
   }
 
   // src/client/updates.ts
-  function createUpdates({ h }) {
+  function createUpdates({ h, fetchSource }) {
     const PLUGIN_PACKAGE = "metaontic-video";
     const UPDATE_SPEC = "git+https://gitee.com/hackloop/metaontic-video.git";
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.18.1".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.19.0".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1017,7 +1014,7 @@
         "https://api.github.com/repos/wxsimon2022/metaontic-video/releases?per_page=100"
       ];
       const results = await Promise.allSettled(urls.map(async (url) => {
-        const body = await (await fetchUpdateSource(url, 6e3)).json();
+        const body = await (await (fetchSource || fetchUpdateSource)(url, 6e3)).json();
         if (!Array.isArray(body)) throw new Error("invalid releases");
         return body.filter((r) => !r.draft && !r.prerelease).map((r) => String(r.tag_name || "").replace(/^v/, "")).filter((version) => /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version));
       }));
@@ -1249,10 +1246,150 @@
     return new Date(date.getTime() + 8 * 60 * 60 * 1e3).toISOString().slice(0, 16).replace("T", " ");
   }
 
+  // src/client/settings-actions.ts
+  var HIDDEN_CONNECTION_MODES = [
+    ...VOLCENGINE_MODE_AVAILABLE ? [] : ["volcengine"]
+  ];
+  function hiddenConnectionLabel(t, mode) {
+    if (mode === "volcengine")
+      return t(VOLCENGINE_MODE_AVAILABLE ? "volcengine" : "volcengineUnavailable");
+    return t(mode);
+  }
+  function createSettingsActions(context) {
+    async function save() {
+      const { saveInFlight, connectionBusy, setSaveError, setStatus, form, draft, same, validateSettings, persistConnection, setDraft, flashStatus, settingsError } = context;
+      if (saveInFlight.current)
+        return;
+      if (connectionBusy.current && !connectionBusy.pending)
+        return;
+      saveInFlight.current = true;
+      setSaveError("");
+      setStatus("saving");
+      try {
+        if (connectionBusy.pending)
+          await connectionBusy.pending.catch(() => {
+          });
+        connectionBusy.current = true;
+        const latest = form.getSnapshot().value || {};
+        const nextMode = draft.connectionMode ?? latest.connectionMode ?? "metaontic";
+        const changes = Object.entries(draft).filter(([key, next]) => !same(latest[key], next));
+        validateSettings({ ...latest, ...draft });
+        await persistConnection(form, changes, nextMode);
+        setDraft((current) => Object.fromEntries(Object.entries(current).filter(([key, next]) => !Object.prototype.hasOwnProperty.call(draft, key) || !same(draft[key], next))));
+        flashStatus("saved");
+      } catch (error) {
+        setSaveError(settingsError(error));
+        setStatus("failed");
+      } finally {
+        connectionBusy.current = false;
+        saveInFlight.current = false;
+      }
+    }
+    async function reset() {
+      const { connectionBusy, t, setSaveError, setStatus, snapshot, PLUGIN_OWNED_KEYS, persistBatch, form, setDraft, setVisibleKey, flashStatus, settingsError } = context;
+      if (connectionBusy.current)
+        return;
+      if (!context.confirm(t("resetConfirm")))
+        return;
+      connectionBusy.current = true;
+      setSaveError("");
+      setStatus("saving");
+      try {
+        const targets = /* @__PURE__ */ new Set([...Object.keys(snapshot.user || {}), ...PLUGIN_OWNED_KEYS]);
+        await persistBatch(form, [...targets].map((key) => ({ op: "unset", path: [key] })));
+        setDraft({});
+        setVisibleKey("");
+        flashStatus("reset");
+      } catch (error) {
+        setSaveError(t("resetFailed", { message: settingsError(error) }));
+        setStatus("failed");
+      } finally {
+        connectionBusy.current = false;
+      }
+    }
+    function control(field) {
+      const { draft, value, h, SELECTS, inputStyle, t, snapshot, visibleKey, setVisibleKey, edit, optionLabel } = context;
+      const current = draft[field.key] !== void 0 ? draft[field.key] : value[field.key] ?? (field.key === "imageUseVideoKey" ? true : field.key === "pollIntervalMs" ? 5e3 : field.key === "maxWaitMs" ? 6e5 : void 0);
+      const secondsField = field.key === "pollIntervalMs" || field.key === "maxWaitMs";
+      const displayed = secondsField && current !== void 0 && current !== "" ? Number(current) / 1e3 : current;
+      const id = `metaontic-video-${field.key}`;
+      if (field.kind === "switch") {
+        return h("label", { key: "control", htmlFor: id, className: "mov-switch" }, h("input", {
+          id,
+          "data-field": field.key,
+          type: "checkbox",
+          checked: Boolean(current),
+          onChange: (event) => edit(field.key, event.target.checked)
+        }), h("span", null, t(field.key)));
+      }
+      if (field.kind === "select") {
+        const options = SELECTS[field.key] || [];
+        const hiddenModel = field.key === "model" && /seedance-2(?:-5|\.5)/i.test(String(current || ""));
+        const hiddenMode = field.key === "connectionMode" && HIDDEN_CONNECTION_MODES.includes(String(current || ""));
+        const legacyMerge = field.key === "mergeMode" && current === "seamless";
+        const retiredImageModel = field.key === "imageModel" && !options.includes(String(current || ""));
+        const removedMode = field.key === "connectionMode" && !["metaontic", "volcengine"].includes(String(current || ""));
+        const list = !removedMode && current && !options.includes(current) && !hiddenModel && !hiddenMode && !legacyMerge && !retiredImageModel ? [...options, current] : options;
+        return h("select", {
+          key: "control",
+          id,
+          "data-field": field.key,
+          className: `mov-input${field.mono ? " mov-mono" : ""}`,
+          style: inputStyle,
+          value: removedMode ? "" : legacyMerge ? "copy" : retiredImageModel ? options[0] ?? "" : current ?? "",
+          onChange: (event) => edit(field.key, event.target.value)
+        }, [
+          removedMode ? h("option", { key: "select-connection", value: "", disabled: true }, t("unknownConnection")) : null,
+          hiddenModel ? h("option", { key: "hidden-current", value: current, hidden: true }, t("modelHiddenCurrent")) : null,
+          // 下架期间直接标出不可用；恢复后这一支不会走到（该方式会回到候选里）。
+          hiddenMode ? h("option", { key: "hidden-current", value: current, hidden: true }, hiddenConnectionLabel(t, String(current || ""))) : null,
+          ...list.map((option) => h("option", { key: option, value: option }, optionLabel(t, field.key, option)))
+        ]);
+      }
+      const canReveal = field.key === "metaonticApiKey" || field.key === "volcengineApiKey" || field.key === "imageApiKey";
+      const revealed = canReveal && visibleKey === field.key;
+      const input = h("input", {
+        // 这个 input 会和右侧眼睛按钮一起放进数组，React 要求数组子节点带 key
+        key: "input",
+        id,
+        "data-field": field.key,
+        className: `mov-input${field.mono ? " mov-mono" : ""}`,
+        style: inputStyle,
+        type: field.kind === "number" ? "number" : field.secret && !revealed ? "password" : "text",
+        value: displayed ?? "",
+        min: secondsField ? 1 : void 0,
+        step: secondsField ? 1e-3 : void 0,
+        placeholder: field.secret && (snapshot.secrets?.[field.key] || value[field.key]) ? t("apiKeyConfigured") : "",
+        onChange: (event) => edit(field.key, field.kind === "number" && event.target.value !== "" ? secondsField ? Math.round(Number(event.target.value) * 1e3) : Number(event.target.value) : event.target.value)
+      });
+      if (!canReveal)
+        return input;
+      return h("div", { key: "control", className: "mov-key-control" }, [
+        input,
+        h("button", {
+          key: "toggle",
+          type: "button",
+          className: "mov-key-eye",
+          "aria-label": t(revealed ? "hideKey" : "showKey"),
+          title: t(revealed ? "hideKey" : "showKey"),
+          "data-action": `toggle-${field.key}`,
+          "aria-controls": id,
+          "aria-pressed": revealed,
+          onClick: () => setVisibleKey(revealed ? "" : field.key)
+        }, h("svg", { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, [
+          h("path", { key: "eye", d: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" }),
+          h("circle", { key: "pupil", cx: 12, cy: 12, r: 3 }),
+          revealed ? h("path", { key: "slash", d: "M3 3l18 18" }) : null
+        ]))
+      ]);
+    }
+    return { save, reset, control };
+  }
+
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.18.1",
+    version: "3.19.0",
     description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, image-to-video, text-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects with your own MetaOntic AI key.",
     license: "SEE LICENSE IN LICENSE",
     type: "module",
@@ -1349,11 +1486,12 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.18.1",
+      version: "3.19.0",
       prerelease: false,
-      publishedAt: "2026-11-07T10:16:03.990Z",
+      publishedAt: "2026-11-07T13:47:23.841Z",
       items: [
-        "\u4F18\u5316\uFF1AWindows \u4E0E Mac \u7EDF\u4E00\u4F7F\u7528\u901A\u7528\u6210\u54C1\u5728\u7EBF\u5B89\u88C5\u3002"
+        "\u65B0\u589E\uFF1A\u5B8C\u5584\u521B\u610F\u65F6\u4E00\u5E76\u786E\u8BA4\u65F6\u957F\uFF0C\u652F\u630115/30/45/60\u79D2\u53CA\u81EA\u5B9A\u4E49\u3002",
+        "\u4F18\u5316\uFF1A\u6CBF\u7528\u5DF2\u660E\u786E\u89C4\u683C\uFF0C\u5B8C\u5584\u4E0D\u504F\u79BB\u539F\u610F\uFF1B\u51CF\u5C11\u91CD\u590D\u786E\u8BA4\uFF0C\u6539\u7A3F\u91CD\u8BD5\u751F\u6548\uFF0C\u7EED\u62CD\u4E0D\u7F29\u65F6\uFF0C\u786E\u8BA4\u5F02\u5E38\u505C\u6B62\u8C03\u7528\uFF0C\u5408\u5E76\u5931\u8D25\u4FDD\u7559\u6210\u7247\uFF0C\u6062\u590D\u5F02\u5E38\u8FDB\u5EA6\u65F6\u660E\u786E\u63D0\u793A\u3002"
       ]
     }
   };
@@ -1387,13 +1525,6 @@
       updateBell,
       PAGE_CSS
     } = deps;
-    const HIDDEN_CONNECTION_MODES = [
-      ...VOLCENGINE_MODE_AVAILABLE ? [] : ["volcengine"]
-    ];
-    function hiddenConnectionLabel(t, mode) {
-      if (mode === "volcengine") return t(VOLCENGINE_MODE_AVAILABLE ? "volcengine" : "volcengineUnavailable");
-      return t(mode);
-    }
     function makePage({ form, t, manager }) {
       return function ConfigPage(props) {
         const snapshot = useSnapshot(form);
@@ -1554,132 +1685,33 @@
           const message = error?.message || String(error);
           return ["unknownConnection", "atomicUnsupported", "atomicRejected", "settingsUnavailable", "settingsConflict", "settingsTransport", "readOnly", "invalidWait", "invalidSeam"].includes(message) ? t(message) : message;
         }
-        async function save() {
-          if (saveInFlight.current) return;
-          if (connectionBusy.current && !connectionBusy.pending) return;
-          saveInFlight.current = true;
-          setSaveError("");
-          setStatus("saving");
-          try {
-            if (connectionBusy.pending) await connectionBusy.pending.catch(() => {
-            });
-            connectionBusy.current = true;
-            const latest = form.getSnapshot().value || {};
-            const nextMode = draft.connectionMode ?? latest.connectionMode ?? "metaontic";
-            const changes = Object.entries(draft).filter(([key, next]) => !same(latest[key], next));
-            validateSettings({ ...latest, ...draft });
-            await persistConnection(form, changes, nextMode);
-            setDraft((current) => Object.fromEntries(Object.entries(current).filter(([key, next]) => !Object.prototype.hasOwnProperty.call(draft, key) || !same(draft[key], next))));
-            flashStatus("saved");
-          } catch (error) {
-            setSaveError(settingsError(error));
-            setStatus("failed");
-          } finally {
-            connectionBusy.current = false;
-            saveInFlight.current = false;
-          }
-        }
-        async function reset() {
-          if (connectionBusy.current) return;
-          if (!window.confirm(t("resetConfirm"))) return;
-          connectionBusy.current = true;
-          setSaveError("");
-          setStatus("saving");
-          try {
-            const targets = /* @__PURE__ */ new Set([...Object.keys(snapshot.user || {}), ...PLUGIN_OWNED_KEYS]);
-            await persistBatch(form, [...targets].map((key) => ({ op: "unset", path: [key] })));
-            setDraft({});
-            setVisibleKey("");
-            flashStatus("reset");
-          } catch (error) {
-            setSaveError(t("resetFailed", { message: settingsError(error) }));
-            setStatus("failed");
-          } finally {
-            connectionBusy.current = false;
-          }
-        }
-        function control(field) {
-          const current = draft[field.key] !== void 0 ? draft[field.key] : value[field.key] ?? (field.key === "imageUseVideoKey" ? true : field.key === "pollIntervalMs" ? 5e3 : field.key === "maxWaitMs" ? 6e5 : void 0);
-          const secondsField = field.key === "pollIntervalMs" || field.key === "maxWaitMs";
-          const displayed = secondsField && current !== void 0 && current !== "" ? Number(current) / 1e3 : current;
-          const id = `metaontic-video-${field.key}`;
-          if (field.kind === "switch") {
-            return h(
-              "label",
-              { key: "control", htmlFor: id, className: "mov-switch" },
-              h("input", {
-                id,
-                "data-field": field.key,
-                type: "checkbox",
-                checked: Boolean(current),
-                onChange: (event) => edit(field.key, event.target.checked)
-              }),
-              h("span", null, t(field.key))
-            );
-          }
-          if (field.kind === "select") {
-            const options = SELECTS[field.key] || [];
-            const hiddenModel = field.key === "model" && /seedance-2(?:-5|\.5)/i.test(String(current || ""));
-            const hiddenMode = field.key === "connectionMode" && HIDDEN_CONNECTION_MODES.includes(String(current || ""));
-            const legacyMerge = field.key === "mergeMode" && current === "seamless";
-            const retiredImageModel = field.key === "imageModel" && !options.includes(String(current || ""));
-            const removedMode = field.key === "connectionMode" && !["metaontic", "volcengine"].includes(String(current || ""));
-            const list = !removedMode && current && !options.includes(current) && !hiddenModel && !hiddenMode && !legacyMerge && !retiredImageModel ? [...options, current] : options;
-            return h("select", {
-              key: "control",
-              id,
-              "data-field": field.key,
-              className: `mov-input${field.mono ? " mov-mono" : ""}`,
-              style: inputStyle,
-              value: removedMode ? "" : legacyMerge ? "copy" : retiredImageModel ? options[0] ?? "" : current ?? "",
-              onChange: (event) => edit(field.key, event.target.value)
-            }, [
-              removedMode ? h("option", { key: "select-connection", value: "", disabled: true }, t("unknownConnection")) : null,
-              hiddenModel ? h("option", { key: "hidden-current", value: current, hidden: true }, t("modelHiddenCurrent")) : null,
-              // 下架期间直接标出不可用；恢复后这一支不会走到（该方式会回到候选里）。
-              hiddenMode ? h("option", { key: "hidden-current", value: current, hidden: true }, hiddenConnectionLabel(t, String(current || ""))) : null,
-              ...list.map((option) => h("option", { key: option, value: option }, optionLabel(t, field.key, option)))
-            ]);
-          }
-          const canReveal = field.key === "metaonticApiKey" || field.key === "volcengineApiKey" || field.key === "imageApiKey";
-          const revealed = canReveal && visibleKey === field.key;
-          const input = h("input", {
-            // 这个 input 会和右侧眼睛按钮一起放进数组，React 要求数组子节点带 key
-            key: "input",
-            id,
-            "data-field": field.key,
-            className: `mov-input${field.mono ? " mov-mono" : ""}`,
-            style: inputStyle,
-            type: field.kind === "number" ? "number" : field.secret && !revealed ? "password" : "text",
-            value: displayed ?? "",
-            min: secondsField ? 1 : void 0,
-            step: secondsField ? 1e-3 : void 0,
-            placeholder: field.secret && (snapshot.secrets?.[field.key] || value[field.key]) ? t("apiKeyConfigured") : "",
-            onChange: (event) => edit(
-              field.key,
-              field.kind === "number" && event.target.value !== "" ? secondsField ? Math.round(Number(event.target.value) * 1e3) : Number(event.target.value) : event.target.value
-            )
-          });
-          if (!canReveal) return input;
-          return h("div", { key: "control", className: "mov-key-control" }, [
-            input,
-            h("button", {
-              key: "toggle",
-              type: "button",
-              className: "mov-key-eye",
-              "aria-label": t(revealed ? "hideKey" : "showKey"),
-              title: t(revealed ? "hideKey" : "showKey"),
-              "data-action": `toggle-${field.key}`,
-              "aria-controls": id,
-              "aria-pressed": revealed,
-              onClick: () => setVisibleKey(revealed ? "" : field.key)
-            }, h("svg", { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, [
-              h("path", { key: "eye", d: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" }),
-              h("circle", { key: "pupil", cx: 12, cy: 12, r: 3 }),
-              revealed ? h("path", { key: "slash", d: "M3 3l18 18" }) : null
-            ]))
-          ]);
-        }
+        const { save, reset, control } = createSettingsActions({
+          saveInFlight,
+          connectionBusy,
+          setSaveError,
+          setStatus,
+          form,
+          draft,
+          same,
+          validateSettings,
+          persistConnection,
+          persistBatch,
+          setDraft,
+          flashStatus,
+          settingsError,
+          t,
+          snapshot,
+          PLUGIN_OWNED_KEYS,
+          setVisibleKey,
+          value,
+          h,
+          SELECTS,
+          inputStyle,
+          optionLabel,
+          edit,
+          visibleKey,
+          confirm: (message) => window.confirm(message)
+        });
         const hints = {
           connectionMode: selectedMode === "metaontic" ? [t("connectionMetaonticHint"), " ", h("a", { key: "metaontic-register", href: "https://ai.bileego.com/sign-up?aff=VzYr", target: "_blank", rel: "noopener noreferrer", style: { textDecoration: "underline" } }, t("connectionMetaonticRegister"))] : directMode && !VOLCENGINE_MODE_AVAILABLE ? t("connectionVolcengineUnavailable") : t("connectionModeHint"),
           metaonticApiKey: t("metaonticKeyHint"),
@@ -2150,7 +2182,8 @@
       const h = React.createElement;
       const { TOKENS, inputStyle, PAGE_CSS } = createTheme();
       const { MediaPreview } = createMediaPreview({ React, h });
-      const { videoExecutionSource, VideoTaskProgress, VideoProgressDock } = createVideoProgress({ React, h, TOKENS, MediaPreview });
+      const { videoExecutionSource: videoExecutionSource2, VideoTaskProgress, VideoProgressDock } = createVideoProgress({ React, h, TOKENS });
+      const { ToolResultView } = createToolResultView({ h, MediaPreview, VideoTaskProgress });
       const { PLUGIN_OWNED_KEYS, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE } = createClientConfig();
       const { zh, en } = createDictionaries();
       const { useSnapshot, same, validateSettings, persistConnection, persistBatch } = createSettingsState({ React });
@@ -2161,14 +2194,14 @@
         apply(ctx) {
           ctx.effect(() => ctx.uiSession.provide({
             hooks: ["videoExecutions"],
-            resolve: (binding) => ({ hooks: { videoExecutions: videoExecutionSource(binding.eventSource) } })
+            resolve: (binding) => ({ hooks: { videoExecutions: videoExecutionSource2(binding.eventSource) } })
           }), "metaontic-video: actual video execution");
           const t = ctx.locale.bind(NS);
           ctx.effect(() => ctx.locale.register(NS, { zh, en }), "metaontic-video: dictionaries");
           const form = ctx.configForms.get(NAMESPACE);
           for (const tool of ["video_generate", "video_extend", "video_status", "video_prepare_image"]) {
             ctx.effect(
-              () => ctx.slots.inject("tool.call.toolview", () => ctx.slots.register({ name: "tool.call.toolview", key: tool, locale: NS }, VideoTaskProgress)),
+              () => ctx.slots.inject("tool.call.toolview", () => ctx.slots.register({ name: "tool.call.toolview", key: tool, locale: NS }, ToolResultView)),
               `metaontic-video: ${tool} progress`
             );
           }

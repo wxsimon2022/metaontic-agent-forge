@@ -85,7 +85,6 @@ export async function cleanupSegmentTemps(temps) {
 export async function mergeClips(config, files: string[], outPath: string, { signal }: RunOptions = {}) {
   const binary = resolveBinary(config, 'ffmpegBinary', 'ffmpeg');
   await mkdir(path.dirname(outPath), { recursive: true });
-  await rm(outPath, { force: true });
   // 所有 ffmpeg 产物先写这个唯一的工作文件，成功后再原子 rename 到 outPath：
   // 并发合并同一个目标路径时，读者要么看到旧文件、要么看到完整的新文件，不会拿到半截 mp4。
   const work = `${outPath}.${uniqueSuffix('work')}.mp4`;
@@ -361,9 +360,10 @@ export async function downloadSegmentsAndMerge(config, {
     }
     if (files.length === 1) {
       await mkdir(path.dirname(finalPath), { recursive: true });
-      await rm(finalPath, { force: true });
-      // 交付副本，不移动原始分段；累计成片识别后也必须保留每个下载原片。
-      await copyFile(files[0], finalPath);
+      // 交付副本先写临时文件，失败保留已有成片；Windows占用时rename失败也不先删原件。
+      const copy = `${finalPath}.${uniqueSuffix('copy')}.mp4`;
+      try { await copyFile(files[0], copy); await rename(copy, finalPath); }
+      finally { await rm(copy, { force: true }).catch(() => {}); }
       await appendRequestLog({ event: 'delivery_copied', sourcePath: files[0], videoPath: finalPath });
       return { files, segmentsDir, deliveredSeconds, merged: true, mergeMode: 'single', videoPath: finalPath };
     }

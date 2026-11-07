@@ -1,21 +1,6 @@
-import { readFileSync } from 'node:fs';
-import vm from 'node:vm';
+import { api as context } from './module-test-api.mjs';
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
-
-// 每段确认挂在 resume 入口（preflightGate 统一弹一次），文案由这个函数产出，
-// 从构建产物里取出来单独验证，避免「源码改了、发的还是旧包」。
-const source = readFileSync(new URL('../index.js', import.meta.url), 'utf8');
-function extract(name) {
-  const start = source.indexOf(`function ${name}(`);
-  assert.ok(start >= 0, `${name} 不在构建产物里`);
-  const indent = source.slice(source.lastIndexOf('\n', start) + 1, start);
-  const end = source.indexOf('\n' + indent + '}', start);
-  return source.slice(start, end + indent.length + 2);
-}
-
-const context = vm.createContext({});
-vm.runInContext(extract('segmentContinueLine'), context);
+import {test} from 'node:test';
 
 test('续做确认说清第几段做完、接下来第几段、整条还差多少', () => {
   const generated = context.segmentContinueLine({ toolName: 'video_generate', done: 1, lastSeconds: 15, nextSeconds: 5 });

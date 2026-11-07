@@ -112,7 +112,7 @@ for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools sub
     const exec = { callId: 'test-call', agent: {session:{id:'integration',header:{cwd:directory}}} };
     async function reviewed(name, supplied) {
       const spec = {ratio:'9:16',resolution:'720p',...supplied};
-      const project = await host.tools.get('video_project').execute({action:'prepare',subjectType:'scenery'},exec);
+      const project = await host.tools.get('video_project').execute({action:'prepare',subjectType:'scenery',duration:spec.duration*(name==='video_extend'?(spec.segments||1):1)},exec);
       const scriptPath=path.join(directory,project.projectId+'.md'), image=path.join(directory,'storyboard.svg');
       await writeFile(scriptPath,'Script '+spec.prompt); await writeFile(image,'<svg/>');
       await host.observe(exec.agent.session,{type:'tool/call',data:{turn:1,name:'video_project'}});

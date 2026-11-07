@@ -9,7 +9,7 @@ const RATES = [
   ['doubao-seedance-2-0', [46, 28]],
   ['doubao-seedance-2-5', [70, 42]],
 ] as const;
-const PRICE_DATE = '2026-11-01';
+const PRICE_DATE = '2026-11-07';
 
 function compareVideoCosts(config, args) {
   const duration = args?.duration;

@@ -1,0 +1,30 @@
+flowchart TD
+  U[用户创意] --> D{是否已明确总时长}
+  D -->|否| Q[15 / 30 / 45 / 60秒 / 自定义输入]
+  Q -->|确认并保存| P[prepare 创建项目并确认画幅与清晰度]
+  D -->|是：沿用确认值| P
+  P --> C{角色参考路线}
+  C -->|直接文生视频或已有获审图片| S[完整脚本 + 分镜图 + 逐段费用预估]
+  C -->|先生成角色图| IC[图片费用同意 → 出图 → 展示审核]
+  IC -->|通过| S
+  S --> R[review 脚本与制作参数审核]
+  R -->|修改| S
+  R -->|通过| A[生成工具付费审批：本段及剩余计划]
+  A -->|允许| E[共用执行器：生成当前一段]
+  E --> SAVE[原请求与taskId先落盘 → 轮询原任务]
+  SAVE -->|本段成功| V[下载本段并正文展示视频链接及预览]
+  V --> MORE{还有未完成分段}
+  MORE -->|是：暂停| SR[review_segment 分段结果确认]
+  SR -->|通过| NEXT[下一段费用审批]
+  NEXT -->|允许：原resume| E
+  MORE -->|否| M[单段直出 / 多段本机FFmpeg合并]
+  M --> OUT[完整成片第一 + 原始分段；最终登记present]
+  SAVE -->|查询失败或超时| STATUS[原taskId / resume继续查，禁止重新提交]
+  STATUS --> SAVE
+  SAVE -->|提交结果不明| CHECK[media_submission核对原渠道记录]
+  CHECK -->|关联已存在任务| SAVE
+  V -->|下载失败| RETRY[原resume重试交付，不新建生成任务]
+  M -->|合并失败| RETRY
+  RETRY --> V
+  SAVE -->|真人限制| CONVERT[转换费用同意 → 转图 → 展示审核 → 单次视频重试]
+  CONVERT -->|结果审核通过| SAVE

@@ -33,10 +33,9 @@ function harness({ segments }) {
       return dest;
     },
   });
-  const source = sourceOf('media/merge');
-  const start = source.indexOf('const SEGMENT_TASK_CONCURRENCY');
-  assert.ok(start > 0);
-  vm.runInContext(source.slice(start), context);
+  const mocks = {prepareSeamTrims:context.prepareSeamTrims, mergeClips:context.mergeClips, cleanupSegmentTemps:context.cleanupSegmentTemps};
+  vm.runInContext(sourceOf('media/merge'), context);
+  Object.assign(context,mocks);
   return { context, state, segments };
 }
 

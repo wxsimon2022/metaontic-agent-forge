@@ -1,3 +1,4 @@
+import { validatePauseRecord } from './result-state.js';
 /** workflow/resume：从宿主入口拆出的独立职责模块。 */
 import path from 'node:path';
 import { readFile, open, rm, mkdir, writeFile, rename } from 'node:fs/promises';
@@ -42,10 +43,7 @@ export async function readPauseFile(dir) {
   } catch {
     throw new Error(`暂停记录不是合法 JSON：${file}。`);
   }
-  if (data?.plugin !== 'metaontic-video' || !Array.isArray(data.plan) || !data.plan.length) {
-    throw new Error(`暂停记录内容不对（不是本插件写的）：${file}。`);
-  }
-  return data;
+  return validatePauseRecord(data, file);
 }
 
 /* ---------------- 暂停目录的「续做锁」：同一份进度只能有一次 resume 在跑 ---------------- */

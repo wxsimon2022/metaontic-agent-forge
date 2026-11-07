@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1620" viewBox="0 0 1600 1620"><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#5b7696"/></marker></defs><style>text{font-family:"PingFang SC","Microsoft YaHei",sans-serif;fill:#24364e}.title{font-size:32px;font-weight:700}.sub{font-size:16px;fill:#64758a}.section{font-size:20px;font-weight:700}.node-title{font-size:20px;font-weight:650}.body{font-size:16px}.code{font-family:"SFMono-Regular",Consolas,monospace;font-size:14px;fill:#61758f}.small{font-size:14px;fill:#65788d}.edge{fill:none;stroke:#5b7696;stroke-width:2;marker-end:url(#arrow)}.edge-label{font-size:14px;fill:#415d7c}</style><rect width="1600" height="1620" fill="#f2f5fa"/><text x="48" y="63" class="title">MetaOnticVideo · 插件流程架构</text><text x="48" y="98" class="sub">依据当前工作区源码｜需求确认 → 审核 → 按段生成 → 预览续做 → 本机交付</text><rect x="40" y="130" width="970" height="1390" rx="18" fill="#fff" stroke="#dbe3ee"/><rect x="1040" y="130" width="520" height="1390" rx="18" fill="#fff" stroke="#dbe3ee"/><text x="68" y="169" class="section">创作主流程</text><text x="1068" y="169" class="section">模块、状态与恢复</text>
+<rect x="90" y="195" width="550" height="120" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>
+<text x="110" y="226" class="node-title">01 需求确认</text>
+<text x="110" y="253" class="body">时长未指定：15 / 30 / 45 / 60 秒 / 自定义</text>
+<text x="110" y="276" class="body">自定义输入4–120整数秒；同时确认画幅和清晰度</text>
+<text x="110" y="301" class="code">video_project.prepare · duration-choice</text>
+<rect x="90" y="335" width="550" height="122" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>
+<text x="110" y="366" class="node-title">02 项目与角色参考路线</text>
+<text x="110" y="393" class="body">优先直接文生视频，也可使用已有图或先生成角色图</text>
+<text x="110" y="416" class="body">先出角色图：单独费用同意 → 出图 → 展示并审核</text>
+<text x="110" y="443" class="code">项目记录 · character-choice</text>
+<rect x="90" y="475" width="550" height="100" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>
+<text x="110" y="506" class="node-title">03 脚本、分镜与费用预估</text>
+<text x="110" y="533" class="body">完整展示脚本，内嵌本版分镜图，列出逐段估价</text>
+<text x="110" y="561" class="code">video_estimate · script.md · storyboard</text>
+<rect x="90" y="605" width="550" height="90" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>
+<text x="110" y="636" class="node-title">04 脚本审核</text>
+<text x="110" y="663" class="body">通过后固定脚本及制作参数；改稿或改参数需重审</text>
+<text x="110" y="681" class="code">video_project.review</text>
+<rect x="90" y="725" width="550" height="90" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>
+<text x="110" y="756" class="node-title">05 本段制作费用确认</text>
+<text x="110" y="783" class="body">生成工具的付费审批就是制作确认，不另问开始制作</text>
+<text x="110" y="801" class="code">tools/pre-execute · approval</text>
+<rect x="90" y="845" width="550" height="100" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>
+<text x="110" y="876" class="node-title">06 生成当前一段</text>
+<text x="110" y="903" class="body">首次生成或续拍；先保存原请求与任务ID，再查询结果</text>
+<text x="110" y="931" class="code">video_generate / video_extend → segment-executor</text>
+<rect x="90" y="975" width="550" height="100" rx="12" fill="#eff9f4" stroke="#c5e1d1"/>
+<text x="110" y="1006" class="node-title">07 取回并展示本段</text>
+<text x="110" y="1033" class="body">暂停时默认只下载新段；正文提供视频链接和直接预览</text>
+<text x="110" y="1061" class="code">segment-run · tool-result · media-preview</text>
+<path d="M365 315V331" class="edge"/>
+<path d="M365 457V471" class="edge"/>
+<path d="M365 575V601" class="edge"/>
+<path d="M365 695V721" class="edge"/>
+<path d="M365 815V841" class="edge"/>
+<path d="M365 945V971" class="edge"/>
+<path d="M365 1075V1106" class="edge"/>
+<path d="M365 1110L500 1160L365 1210L230 1160Z" fill="#fff7e9" stroke="#e9c88f"/>
+<text x="306" y="1166" class="node-title">还有分段？</text>
+<path d="M500 1160H715" class="edge"/>
+<text x="537" y="1145" class="edge-label">是：先暂停</text>
+<rect x="720" y="1105" width="270" height="110" rx="12" fill="#fff7e9" stroke="#e9c88f"/>
+<text x="740" y="1136" class="node-title">08 分段结果确认</text>
+<text x="740" y="1163" class="body">实际看过本段，再决定继续</text>
+<text x="740" y="1186" class="body">取消或未答：保留成果并停住</text>
+<text x="740" y="1201" class="code">review_segment</text>
+<path d="M855 1105V1074" class="edge"/>
+<text x="870" y="1087" class="edge-label">审核通过</text>
+<rect x="720" y="945" width="270" height="125" rx="12" fill="#fff7e9" stroke="#e9c88f"/>
+<text x="740" y="976" class="node-title">09 下一段费用确认</text>
+<text x="740" y="1003" class="body">只生成未完成部分</text>
+<text x="740" y="1026" class="body">本次新增分段仍需确认费用</text>
+<text x="740" y="1056" class="code">resume → approval</text>
+<path d="M855 945V895H645" class="edge"/>
+<text x="728" y="880" class="edge-label">原resume续做</text>
+<path d="M365 1210V1241" class="edge"/>
+<text x="385" y="1231" class="edge-label">否</text>
+<rect x="90" y="1245" width="550" height="90" rx="12" fill="#eff9f4" stroke="#c5e1d1"/>
+<text x="110" y="1276" class="node-title">10 完成收尾</text>
+<text x="110" y="1303" class="body">单段直接交付；多段使用FFmpeg在本机合并</text>
+<text x="110" y="1321" class="code">segment-run · media/merge</text>
+<path d="M365 1335V1361" class="edge"/>
+<rect x="90" y="1365" width="550" height="125" rx="12" fill="#eff9f4" stroke="#c5e1d1"/>
+<text x="110" y="1396" class="node-title">11 最终交付</text>
+<text x="110" y="1423" class="body">完整成片排第一，其后按段号列出原始分段</text>
+<text x="110" y="1446" class="body">仅最终成果登记交付卡片，保留逐项打开链接</text>
+<text x="110" y="1476" class="code">delivery-order · present</text>
+<text x="706" y="1304" class="small">审核未通过 → 修改后重新审核</text>
+<text x="706" y="1332" class="small">拒绝费用 → 不提交新任务</text>
+<text x="706" y="1360" class="small">停止等待 ≠ 上游任务已取消</text>
+<text x="706" y="1388" class="small">需要累计预览：只合并已有分段</text>
+<text x="706" y="1416" class="small">不生成下一段，不新增模型调用</text>
+<rect x="1065" y="195" width="470" height="170" rx="12" fill="#f3f0ff" stroke="#d9cff3"/>
+<text x="1085" y="226" class="node-title">宿主与客户端</text>
+<text x="1085" y="253" class="body">Harness工具注册、提问、审批、会话事件</text>
+<text x="1085" y="276" class="body">创作提示词仅作用于“视频创作助手”模式</text>
+<text x="1085" y="299" class="body">设置保存、更新与结果预览各自独立</text>
+<text x="1085" y="322" class="body">视频进度只在生成／续拍等待期间显示</text>
+<text x="1085" y="351" class="code">src/index.ts · src/client/</text>
+<path d="M1300 365V390" class="edge"/>
+<rect x="1065" y="395" width="470" height="170" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>
+<text x="1085" y="426" class="node-title">工具接口层</text>
+<text x="1085" y="453" class="body">video_project：需求准备与真实审核记录</text>
+<text x="1085" y="476" class="body">video_generate / video_extend：生成与续拍</text>
+<text x="1085" y="499" class="body">video_estimate / video_status：试算与原任务查询</text>
+<text x="1085" y="522" class="body">video_prepare_image：角色图与经同意的转换</text>
+<text x="1085" y="551" class="code">src/tools/</text>
+<path d="M1300 565V590" class="edge"/>
+<rect x="1065" y="595" width="470" height="200" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>
+<text x="1085" y="626" class="node-title">共享工作流层</text>
+<text x="1085" y="653" class="body">segment-executor：按段执行、落盘与暂停</text>
+<text x="1085" y="676" class="body">result-state：生成／待查／待交付／完成</text>
+<text x="1085" y="699" class="body">approval：本段与剩余计划的费用确认</text>
+<text x="1085" y="722" class="body">resume：互斥锁与断点校验</text>
+<text x="1085" y="745" class="body">segment-review：分段预览后的结果审核</text>
+<text x="1085" y="781" class="code">src/workflow/</text>
+<path d="M1300 795V820" class="edge"/>
+<rect x="1065" y="825" width="470" height="140" rx="12" fill="#eff9f4" stroke="#c5e1d1"/>
+<text x="1085" y="856" class="node-title">渠道与媒体层</text>
+<text x="1085" y="883" class="body">MetaOntic AI（默认）／火山直连（存量配置）</text>
+<text x="1085" y="906" class="body">固定连接快照，提交防重，轮询原任务</text>
+<text x="1085" y="929" class="body">本地下载、参考图处理、FFmpeg合并</text>
+<text x="1085" y="951" class="code">providers/ · media/</text>
+<path d="M1300 965V990" class="edge"/>
+<rect x="1065" y="995" width="470" height="190" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>
+<text x="1085" y="1026" class="node-title">持久化与保护</text>
+<text x="1085" y="1053" class="body">项目：时长、角色路线、脚本与参数摘要</text>
+<text x="1085" y="1076" class="body">paused-plan.json：任务ID、原请求与分段进度</text>
+<text x="1085" y="1099" class="body">segment-review.json：本段审核结果</text>
+<text x="1085" y="1122" class="body">submission记录：提交不明时防止重复提交</text>
+<text x="1085" y="1145" class="body">密钥不写入断点；保存失败不继续生成</text>
+<text x="1085" y="1171" class="code">原子写入 · 原进度恢复 · 旧记录兼容</text>
+<rect x="1065" y="1205" width="470" height="260" rx="12" fill="#fff3f1" stroke="#edcbc5"/>
+<text x="1085" y="1236" class="node-title">异常与恢复路径</text>
+<text x="1085" y="1263" class="body">提交不明 → 核对原渠道记录，禁止直接重发</text>
+<text x="1085" y="1286" class="body">查询失败／超时 → 按原taskId继续查</text>
+<text x="1085" y="1309" class="body">下载／合并失败 → 原resume仅重试交付</text>
+<text x="1085" y="1332" class="body">真人限制 → 先同意转换，再逐图审核</text>
+<text x="1085" y="1355" class="body">审核转换图后，仅允许一次视频重试</text>
+<text x="1085" y="1378" class="body">损坏断点 → 保留原文件与任务，停止提交</text>
+<text x="1085" y="1451" class="code">原任务优先，不因查询或交付失败重新付费生成</text>
+<text x="50" y="1562" class="sub">确认边界：角色图费用、脚本审核、本段费用、分段结果审核分别记录；未答、取消或拒绝都不表示同意。</text>
+<text x="50" y="1592" class="small">说明：生成成功不等于下载、合并或交付完成；实际费用以渠道账单为准。本图按当前开发源码绘制。</text>
+</svg>

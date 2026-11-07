@@ -1,3 +1,4 @@
+import { validateExtensionDuration } from './planning.js';
 /** workflow/costs：从宿主入口拆出的独立职责模块。 */
 import { ESTIMATE_RATES, MAX_SEGMENTS, MIN_SECONDS, FIXED_RESOLUTION, resolveResolution, ESTIMATE_PIXELS, ESTIMATE_FPS, ESTIMATE_TOKEN_DIVISOR, ref } from '../config.js';
 import { clampInteger, finiteNumber } from '../utils/validation.js';
@@ -29,6 +30,7 @@ function estimateRate(model, usesReference) {
 /** 这次调用会拆几段：和真正执行用的是同一套规划（直出 + 逐段延长）。 */
 export function estimatePlan(config, toolName, args) {
   if (toolName === 'video_extend') {
+    validateExtensionDuration(config, args);
     const count = clampInteger(args?.segments, 1, MAX_SEGMENTS, 1);
     const fallback = modelMaxSeconds(config);
     const seconds = clampInteger(

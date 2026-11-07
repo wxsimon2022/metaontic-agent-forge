@@ -79,3 +79,15 @@ test('60s breakdown labels first segment without video and all continuations wit
  assert.match(text,/插件第1段：无视频输入；输入0秒 \+ 输出15秒/);
  assert.match(text,/插件第2段：有视频输入；输入15秒 \+ 输出15秒/);
 });
+
+test('Seedance 2.5 30s official base estimate matches current published 480P/720P tariffs without splitting',async()=>{
+ const tool=setup(base).tool;
+ for(const [resolution,tokens,expected] of [['480p',288225,20.1758],['720p',648000,45.36]]){
+  const result=await tool.execute({...args,duration:30,resolution});
+  assert.equal(result.official.segments.length,1);
+  assert.equal(result.official.segments[0].inputSeconds,0);
+  assert.equal(result.official.segments[0].tokens,tokens);
+  assert.equal(result.official.segments[0].rateCnyPerMillion,70);
+  assert.equal(result.official.cny,expected);
+ }
+});

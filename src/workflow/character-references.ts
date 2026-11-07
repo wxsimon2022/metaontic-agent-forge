@@ -4,7 +4,10 @@ import { resolveModel, isVolcengine } from '../providers/connection.js';
 import { ref } from '../config.js';
 
 export async function initialCharacterReferences(config, args, saved, signal) {
-  if (Array.isArray(saved?.characterReferences)) {
+  const current = saved?.operationState?.[Number(saved?.done) || 0];
+  const rebuildingFailed = !saved?.pendingTask && current?.originalResult?.status === 'failed'
+    && current.originalResult.errorCode !== 'real_person_rejected' && !current.retryUsed && !current.phase;
+  if (Array.isArray(saved?.characterReferences) && !rebuildingFailed) {
     validateImageRoles({ referenceImages: saved.characterReferences.map(item => item?.image_url?.url) }, resolveModel(config));
     return saved.characterReferences.map(item => ({ ...item, image_url: { ...item.image_url } }));
   }

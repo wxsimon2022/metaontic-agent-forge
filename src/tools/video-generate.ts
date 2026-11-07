@@ -1,19 +1,15 @@
-import { initialCharacterReferences, approvedCharacterReferences } from '../workflow/character-references.js';
+import { executeSegmentPlan } from '../workflow/segment-executor.js';
+import { initialCharacterReferences } from '../workflow/character-references.js';
 /** tools/video-generate：从宿主入口拆出的独立职责模块。 */
 import { MAX_TOTAL_SECONDS, MAX_SEGMENTS, resolveResolution } from '../config.js';
 import { modelMaxSeconds, resolveTargetPlan, resolveSegmentPrompts } from '../workflow/planning.js';
 import { SEGMENT_OUTPUT_SCHEMA, renderVideoResult } from './results.js';
 import { snapshotConfig, resolveApiKey, assertConfigured, isOmniExtendModel, resolveModel } from '../providers/connection.js';
 import { assertResumeConnection, saveProgress, resumeDirOf, readPauseFile, resumePlanFrom, pickResumeOptions } from '../workflow/resume.js';
-import { abortError } from '../utils/errors.js';
 import { buildSegmentExecutionPrompt } from '../prompts/generation.js';
-import { buildGenerationBody, buildRequestBody, runTask, normalizeReferenceUrl } from '../providers/seedance.js';
+import { buildGenerationBody, buildRequestBody, normalizeReferenceUrl } from '../providers/seedance.js';
 import { resolveOutputDir, allocateStamp, fileStamp } from '../utils/files.js';
-import {
-  SEGMENT_PAUSE_NOTE, absorbSegmentInterruption, describeIncompleteRun,
-  recordSegmentResult, runSegmentDelivery, skipMergeDelivery,
-} from '../workflow/segment-run.js';
-
+import { describeIncompleteRun, runSegmentDelivery, skipMergeDelivery, } from '../workflow/segment-run.js';
 export function videoTool(liveConfig, deps, ctx) {
   const config = liveConfig;
   // 结果里的「接着做要调哪个工具」和确认框里的工具名都用它
@@ -201,26 +197,24 @@ export function videoTool(liveConfig, deps, ctx) {
       const config = snapshotConfig(liveConfig);
       const apiKey = resolveApiKey(config);
       assertConfigured(config, apiKey);
-
       // 接着上一次暂停的进度继续做（循环迭代的第二轮起）：计划、游标、参考视频都从暂停记录里来。
       const resumeDir = resumeDirOf(args?.resume);
       const resume = resumeDir ? await readPauseFile(resumeDir) : null;
       assertResumeConnection(resume, config, args);
-      if (resume?.toolName && resume.toolName !== TOOL_NAME) throw new Error(`这份进度请使用 ${resume.toolName} 继续。`);
+      if (resume?.toolName && resume.toolName !== TOOL_NAME)
+        throw new Error(`这份进度请使用 ${resume.toolName} 继续。`);
       args = { ...(resume?.options || {}), ...args };
       args.mode = args.mode || 'continuous';
       args.resolution = resolveResolution(config, args);
       if (args.transitionDescription !== undefined && typeof args.transitionDescription !== 'string') {
         throw new Error('过渡描述必须是文字。');
       }
-
       const prompt = String(args?.prompt ?? '').trim() || String(resume?.prompt ?? '').trim();
       if (!prompt) {
         throw new Error(resumeDir
           ? '这次是接着上一次暂停的视频继续，但暂停记录里没有提示词：请把 prompt 补上。'
           : '提示词 prompt 不能为空。');
       }
-
       const target = resolveTargetPlan(config, args);
       const { singleMax, segmentSeconds, cap, asked } = target;
       const restarted = resume
@@ -234,30 +228,22 @@ export function videoTool(liveConfig, deps, ctx) {
       const total = restarted ? restarted.total : target.total;
       const doneBefore = restarted ? (Number(resume.done) || 0) : 0;
       const plannedTotal = plan.reduce((sum, step) => sum + step.seconds, 0);
-
       const notes = [];
       if (restarted) {
-        notes.push(
-          `接着上一次暂停的进度继续：前面 ${doneBefore} 段（${restarted.cursor} 秒）不重新生成，`
-          + `这次还要生成 ${plan.length} 段共 ${plannedTotal} 秒。`,
-        );
-      } else if (asked > total) {
-        notes.push(
-          `目标 ${asked} 秒超过单条成片上限 ${cap} 秒（首段最长 ${singleMax} 秒 + 每段最多 `
-          + `${segmentSeconds} 秒 × ${MAX_SEGMENTS - 1}），本次按 ${total} 秒执行。`,
-        );
+        notes.push(`接着上一次暂停的进度继续：前面 ${doneBefore} 段（${restarted.cursor} 秒）不重新生成，`
+          + `这次还要生成 ${plan.length} 段共 ${plannedTotal} 秒。`);
+      }
+      else if (asked > total) {
+        notes.push(`目标 ${asked} 秒超过单条成片上限 ${cap} 秒（首段最长 ${singleMax} 秒 + 每段最多 `
+          + `${segmentSeconds} 秒 × ${MAX_SEGMENTS - 1}），本次按 ${total} 秒执行。`);
       }
       if (!restarted && plannedTotal < total) {
-        notes.push(
-          `目标 ${total} 秒排不满（每段上限 ${segmentSeconds} 秒 × ${MAX_SEGMENTS} 段），`
-          + `本次按 ${plannedTotal} 秒执行。`,
-        );
-      } else if (!restarted && plannedTotal > total) {
-        notes.push(
-          `目标 ${total} 秒拆不出完全等长的分段（每段 4 至模型上限（2.0 为 15、2.5 为 30） 秒），本次按 ${plannedTotal} 秒执行。`,
-        );
+        notes.push(`目标 ${total} 秒排不满（每段上限 ${segmentSeconds} 秒 × ${MAX_SEGMENTS} 段），`
+          + `本次按 ${plannedTotal} 秒执行。`);
       }
-
+      else if (!restarted && plannedTotal > total) {
+        notes.push(`目标 ${total} 秒拆不出完全等长的分段（每段 4 至模型上限（2.0 为 15、2.5 为 30） 秒），本次按 ${plannedTotal} 秒执行。`);
+      }
       const segments = [];
       if (restarted) {
         // 上一次暂停前生成好的段：文件就在同样的分段目录里（序号 + 类型就是文件名），
@@ -274,128 +260,73 @@ export function videoTool(liveConfig, deps, ctx) {
         }
       }
       const resultImages = [];
-      let submissionId;
-      let convertedReferences;
-      let status = 'succeeded';
-      let error;
-      let errorCode;
       let referenceUrl = restarted ? String(resume.lastVideoUrl || '') : '';
       let cursor = restarted ? restarted.cursor : 0;
       // 用户选择先不继续（确认框里点了拒绝/取消）：先交付已经生成的部分。
-      let paused = Boolean(resume && args.cumulativePreview === true && fullPlan.length > (Number(resume.done) || 0));
+      const initiallyPaused = Boolean(resume && args.cumulativePreview === true && fullPlan.length > (Number(resume.done) || 0));
       // 上次那轮用的参数（续做时调用方可以只传 resume）
       const resumeOptions = restarted ? (resume.options || {}) : {};
-      const suppliedPrompts = resolveSegmentPrompts(
-        args?.segmentPrompts ?? resumeOptions.segmentPrompts, fullPlan.length,
-      );
-
+      const suppliedPrompts = resolveSegmentPrompts(args?.segmentPrompts ?? resumeOptions.segmentPrompts, fullPlan.length);
       // 被用户停止 / 宿主超时时，别把已经生成好的分段丢掉：按「暂停」收尾，留暂停记录给 resume。
       const outDir = await resolveOutputDir(config, exec, deps);
       const { stamp, segmentsDir } = resume
         ? { stamp: String(resume.stamp || fileStamp()), segmentsDir: resumeDir }
         : await allocateStamp(outDir, fileStamp());
-      let pendingTask = resume?.pendingTask || null;
       const operationState = resume?.operationState || {};
-      let characterReferences = await initialCharacterReferences(config, args, resume, exec?.signal);
-      const checkpoint = async () => saveProgress(segmentsDir, {
-        config, toolName: TOOL_NAME, stamp, prompt, fullPlan, cursor, referenceUrl,
-        options: pickResumeOptions(args), segments, pendingTask, operationState, characterReferences,
-      });
-      if (resume?.deliveryPending) await checkpoint();
-      let interrupted = false;
-      try {
-      for (const [offset, step] of plan.entries()) {
-        if (exec?.signal?.aborted) throw abortError();
-        const position = doneBefore + offset;
-
-        const focusedPrompt = suppliedPrompts
-          ? buildSegmentExecutionPrompt({ prompt: suppliedPrompts[position], kind: step.kind, index: position, count: fullPlan.length })
-          : prompt;
-        const stepArgs = {
-          ...resumeOptions,
-          ...args,
-          characterReferences,
-          prompt: focusedPrompt,
-          duration: step.seconds,
-          // 这条流程是「先直出再向后续拍」，分段的拼接顺序固定为向后延长。
-          direction: 'backward',
-          startAt: step.kind === 'extend' && isOmniExtendModel(resolveModel(config)) ? cursor : undefined,
-        };
-        let body;
-        let seconds;
-        if (operationState[position]?.originalBody) {
-          body = operationState[position].originalBody;
-          seconds = step.seconds;
-        } else if (step.kind === 'generate') {
-          const initialArgs = { ...stepArgs };
-          if (characterReferences.length) {
-            if (!stepArgs.firstFrameUrl && (!stepArgs.referenceImages || args.characterReferenceImages === undefined)) initialArgs.referenceImages = characterReferences.map(item => item.image_url.url);
-            else if (stepArgs.firstFrameUrl && args.characterReferenceImages === undefined) initialArgs.firstFrameUrl = characterReferences[0].image_url.url;
+      const characterReferences = await initialCharacterReferences(config, args, resume, exec?.signal);
+      const execution = await executeSegmentPlan({
+        config, ctx, exec, args, plan, doneBefore, segments, segmentsDir, operationState, notes,
+        initial: { cursor, referenceUrl, pendingTask: resume?.pendingTask || null, characterReferences, paused: initiallyPaused },
+        persistBeforeRun: Boolean(resume?.deliveryPending),
+        save: state => saveProgress(segmentsDir, {
+          config, toolName: TOOL_NAME, stamp, prompt, fullPlan,
+          cursor: state.cursor, referenceUrl: state.referenceUrl,
+          options: pickResumeOptions(args), segments, pendingTask: state.pendingTask, operationState,
+          characterReferences: state.characterReferences,
+        }),
+        buildStep: async ({ step, position, state }) => {
+          const focusedPrompt = suppliedPrompts
+            ? buildSegmentExecutionPrompt({ prompt: suppliedPrompts[position], kind: step.kind, index: position, count: fullPlan.length })
+            : prompt;
+          const stepArgs = {
+            ...resumeOptions,
+            ...args,
+            characterReferences: state.characterReferences,
+            prompt: focusedPrompt,
+            duration: step.seconds,
+            // 这条流程是「先直出再向后续拍」，分段的拼接顺序固定为向后延长。
+            direction: 'backward',
+            startAt: step.kind === 'extend' && isOmniExtendModel(resolveModel(config)) ? state.cursor : undefined,
+          };
+          let body;
+          let seconds;
+          if (step.kind === 'generate') {
+            const initialArgs = { ...stepArgs };
+            if (state.characterReferences.length) {
+              if (!stepArgs.firstFrameUrl && (!stepArgs.referenceImages || args.characterReferenceImages === undefined))
+                initialArgs.referenceImages = state.characterReferences.map(item => item.image_url.url);
+              else if (stepArgs.firstFrameUrl && args.characterReferenceImages === undefined)
+                initialArgs.firstFrameUrl = state.characterReferences[0].image_url.url;
+            }
+            const generated = await buildGenerationBody(config, initialArgs, step.seconds, {
+              signal: exec?.signal,
+            });
+            body = generated.body;
+            seconds = generated.seconds;
+            if (generated.images?.length)
+              resultImages.push(...generated.images);
+            if (generated.notes?.length)
+              notes.push(...generated.notes);
           }
-          const generated = await buildGenerationBody(config, initialArgs, step.seconds, {
-            signal: exec?.signal,
-          });
-          body = generated.body;
-          seconds = generated.seconds;
-          if (generated.images?.length) resultImages.push(...generated.images);
-          if (generated.notes?.length) notes.push(...generated.notes);
-        } else {
-          ({ body, seconds } = buildRequestBody(config, stepArgs, referenceUrl));
-        }
-
-        const final = await runTask(config, body, exec?.signal, {
-          ctx, exec,
-          state: operationState[position] ||= {},
-          saveState: checkpoint,
-          scope: `${segmentsDir}:${position}`,
-          referenceImagesReviewed: args?.referenceImagesReviewed === true,
-          taskId: pendingTask?.taskId,
-          onCreated: async (taskId) => {
-            pendingTask = { taskId, index: position + 1, kind: step.kind, seconds };
-            await checkpoint();
-          },
-        });
-        if (final.status === 'succeeded') {
-          characterReferences = approvedCharacterReferences(characterReferences, operationState[position]);
-          await checkpoint();
-        }
-        const outcome = recordSegmentResult({
-          final, segments, segment: { index: position + 1, kind: step.kind, seconds }, submissionId, convertedReferences,
-        });
-        ({ submissionId, convertedReferences, pendingTask } = outcome);
-        if (!outcome.ok) {
-          await checkpoint();
-          status = outcome.status;
-          errorCode = outcome.errorCode;
-          error = outcome.error;
-          break;
-        }
-        referenceUrl = normalizeReferenceUrl(final.videoUrl);
-        cursor += seconds;
-
-        await checkpoint();
-
-        // 先结束本次调用并交付视频，让助手展示成果后再询问是否继续。
-        // 工具内部阻塞在审批框时，宿主尚拿不到输出，无法展示刚完成的分段。
-        if (plan[offset + 1]) {
-          paused = true;
-          notes.push(SEGMENT_PAUSE_NOTE);
-          break;
-        }
-      }
-      } catch (failure) {
-        absorbSegmentInterruption(failure, {
-          segments,
-          notes,
-          message:
-            '这次调用被中断了（用户点了停止，或者等超时了）：已经生成好的部分会尝试下载并交付；是否合并以返回结果为准，'
-            + '剩下的秒数不用重头再来——用 resume 就能接着做。',
-        });
-        // 中断/超时：已经生成的部分照常下载合并交付，剩下的交给 resume。
-        interrupted = true;
-        paused = true;
-      }
-
+          else {
+            ({ body, seconds } = buildRequestBody(config, stepArgs, state.referenceUrl));
+          }
+          return { body, seconds };
+        },
+        interruptionMessage: '这次调用被中断了（用户点了停止，或者等超时了）：已经生成好的部分会尝试下载并交付；是否合并以返回结果为准，剩下的段不用重头再来——用 resume 就能接着做。',
+      });
+      let { paused } = execution;
+      const { status, error, errorCode, submissionId, convertedReferences, pendingTask, interrupted } = execution;
       const completed = segments.filter((segment) => segment.status === 'succeeded' && segment.videoUrl);
       const deliveredSeconds = completed.reduce((sum, segment) => sum + (segment.seconds || 0), 0);
       // 结果字段随流程追加（合并信息、备注等），显式声明成可扩展对象
@@ -412,7 +343,8 @@ export function videoTool(liveConfig, deps, ctx) {
         convertedReferences,
         ...(convertedReferences ? { nextAction: 'show_reference_images_then_wait_for_user' } : {}),
       };
-      if (resume?.deliveryPending && doneBefore < fullPlan.length) paused = true;
+      if (resume?.deliveryPending && doneBefore < fullPlan.length)
+        paused = true;
       // 「还剩多少秒」按计划口径（fullPlan）算，交付阶段再按目标 total 收敛，两者口径不同、都要保留。
       const plannedRemainingSeconds = Math.max(0, fullPlan.reduce((sum, step) => sum + step.seconds, 0) - deliveredSeconds);
       const remainingSeconds = Math.max(0, total - deliveredSeconds);
@@ -426,7 +358,6 @@ export function videoTool(liveConfig, deps, ctx) {
         result.pendingTaskId = pendingTask.taskId;
         result.note = '任务已提交，请用 resume 查询并接回原进度，或用 video_status 查询；不要重复提交。';
       }
-
       if (resultImages.length) {
         // 只回「用了哪些图、来自哪里」，不回 base64 正文（太长）
         result.images = resultImages.map((item) => ({
@@ -440,13 +371,11 @@ export function videoTool(liveConfig, deps, ctx) {
           recentUploads: item.recentUploads,
         }));
       }
-
       // 没成功的那一段：区分「确实失败」和「只是没查到」，后者任务已提交、要用 video_status 补拉。
       if (describeIncompleteRun({ result, status, segments, notes, completed, deliveredSeconds })) {
         result.note = notes.join('\n');
         return result;
       }
-
       if (args?.merge === false) {
         return skipMergeDelivery({ result, paused, remainingSeconds, notes, segmentsDir, toolName: TOOL_NAME });
       }

@@ -1,15 +1,9 @@
+import { api } from './module-test-api.mjs';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 const source = readFileSync(new URL('../client.js', import.meta.url), 'utf8');
-function extract(name) {
-  const start = source.indexOf(`function ${name}(`);
-  assert.ok(start >= 0);
-  const indent = source.slice(source.lastIndexOf('\n', start) + 1, start);
-  const end = source.indexOf('\n' + indent + '}', start);
-  return source.slice(start, end + indent.length + 2);
-}
 test('video views register immediately when the host declares the tool slot and clean up', () => {
   let entry;
   vm.runInNewContext(source, { window: { __ModuleLoader__: { load(x) { entry = x; } } } });
@@ -35,12 +29,12 @@ test('video views register immediately when the host declares the tool slot and 
   const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
   assert.ok(pkg.dsh.client.inject.includes('@deepseek-ai/dsh-client-ui-tool'));
 });
-test('running video card renders progress and a completed success reaches 100 percent', () => {
+test('progress renders only for active video generation and disappears on completion', () => {
   const context = vm.createContext({
     React: { useState: () => [30, () => {}], useRef: () => ({ current: 0 }), useEffect() {} },
     h: (tag, props, ...children) => ({ tag, props, children }), TOKENS: {}, MediaPreview: null,
   });
-  vm.runInContext(extract('estimatedVideoWait') + '\n' + extract('estimatedVideoProgress') + '\n' + extract('VideoTaskProgress'), context);
+  Object.assign(context, api.createVideoProgress(context));
   const running = context.VideoTaskProgress({ block: { phase: 'start', name: 'video_generate', args: { duration: 15 } }, callId: 'a', startedAt: 1 });
   assert.match(JSON.stringify(running), /progressbar/);
   assert.match(JSON.stringify(running), /mov-task-active/);
@@ -64,7 +58,7 @@ test('running video card renders progress and a completed success reaches 100 pe
 
 test('execution source waits for real execution and clears on settlement or interrupted turns', () => {
   const context = vm.createContext({ Map });
-  vm.runInContext(extract('videoExecutionSource'), context);
+  Object.assign(context, { videoExecutionSource: api.videoExecutionSource });
   let window = { entries: [] };
   const listeners = new Set();
   const source = context.videoExecutionSource({ getSnapshot: () => window, subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); } });
@@ -90,33 +84,29 @@ test('execution source waits for real execution and clears on settlement or inte
 });
 
 test('execution signals surround only the actual tool body and settle on errors', async () => {
-  const host = readFileSync(new URL('../index.js', import.meta.url), 'utf8');
-  const start = host.indexOf('function withVideoExecution(');
-  const end = host.indexOf('\n}', start) + 2;
   const signals = [];
-  const context = vm.createContext({ appendVideoExecution: async (exec, phase) => signals.push([exec.callId, phase]) });
-  vm.runInContext(host.slice(start, end), context);
+  const report = async (exec, phase) => signals.push([exec.callId, phase]);
   const exec = { callId: 'test' };
-  const tool = context.withVideoExecution({ execute: async () => { signals.push('body'); return 'ok'; } });
+  const tool = api.withVideoExecution({ execute: async () => { signals.push('body'); return 'ok'; } }, undefined, report);
   assert.equal(signals.length, 0, 'registration and approval do not emit execution');
   assert.equal(await tool.execute({}, exec), 'ok');
   assert.deepEqual(signals, ['body', ['test', 'end']]);
   signals.length = 0;
   const failure = new Error('failed before task creation');
-  const failed = context.withVideoExecution({ execute: async () => { throw failure; } });
+  const failed = api.withVideoExecution({ execute: async () => { throw failure; } }, undefined, report);
   await assert.rejects(failed.execute({}, exec), error => error === failure);
   assert.deepEqual(signals, [['test', 'end']]);
 });
 
 test('estimated progress follows video duration and waits for actual success', () => {
   const context = vm.createContext({});
-  vm.runInContext(extract('estimatedVideoWait') + '\n' + extract('estimatedVideoProgress'), context);
+  Object.assign(context, {estimatedVideoWait: api.estimatedVideoWait, estimatedVideoProgress: api.estimatedVideoProgress});
   for (const [duration, wait] of [[5, 120], [10, 135], [15, 150], [30, 195]]) {
     assert.equal(context.estimatedVideoWait(duration), wait);
-    assert.equal(context.estimatedVideoProgress(wait / 2, false, duration), 50);
-    assert.equal(context.estimatedVideoProgress(wait, false, duration), 99);
-    assert.equal(context.estimatedVideoProgress(wait * 2, false, duration), 99);
-    assert.equal(context.estimatedVideoProgress(1, true, duration), 100);
+    assert.equal(context.estimatedVideoProgress(wait / 2, duration), 50);
+    assert.equal(context.estimatedVideoProgress(wait, duration), 99);
+    assert.equal(context.estimatedVideoProgress(wait * 2, duration), 99);
+
   }
   for (const duration of [undefined, '', 0, -1, 'bad', Infinity]) {
     assert.equal(context.estimatedVideoWait(duration), 180);
@@ -126,7 +116,7 @@ test('estimated progress follows video duration and waits for actual success', (
 
 test('outside progress tracks active nested calls without relying on expanded tool cards', () => {
   const context = vm.createContext({ Set });
-  vm.runInContext(extract('activeVideoCalls'), context);
+  Object.assign(context, { activeVideoCalls: api.activeVideoCalls });
   const running = { callId: 'video-1', name: 'video_generate', args: { duration: 15 }, subCalls: [] };
   const root = { callId: 'dispatch', name: 'parallel', subCalls: [running] };
   const chat = { order: ['tool'], nodes: new Map([['tool', { kind: 'tool-call', data: { root } }]]) };
@@ -146,7 +136,7 @@ test('outside progress dock is visible only while the current session has active
     h: (tag, props, ...children) => ({ tag, props, children }),
     VideoTaskProgress() {},
   });
-  vm.runInContext(extract('activeVideoCalls') + '\n' + extract('VideoProgressDock'), context);
+  Object.assign(context, api.createVideoProgress({ ...context, React: {}, TOKENS: {} }));
   const running = { phase: 'start', callId: 'video-2', name: 'video_extend', subCalls: [] };
   const chat = { order: ['tool'], nodes: new Map([['tool', { kind: 'tool-call', data: { root: running } }]]) };
   const hooks = { useChat: selector => selector(chat), useVideoExecutions: selector => selector(new Map([['video-2', 1234]])) };
@@ -164,16 +154,25 @@ test('outside progress dock is visible only while the current session has active
 });
 
  test('generation signals stop before delivery and always clear on failure', async () => {
-  const host = readFileSync(new URL('../index.js', import.meta.url), 'utf8');
-  const start = host.indexOf('async function withGenerationProgress(');
-  const end = host.indexOf('\n}', start) + 2;
   const signals = [];
-  const context = vm.createContext({ appendVideoExecution: async (_exec, phase) => signals.push(phase) });
-  vm.runInContext(host.slice(start, end), context);
-  await context.withGenerationProgress({}, async () => signals.push('generation'));
+  const report = async (_exec, phase) => signals.push(phase);
+  await api.withGenerationProgress({}, async () => signals.push('generation'), report);
   signals.push('download', 'merge');
   assert.deepEqual(signals, ['start', 'generation', 'end', 'download', 'merge']);
   signals.length = 0;
-  await assert.rejects(context.withGenerationProgress({}, async () => { throw Error('stopped'); }));
+  await assert.rejects(api.withGenerationProgress({}, async () => { throw Error('stopped'); }, report));
   assert.deepEqual(signals, ['start', 'end']);
  });
+
+test('tool results route to media while progress is restricted to unfinished video calls', () => {
+ const h=(tag,props)=>({tag,props});
+ const MediaPreview=()=>{};const VideoTaskProgress=()=>{};
+ const {ToolResultView}=api.createToolResultView({h,MediaPreview,VideoTaskProgress});
+ for(const toolName of ['video_generate','video_extend','video_status','video_prepare_image']) {
+  const result=ToolResultView({toolName,block:{kind:'result'}});
+  assert.equal(result.tag,MediaPreview);
+  const running=ToolResultView({toolName,block:{phase:'start'}});
+  if(['video_generate','video_extend'].includes(toolName))assert.equal(running.tag,VideoTaskProgress);
+  else assert.equal(running,null);
+ }
+});

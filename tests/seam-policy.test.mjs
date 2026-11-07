@@ -1,8 +1,8 @@
-import { readFileSync } from 'node:fs';
+import { sourceOf } from './source.mjs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-const source = readFileSync(new URL('../index.js', import.meta.url), 'utf8');
+const source = sourceOf('media/merge');
 function harness() {
   const commands = [];
   const ctx = vm.createContext({
@@ -13,8 +13,9 @@ function harness() {
     uniqueSuffix: x => x, resolveBinary: () => 'ffmpeg', cleanupSegmentTemps: async () => {}, tail: String,
     runProcess: async (_bin, args) => { commands.push(args); return { code: 0 }; },
   });
-  const start = source.indexOf('async function prepareSeamTrims(');
-  vm.runInContext(source.slice(start, source.indexOf('\n}', start) + 2), ctx);
+  const cleanup = ctx.cleanupSegmentTemps;
+  vm.runInContext(source, ctx);
+  ctx.cleanupSegmentTemps = cleanup;
   return { ctx, commands };
 }
 test('model defaults, explicit disabling and manual overrides are distinct', async () => {

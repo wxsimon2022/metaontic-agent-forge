@@ -1,9 +1,10 @@
-import { readFileSync } from 'node:fs';
+import { sourceOf } from './source.mjs';
+import {api} from './module-test-api.mjs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-const source = readFileSync(new URL('../index.js', import.meta.url), 'utf8');
+
 function harness() {
   const resolved = [];
   const context = vm.createContext({
@@ -19,12 +20,11 @@ function harness() {
       return { url: value, source: 'test' };
     },
   });
-  for (const name of ['resolveResolution', 'isOmniExtendModel', 'validateImageRoles', 'buildGenerationBody']) {
-    const marker = name === 'buildGenerationBody' ? 'async function' : 'function';
-    const start = source.indexOf(`${marker} ${name}(`);
-    assert.ok(start >= 0, name);
-    vm.runInContext(source.slice(start, source.indexOf('\n}', start) + 2), context);
-  }
+  context.resolveResolution = api.resolveResolution;
+  context.isOmniExtendModel = api.isOmniExtendModel;
+  const mocks = {validateImageRoles: api.validateImageRoles, canvasSize: context.canvasSize, resolveImageInput: context.resolveImageInput};
+  vm.runInContext(sourceOf('media/references','providers/seedance'), context);
+  Object.assign(context,mocks);
   return { context, resolved };
 }
 
@@ -83,9 +83,7 @@ test('relay rejects an oversized inline-image body before sending any request', 
     resolveBaseUrl: () => 'https://example.com',
     fetch: async () => { fetchCalls++; throw new Error('unexpected network call'); },
   });
-  const start = source.indexOf('async function relayRequestCore(');
-  assert.ok(start >= 0);
-  vm.runInContext(source.slice(start, source.indexOf('\n}', start) + 2), context);
+  vm.runInContext(sourceOf('providers/transport'), context);
   const oversized = { content: [{ type: 'image_url', image_url: { url: 'x'.repeat(64 * 1024 * 1024) } }] };
   await assert.rejects(context.relayRequestCore({ connectionMode: 'service' }, '/doubao/api/v3/contents/generations/tasks', {
     method: 'POST', body: oversized,

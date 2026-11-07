@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { sourceOf } from './source.mjs';
 const c = vm.createContext({ URL });
-vm.runInContext(sourceOf('client/media-preview', 'workflow/media-preview'), c);
+vm.runInContext(sourceOf('workflow/result-state', 'client/media-preview', 'workflow/media-preview'), c);
 test('local media uses host route for macOS and Windows paths', () => {
   for (const path of ['/Users/测试/视频 1.mp4', 'C:\\项目\\视频 1.mp4']) {
     const url = new URL(c.localMediaUrl(path, 'https://host/app/'));
@@ -22,7 +22,8 @@ test('metadata projects only completed media and keeps merged film first', () =>
   ] };
   const meta = c.mediaPreviewMeta(value, 'video_generate');
   assert.equal(meta.media.length, 2);
-  assert.equal(meta.media[0].label, '完整视频');
+  assert.equal(meta.media[0].label, '已完成部分合并视频');
+  assert.equal(c.mediaPreviewMeta({ ...value, segments: value.segments.slice(0, 1) }, 'video_generate').media[0].label, '完整视频');
   assert.equal(meta.media[1].url, 'https://cdn/one.mp4');
   assert.doesNotMatch(JSON.stringify(meta), /secret|bad/);
   assert.equal(c.mediaPreviewMeta({ ...value, paused: true }, 'video_generate').media[0].label, '已完成部分合并视频');

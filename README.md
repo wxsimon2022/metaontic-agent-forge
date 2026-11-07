@@ -10,12 +10,12 @@ DeepSeek Harness 的 AI 视频创作插件。支持 Seedance 文生视频、图�
 
 1. 在 Harness「插件 → 添加插件」中粘贴下方在线安装链接。
 2. 打开插件设置，选择 **MetaOntic AI**，填写自己的 API密钥并保存。申请与配置步骤见[使用说明书](./MetaOnticVideo使用说明书.md)。
-3. 将会话模式切换为 **视频创作助手**，说明主题、时长、画幅和清晰度（480P / 720P）。
+3. 将会话模式切换为 **视频创作助手**，说明主题、时长、画幅和清晰度（480P / 720P）。未指定时长时，会在完善创意时一并询问15、30、45、60秒或自定义长度。
 
 在线安装链接：
 
 ```text
-https://gitee.com/hackloop/metaontic-video/releases/download/v3.18.1/metaontic-video-3.18.1.tgz
+https://gitee.com/hackloop/metaontic-video/releases/download/v3.19.0/metaontic-video-3.19.0.tgz
 ```
 
 ## 制作流程
@@ -40,6 +40,16 @@ https://gitee.com/hackloop/metaontic-video/releases/download/v3.18.1/metaontic-v
 ## 开发与发布
 
 [开发、热加载、验证和发布规范](./docs/engineering/development.md) · [维护经验](./docs/engineering/SKILL.md) · [双平台兼容规范](./docs/engineering/platform-compatibility.md)
+
+## v3.19.0 更新内容
+
+### 新增
+
+- 完善创意时一并确认时长，支持15/30/45/60秒及自定义。
+
+### 优化
+
+- 沿用已明确规格，完善不偏离原意；减少重复确认，改稿重试生效，续拍不缩时，确认异常停止调用，合并失败保留成片，恢复异常进度时明确提示。
 
 ## v3.18.1 更新内容
 

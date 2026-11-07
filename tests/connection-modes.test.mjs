@@ -2,7 +2,8 @@ import { sourceOf } from './source.mjs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-const source = sourceOf('config', 'providers/connection', 'workflow/approval');
+import {api} from './module-test-api.mjs';
+const source = sourceOf('providers/connection', 'workflow/approval');
 function harness({ serviceAvailable = true } = {}) {
   const context = vm.createContext({ characterChoiceGate: async () => null,
     METAONTIC_BASE_URL: 'https://ai.bileego.com',
@@ -30,11 +31,11 @@ function harness({ serviceAvailable = true } = {}) {
     DEFAULT_REGISTER_TOKEN: 'metaontic-video-register-v1',
     PLUGIN_VERSION: '3.14.0',
   });
-  for (const name of ['resolveResolution', 'isVolcengine', 'isMetaontic', 'isManualKey', 'connectionLabel', 'resolveApiKey', 'resolveBaseUrl', 'resolveSubmitPath', 'resolveQueryPath', 'assertConfigured', 'remainingCostText', 'segmentContinueLine', 'planSummary', 'preflightGate']) {
-    const start = source.search(new RegExp(`(?:async )?function ${name}\\(`));
-    assert.ok(start >= 0, name);
-    vm.runInContext(source.slice(start, source.indexOf('\n}', start) + 2), context);
-  }
+  const mocks = {estimateArgsFor:context.estimateArgsFor, ffmpegConsentGate:context.ffmpegConsentGate};
+  context.RELAY_PRESET = context.relayPreset();
+  context.resolveResolution = api.resolveResolution;
+  vm.runInContext(source,context);
+  Object.assign(context,mocks);
   return context;
 }
 test('MetaOntic key is independent; relay routes match service and secrets do not fall back', () => {

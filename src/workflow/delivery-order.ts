@@ -1,3 +1,4 @@
+import { videoResultState } from './result-state.js';
 /** workflow/delivery-order：把「交付卡片只登记最终成片」从提示词要求升级成提交前的真实校验。 */
 import path from 'node:path';
 import { stat } from 'node:fs/promises';
@@ -58,8 +59,7 @@ export function createDeliveryOrderGuard() {
       group.merges.push({ path: distinct, size: await sizeOf(distinct) });
     }
     // 只有「整条视频生成完 + 本机合并成功」才算最终交付；暂停、待查、部分交付都不许登记卡片。
-    group.finished = value?.status === 'succeeded' && value?.merged === true
-      && value?.paused !== true && value?.partial !== true && !value?.pendingTaskId;
+    group.finished = videoResultState(value).canPresent && value?.merged === true;
   }
 
   function observe(session, event) {

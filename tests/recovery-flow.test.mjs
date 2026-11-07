@@ -111,7 +111,7 @@ for (const name of ['video_generate', 'video_extend']) {
 test('resume target cannot exceed 120 seconds even for 2.5', () => {
   const h = vm.createContext({ characterChoiceGate: async () => null, MAX_SEGMENTS: 10, MAX_TOTAL_SECONDS: 120, MIN_SECONDS: 4, MAX_SEGMENT_SECONDS: 15,
     sumStepSeconds: steps => steps.reduce((n, s) => n + s.seconds, 0) });
-  vm.runInContext(sourceOf('workflow/resume'), h);
+  vm.runInContext(sourceOf('workflow/result-state','workflow/resume'), h);
   const result = h.resumePlanFrom({ done: 1, cursor: 30, plan: [{ kind: 'generate', seconds: 30 }] }, { askedTotal: 300, segmentSeconds: 30 });
   assert.equal(result.total, 120);
   assert.equal(result.fullPlan.length, 4);

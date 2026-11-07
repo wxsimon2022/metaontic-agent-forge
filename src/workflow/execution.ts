@@ -26,13 +26,13 @@ export async function appendVideoExecution(exec, phase) {
 }
 
 /** 只包裹视频提交与等待生成，不能覆盖审批、图片处理、下载或合并。 */
-export async function withGenerationProgress(exec, operation) {
-  await appendVideoExecution(exec, 'start');
+export async function withGenerationProgress(exec, operation, report = appendVideoExecution) {
+  await report(exec, 'start');
   try { return await operation(); }
-  finally { await appendVideoExecution(exec, 'end'); }
+  finally { await report(exec, 'end'); }
 }
 
-export function withVideoExecution(tool, onResult = undefined) {
+export function withVideoExecution(tool, onResult = undefined, report = appendVideoExecution) {
   return {
     ...tool,
     async execute(args, exec) {
@@ -40,7 +40,7 @@ export function withVideoExecution(tool, onResult = undefined) {
       try {
         value = await tool.execute(args, exec);
       } finally {
-        await appendVideoExecution(exec, 'end');
+        await report(exec, 'end');
       }
       // 记下这次真实交付了哪些分段与成片：present 提交前要用它校验成片排第一。
       // 记录会顺手量一遍文件大小（改名后的交付副本只能靠大小认领），因此这里要等它完成。

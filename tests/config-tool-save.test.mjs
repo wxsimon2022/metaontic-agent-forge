@@ -1,8 +1,8 @@
-import { readFileSync } from 'node:fs';
+import { sourceOf } from './source.mjs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-const source = readFileSync(new URL('../index.js', import.meta.url), 'utf8');
+const source = sourceOf('tools/video-config');
 function harness() {
   const c = vm.createContext({
     SERVICE_MODE_AVAILABLE: true, VOLCENGINE_MODE_AVAILABLE: false,
@@ -13,8 +13,9 @@ function harness() {
     modelMaxSeconds: () => 15,
     configView: config => ({ stored: {}, effective: { connectionMode: config.connectionMode } }),
   });
-  const start = source.indexOf('function configTool(');
-  vm.runInContext(source.slice(start, source.indexOf('\n}', start) + 2), c);
+  const view = c.configView;
+  vm.runInContext(source, c);
+  c.configView = view;
   return c;
 }
 test('video_config reports the current configuration read-only', async () => {

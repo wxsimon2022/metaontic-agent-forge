@@ -39,7 +39,7 @@ async function fixture(run) {
     for(const observer of observers)await observer(exec.agent.session,{type:'assistant/message',data:{turn:1,message:{content:[{type:'text',text}]}}});
   }
   const project=tools.get('video_project');
-  async function prepare(subjectType='scenery'){return project.execute({action:'prepare',subjectType},exec);}
+  async function prepare(subjectType='scenery'){return project.execute({action:'prepare',subjectType,duration:spec.duration},exec);}
   async function review(id,extra={}){await show();return project.execute({action:'review',projectId:id,scriptPath:script,toolName:'video_generate',specification:spec,...extra},exec);}
   try {await run({dir,config,tools,exec,answers,spec,script,image,project,prepare,review,show,gate:x=>gate(x,()=>null),get asks(){return asks;},get posts(){return posts;}});}
   finally{dispose();globalThis.fetch=oldFetch;if(oldHome===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=oldHome;await rm(dir,{recursive:true,force:true});}
@@ -120,3 +120,27 @@ test('video-only prompt uses current preset projection; standard and unknown mod
   selected='another-preset';assert.equal(section.text(context),'');
   assert.equal(section.text({}),'');dispose();
 });
+
+test('missing duration stops preparation before character choice and blocks script review',()=>fixture(async h=>{
+ const p=await h.project.execute({action:'prepare',subjectType:'fixed_subject'},h.exec);
+ assert.equal(p.status,'pending');assert.equal(h.asks,1);assert.equal(h.posts,0);
+ await assert.rejects(h.review(p.projectId),/角色图|时长/);
+}));
+test('a prepared project must review the user-confirmed total duration',()=>fixture(async h=>{
+ const p=await h.prepare();await h.show();
+ await assert.rejects(h.project.execute({action:'review',projectId:p.projectId,scriptPath:h.script,toolName:'video_generate',specification:{...h.spec,duration:10}},h.exec),/确认的总时长/);
+}));
+
+test('initial generation cannot omit the confirmed duration and fall back to 15 seconds',()=>fixture(async h=>{
+ const p=await h.prepare();await h.review(p.projectId);const args={...h.spec,projectId:p.projectId};delete args.duration;
+ await assert.rejects(h.tools.get('video_generate').execute(args,h.exec),/已确认的视频时长/);assert.equal(h.posts,0);
+}));
+
+test('extension review rejects oversize seconds and accepts an explicit equal-length multisegment plan',()=>fixture(async h=>{
+ h.config.model='seedance-2.5';h.spec.duration=45;
+ const p=await h.prepare();
+ await assert.rejects(h.review(p.projectId,{toolName:'video_extend'}),/不会自动缩短/);
+ h.spec.duration=15;h.spec.segments=3;
+ assert.equal((await h.review(p.projectId,{toolName:'video_extend'})).status,'approved');
+ assert.equal(h.posts,0);
+}));

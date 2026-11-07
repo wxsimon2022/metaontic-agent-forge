@@ -23,7 +23,7 @@ for (const cumulative of [false, true]) for (const cuts of [false, true]) {
         hasFfmpeg: async () => true,
         probeMedia: async file => ({durationSeconds: file === originals[1] && cumulative ? 30 : 15}),
         CUMULATIVE_TOLERANCE_MIN_SECONDS: 1.5, CUMULATIVE_TOLERANCE_RATIO: 0.25,
-        formatSeconds: String,
+        formatSeconds: String, uniqueSuffix: value => value + Math.random().toString(36).slice(2),
         prepareSeamTrims: async (_config, files) => ({files, temps: [], cuts: cuts ? [{ index: 2, seconds: 0.5, tailSeconds: 0 }] : []}),
         cleanupSegmentTemps: async () => {},
         mergeClips: async (_config, files, out) => {
@@ -32,10 +32,9 @@ for (const cumulative of [false, true]) for (const cuts of [false, true]) {
           return {mode:'copy'};
         },
       });
-      // 从并发闸（mapLimit）开始切：downloadSegmentsAndMerge 依赖它，单切函数体会缺定义。
-      const start = source.indexOf('const SEGMENT_TASK_CONCURRENCY');
-      assert.ok(start > 0, '并发闸前的标记没找到');
-      vm.runInContext(source.slice(start), context);
+      const mocks = {prepareSeamTrims:context.prepareSeamTrims, mergeClips:context.mergeClips, cleanupSegmentTemps:context.cleanupSegmentTemps};
+      vm.runInContext(sourceOf('media/merge'), context);
+      Object.assign(context,mocks);
       const result = await context.downloadSegmentsAndMerge({ mergeMode: 'reencode', keepSegments: false, seamTrimSeconds: cuts ? '0.5' : '0' }, {
         segments: [{index:1,kind:'generate',seconds:15},{index:2,kind:'extend',seconds:15}],
         segmentsDir, outDir:dir, stamp:'test',

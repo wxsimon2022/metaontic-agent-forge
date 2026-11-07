@@ -1,16 +1,7 @@
-import { sourceOf } from './source.mjs';
+import { api } from './module-test-api.mjs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
-const source = sourceOf('connection-defaults', 'client/state', 'client/settings', 'client/updates');
-function extract(name) {
-  const start = source.search(new RegExp(`(?:async )?function ${name}\\(`));
-  assert.ok(start >= 0, name);
-  // Bundled functions end at the same indentation as their declaration.
-  const indent = source.slice(source.lastIndexOf('\n', start) + 1, start);
-  const end = source.indexOf('\n' + indent + '}', start);
-  return 'var context = globalThis;\n' + source.slice(start, end + indent.length + 2);
-}
+import {test} from 'node:test';
 function setup(fail = false, options = {}) {
   const state = { connectionMode: 'metaontic', apiKey: 'previous', deviceSecret: 'device', model: 'model', ...(options.state || {}) };
   const events = []; let calls = 0;
@@ -29,8 +20,9 @@ function setup(fail = false, options = {}) {
     settingsError: e => e?.message || String(e), t: (key, args) => args ? `${key}: ${args.message}` : key,
     loadQuota: async () => {}, loadUsage: async () => {},
   });
-  vm.runInContext(sourceOf('connection-defaults'), ctx);
-  for (const name of ['persistBatch', 'persistConnection', 'validateSettings', 'reset']) vm.runInContext(extract(name), ctx);
+  ctx.confirm = () => true;
+  Object.assign(ctx, api.createSettingsState({React: {}}));
+  Object.assign(ctx, api.createSettingsActions(ctx));
   return { ctx, state, events, calls: () => calls };
 }
 test('reset clears in one operation and preserves local identity if rejected', async () => {
@@ -55,7 +47,7 @@ test('wait controls show seconds, retain millisecond precision and preserve an e
     h: (tag, props, ...children) => ({ tag, props, children }),
     edit: (key, value) => { ctx.draft[key] = value; },
   });
-  vm.runInContext(extract('control'), ctx);
+  Object.assign(ctx, api.createSettingsActions(ctx));
   const field = { key: 'pollIntervalMs', kind: 'number' };
   let input = ctx.control(field); assert.equal(input.props.value, 5.5); assert.equal(input.props.min, 1);
   input.props.onChange({ target: { value: '1.125' } }); assert.equal(ctx.draft.pollIntervalMs, 1125);
@@ -65,8 +57,7 @@ test('wait controls show seconds, retain millisecond precision and preserve an e
 });
 test('update bell only appears for newer versions and names the available version', () => {
   const ctx = vm.createContext({ h: (tag, props, ...children) => ({ tag, props, children }) });
-  vm.runInContext(extract('isNewerVersion'), ctx);
-  vm.runInContext(extract('updateBell'), ctx);
+  Object.assign(ctx, api.createUpdates({h:ctx.h}));
   const t = (_key, args) => `New version ${args.version}`;
   assert.equal(ctx.updateBell(t, '3.2.2', '3.2.2'), null);
   assert.equal(ctx.updateBell(t, '3.2.1', '3.2.2'), null);
@@ -82,7 +73,7 @@ test('automatic update failures do not change page status; manual failures remai
     setUpdateStatus: value => events.push(value), setUpdateMessage: value => events.push(value),
     t: (_key, args) => args.message,
   });
-  vm.runInContext(extract('checkForUpdate'), ctx);
+  Object.assign(ctx, api.createUpdateActions(ctx));
   assert.equal(await ctx.checkForUpdate(true), '');
   assert.deepEqual(events, []);
   assert.equal(await ctx.checkForUpdate(false), '');
@@ -98,7 +89,7 @@ for (const available of ['gitee', 'github']) test(`${available} can supply versi
       throw new Error('unavailable');
     },
   });
-  for (const name of ['isNewerVersion', 'fetchRecentVersions', 'fetchLatestVersion']) vm.runInContext(extract(name), ctx);
+  Object.assign(ctx, api.createUpdates({h:ctx.h,fetchSource:ctx.fetchUpdateSource}));
   assert.equal(await Promise.race([ctx.fetchLatestVersion(), new Promise((_, reject) => setTimeout(() => reject(new Error('blocked by another source')), 100))]), '3.3.1');
 });
 test('all update sources failing rejects cleanly; an older successful source still works', async () => {
@@ -111,7 +102,7 @@ test('all update sources failing rejects cleanly; an older successful source sti
       throw new Error('offline');
     },
   });
-  for (const name of ['isNewerVersion', 'fetchRecentVersions', 'fetchLatestVersion']) vm.runInContext(extract(name), ctx);
+  Object.assign(ctx, api.createUpdates({h:ctx.h,fetchSource:ctx.fetchUpdateSource}));
   await assert.rejects(ctx.fetchLatestVersion(), /no published stable/);
   failed = false; assert.equal(await ctx.fetchLatestVersion(), '3.2.2');
 });
@@ -131,7 +122,7 @@ test('online updates report hot application, required restart and inactive insta
       updateConfirm: true, updateCommit: { current: '' }, updateLatest: '3.4.0', setUpdateLatest() {}, forgetUpdateCheck() {},
       t: key => key,
     });
-    vm.runInContext(extract('runOnlineUpdate'), ctx);
+    Object.assign(ctx, api.createUpdateActions(ctx));
     await ctx.runOnlineUpdate();
     assert.equal(states.at(-1), status, application);
     assert.equal(messages.at(-1), message, application);
@@ -147,7 +138,7 @@ test('first Save waits for background device synchronization instead of silently
   h.ctx.draft = { connectionMode: 'metaontic', metaonticApiKey: 'video-key' };
   h.ctx.same = (a,b) => a === b;
   h.ctx.form.getSnapshot = () => ({ value: { ...h.state } });
-  vm.runInContext(extract('save'), h.ctx);
+  Object.assign(h.ctx, api.createSettingsActions(h.ctx));
   const first = h.ctx.save();
   await h.ctx.save(); // double click while waiting cannot queue a second save
   assert.equal(h.calls(), 0);
@@ -166,7 +157,7 @@ test('save retains edits made while the write is in flight', async () => {
   h.ctx.form.getSnapshot = () => ({value:{...h.state}});
   h.ctx.form.mutate = () => new Promise(resolve => { release = resolve; });
   h.ctx.setDraft = update => { currentDraft = typeof update === 'function' ? update(currentDraft) : update; };
-  vm.runInContext(extract('save'), h.ctx);
+  Object.assign(h.ctx, api.createSettingsActions(h.ctx));
   const saving = h.ctx.save();
   currentDraft = {model:'edited-again',ratio:'16:9'};
   release(true); await saving;

@@ -1,3 +1,4 @@
+import { videoResultState } from './result-state.js';
 /** 仅投影已生成成果的媒体字段，供结果卡片使用；不把请求或完整配置送到客户端。 */
 const PREVIEW_TOOLS = new Set(['video_generate', 'video_extend', 'video_status', 'video_prepare_image']);
 export function mediaPreviewMeta(value, toolName) {
@@ -14,7 +15,7 @@ export function mediaPreviewMeta(value, toolName) {
   }
   if (toolName === 'video_prepare_image') add('image', '角色参考图', value?.localPath, value?.imageUrl);
   else {
-    if (value?.videoPath && value?.merged) add('video', value.paused || value.partial ? '已完成部分合并视频' : '完整视频', value.videoPath, '');
+    if (value?.videoPath && value?.merged) add('video', videoResultState(value).isFinal ? '完整视频' : '已完成部分合并视频', value.videoPath, '');
     const segments = (value?.segments || []).filter(s => s.status === 'succeeded');
     for (const segment of segments) add('video', `第${segment.index}段`, segment.localPath, segment.videoUrl);
     if (!segments.length && value?.status === 'succeeded') add('video', value.paused ? '本段视频' : '视频', value.previewPath || value.videoPath, value.videoUrl);

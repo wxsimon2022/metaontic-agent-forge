@@ -110,3 +110,14 @@ export function resolveTargetPlan(config, args) {
 export function sumStepSeconds(steps) {
   return (steps || []).reduce((sum, step) => sum + (Number(step?.seconds) || 0), 0);
 }
+
+/** 延长工具的duration是每段秒数，超上限必须明确拆段，不能静默压缩已审核时长。 */
+export function validateExtensionDuration(config, args) {
+  const value = args?.duration;
+  if (value !== undefined && (!Number.isInteger(value) || value < MIN_SECONDS || value > modelMaxSeconds(config))) {
+    throw new Error(`续拍duration是每段新增秒数，须为${MIN_SECONDS}–${modelMaxSeconds(config)}秒整数；更长时请用segments安排多段并重新审核，不会自动缩短。`);
+  }
+  if (args?.segments !== undefined && (!Number.isInteger(args.segments) || args.segments < 1 || args.segments > MAX_SEGMENTS)) {
+    throw new Error(`续拍segments须为1–${MAX_SEGMENTS}整数，请先确认完整分段计划。`);
+  }
+}

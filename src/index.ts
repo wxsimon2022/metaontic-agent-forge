@@ -53,7 +53,14 @@ export function apply(ctx: DshContext, config: any = {}) {
   const deliveryObserver = (ctx as any).on('session/event', deliveryOrder.observe);
   // 脚本落盘就是脚本设计阶段的真实终点：由插件收口，助手不必再补一次计时标记。
   const scriptObserver = (ctx as any).on('session/event', createScriptTracker().observe);
-  const register = (tool) => ctx.tools.register(withStageTiming(withMediaPreview(tool)));
+  let confirmationReady = false;
+  const register = (tool) => {
+    const guarded = !GATED_TOOLS.includes(tool.name) ? tool : { ...tool, async execute(args, exec) {
+      if (!confirmationReady) throw new Error('人工确认服务未就绪，已停止操作；请恢复插件确认能力后重试，未提交付费任务。');
+      return tool.execute(args, exec);
+    } };
+    return ctx.tools.register(withStageTiming(withMediaPreview(guarded)));
+  };
   const disposers = [
     ...(typeof segmentObserver === 'function' ? [segmentObserver] : []),
     ...(typeof storyboardObserver === 'function' ? [storyboardObserver] : []),
@@ -151,6 +158,7 @@ export function apply(ctx: DshContext, config: any = {}) {
         };
       }
     });
+    confirmationReady = true;
   } catch (error) {
     ctx.logger?.warn?.(
       `metaontic-video: 调用前的人工确认卡口注册失败：${error?.message || error}`,

@@ -1,5 +1,5 @@
 /** 浏览器端 updates：由入口注入宿主 React 与共享依赖。 */
-export function createUpdates({ h }: any) {
+export function createUpdates({ h, fetchSource }: any) {
 /** 「检查更新」的数据源：Gitee 镜像仓库（Gitee 的 API 带 CORS 头，浏览器半侧能直接读）。 */
     const PLUGIN_PACKAGE = 'metaontic-video';
     const UPDATE_SPEC = 'git+https://gitee.com/hackloop/metaontic-video.git';
@@ -69,7 +69,7 @@ export function createUpdates({ h }: any) {
         'https://api.github.com/repos/wxsimon2022/metaontic-video/releases?per_page=100',
       ];
       const results = await Promise.allSettled(urls.map(async url => {
-        const body = await (await fetchUpdateSource(url, 6000)).json();
+        const body = await (await (fetchSource || fetchUpdateSource)(url, 6000)).json();
         if (!Array.isArray(body)) throw new Error('invalid releases');
         return body.filter(r => !r.draft && !r.prerelease)
           .map(r => String(r.tag_name || '').replace(/^v/, ''))
