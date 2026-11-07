@@ -10,10 +10,10 @@ export function taskTool(liveConfig) {
   return {
     name: 'video_status',
     description:
-      '按任务 ID 查询 Seedance 视频任务（生成、延长与合并）的状态；'
-      + '任务完成（status 为 succeeded）时返回视频下载链接（约 24 小时内有效）。'
+      '按任务 ID 查询 Seedance 视频生成或延长任务（不查询本地下载与合并进度）的状态；'
+      + '任务完成（status 为 succeeded）时返回视频下载链接（有效期以上游为准）。'
       + 'video_generate / video_extend 返回 timeout 或某段 unknown（查询失败、任务已提交）时，'
-      + '用它们给出的 taskId 在这里继续等——unknown 只表示「没查到」，任务很可能还在生成，'
+      + '用它们给出的 taskId 在这里继续等——unknown 只表示「没查到」，任务的实际状态尚未确认，'
       + '不要因此重新提交同一段任务。A/B接入在任务成功后还会查询中转站最终结算；待结算或费用查询失败可用同一taskId补查，不重新生成。',
     parameters: {
       type: 'object',
@@ -44,10 +44,10 @@ export function taskTool(liveConfig) {
             {
               type: 'text',
               text: [
-                '视频任务已完成。',
+                '上游已确认这一段生成成功，并返回视频链接；此查询不执行下载或本地合并。',
                 `任务 ID：${taskId}`,
                 `模型：${model || '-'}`,
-                `视频链接（约 24 小时内有效）：${artifactLink('观看视频', '', videoUrl) || '（无）'}`,
+                `视频链接（有效期以上游为准，请及时保存）：${artifactLink('观看视频', '', videoUrl) || '（无）'}`,
                 '正文须保留上述可点击链接，有卡片也不能省略；查询不会重新生成视频。',
               ].join('\n'),
             },
@@ -62,7 +62,7 @@ export function taskTool(liveConfig) {
             {
               type: 'text',
               text: `任务 ${taskId} 这次没查到状态：${detail}。`
-                + '这不代表任务没有生成——稍后重试，或检查 API密钥 / 额度后再查一次，不要重新提交。',
+                + '尚不能判断任务是否生成成功。401/403请检查原渠道鉴权，限流或网络异常可稍后查询同一任务；不要重新提交。',
             },
           ];
         }

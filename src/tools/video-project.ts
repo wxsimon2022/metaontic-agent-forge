@@ -8,12 +8,13 @@ import { resumeDirOf } from '../workflow/resume.js';
 import { approvalPolicy } from '../workflow/approval.js';
 
 /** 真实用户答复只由宿主 userQuestions 获取，不接受助手提交 approved:true。 */
-export function projectTool(config, ctx, reviewGuard, generationProperties, extensionProperties) {
+export function projectTool(config, ctx, reviewGuard, generationProperties, extensionProperties, segmentReview = null) {
   return {
     name: 'video_project',
-    description: '需求阶段先prepare创建独立projectId并决定角色图路线，scenery仅用于无固定主体空镜，fixed_subject用于需要固定外形的人物/主体。角色图选择绑定项目不随提示词改变。脚本、分镜、逐段生成提示词及完整制作参数准备后，正文完整展示，再review弹唯一一次脚本审核；通过后直接调用对应生成工具，工具付费审批即开始制作确认，不另弹开始制作问题。改稿或参数改变须review，status只读取真实状态。不会生成或扣费。',
+    description: '需求阶段先prepare创建独立projectId并决定角色图路线，scenery仅用于无固定主体空镜，fixed_subject用于需要固定外形的人物/主体。角色图选择绑定项目不随提示词改变。脚本、分镜、逐段生成提示词及完整制作参数准备后，正文完整展示，再review弹本版脚本审核（同版已通过不重复，改稿需重审）；通过后直接调用对应生成工具，工具付费审批即开始制作确认，不另弹开始制作问题。改稿或参数改变须review，status只读取真实状态。每段完成后先展示视频，再调用review_segment并传resume弹结果确认窗；这不属于重复制作确认，禁止跳过。不会生成或扣费。',
     parameters: { type: 'object', properties: {
-      action: { type: 'string', enum: ['prepare', 'review', 'status'] }, projectId: { type: 'string' },
+      resume: { type: 'string', description: 'review_segment审核已完成分段，传原resumeDir；先正文展示视频，再调用本动作弹结果确认窗。' },
+      action: { type: 'string', enum: ['prepare', 'review', 'status', 'review_segment'] }, projectId: { type: 'string' },
       subjectType: { type: 'string', enum: ['fixed_subject', 'scenery', 'provided_images'] },
       resetCharacterChoice: { type: 'boolean', description: '仅用户明确改变角色图路线时传true' },
       toolName: { type: 'string', enum: ['video_generate', 'video_extend'] },
@@ -24,6 +25,10 @@ export function projectTool(config, ctx, reviewGuard, generationProperties, exte
     timeoutMs: 600000,
     isConcurrencySafe() { return false; },
     async execute(args, exec) {
+      if (args.action === 'review_segment') {
+        if (!segmentReview) throw new Error('结果审核服务不可用');
+        return segmentReview.review(args, exec);
+      }
       if (args.action === 'status') {
         const data = await readProject(args.projectId, exec);
         const current = data.approved && await scriptDigest(data.approved.scriptPath).catch(() => '') === data.approved.scriptHash

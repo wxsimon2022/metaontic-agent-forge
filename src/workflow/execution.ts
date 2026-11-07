@@ -25,11 +25,17 @@ export async function appendVideoExecution(exec, phase) {
   }
 }
 
+/** 只包裹视频提交与等待生成，不能覆盖审批、图片处理、下载或合并。 */
+export async function withGenerationProgress(exec, operation) {
+  await appendVideoExecution(exec, 'start');
+  try { return await operation(); }
+  finally { await appendVideoExecution(exec, 'end'); }
+}
+
 export function withVideoExecution(tool, onResult = undefined) {
   return {
     ...tool,
     async execute(args, exec) {
-      await appendVideoExecution(exec, 'start');
       let value;
       try {
         value = await tool.execute(args, exec);

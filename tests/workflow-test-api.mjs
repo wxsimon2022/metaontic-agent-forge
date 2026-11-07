@@ -11,6 +11,7 @@ await build({stdin:{contents:`
 import {videoTool} from './src/tools/video-generate.ts';
 import {extendTool} from './src/tools/video-extend.ts';
 import {withResumeLock} from './src/workflow/resume.ts';
+export {createSegmentReview,assertSegmentReviewed} from './src/workflow/segment-review.ts';
 export {projectTool} from './src/tools/video-project.ts';
 export {createStoryboardReviewGuard} from './src/workflow/storyboard-review.ts';
 export {assertProjectApproved,readProject,productionFingerprint} from './src/workflow/project.ts';

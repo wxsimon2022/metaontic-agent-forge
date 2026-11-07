@@ -7,7 +7,7 @@ import { appendRequestLog } from '../utils/logging.js';
 import { resumeHint } from './resume.js';
 
 /** 每段完成后的暂停提示：先交付这一段，等用户预览确认再 resume 下一段。 */
-export const SEGMENT_PAUSE_NOTE = '本段已完成：请先展示本次视频成果，让用户预览；用户确认继续后再用 resume 接着生成下一段。';
+export const SEGMENT_PAUSE_NOTE = '本段已完成：请先展示本次视频成果，让用户预览；正文展示后立即调用video_project(action:review_segment,resume:原resumeDir)弹出分段结果确认窗；通过后才用resume进入下一段费用审批，不以文字问句替代弹窗。';
 
 /**
  * 把一次 runTask 的最终结果写进分段列表：任务 ID、上游链接、失败原因，以及
@@ -51,7 +51,7 @@ export function absorbSegmentInterruption(failure, { segments, notes, message })
 }
 
 /**
- * 收尾说明：某一段落败时区分「确实失败」和「只是没查到」——后者任务已经提交、大概率还在生成，
+ * 收尾说明：某一段落败时区分「确实失败」和「只是没查到」——后者任务已经提交、实际状态尚未确认，
  * 必须把任务 ID 交出去让 video_status 事后补拉，而不是当成没生成。
  * 返回 true 表示没有任何可交付分段，调用方直接返回 result。
  */
@@ -63,14 +63,14 @@ export function describeIncompleteRun({ result, status, segments, notes, complet
     notes.push(
       `第 ${last.index ?? segments.length} 段的查询没拿到结果（${status}），但任务已提交：`
       + `${last.taskId || '（无任务 ID）'}。它可能仍在生成——用 video_status 按这个 ID 复查，`
-      + '拿到链接就能补上这一段，不用重新提交、不会重复扣费。',
+      + '取得成功状态和视频链接后可恢复下载，不重新提交该任务。',
     );
   } else {
     notes.push(`第 ${last.index ?? segments.length} 段没有成功（${status}）。`);
   }
   if (!completed.length) return true;
   notes.push(
-    `已把成功的 ${completed.length} 段（${deliveredSeconds} 秒）下载并合并交付，可作为残片使用。`,
+    `已有 ${completed.length} 段生成成功（计划时长共 ${deliveredSeconds} 秒）；下载和合并是否完成，以本次返回的文件路径及交付状态为准。`,
   );
   result.partial = true;
   return false;

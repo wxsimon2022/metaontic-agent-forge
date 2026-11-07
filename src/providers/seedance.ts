@@ -1,3 +1,4 @@
+import { withGenerationProgress } from '../workflow/execution.js';
 import { timedStage } from '../utils/timing.js';
 /** providers/seedance：从宿主入口拆出的独立职责模块。 */
 import { resolveModel, parseExtraParams, isOmniExtendModel, isVolcengine, snapshotConfig, resolveSubmitPath } from './connection.js';
@@ -132,29 +133,31 @@ export async function buildGenerationBody(config, args, seconds, options: { sign
 }
 
 /** 创建任务并等到结束；超时、取消、失败都归一化成同一形状。 */
-async function runTaskOnce(config, body, signal, progress: { taskId?: string; onCreated?: (taskId: string) => Promise<void>; scope?: string } = {}): Promise<TaskResult> {
-  const created = progress.taskId ? null : await guardedSubmit(config, resolveSubmitPath(config), body, signal, progress.scope);
-  const taskId = progress.taskId || extractTaskId(created);
-  await appendRequestLog({ event: 'task_created', taskId, model: body?.model, duration: body?.duration });
-  if (!taskId) throw new Error('创建任务失败：响应中缺少任务 ID。');
-  try {
-    await progress.onCreated?.(taskId);
-    const final = await timedStage('video_poll_wait', () => waitForCompletion(config, taskId, signal));
-    if (['succeeded', 'failed', 'cancelled'].includes(final.status)) await finishSubmission(config, resolveSubmitPath(config), body);
-    await appendRequestLog({ event: 'task_finished', taskId, status: final.status, errorCode: final.errorCode });
-    return { ...final, taskId };
-  } catch (failure) {
-    if (failure?.code === 'ABORTED') return { taskId, status: 'unknown', errorCode: 'waiting_stopped', error: `已停止等待，任务 ${taskId} 已提交，可能仍在生成。用 resume 或 video_status 查询已有任务，不要重新提交。` };
-    // 任务已经建好，这里只说明「查询没拿到结果」，不能说成「这一段没生成」：
-    // 标成 unknown 并保留 taskId，让结果能引导用 video_status 事后补拉。
-    return {
-      taskId,
-      status: 'unknown',
-      errorCode: failure?.code || 'provider_poll_error',
-      error: `任务已提交（${taskId}），但查询状态失败：${failure?.message || String(failure)}。`
-        + '任务可能仍在生成，可用 video_status 按这个 ID 再查，不要重复提交。',
-    };
-  }
+async function runTaskOnce(config, body, signal, progress: { taskId?: string; onCreated?: (taskId: string) => Promise<void>; scope?: string; exec?: any } = {}): Promise<TaskResult> {
+  return withGenerationProgress(progress.exec, async () => {
+    const created = progress.taskId ? null : await guardedSubmit(config, resolveSubmitPath(config), body, signal, progress.scope);
+    const taskId = progress.taskId || extractTaskId(created);
+    await appendRequestLog({ event: 'task_created', taskId, model: body?.model, duration: body?.duration });
+    if (!taskId) throw new Error('创建任务失败：响应中缺少任务 ID。');
+    try {
+      await progress.onCreated?.(taskId);
+      const final = await timedStage('video_poll_wait', () => waitForCompletion(config, taskId, signal));
+      if (['succeeded', 'failed', 'cancelled'].includes(final.status)) await finishSubmission(config, resolveSubmitPath(config), body);
+      await appendRequestLog({ event: 'task_finished', taskId, status: final.status, errorCode: final.errorCode });
+      return { ...final, taskId };
+    } catch (failure) {
+      if (failure?.code === 'ABORTED') return { taskId, status: 'unknown', errorCode: 'waiting_stopped', error: `已停止等待，任务 ${taskId} 已提交，可能仍在生成。用 resume 或 video_status 查询已有任务，不要重新提交。` };
+      // 任务已经建好，这里只说明「查询没拿到结果」，不能说成「这一段没生成」：
+      // 标成 unknown 并保留 taskId，让结果能引导用 video_status 事后补拉。
+      return {
+        taskId,
+        status: 'unknown',
+        errorCode: failure?.code || 'provider_poll_error',
+        error: `任务已提交（${taskId}），但查询状态失败：${failure?.message || String(failure)}。`
+          + '任务可能仍在生成，可用 video_status 按这个 ID 再查，不要重复提交。',
+      };
+    }
+  });
 }
 
 
@@ -188,6 +191,7 @@ export async function runTask(liveConfig, body, signal, progress: {
       const result = await runTaskOnce(config, state.convertedBody, signal, {
         taskId: state.retryTaskId,
         scope: progress.scope,
+        exec: progress.exec,
         onCreated: onCreated('retryTaskId'),
       });
       if (['succeeded', 'failed', 'cancelled'].includes(result.status)) { state.retryResult = result; await save(); }
@@ -209,6 +213,7 @@ export async function runTask(liveConfig, body, signal, progress: {
       final = await runTaskOnce(config, body, signal, {
         taskId: state.originalTaskId || progress.taskId,
         scope: progress.scope,
+        exec: progress.exec,
         onCreated: onCreated('originalTaskId'),
       });
     } catch (error) {

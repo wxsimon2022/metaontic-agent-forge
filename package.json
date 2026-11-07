@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.17.0",
+  "version": "3.18.0",
   "description": "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, image-to-video, text-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects with your own MetaOntic AI key.",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
@@ -97,12 +97,12 @@
   },
   "dependencies": {},
   "releaseNotes": {
-    "version": "3.17.0",
+    "version": "3.18.0",
     "prerelease": false,
-    "publishedAt": "2026-11-07T03:12:14.052Z",
+    "publishedAt": "2026-11-07T06:17:57.554Z",
     "items": [
-      "新增：项目审核记录与累计视频预览。",
-      "优化：角色图选择前置，合并制作确认，补齐分段费用；暂停仅预览新段；创作限制仅作用于视频创作助手；移除服务端接入及登录充值。"
+      "新增：图片与视频结果直接预览，支持图片放大和本地失效回退。",
+      "优化：恢复分段结果确认；视频进度仅在生成时显示；角色图选择优先直接文生视频。"
     ]
   }
 }

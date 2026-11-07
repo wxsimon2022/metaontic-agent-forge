@@ -1,3 +1,5 @@
+import { withMediaPreview } from './workflow/media-preview.js';
+import { createSegmentReview, assertSegmentReviewed } from './workflow/segment-review.js';
 import { isVideoDirector } from './prompts/scope.js';
 import { projectTool } from './tools/video-project.js';
 import { assertProjectApproved, withProjectApproval } from './workflow/project.js';
@@ -42,6 +44,8 @@ function asDisposer(value: unknown): (() => void) | undefined {
 export function apply(ctx: DshContext, config: any = {}) {
   // 可选服务的宿主对象（会话工作目录等），拿到就放进来
   const deps: Record<string, any> = {};
+  const segmentReview = createSegmentReview(ctx);
+  const segmentObserver = (ctx as any).on('session/event', segmentReview.observe);
   const storyboardReview = createStoryboardReviewGuard();
   const deliveryOrder = createDeliveryOrderGuard();
   const storyboardObserver = (ctx as any).on('session/event', storyboardReview.observe);
@@ -49,13 +53,14 @@ export function apply(ctx: DshContext, config: any = {}) {
   const deliveryObserver = (ctx as any).on('session/event', deliveryOrder.observe);
   // 脚本落盘就是脚本设计阶段的真实终点：由插件收口，助手不必再补一次计时标记。
   const scriptObserver = (ctx as any).on('session/event', createScriptTracker().observe);
-  const register = (tool) => ctx.tools.register(withStageTiming(tool));
+  const register = (tool) => ctx.tools.register(withStageTiming(withMediaPreview(tool)));
   const disposers = [
+    ...(typeof segmentObserver === 'function' ? [segmentObserver] : []),
     ...(typeof storyboardObserver === 'function' ? [storyboardObserver] : []),
     ...(typeof deliveryObserver === 'function' ? [deliveryObserver] : []),
     ...(typeof scriptObserver === 'function' ? [scriptObserver] : []),
     register(jsonSafeTool(stageTool())),
-    register(jsonSafeTool(projectTool(config, ctx, storyboardReview, videoTool(config, deps, ctx).parameters.properties, extendTool(config, deps, ctx).parameters.properties))),
+    register(jsonSafeTool(projectTool(config, ctx, storyboardReview, videoTool(config, deps, ctx).parameters.properties, extendTool(config, deps, ctx).parameters.properties, segmentReview))),
     register(jsonSafeTool(estimateTool(config))),
     register(jsonSafeTool(submissionTool(config))),
     register(jsonSafeTool(prepareImageTool(config))),
@@ -110,7 +115,7 @@ export function apply(ctx: DshContext, config: any = {}) {
       if (orderGate) return orderGate;
       if (!GATED_TOOLS.includes(exec.name)) return next();
       if (['video_generate', 'video_extend'].includes(exec.name)) {
-        try { await assertProjectApproved(config, exec, exec.arguments || {}); }
+        try { await assertSegmentReviewed(exec, exec.arguments || {}); await assertProjectApproved(config, exec, exec.arguments || {}); }
         catch (error) { return { kind: 'deny', reason: error?.message || String(error) }; }
       }
       try {

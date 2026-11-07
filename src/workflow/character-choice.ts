@@ -41,7 +41,7 @@ export async function characterChoiceGate(ctx, config, exec, args) {
         agent: exec.agent, signal: exec.signal, ...(exec.callId ? { wait: { callId: exec.callId } } : {}),
         questions: [{ id: 'metaontic_character_reference', header: '角色参考图',
           question: isVolcengine(config) ? '是否先准备角色参考图？当前火山直连不提供代生成图片通道，可使用你提供的角色图，或直接文生视频。' : '是否先生成角色参考图？图片调用单独计费，生成后先看图确认，再用于视频和后续续拍。',
-          multiSelect: false, options: [{ label: first, description: isVolcengine(config) ? '提供角色图并确认后再生成视频。' : '先生成并审核角色图，图片费用与视频分开。' }, { label: TEXT, description: '不生成角色图，按纯文生方案制作视频。' }] }],
+          multiSelect: false, options: [{ label: TEXT, description: '不生成角色图，按纯文生方案制作视频。' }, { label: first, description: isVolcengine(config) ? '提供角色图并确认后再生成视频。' : '先生成并审核角色图，图片费用与视频分开。' }] }],
       }));
       if (exec.signal?.aborted) return null;
       const answer = result?.answers?.find(item => item.id === 'metaontic_character_reference');

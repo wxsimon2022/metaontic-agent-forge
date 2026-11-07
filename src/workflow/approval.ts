@@ -75,9 +75,9 @@ function setupGate(ctx, exec) {
     reason: `人工确认：在 ${os} 上执行安装命令「${command}」。`,
     displayReason: {
       zh: `准备在这台电脑上装 ffmpeg：${command}（${os}）。`
-        + '点了「允许」才会执行，装完会自动接着把视频生成出来。',
+        + '点了「允许」才会执行，安装完成只验证工具；新生成仍需单独确认费用，已有任务按原进度恢复。',
       en: `About to install ffmpeg on this machine: ${command} (${os}). `
-        + 'It runs only after you allow it; the video generation continues right after.',
+        + 'It runs only after you allow it; installation only verifies the tool; new video generation requires separate cost confirmation, while existing tasks should resume their saved progress.',
     },
   };
 }
@@ -118,18 +118,18 @@ export async function ffmpegConsentGate(config, exec, args) {
   const sizes = allSteps.map((step) => `${step.seconds}s`).join(' + ');
   const binary = resolveBinary(config, 'ffmpegBinary', 'ffmpeg');
   const lines = [
-    `本机没有 ${binary}，这条成片是 ${allSteps.reduce((sum, step) => sum + step.seconds, 0)} 秒`
+    `本机没有 ${binary}，本次计划总时长是 ${allSteps.reduce((sum, step) => sum + step.seconds, 0)} 秒`
       + `（会拆成 ${allSteps.length} 段：${sizes}），没有 ffmpeg 就没法合并成一条，所以先停下来了，`
       + '还没有调用模型、没有产生费用。',
     '请在对话框里先和用户确认，不要自己绕过这一步：',
     `1) 问用户要不要现在装 ffmpeg —— 说清他的系统（${os}）和命令：${command}`,
-    '   （装好后重跑这次生成就会自动合并成一条，分段不用重新生成）。',
+    '   （装好后，已有任务用原resume重试下载或合并；尚未提交的新任务再确认生成费用）。',
     '2) 用户同意安装：调用 video_setup（install:true）——插件会执行上面的命令，'
       + '宿主会先把这条命令拿给用户确认；装完它会自己验证，成功后你按原 duration 重新调用 '
       + 'video_generate 继续生成即可（一般是先装包管理器：本机连 brew 都没有时，'
       + 'video_setup 会返回 nextStep，用 target:"package-manager" 再装一次）。',
     '3) 用户不想装、或者装不了：带 `merge:false` 重新调用 video_generate，'
-      + '插件就只生成并返回分段列表（每段链接 + 本地文件），这次不会再拦。',
+      + '插件就只生成并返回分段列表（每段上游链接，不下载本地文件），这次不会再拦。',
     '已经装过但不在默认位置的话，把绝对路径填进插件设置里的「ffmpeg 路径」也一样管用；'
       + '安装包自带 ffprobe，分段时长探测会一起解决。',
   ];
@@ -232,8 +232,8 @@ export async function preflightGate(ctx, config, exec) {
     resumeLead = {
       zh: `${line.zh}，${rest}。`,
       en: `${line.en}; about ${resumeSegment.remainingSeconds}s left in the whole video. `,
-      tailZh: '点「允许」继续往下做；点「拒绝」就先不继续，已经生成好的分段不用重做，之后随时能接着做（不用重头再来）。',
-      tailEn: ' Allow to continue; reject to stop here — the segments already generated are kept and you can continue later.',
+      tailZh: '点「允许」继续往下做；点「拒绝」就先不继续，已经生成好的分段不用重做，之后可用原进度恢复；上游链接过期且本地文件缺失时需先核对取件状态。',
+      tailEn: ' Allow to continue; reject to stop here — the segments already generated are kept and you can resume saved progress later if the local files or upstream results remain available.',
     };
   }
 

@@ -140,8 +140,8 @@ async function acquireResumeLock(dir, { toolName, callId, staleMs }) {
       const holder = await describeResumeLock(file);
       const minutes = staleMs ? Math.round(staleMs / 60000) : 0;
       throw Object.assign(new Error(
-        `这份暂停进度已经有一次「继续」在跑了${holder}，先别同时续做：两份请求会把剩下的段各提交一遍、`
-        + '重复扣费。等它跑完再用 resume（结果里会说完成片在哪）。'
+        `这份暂停进度已经有一次「继续」在跑了${holder}，本次续做已拦截，未新增生成任务。请等待现有调用完成，避免并发提交导致`
+        + '重复计费。之后按原 resume 恢复进度，文件位置以返回结果为准。'
         + (minutes
           ? `如果确认那一次已经中断了，等 ${minutes} 分钟锁会自动过期，也可以把 ${file} 删掉再试。`
           : `确认那一次已经中断了就删掉 ${file} 再试。`),
@@ -267,7 +267,7 @@ function pauseRecordAt({ stamp, prompt, fullPlan, done, cursor, lastVideoUrl, op
 /** 暂停后怎么接着做：这段说明会交到模型手里，正是「循环迭代」的续做入口。 */
 export function resumeHint(dir, remainingSeconds, toolName = 'video_generate') {
   return `要接着做就把 resume="${dir}" 再调一次 ${toolName}（prompt 可以省略，其余参数照旧）：`
-    + `插件会接着已经生成的分段继续，剩下的 ${remainingSeconds} 秒不用重头生成、不会重复扣费。`;
+    + `插件会接着已经生成的分段继续，已完成分段不重新生成；剩余 ${remainingSeconds} 秒仍需确认费用并计费。`;
 }
 
 /** Non-secret connection identity. Never copy API keys into progress files. */

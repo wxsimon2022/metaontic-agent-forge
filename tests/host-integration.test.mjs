@@ -28,7 +28,7 @@ function harness(config, directory) {
       };
       return install({ ...ctx, ...services });
     },
-    get(name) { return name === 'userQuestions' ? { ask: async () => ({answers:[{id:'script_review',selected:['脚本通过']}]}) } : undefined; },
+    get(name) { return name === 'userQuestions' ? { ask: async () => ({answers:[{id:'script_review',selected:['脚本通过']},{id:'segment_result_review',selected:['效果可以，继续下一段']}]}) } : undefined; },
     on(event, listener) { if (event === 'session/event') observers.push(listener); else gate = listener; return () => {}; },
   };
   const dispose = plugin.apply(ctx, config);
@@ -140,6 +140,13 @@ for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools sub
     assert.equal(record.done, 1);
     // 每段确认接在 resume 入口：点「继续」后、提交下一段前，由代码弹一次说得清的确认，
     // 而不是只靠提示词让模型自己问。
+    const unreviewed = await host.gate({ ...exec, name: 'video_generate', arguments: {resume:first.resumeDir,merge:false} });
+    assert.equal(unreviewed.kind,'deny');assert.match(unreviewed.reason,/结果审核/);
+    await assert.rejects(host.tools.get('video_generate').execute({resume:first.resumeDir,merge:false},exec),/结果审核/);
+    assert.equal(submissions.length,2);
+    await host.observe(exec.agent.session,{type:'assistant/message',data:{turn:2,message:{content:[{type:'text',text:`[观看第一段](<${first.segments[0].videoUrl}>)`}]}}});
+    const segmentReview=await host.tools.get('video_project').execute({action:'review_segment',resume:first.resumeDir},exec);
+    assert.equal(segmentReview.status,'approved');
     const resumeGate = await host.gate({
       name: 'video_generate',
       agent: exec.agent, arguments: { resume: first.resumeDir, merge: false },

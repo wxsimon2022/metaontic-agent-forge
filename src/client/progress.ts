@@ -1,5 +1,5 @@
 /** 浏览器端 progress：由入口注入宿主 React 与共享依赖。 */
-export function createVideoProgress({ React, h, TOKENS }: any) {
+export function createVideoProgress({ React, h, TOKENS, MediaPreview }: any) {
 function estimatedVideoWait(duration) {
       const seconds = Number(duration);
       // 5 秒视频约 120 秒，15 秒视频约 150 秒；其他时长按同一斜率估算。
@@ -26,7 +26,8 @@ function estimatedVideoWait(duration) {
         const timer = window.setInterval(tick, 1000);
         return () => window.clearInterval(timer);
       }, [done, callId, beganAt]);
-      if (!done && (block.phase !== 'start' || beganAt === undefined)) return null;
+      if (done) return MediaPreview ? h(MediaPreview, { block, toolName }) : null;
+      if (!['video_generate', 'video_extend'].includes(toolName) || block.phase !== 'start' || beganAt === undefined) return null;
       const failed = Boolean(block.isError || block.error);
       const status = done ? (failed ? '执行失败或已停止' : '本次任务已返回')
         : block.phase === 'preparing' ? '准备参数 / 等待授权' : '正在执行 · 等待生成结果';
@@ -37,7 +38,7 @@ function estimatedVideoWait(duration) {
       const estimatedWait = estimatedVideoWait(duration);
       const progress = estimatedVideoProgress(elapsed, succeeded, duration);
       const waitingDots = '.'.repeat((elapsed % 3) + 1);
-      const title = toolName === 'video_extend' ? '视频续拍' : toolName === 'video_status' ? '查询视频状态' : '视频生成';
+      const title = toolName === 'video_prepare_image' ? '图片生成' : toolName === 'video_extend' ? '视频续拍' : toolName === 'video_status' ? '查询视频状态' : '视频生成';
       return h('div', { className: `mov-task${!done ? ' mov-task-running' : ''}`, 'data-field': 'video-task-progress' }, [
         h('style', { key: 'style' }, `
           @keyframes mov-task-spin { to { transform: rotate(360deg); } }
@@ -80,8 +81,9 @@ function estimatedVideoWait(duration) {
             h('span', { key: 'live', className: 'mov-task-live', 'aria-hidden': true }),
             `${duration ? `目标 ${duration} 秒 · 预计等待约 ${Math.round(estimatedWait)} 秒 · ` : ''}${progress >= 99 ? '任务仍在等待结果，进度停在99%不表示失败。' : '任务处理中，完成后自动显示结果。'}请勿重复提交。`,
           ]) : null,
+        done && MediaPreview ? h(MediaPreview, { key: 'media', block, toolName }) : null,
         done && output ? h('details', { key: 'output', open: failed }, [
-          h('summary', { key: 'toggle', className: 'mov-task-note' }, failed ? '查看错误详情' : '查看视频结果与文件路径'),
+          h('summary', { key: 'toggle', className: 'mov-task-note' }, failed ? '查看错误详情' : '查看结果详情与文件路径'),
           h('pre', { key: 'text', className: 'mov-task-output' }, output),
         ]) : null,
       ]);
@@ -95,7 +97,7 @@ function estimatedVideoWait(duration) {
         if (!block) return;
         const done = 'kind' in block;
         const name = done ? block.call?.name : block.name;
-        if (!done && ['video_generate', 'video_extend', 'video_status'].includes(name)
+        if (!done && ['video_generate', 'video_extend'].includes(name)
           && !seen.has(block.callId)) {
           seen.add(block.callId);
           calls.push({ block, toolName: name, callId: block.callId });

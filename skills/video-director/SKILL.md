@@ -197,7 +197,7 @@ description: 仅视频创作助手模式或明确视频创作请求使用本技�
 
 ## 6. 生成
 
-- 调 `video_generate`：`duration` 设本任务总秒数（不超过当前模型单段上限时直出，超过后自动续拍合并；2.0为15秒、2.5为30秒），`ratio`、`resolution`、`generateAudio` 按脚本。
+- 调 `video_generate`：`duration` 设本任务总秒数（不超过当前模型单段上限时直出，超过后逐段确认续拍，全部完成后合并；2.0为15秒、2.5为30秒），`ratio`、`resolution`、`generateAudio` 按脚本。
 - 要固定人物长相：把参考图交给 `referenceImages`（用户上传的图片路径 / base64 / 公网 URL 都行），
   首帧、尾帧分别用 `firstFrameUrl`、`lastFrameUrl`，尾帧必须搭配首帧。
   当前接入方式都按数组顺序逐张提交：2.0 最多9张参考图，2.5最多30张；首尾帧模式与参考图模式互斥，不能同时传。
@@ -211,7 +211,7 @@ description: 仅视频创作助手模式或明确视频创作请求使用本技�
   **用户确认后用 resume 续做，不要重新创建生成任务**。用户点「拒绝」时结果里是 `paused: true` +
   `resumeDir` + `remainingSeconds`：先把已经生成的部分交付给他，等他说「继续」再把 `resumeDir`
   原样传给 `video_generate` 的 `resume` 参数接着做（前面几段不会重新生成、不重复扣费）。
-- **中途被停下来（用户点了停止 / 这一轮等超时）不等于白做**：已经生成好的段会被下载、合并、交付，
+- **中途被停下来（用户点了停止 / 这一轮等超时）不等于白做**：已经生成好的段会尝试下载并交付；是否合并以返回结果为准，
   结果是 `paused: true` + 成片 + `resumeDir`，别把前面几段丢掉重来；等用户说「继续」，把 `resumeDir`
   原样传给 `resume` 接着做（已生成的部分不重新提交、不重复扣费）。
 - 往已有视频上接长（`video_extend`）连着延长多段时，同样是**逐段交付预览、确认续做 + 本地合并成一条成片**，
@@ -232,7 +232,7 @@ description: 仅视频创作助手模式或明确视频创作请求使用本技�
 ### 每段预览的交付门槛
 
 结果 paused=true 时，先在正文用可点击链接展示 previewPath（本次新段），必要时另展示累计 videoPath；不要调用 `present`，卡片只登记最终成片。
-然后问“先看这段，效果可以吗？确认后再继续下一段。”并结束本轮等待用户回复。
+正文展示后立即单独调用video_project(action:review_segment,resume:原resumeDir)弹出结果确认窗；不能只用正文问句后结束回合。未回答、取消或拒绝不提交下一段。
 只报告成功、任务ID或普通文本路径不能代替视频展示；给不出链接时提供可点击的本地文件路径。
 首次制作同意不能当作后续预览确认，不自动resume或另建生成任务跳过预览。
 
@@ -317,10 +317,12 @@ ffmpeg -y -f concat -safe 0 -i clips/concat.txt \
 
 最初角色图持续参考：每段续拍携带上一段视频与同一套最初已审核角色图；characterReferenceImages可明确指定，未指定时沿用首段referenceImages或首帧，首帧在续拍中改作reference_image而不是first_frame。角色图归一化后随断点保存，不使用后续段落截图替代初始角色，不自动重画；无初始图片时仍为纯视频续拍，不虚构角色参考图。真人限制须先获转换同意、展示审核，再单次视频重试；成功后复用已审核转换图。原已提交任务保留originalBody，不因加图而重新提交。
 
-纯文生视频角色图选择：有需要固定外形的人物/主体且未提供图片时，在需求阶段用video_project(action:prepare)询问“是否先生成角色参考图？图片调用单独计费，生成后先看图确认。”两个选项为“先生成角色图（单独计费）/直接文生视频”。本次已明确同意或拒绝则记录到项目，不重复问；未答/取消/pending不表示同意，不调用图片或视频。用户拒绝时保留纯文生方案，不自动加图；没有固定主体的空镜不强加角色。用户同意后先明确外形与画面风格，依次提供真人写实（第一位）、二维动画、卡通、插画；必须按用户选择执行，调用video_prepare_image(operation:create_character,prompt:角色设定,style:已确认风格,characterType:真人写实选realistic其余选stylized)，默认一次一张，不需要原图。记录taskId/imageUrl；超时查询原taskId，不重发；失败或不满意先停止，重画先确认新增费用。结果在正文内嵌并给原图链接，单独询问“这张角色图可以用于接下来的视频吗？”，待明确认可后，将imageUrl同时写入video_generate.referenceImages和characterReferenceImages。再展示含角色图、脚本、分镜与费用预估的本版材料并审核，最后由视频工具审批确认制作。脚本末尾注明角色图单独计费且不包含在视频估价中；项目记录角色图选择、任务及审核状态，恢复后不重复出图或重复问已确认选择。火山直连无此图片通道时先说明限制，可让用户提供角色图，不谎称可代画。
+纯文生视频角色图选择：有需要固定外形的人物/主体且未提供图片时，在需求阶段用video_project(action:prepare)询问“是否先生成角色参考图？图片调用单独计费，生成后先看图确认。”两个选项为“直接文生视频/先生成角色图（单独计费）”。本次已明确同意或拒绝则记录到项目，不重复问；未答/取消/pending不表示同意，不调用图片或视频。用户拒绝时保留纯文生方案，不自动加图；没有固定主体的空镜不强加角色。用户同意后先明确外形与画面风格，依次提供真人写实（第一位）、二维动画、卡通、插画；必须按用户选择执行，调用video_prepare_image(operation:create_character,prompt:角色设定,style:已确认风格,characterType:真人写实选realistic其余选stylized)，默认一次一张，不需要原图。记录taskId/imageUrl；超时查询原taskId，不重发；失败或不满意先停止，重画先确认新增费用。结果在正文内嵌并给原图链接，单独询问“这张角色图可以用于接下来的视频吗？”，待明确认可后，将imageUrl同时写入video_generate.referenceImages和characterReferenceImages。再展示含角色图、脚本、分镜与费用预估的本版材料并审核，最后由视频工具审批确认制作。脚本末尾注明角色图单独计费且不包含在视频估价中；项目记录角色图选择、任务及审核状态，恢复后不重复出图或重复问已确认选择。火山直连无此图片通道时先说明限制，可让用户提供角色图，不谎称可代画。
 
 角色图选择由video_project(action:prepare)提前取得；以projectId持久化，修改提示词/时长/清晰度不重复问。提交入口只核验已有选择；新项目重新prepare。需求阶段先调用video_project(action:prepare)：固定外形主体选fixed_subject，无固定主体空镜选scenery，已有参考图选provided_images；新创作必须创建新projectId，同项目改稿沿用ID。角色图选择在prepare内完成，不在提交视频时临时询问，也不另弹重复问题。脚本、分镜和逐段执行提示词全部准备后，完整展示当前版脚本正文、费用预估和内嵌分镜图，再调用video_project(action:review,projectId,scriptPath,toolName,specification)。specification须与随后生成参数完整一致，含prompt、segmentPrompts、duration、ratio、resolution及参考素材。只有工具返回approved才可调用对应video_generate/video_extend并带projectId；生成工具自带的付费审批即第二道制作确认，不另用ask_user_question询问开始制作。未答、取消、拒绝不算通过。审核后不改写script.md状态或时间戳，审核状态以video_project(action:status)为准；脚本、生成参数或接入配置变化须重审。
 
 角色图真人写实仅用于create_character，characterType=realistic；建议顺序真人写实第一，其后二维动画、卡通、插画。未指定类型保持原stylized行为，不能推断用户同意写实。真人限制转换仍必须非真人，不改变审核/单次重试规则；写实出图被拒就停止并如实报错，不自动去图、换风格、重画或重提视频，另选风格需用户同意及重新费用确认。
 
 暂停默认只下载并展示新段，完整计划结束后再合并；明确需要累计预览时仅传原resume和cumulativePreview:true，只做已有视频交付，不生成下一段。
+
+状态文案按工具证据区分：上游生成成功不等于下载、合并或交付完成；查询失败/超时不推断任务终态。暂停先给本段预览并审核，不能说默认正在合并。已有分段不重生成，新增剩余分段仍计费；上游链接有效期由渠道决定，不保证24小时。401称鉴权异常，不称密钥抖动；后来成功查询后进度只报告当前确认结果。视频进度提示只用于生成/续拍等待，其他阶段禁止使用。

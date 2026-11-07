@@ -1,3 +1,4 @@
+import { createMediaPreview } from './client/media-preview.js';
 /** Harness 浏览器入口：装配设置页、进度视图和宿主服务。 */
 import { createTheme } from './client/theme.js';
 import { createVideoProgress } from './client/progress.js';
@@ -20,7 +21,8 @@ window.__ModuleLoader__.load({
     const React = require('react');
     const h = React.createElement;
     const { TOKENS, inputStyle, PAGE_CSS } = createTheme();
-    const { videoExecutionSource, VideoTaskProgress, VideoProgressDock } = createVideoProgress({ React, h, TOKENS });
+    const { MediaPreview } = createMediaPreview({ React, h });
+    const { videoExecutionSource, VideoTaskProgress, VideoProgressDock } = createVideoProgress({ React, h, TOKENS, MediaPreview });
     const { PLUGIN_OWNED_KEYS, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE } = createClientConfig();
     const { zh, en } = createDictionaries();
     const { useSnapshot, same, validateSettings, persistConnection, persistBatch } = createSettingsState({ React });
@@ -39,7 +41,7 @@ window.__ModuleLoader__.load({
         const t = ctx.locale.bind(NS);
         ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'metaontic-video: dictionaries');
         const form = ctx.configForms.get(NAMESPACE);
-        for (const tool of ['video_generate', 'video_extend', 'video_status']) {
+        for (const tool of ['video_generate', 'video_extend', 'video_status', 'video_prepare_image']) {
           ctx.effect(() => ctx.slots.inject('tool.call.toolview', () =>
             ctx.slots.register({ name: 'tool.call.toolview', key: tool, locale: NS }, VideoTaskProgress)),
           `metaontic-video: ${tool} progress`);

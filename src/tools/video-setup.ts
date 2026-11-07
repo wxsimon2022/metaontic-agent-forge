@@ -8,7 +8,7 @@ import { tail } from '../utils/files.js';
  * 存在的意义：长视频合并要 ffmpeg，而「在对话框里问一句要不要装」光靠模型没法落地
  * （模型不一定有终端工具、也不一定敢自己跑安装命令）。所以给一个工具：
  * 用户同意后由插件执行安装（install=true 会走审批卡口，让用户先看到完整命令），
- * 装完自己再验证一次，并告诉模型「现在重跑生成就会自动合并」。
+ * 安装完成验证工具；已有任务按原resume恢复，新任务仍须生成费用确认。
  */
 export function setupTool(config) {
   return {
@@ -150,7 +150,7 @@ export function setupTool(config) {
           ffmpegVersion: afterVersion,
           ffmpegPath: binary,
           output,
-          note: '装好了：直接重跑刚才那次生成就会自动合并成一条（分段不用重新生成）。',
+          note: '已验证ffmpeg可用。已有任务用原resume重试下载或合并；尚未提交的新任务仍需单独确认生成费用。',
         };
       }
 
@@ -164,7 +164,7 @@ export function setupTool(config) {
           ffmpegPath: found,
           output,
           note: `装好了，但没进 PATH：把 ${found} 填进插件设置里的「ffmpeg 路径」`
-            + '（或者重开一个终端再重跑一次生成）。',
+            + '，保存后用原resume恢复已有任务。',
         };
       }
 

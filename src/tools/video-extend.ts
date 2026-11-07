@@ -29,12 +29,12 @@ export function extendTool(liveConfig, deps, ctx) {
       + '内容写清延长方向、剧情发展、主体状态、镜头运动和声音延续'
       + '（背景音乐要接着视频1结尾往下走，禁止从头播放/换曲），减少接缝。'
       + '每段 4 至模型上限（2.0 为 15、2.5 为 30） 秒，默认按所选模型上限拆、段数最少；上游对卡满 15 秒敏感时再调小。'
-      + '返回每段的任务 ID 和最终视频下载链接（约 24 小时内有效）；生成通常需要几分钟，'
+      + '返回每段的任务 ID 和最终视频下载链接（有效期以上游为准）；生成通常需要几分钟，'
       + '单次调用返回 timeout、或某段返回 unknown（查询失败、任务其实已提交）时，'
       + '都用返回的任务 ID 走 video_status 继续等，不要重复提交同一段。'
       + '每段延长完先返回成果供展示，用户预览并确认继续后再用resume续做；未确认时停在当前成果，'
       + '结果里带 paused=true、resumeDir、remainingSeconds；之后用户说「继续」时把 resumeDir '
-      + '原样传给 video_extend 的 resume 参数接着做（前面几段不重新生成、不重复扣费）。'
+      + '原样传给 video_extend 的 resume 参数接着做（前面几段不重新生成；新增剩余分段仍需确认费用并计费）。'
       + '多段默认会下载分段并在本机合并成一条成片（需要 ffmpeg）：没有 ffmpeg 时会先拦下来问用户，'
       + '结果里也会带 ffmpegMissing 与安装引导。'
       + '中途被停止 / 等超时同理：已经延长好的段先交付，剩下的用 resume 接着做。',
@@ -56,7 +56,7 @@ export function extendTool(liveConfig, deps, ctx) {
         taskId: {
           type: 'string',
           description:
-            '已有的 video_generate / video_extend 任务 ID，用它的成片作为输入素材。与 videoUrl 二选一。',
+            '已有的 video_generate / video_extend 任务 ID，用该上游任务返回的视频作为输入素材（不是本地合并成片）。与 videoUrl 二选一。',
         },
         duration: {
           type: 'integer',
@@ -64,7 +64,7 @@ export function extendTool(liveConfig, deps, ctx) {
           maximum: modelMaxSeconds(config),
           description:
             '每段新增的秒数上限，4 至模型上限（2.0 为 15、2.5 为 30） 的整数（如 5/8/10/14，默认按模型上限）；'
-            + '刚好卡 15 秒容易因封装略超被上游拒绝。省略时使用配置默认值。',
+            + '刚好卡 15 秒容易因封装略超被上游拒绝。省略时按当前模型单段上限规划。',
         },
         direction: {
           type: 'string',
@@ -127,7 +127,7 @@ export function extendTool(liveConfig, deps, ctx) {
             + 'prompt / videoUrl / direction 都可以省略。'
             + '想顺手多延长几段就再传 segments（表示在剩下的基础上「再加」几段）。'
             + '同一份暂停进度同时只允许一次 resume 在跑：已经有别的调用在续做时会直接报错，'
-            + '等它跑完再继续，别重复发（重复会把剩下的段提交两遍、重复扣费）。',
+            + '等它跑完再继续，别重复发（并发续做会被拦截；请勿绕过锁重复提交）。',
         },
       },
       required: [],
@@ -356,7 +356,7 @@ export function extendTool(liveConfig, deps, ctx) {
           segments,
           notes,
           message:
-            '这次调用被中断了（用户点了停止，或者等超时了）：已经延长好的部分会先下载、合并、交付，'
+            '这次调用被中断了（用户点了停止，或者等超时了）：已经延长好的部分会尝试下载并交付；是否合并以返回结果为准，'
             + '剩下的段不用重头再来——用 resume 就能接着做。',
         });
         interrupted = true;
@@ -413,7 +413,7 @@ export function extendTool(liveConfig, deps, ctx) {
         config, exec, interrupted, completed, segments, segmentsDir, outDir, stamp, notes, result, cumulativePreview: args.cumulativePreview === true,
         paused,
         remainingSeconds,
-        pauseNote: `已交付的成片是到第 ${segments.length} 段，分段仍保留在 ${segmentsDir}。`,
+        pauseNote: `本次累计预览包含已完成的 ${segments.length} 段，不是整条最终成片，分段仍保留在 ${segmentsDir}。`,
         toolName: TOOL_NAME,
       });
     },

@@ -119,7 +119,7 @@ MetaOntic AI 使用手填 API密钥。界面保存及video_config写入须原子
 
 最初角色图持续参考：每段续拍携带上一段视频与同一套最初已审核角色图；characterReferenceImages可明确指定，未指定时沿用首段referenceImages或首帧，首帧在续拍中改作reference_image而不是first_frame。角色图归一化后随断点保存，不使用后续段落截图替代初始角色，不自动重画；无初始图片时仍为纯视频续拍，不虚构角色参考图。真人限制须先获转换同意、展示审核，再单次视频重试；成功后复用已审核转换图。原已提交任务保留originalBody，不因加图而重新提交。
 
-纯文生视频角色图选择：有需要固定外形的人物/主体且未提供图片时，在需求阶段通过video_project(action:prepare)询问“是否先生成角色参考图？图片调用单独计费，生成后先看图确认。”两个选项为“先生成角色图（单独计费）/直接文生视频”。本次已明确同意或拒绝则记录到项目，不重复问；未答/取消/pending不表示同意，不调用图片或视频。用户拒绝时保留纯文生方案，不自动加图；没有固定主体的空镜不强加角色。用户同意后先明确外形与画面风格，依次提供真人写实（第一位）、二维动画、卡通、插画；必须按用户选择执行，调用video_prepare_image(operation:create_character,prompt:角色设定,style:已确认风格,characterType:真人写实选realistic其余选stylized)，默认一次一张，不需要原图。记录taskId/imageUrl；超时查询原taskId，不重发；失败或不满意先停止，重画先确认新增费用。结果在正文内嵌并给原图链接，单独询问“这张角色图可以用于接下来的视频吗？”，待明确认可后，将imageUrl同时写入video_generate.referenceImages和characterReferenceImages。再展示含角色图、脚本、分镜与费用预估的本版材料并审核，最后由视频工具付费审批确认制作。脚本末尾注明角色图单独计费且不包含在视频估价中；项目记录角色图选择、任务及审核状态，恢复后不重复出图或重复问已确认选择。火山直连无此图片通道时先说明限制，可让用户提供角色图，不谎称可代画。
+纯文生视频角色图选择：有需要固定外形的人物/主体且未提供图片时，在需求阶段通过video_project(action:prepare)询问“是否先生成角色参考图？图片调用单独计费，生成后先看图确认。”两个选项为“直接文生视频/先生成角色图（单独计费）”。本次已明确同意或拒绝则记录到项目，不重复问；未答/取消/pending不表示同意，不调用图片或视频。用户拒绝时保留纯文生方案，不自动加图；没有固定主体的空镜不强加角色。用户同意后先明确外形与画面风格，依次提供真人写实（第一位）、二维动画、卡通、插画；必须按用户选择执行，调用video_prepare_image(operation:create_character,prompt:角色设定,style:已确认风格,characterType:真人写实选realistic其余选stylized)，默认一次一张，不需要原图。记录taskId/imageUrl；超时查询原taskId，不重发；失败或不满意先停止，重画先确认新增费用。结果在正文内嵌并给原图链接，单独询问“这张角色图可以用于接下来的视频吗？”，待明确认可后，将imageUrl同时写入video_generate.referenceImages和characterReferenceImages。再展示含角色图、脚本、分镜与费用预估的本版材料并审核，最后由视频工具付费审批确认制作。脚本末尾注明角色图单独计费且不包含在视频估价中；项目记录角色图选择、任务及审核状态，恢复后不重复出图或重复问已确认选择。火山直连无此图片通道时先说明限制，可让用户提供角色图，不谎称可代画。
 
 安装稳定性：宿主入口必须内置schemastery及运行依赖（仅开发依赖），成品不依赖外部node_modules；同步第三方MIT声明。发布前把index.js复制到无依赖空目录导入并校验Config/工具，用实际Harness Schema解析器验证。卸载重装后若仍指本地路径，核对HMR覆盖；仅改本插件HMR目标为已安装目录，保留 API密钥与其他配置，工作区外修改走系统权限。
 
@@ -147,3 +147,11 @@ Windows解压目录安装在更新时出现空目录/locale缺失：先核对成
 插件已移除服务端登录接入、账户额度、钱包及充值逻辑。默认 MetaOntic AI，火山已有配置仍支持；独立服务端仓库保留。旧服务端凭据仅供清理，不迁移为其他渠道密钥。
 
 项目流程由video_project管理，review通过后生成工具付费审批即制作确认，不再另问开始制作；正文完整展示脚本并内嵌分镜才允许审核。状态绑定项目、脚本摘要和制作参数，改稿重审，审核后不再改script.md状态。分段暂停默认只交付新段，最终合并；resume+cumulativePreview:true只交付已有累计视频，不生成、不改变deliveryPending。动态创作提示词仅在当前agentPresets.presetForSession为video-director时注入，标准模式返回空串，不能由历史header覆盖当前标准选择。
+
+分段结果审核不得并入或省略：paused返回后，助手先正文展示最新分段可点击链接，再立即调用video_project(action:review_segment,resume:原目录)；只在独立工具中用userQuestions弹窗，不能在生成循环里等待。续做入口和执行前校验segment-review.json中的会话/完成段数/末段taskId；未答、取消、拒绝均不放行，下一段必须新审。原任务查询、交付恢复及累计预览不新增任务则跳过，重载可复用已通过记录。Windows/macOS均用node:path和原子写入，Windows占用失败保留原文件并报错；已跑自动模拟，未跑付费与双平台桌面实测。
+
+媒体预览使用output.presentationMeta投影成果字段，客户端读取block.meta.metaonticMedia；不投影请求、配置或密钥。本地媒体走宿主鉴权api/file，支持Windows盘符和macOS绝对路径，禁止file://及UNC；加载失败回退上游URL，保留正文原文件链接。预览不登记present、不改变交付顺序。
+
+视频进度仅由providers/seedance.runTaskOnce的withGenerationProgress发起，结束等待即清除，不能由整个工具execute发起。外层只做finally清理与交付登记。客户端仅允许generate/extend运行时显示，完成结果只保留媒体预览；status和image不得显示视频进度。
+
+文案按真实阶段陈述：上游成功及链接→本段生成成功，本地文件→下载完成，真实合并结果→合并完成，正文逐项链接→已交付。下载前不写已合并交付；暂停文件不称整条成片。查询失败只称状态未确认；续做复用已完成分段，新增分段仍计费；merge:false只给上游链接，无本地文件。不得保证上游链接24小时或建议因更新入口缺失直接卸载。

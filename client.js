@@ -1,4 +1,121 @@
 (() => {
+  // src/client/media-preview.ts
+  function localMediaUrl(file, base) {
+    if (typeof file !== "string" || /[\u0000-\u001f\u007f]/.test(file) || !/^(?:\/(?!\/)|[a-z]:[/\\])/i.test(file)) return "";
+    if (typeof base !== "string" || !/^https?:/i.test(base) && !base.startsWith("dsh-app://app/")) return "";
+    try {
+      return new URL(`api/file?path=${encodeURIComponent(file)}`, base).href;
+    } catch {
+      return "";
+    }
+  }
+  function remoteMediaUrl(value) {
+    try {
+      const url = new URL(String(value || ""));
+      return ["https:", "http:"].includes(url.protocol) && !url.username && !url.password ? url.href : "";
+    } catch {
+      return "";
+    }
+  }
+  function previewMediaFromBlock(block, toolName) {
+    if (!block || !("kind" in block) || block.isError) return [];
+    const projected = block.meta?.metaonticMedia;
+    if (projected?.version === 1 && Array.isArray(projected.media)) return projected.media.filter((item) => item && ["video", "image"].includes(item.kind)).slice(0, 40);
+    const text = (Array.isArray(block.content) ? block.content : []).filter((p) => p.type === "text").map((p) => p.text || "").join("\n");
+    const media = [], seen = /* @__PURE__ */ new Set();
+    for (const match of text.matchAll(/\[([^\]]*)\]\(\s*(?:<([^>]+)>|([^\s)]+))\s*\)/g)) {
+      const source = match[2] || match[3];
+      if (seen.has(source)) continue;
+      let kind = /\.(png|jpe?g|webp|gif|svg)(?:[?#]|$)/i.test(source) || /图片|参考图/.test(match[1]) || toolName === "video_prepare_image" ? "image" : /\.(mp4|webm|mov|m4v)(?:[?#]|$)/i.test(source) || /视频|第.*段/.test(match[1]) ? "video" : "";
+      if (!kind) continue;
+      seen.add(source);
+      let url = remoteMediaUrl(source);
+      let file = "";
+      if (!url) {
+        try {
+          file = decodeURI(source);
+        } catch {
+          continue;
+        }
+      }
+      media.push({ kind, label: match[1] || (kind === "image" ? "\u56FE\u7247" : "\u89C6\u9891"), ...url ? { url } : { localPath: file } });
+      if (media.length >= 40) break;
+    }
+    return media;
+  }
+  function createMediaPreview({ React, h }) {
+    function MediaItem({ item }) {
+      const sources = [...new Set([localMediaUrl(item.localPath, document.baseURI), remoteMediaUrl(item.url)].filter(Boolean))];
+      const signature = sources.join("\n");
+      const [index, setIndex] = React.useState(0);
+      const [failed, setFailed] = React.useState(false);
+      const [zoom, setZoom] = React.useState(false);
+      const dialog = React.useRef(null);
+      React.useEffect(() => {
+        setIndex(0);
+        setFailed(false);
+        setZoom(false);
+      }, [signature]);
+      React.useEffect(() => {
+        if (zoom && dialog.current && !dialog.current.open) dialog.current.showModal();
+      }, [zoom]);
+      const source = sources[index] || "";
+      const error = () => {
+        if (index + 1 < sources.length) setIndex(index + 1);
+        else setFailed(true);
+      };
+      const label = String(item.label || (item.kind === "image" ? "\u56FE\u7247" : "\u89C6\u9891"));
+      const media = !source || failed ? h("p", { role: "status", className: "mov-media-error" }, item.kind === "image" ? "\u56FE\u7247\u9884\u89C8\u65E0\u6CD5\u52A0\u8F7D\uFF0C\u6587\u4EF6\u53EF\u80FD\u5DF2\u79FB\u52A8\u6216\u94FE\u63A5\u5DF2\u8FC7\u671F\u3002\u8BF7\u5C1D\u8BD5\u6253\u5F00\u539F\u56FE\u3002" : "\u89C6\u9891\u9884\u89C8\u65E0\u6CD5\u64AD\u653E\uFF0C\u53EF\u80FD\u662F\u6587\u4EF6\u5DF2\u79FB\u52A8\u3001\u94FE\u63A5\u5DF2\u8FC7\u671F\u6216\u7F16\u7801\u4E0D\u53D7\u652F\u6301\u3002\u8BF7\u5C1D\u8BD5\u6253\u5F00\u539F\u89C6\u9891\u6216\u4E0B\u8F7D\u540E\u64AD\u653E\u3002") : item.kind === "image" ? h("button", { type: "button", className: "mov-media-image-button", onClick: () => setZoom(true), "aria-label": `\u653E\u5927${label}` }, h("img", { src: source, alt: label, loading: "lazy", onError: error, className: "mov-media-image", referrerPolicy: "no-referrer" })) : h("video", { key: source, src: source, controls: true, playsInline: true, preload: "metadata", onError: error, className: "mov-media-video", "aria-label": label, referrerPolicy: "no-referrer" });
+      return h("figure", { className: "mov-media-item", "data-media-kind": item.kind }, [
+        h("figcaption", { key: "caption", className: "mov-media-caption" }, label),
+        h("div", { key: "body", className: "mov-media-surface" }, media),
+        sources.length ? h("div", { key: "links", className: "mov-media-links" }, [
+          h("a", { key: "open", href: source || sources[0], target: "_blank", rel: "noopener noreferrer", referrerPolicy: "no-referrer" }, item.kind === "image" ? "\u6253\u5F00\u539F\u56FE" : "\u6253\u5F00\u539F\u89C6\u9891"),
+          item.localPath && remoteMediaUrl(item.url) ? h("a", { key: "remote", href: remoteMediaUrl(item.url), target: "_blank", rel: "noopener noreferrer", referrerPolicy: "no-referrer" }, "\u4E0A\u6E38\u94FE\u63A5") : null
+        ]) : null,
+        zoom && item.kind === "image" ? h("dialog", { key: "zoom", ref: dialog, className: "mov-media-dialog", "aria-label": label, onCancel: () => setZoom(false), onClose: () => setZoom(false), onClick: (e) => {
+          if (e.target === e.currentTarget) setZoom(false);
+        } }, [
+          h("button", { key: "close", type: "button", className: "mov-media-close", onClick: () => {
+            dialog.current?.close();
+            setZoom(false);
+          }, "aria-label": "\u5173\u95ED\u56FE\u7247\u9884\u89C8" }, "\u5173\u95ED"),
+          h("img", { key: "image", src: source, alt: label, className: "mov-media-zoom", referrerPolicy: "no-referrer", onError: error })
+        ]) : null
+      ]);
+    }
+    function MediaPreview({ block, toolName }) {
+      const items = previewMediaFromBlock(block, toolName);
+      const [expanded, setExpanded] = React.useState(false);
+      if (!items.length) return null;
+      const visible = expanded ? items : items.slice(0, 2);
+      return h("section", { className: "mov-media-preview", "aria-label": "\u751F\u6210\u7ED3\u679C\u9884\u89C8", "data-field": "media-preview" }, [
+        h("style", { key: "styles" }, `
+        .mov-media-preview{margin-top:12px;min-width:0;color:var(--dsw-alias-label-primary,inherit)}
+        .mov-media-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;min-width:0}
+        .mov-media-item{margin:0;min-width:0;border:1px solid var(--dsw-alias-border-l2,#dfe3eb);border-radius:10px;overflow:hidden}
+        .mov-media-caption{padding:8px 12px;font-size:13px;font-weight:600;overflow-wrap:anywhere}
+        .mov-media-surface{min-width:0;background:var(--dsw-specific-input-major,#f5f6f8)}
+        .mov-media-image-button{display:block;width:100%;padding:0;border:0;background:transparent;cursor:zoom-in}
+        .mov-media-image{display:block;width:100%;max-height:320px;object-fit:contain}
+        .mov-media-video{display:block;width:100%;max-height:420px;background:#10131a;object-fit:contain}
+        .mov-media-links{display:flex;gap:16px;flex-wrap:wrap;padding:8px 12px;font-size:12px}
+        .mov-media-links a{color:var(--dsw-alias-link,#247bbf);text-decoration:underline;overflow-wrap:anywhere}
+        .mov-media-error{margin:0;padding:18px 12px;font-size:12px;line-height:1.6;color:var(--dsw-alias-label-caption,#737b8b)}
+        .mov-media-more{margin-top:10px;border:1px solid var(--dsw-alias-border-l2,#dfe3eb);border-radius:6px;padding:6px 10px;background:transparent;color:inherit;cursor:pointer}
+        .mov-media-dialog{box-sizing:border-box;max-width:94vw;max-height:94vh;padding:42px 12px 12px;border:0;border-radius:12px;background:var(--dsw-alias-settings-card-fill,#fff);color:inherit}
+        .mov-media-dialog::backdrop{background:rgba(0,0,0,.7)}
+        .mov-media-zoom{display:block;max-width:calc(94vw - 24px);max-height:calc(94vh - 70px);object-fit:contain}
+        .mov-media-close{position:absolute;top:8px;right:10px;background:transparent;color:inherit;border:1px solid var(--dsw-alias-border-l2,#dfe3eb);border-radius:6px;padding:4px 10px;cursor:pointer}
+        .mov-media-image-button:focus-visible,.mov-media-more:focus-visible,.mov-media-close:focus-visible{outline:2px solid #247bbf;outline-offset:-2px}
+      `),
+        h("div", { key: "grid", className: "mov-media-grid" }, visible.map((item) => h(MediaItem, { key: `${item.kind}:${item.localPath || item.url}`, item }))),
+        items.length > 2 ? h("button", { key: "more", type: "button", className: "mov-media-more", onClick: () => setExpanded(!expanded), "aria-expanded": expanded }, expanded ? "\u6536\u8D77\u5176\u4ED6\u6210\u679C" : `\u5C55\u5F00\u5176\u4ED6\u6210\u679C\uFF08${items.length - 2}\uFF09`) : null
+      ]);
+    }
+    return { MediaPreview };
+  }
+
   // src/client/theme.ts
   function createTheme() {
     const TOKENS = {
@@ -149,7 +266,7 @@
   }
 
   // src/client/progress.ts
-  function createVideoProgress({ React, h, TOKENS }) {
+  function createVideoProgress({ React, h, TOKENS, MediaPreview }) {
     function estimatedVideoWait(duration) {
       const seconds = Number(duration);
       return Number.isFinite(seconds) && seconds > 0 ? 105 + seconds * 3 : 180;
@@ -171,7 +288,8 @@
         const timer = window.setInterval(tick, 1e3);
         return () => window.clearInterval(timer);
       }, [done, callId, beganAt]);
-      if (!done && (block.phase !== "start" || beganAt === void 0)) return null;
+      if (done) return MediaPreview ? h(MediaPreview, { block, toolName }) : null;
+      if (!["video_generate", "video_extend"].includes(toolName) || block.phase !== "start" || beganAt === void 0) return null;
       const failed = Boolean(block.isError || block.error);
       const status = done ? failed ? "\u6267\u884C\u5931\u8D25\u6216\u5DF2\u505C\u6B62" : "\u672C\u6B21\u4EFB\u52A1\u5DF2\u8FD4\u56DE" : block.phase === "preparing" ? "\u51C6\u5907\u53C2\u6570 / \u7B49\u5F85\u6388\u6743" : "\u6B63\u5728\u6267\u884C \xB7 \u7B49\u5F85\u751F\u6210\u7ED3\u679C";
       const output = Array.isArray(block.content) ? block.content.filter((part) => part.type === "text").map((part) => part.text).join("\n") : "";
@@ -180,7 +298,7 @@
       const estimatedWait = estimatedVideoWait(duration);
       const progress = estimatedVideoProgress(elapsed, succeeded, duration);
       const waitingDots = ".".repeat(elapsed % 3 + 1);
-      const title = toolName === "video_extend" ? "\u89C6\u9891\u7EED\u62CD" : toolName === "video_status" ? "\u67E5\u8BE2\u89C6\u9891\u72B6\u6001" : "\u89C6\u9891\u751F\u6210";
+      const title = toolName === "video_prepare_image" ? "\u56FE\u7247\u751F\u6210" : toolName === "video_extend" ? "\u89C6\u9891\u7EED\u62CD" : toolName === "video_status" ? "\u67E5\u8BE2\u89C6\u9891\u72B6\u6001" : "\u89C6\u9891\u751F\u6210";
       return h("div", { className: `mov-task${!done ? " mov-task-running" : ""}`, "data-field": "video-task-progress" }, [
         h("style", { key: "style" }, `
           @keyframes mov-task-spin { to { transform: rotate(360deg); } }
@@ -232,8 +350,9 @@
             `${duration ? `\u76EE\u6807 ${duration} \u79D2 \xB7 \u9884\u8BA1\u7B49\u5F85\u7EA6 ${Math.round(estimatedWait)} \u79D2 \xB7 ` : ""}${progress >= 99 ? "\u4EFB\u52A1\u4ECD\u5728\u7B49\u5F85\u7ED3\u679C\uFF0C\u8FDB\u5EA6\u505C\u572899%\u4E0D\u8868\u793A\u5931\u8D25\u3002" : "\u4EFB\u52A1\u5904\u7406\u4E2D\uFF0C\u5B8C\u6210\u540E\u81EA\u52A8\u663E\u793A\u7ED3\u679C\u3002"}\u8BF7\u52FF\u91CD\u590D\u63D0\u4EA4\u3002`
           ]
         ) : null,
+        done && MediaPreview ? h(MediaPreview, { key: "media", block, toolName }) : null,
         done && output ? h("details", { key: "output", open: failed }, [
-          h("summary", { key: "toggle", className: "mov-task-note" }, failed ? "\u67E5\u770B\u9519\u8BEF\u8BE6\u60C5" : "\u67E5\u770B\u89C6\u9891\u7ED3\u679C\u4E0E\u6587\u4EF6\u8DEF\u5F84"),
+          h("summary", { key: "toggle", className: "mov-task-note" }, failed ? "\u67E5\u770B\u9519\u8BEF\u8BE6\u60C5" : "\u67E5\u770B\u7ED3\u679C\u8BE6\u60C5\u4E0E\u6587\u4EF6\u8DEF\u5F84"),
           h("pre", { key: "text", className: "mov-task-output" }, output)
         ]) : null
       ]);
@@ -245,7 +364,7 @@
         if (!block) return;
         const done = "kind" in block;
         const name = done ? block.call?.name : block.name;
-        if (!done && ["video_generate", "video_extend", "video_status"].includes(name) && !seen.has(block.callId)) {
+        if (!done && ["video_generate", "video_extend"].includes(name) && !seen.has(block.callId)) {
           seen.add(block.callId);
           calls.push({ block, toolName: name, callId: block.callId });
         }
@@ -443,22 +562,22 @@
       panelHighlights: "\u4E3A\u4EC0\u4E48\u7528\u5B83",
       panelHighlight1Title: "\u65B0\u624B\u4E5F\u80FD\u4E0A\u624B",
       panelHighlight1Desc: "\u4E0D\u7528\u7814\u7A76\u63D0\u793A\u8BCD\uFF1A\u8BF4\u6E05\u521B\u610F\u3001\u65F6\u957F\u548C\u753B\u5E45\u5C31\u80FD\u5F00\u59CB\uFF0C\u811A\u672C\u3001\u5206\u955C\u3001\u751F\u6210\u548C\u672C\u673A\u5408\u5E76\u90FD\u7531\u52A9\u624B\u5B8C\u6210\u3002",
-      panelHighlight2Title: "\u4F4E\u6210\u672C\u957F\u89C6\u9891",
-      panelHighlight2Desc: "\u8D85\u8FC7\u5355\u6BB5\u4E0A\u9650\u81EA\u52A8\u7EED\u62CD\uFF0C\u5206\u6BB5\u751F\u6210\u540E\u5728\u672C\u673A\u5408\u5E76\uFF0C\u8D85\u957F\u89C6\u9891\u4E5F\u80FD\u628A\u6210\u672C\u538B\u4E0B\u6765\u3002",
+      panelHighlight2Title: "\u5206\u6BB5\u5236\u4F5C\u957F\u89C6\u9891",
+      panelHighlight2Desc: "\u8D85\u8FC7\u5355\u6BB5\u4E0A\u9650\u65F6\u5206\u6BB5\u7EED\u62CD\uFF0C\u6BCF\u6BB5\u9884\u89C8\u786E\u8BA4\u540E\u7EE7\u7EED\uFF0C\u5168\u90E8\u5B8C\u6210\u540E\u5728\u672C\u673A\u5408\u5E76\u3002",
       panelFlow: "\u4F7F\u7528\u6D41\u7A0B",
       panelStep1Title: "\u8BF4\u6E05\u521B\u610F",
       panelStep1Desc: "\u4E3B\u9898\u3001\u65F6\u957F\u3001\u753B\u5E45\uFF0816:9 / 9:16\uFF09\u4E0E\u6E05\u6670\u5EA6\uFF1B\u6CA1\u5199\u753B\u5E45\u65F6\u52A9\u624B\u4F1A\u5148\u95EE\u3002",
       panelStep2Title: "\u811A\u672C\u5206\u955C",
       panelStep2Desc: "\u5148\u51FA\u811A\u672C\u4E0E\u5206\u955C\uFF0C\u4F60\u5BA1\u6838\u786E\u8BA4\u540E\u518D\u7EE7\u7EED\u3002",
       panelStep3Title: "\u9010\u6BB5\u751F\u6210",
-      panelStep3Desc: "\u786E\u8BA4\u8D39\u7528\u540E\u5F00\u59CB\u751F\u6210\uFF1B\u8D85\u8FC7\u5355\u6BB5\u4E0A\u9650\u81EA\u52A8\u7EED\u62CD\uFF0C\u652F\u6301\u65AD\u70B9\u7EED\u505A\u3002",
+      panelStep3Desc: "\u786E\u8BA4\u8D39\u7528\u540E\u751F\u6210\uFF1B\u5206\u6BB5\u9884\u89C8\u786E\u8BA4\u540E\u7EE7\u7EED\u4E0B\u4E00\u6BB5\uFF0C\u652F\u6301\u65AD\u70B9\u7EED\u505A\u3002",
       panelStep4Title: "\u672C\u673A\u5408\u5E76",
       panelStep4Desc: "\u5206\u6BB5\u751F\u6210\u7684\u7ED3\u679C\u5728\u672C\u673A\u5408\u5E76\u6210\u7247\uFF0C\u53EF\u9010\u6BB5\u9884\u89C8\u3002",
       summary: "{provider} \xB7 {model}",
       apiKeyConfigured: "\u5DF2\u914D\u7F6E\uFF0C\u7559\u7A7A\u4FDD\u7559\u73B0\u6709 API\u5BC6\u94A5",
       connectionMode: "\u63A5\u5165\u65B9\u5F0F",
       connectionModeHint: "\u4F7F\u7528\u81EA\u5DF1\u7684 MetaOntic AI API\u5BC6\u94A5\u3002\u5207\u6362\u540E\u4FDD\u5B58\u751F\u6548\u3002",
-      connectionVolcengineUnavailable: "\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\u5F53\u524D\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF1A\u5DF2\u6709\u7684\u914D\u7F6E\u4ECD\u53EF\u7EE7\u7EED\u751F\u6210\uFF1B\u5982\u9700\u66F4\u6362\uFF0C\u8BF7\u5728\u300C\u63A5\u5165\u65B9\u5F0F\u300D\u91CC\u9009\u62E9 MetaOnticVideo \u6216 MetaOntic AI\u3002",
+      connectionVolcengineUnavailable: "\u706B\u5C71\u5F15\u64CE\u76F4\u8FDE\u5F53\u524D\u6682\u4E0D\u63D0\u4F9B\u9009\u62E9\uFF1A\u5DF2\u6709\u7684\u914D\u7F6E\u4ECD\u53EF\u7EE7\u7EED\u751F\u6210\uFF1B\u5982\u9700\u66F4\u6362\uFF0C\u8BF7\u5728\u300C\u63A5\u5165\u65B9\u5F0F\u300D\u91CC\u9009\u62E9 MetaOntic AI\u3002",
       connectionMetaonticHint: "\u4F7F\u7528 MetaOntic AI \u7684 API\u5BC6\u94A5\uFF0C\u586B\u5199\u540E\u4FDD\u5B58\u751F\u6548\u3002",
       connectionMetaonticRegister: "\u6CE8\u518C\u83B7\u53D6 API\u5BC6\u94A5",
       volcengineKeyHint: "\u586B\u5199\u706B\u5C71\u65B9\u821F\u63A7\u5236\u53F0\u7684 API\u5BC6\u94A5\u540E\u4FDD\u5B58\uFF0C\u8D39\u7528\u7531\u706B\u5C71\u5F15\u64CE\u8D26\u6237\u627F\u62C5\u3002\u9700\u8981\u81EA\u884C\u6838\u5BF9\u597D API\u5BC6\u94A5\u7684\u6A21\u578B\u80FD\u529B\u3002",
@@ -482,7 +601,7 @@
       videoModelKey: "\u89C6\u9891\u6A21\u578B API\u5BC6\u94A5",
       imageApiKey: "\u56FE\u7247\u6A21\u578B API\u5BC6\u94A5",
       resolution: "\u89C6\u9891\u6E05\u6670\u5EA6",
-      imageModelHint: "\u771F\u4EBA\u53C2\u8003\u56FE\u5148\u7528 Seedream \u8F6C\u4E3A\u975E\u771F\u4EBA\u98CE\u683C\uFF0C\u56FE\u7247\u8C03\u7528\u53E6\u884C\u8BA1\u8D39\u3002",
+      imageModelHint: "Seedream\u53EF\u751F\u6210\u89D2\u8272\u56FE\uFF1B\u9047\u771F\u4EBA\u9650\u5236\u65F6\uFF0C\u7ECF\u540C\u610F\u53EF\u8F6C\u6362\u53C2\u8003\u56FE\u3002\u56FE\u7247\u8C03\u7528\u5355\u72EC\u8BA1\u8D39\uFF0C\u7ED3\u679C\u9700\u5BA1\u6838\u3002",
       modelHint: "mini \u4FA7\u91CD\u6210\u672C\uFF0Cfast \u4FA7\u91CD\u751F\u6210\u901F\u5EA6\u3002\u5B9E\u9645\u4EF7\u683C\u4EE5\u6240\u9009\u6E20\u9053\u4E3A\u51C6\u3002",
       mergeMode: "\u5408\u5E76\u65B9\u5F0F",
       mergeModeSeamless: "\u76F4\u63A5\u62FC\u63A5\uFF08\u65E7\u914D\u7F6E\u517C\u5BB9\uFF09",
@@ -491,13 +610,13 @@
       ffmpegBinary: "ffmpeg \u8DEF\u5F84",
       ffprobeBinary: "ffprobe \u8DEF\u5F84",
       ffmpegTitle: "\u957F\u89C6\u9891\u5408\u5E76\u9700\u8981 ffmpeg",
-      ffmpegBody: "\u89C6\u9891\u8D85\u8FC7\u6A21\u578B\u5355\u6B21\u4E0A\u9650\uFF082.0 \u4E3A 15 \u79D2\u30012.5 \u4E3A 30 \u79D2\uFF09\u65F6\u4F1A\u62C6\u6210\u51E0\u6BB5\u5206\u522B\u751F\u6210\u3001\u518D\u5728\u672C\u673A\u5408\u5E76\u6210\u4E00\u6761\u2014\u2014\u5408\u5E76\u8FD9\u4E00\u6B65\u7528\u7684\u662F ffmpeg\u3002\u6CA1\u88C5\u4E5F\u80FD\u751F\u6210\uFF0C\u53EA\u662F\u53EA\u7ED9\u5206\u6BB5\u5217\u8868\u3001\u4E0D\u5408\u6210\u6574\u6761\u3002",
+      ffmpegBody: "\u89C6\u9891\u8D85\u8FC7\u6A21\u578B\u5355\u6B21\u4E0A\u9650\uFF082.0 \u4E3A 15 \u79D2\u30012.5 \u4E3A 30 \u79D2\uFF09\u65F6\u4F1A\u62C6\u6210\u51E0\u6BB5\u5206\u522B\u751F\u6210\u3001\u518D\u5728\u672C\u673A\u5408\u5E76\u6210\u4E00\u6761\u2014\u2014\u5408\u5E76\u8FD9\u4E00\u6B65\u7528\u7684\u662F ffmpeg\u3002\u9ED8\u8BA4\u5408\u5E76\u524D\u4F1A\u68C0\u67E5\u662F\u5426\u5B89\u88C5\uFF1B\u660E\u786E\u9009\u62E9\u53EA\u751F\u6210\u5206\u6BB5\u65F6\u53EF\u4E0D\u5408\u5E76\u3002",
       ffmpegInstallFor: "\u6309\u4F60\u7684\u7CFB\u7EDF\u88C5\u4E00\u4E0B\uFF08\u70B9\u53F3\u8FB9\u6309\u94AE\u590D\u5236\u547D\u4EE4\uFF09\uFF1A",
       ffmpegCopy: "\u590D\u5236",
       ffmpegCopied: "\u5DF2\u590D\u5236",
       ffmpegMore: "\u5176\u4ED6\u7CFB\u7EDF",
       ffmpegLess: "\u6536\u8D77\u5176\u4ED6\u7CFB\u7EDF",
-      ffmpegAfter: "\u4E0D\u60F3\u81EA\u5DF1\u6572\u547D\u4EE4\u7684\u8BDD\uFF0C\u76F4\u63A5\u5728\u5BF9\u8BDD\u91CC\u8BF4\u300C\u5E2E\u6211\u88C5 ffmpeg\u300D\u2014\u2014\u63D2\u4EF6\u4F1A\u6267\u884C\u5B89\u88C5\uFF08\u547D\u4EE4\u4F1A\u5148\u8BA9\u4F60\u786E\u8BA4\uFF09\uFF1B\u88C5\u597D\u540E\u91CD\u8DD1\u4E00\u6B21\u5C31\u4F1A\u81EA\u52A8\u5408\u5E76\uFF08\u4E0D\u7528\u91CD\u65B0\u751F\u6210\uFF09\u3002ffmpeg \u88C5\u5728\u975E\u9ED8\u8BA4\u4F4D\u7F6E\u7684\u8BDD\uFF0C\u628A\u7EDD\u5BF9\u8DEF\u5F84\u586B\u5230\u4E0A\u9762\u7684\u300Cffmpeg \u8DEF\u5F84\u300D\u4E5F\u4E00\u6837\u7BA1\u7528\u3002\u5B89\u88C5\u5305\u81EA\u5E26 ffprobe\uFF0C\u5206\u6BB5\u65F6\u957F\u63A2\u6D4B\u4F1A\u4E00\u8D77\u89E3\u51B3\u3002",
+      ffmpegAfter: "\u4E0D\u60F3\u81EA\u5DF1\u6572\u547D\u4EE4\u7684\u8BDD\uFF0C\u76F4\u63A5\u5728\u5BF9\u8BDD\u91CC\u8BF4\u300C\u5E2E\u6211\u88C5 ffmpeg\u300D\u2014\u2014\u63D2\u4EF6\u4F1A\u6267\u884C\u5B89\u88C5\uFF08\u547D\u4EE4\u4F1A\u5148\u8BA9\u4F60\u786E\u8BA4\uFF09\uFF1B\u88C5\u597D\u540E\u7528\u539F\u6682\u505C\u8FDB\u5EA6\u91CD\u8BD5\u4E0B\u8F7D\u6216\u5408\u5E76\uFF0C\u4E0D\u91CD\u65B0\u63D0\u4EA4\u89C6\u9891\u751F\u6210\u3002ffmpeg \u88C5\u5728\u975E\u9ED8\u8BA4\u4F4D\u7F6E\u7684\u8BDD\uFF0C\u628A\u7EDD\u5BF9\u8DEF\u5F84\u586B\u5230\u4E0A\u9762\u7684\u300Cffmpeg \u8DEF\u5F84\u300D\u4E5F\u4E00\u6837\u7BA1\u7528\u3002\u5B89\u88C5\u5305\u81EA\u5E26 ffprobe\uFF0C\u5206\u6BB5\u65F6\u957F\u63A2\u6D4B\u4F1A\u4E00\u8D77\u89E3\u51B3\u3002",
       ffmpegManual: "\u60F3\u81EA\u5DF1\u88C5\uFF1AmacOS \u7528 Homebrew\uFF0CWindows \u7528 winget\uFF0CLinux \u7528\u7CFB\u7EDF\u5305\u7BA1\u7406\u5668\uFF1B\u88C5\u5B8C\u786E\u8BA4\u547D\u4EE4\u884C\u91CC\u80FD\u8DD1 ffmpeg -version \u5C31\u884C\u3002",
       supportRecharge: "\u5BA2\u670D",
       supportClose: "\u5173\u95ED",
@@ -522,10 +641,10 @@
       versionUpdateCancelled: "\u66F4\u65B0\u5DF2\u53D6\u6D88\u3002",
       versionUpdateRetry: "\u66F4\u65B0\u672A\u5B8C\u6210\uFF0C\u6B63\u5728\u91CD\u8BD5\uFF08{attempt}/{total}\uFF09\u2026",
       versionUpdateFailed: "\u5728\u7EBF\u66F4\u65B0\u5931\u8D25\uFF1A{message}",
-      versionUpdateRemoved: "\u63D2\u4EF6\u5DF2\u5378\u8F7D\uFF0C\u4F46\u91CD\u65B0\u5B89\u88C5\u5931\u8D25\u3002\u8BF7\u5230\u300C\u63D2\u4EF6\u300D\u9875\u91CD\u65B0\u6DFB\u52A0\u3002",
+      versionUpdateRemoved: "\u672A\u80FD\u786E\u8BA4\u63D2\u4EF6\u5B89\u88C5\u72B6\u6001\uFF0C\u8BF7\u5230\u300C\u63D2\u4EF6\u300D\u9875\u68C0\u67E5\uFF1B\u4FDD\u7559\u73B0\u6709\u914D\u7F6E\uFF0C\u4E0D\u8981\u76F4\u63A5\u5378\u8F7D\u3002",
       versionUpdateRateLimited: "Gitee \u8BF7\u6C42\u8FC7\u4E8E\u9891\u7E41\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5\u3002\u73B0\u6709\u914D\u7F6E\u4E0E API\u5BC6\u94A5\u4F1A\u4FDD\u7559\u3002",
-      versionUpdateLockfile: "\u5B89\u88C5\u76EE\u5F55\u7684 pnpm-lock.yaml \u91CC\u6709\u4E00\u6761\u672C\u63D2\u4EF6\u7F3A\u5C11 integrity \u7684\u65E7\u8BB0\u5F55\uFF0Cpnpm \u56E0\u6B64\u62D2\u7EDD\u5B89\u88C5\uFF08ERR_PNPM_MISSING_TARBALL_INTEGRITY\uFF09\u3002\u63D2\u4EF6\u4F1A\u6BCF 2 \u79D2\u68C0\u67E5\u4E00\u6B21\u3001\u81EA\u52A8\u6E05\u6389\u8FD9\u6761\u8BB0\u5F55\u5E76\u4FDD\u7559\u5907\u4EFD\uFF0C\u66F4\u65B0\u5931\u8D25\u540E\u4E5F\u4F1A\u7B49\u6E05\u7406\u5B8C\u6210\u81EA\u52A8\u91CD\u8BD5\uFF1B\u82E5\u4ECD\u7136\u5931\u8D25\uFF0C\u5B8C\u5168\u9000\u51FA Harness \u540E\u624B\u52A8\u5220\u9664\u63D2\u4EF6\u5B89\u88C5\u76EE\u5F55\u4E0B\u7684 pnpm-lock.yaml \u518D\u8BD5\u3002",
-      versionUpdateUnavailable: "\u5F53\u524D Harness \u4E0D\u652F\u6301\u5728\u7EBF\u66F4\u65B0\uFF0C\u8BF7\u5230\u300C\u63D2\u4EF6\u300D\u9875\u5378\u8F7D\u540E\u91CD\u65B0\u6DFB\u52A0\u3002",
+      versionUpdateLockfile: "\u5B89\u88C5\u76EE\u5F55\u7684 pnpm-lock.yaml \u91CC\u6709\u672C\u63D2\u4EF6\u7F3A\u5C11 integrity \u7684\u65E7\u8BB0\u5F55\uFF0Cpnpm \u56E0\u6B64\u62D2\u7EDD\u5B89\u88C5\uFF08ERR_PNPM_MISSING_TARBALL_INTEGRITY\uFF09\u3002\u63D2\u4EF6\u4F1A\u6BCF 2 \u79D2\u68C0\u67E5\u4E00\u6B21\u3001\u81EA\u52A8\u6E05\u7406\u8FD9\u4E9B\u65E0\u6548\u8BB0\u5F55\u5E76\u4FDD\u7559\u5907\u4EFD\uFF0C\u66F4\u65B0\u5931\u8D25\u540E\u4E5F\u4F1A\u7B49\u6E05\u7406\u5B8C\u6210\u81EA\u52A8\u91CD\u8BD5\uFF1B\u82E5\u4ECD\u7136\u5931\u8D25\uFF0C\u5B8C\u5168\u9000\u51FA Harness \u540E\u624B\u52A8\u5220\u9664\u63D2\u4EF6\u5B89\u88C5\u76EE\u5F55\u4E0B\u7684 pnpm-lock.yaml \u518D\u8BD5\u3002",
+      versionUpdateUnavailable: "\u5F53\u524D Harness \u4E0D\u652F\u6301\u6B64\u5728\u7EBF\u66F4\u65B0\u5165\u53E3\uFF0C\u8BF7\u4FDD\u7559\u73B0\u6709\u63D2\u4EF6\u4E0E\u914D\u7F6E\uFF0C\u53C2\u8003\u4F7F\u7528\u8BF4\u660E\u901A\u8FC7\u6B63\u5F0F\u7248\u6210\u54C1\u5305\u66F4\u65B0\u3002",
       versionHint: "\u53EF\u5728\u6B64\u68C0\u67E5\u5E76\u5B89\u88C5\u65B0\u7248\u672C\uFF0C\u73B0\u6709\u914D\u7F6E\u4E0E API\u5BC6\u94A5\u4F1A\u4FDD\u7559\u3002",
       versionCheckedAt: "\u68C0\u67E5\u4E8E {time}",
       sectionGeneration: "\u751F\u6210\u53C2\u6570",
@@ -585,22 +704,22 @@
       panelHighlights: "Why it works",
       panelHighlight1Title: "Made for beginners",
       panelHighlight1Desc: "No prompt engineering: describe the idea, duration and ratio, and the assistant handles script, storyboard, generation and merging.",
-      panelHighlight2Title: "Long videos, low cost",
-      panelHighlight2Desc: "Clips past the model limit continue automatically and are merged locally, keeping long videos affordable.",
+      panelHighlight2Title: "Create longer videos in segments",
+      panelHighlight2Desc: "Videos beyond the model limit are continued in segments. Review each segment before continuing; merge locally when all segments are complete.",
       panelFlow: "How it works",
       panelStep1Title: "Describe the idea",
       panelStep1Desc: "Topic, duration, ratio (16:9 / 9:16) and resolution; the assistant asks when the ratio is missing.",
       panelStep2Title: "Script & storyboard",
       panelStep2Desc: "The script and storyboard come first; production waits for your review.",
       panelStep3Title: "Segment generation",
-      panelStep3Desc: "After you confirm the cost, clips generate in segments and continue automatically past the model limit.",
+      panelStep3Desc: "Confirm the cost to generate, then review each segment before continuing to the next. Resume saved progress when needed.",
       panelStep4Title: "Merge locally",
       panelStep4Desc: "Segments are merged into the final video on your machine, with per-segment preview.",
       summary: "{provider} \xB7 {model}",
       apiKeyConfigured: "Configured; leave blank to keep the current key",
       connectionMode: "Connection",
       connectionModeHint: "Log in by email to receive a key, or use your own MetaOntic AI key. Save to apply a change.",
-      connectionVolcengineUnavailable: 'Volcano Engine direct is not offered right now. An existing configuration keeps working; switch to MetaOnticVideo or MetaOntic AI in "Connection" to change it.',
+      connectionVolcengineUnavailable: 'Volcano Engine direct is not offered right now. An existing configuration keeps working; switch to MetaOntic AI in "Connection" to change it.',
       connectionMetaonticHint: "Use your MetaOntic AI API key, then save to apply.",
       connectionMetaonticRegister: "Register to get a key",
       volcengineKeyHint: "Enter an API key from the Volcano Ark console and save. No email login required. Billed to your Volcano Engine account. Check which models your key can access.",
@@ -624,7 +743,7 @@
       videoModelKey: "Video model key",
       imageApiKey: "Image model key",
       resolution: "Video resolution",
-      imageModelHint: "Seedream stylizes real-person references before video generation; image calls are billed separately.",
+      imageModelHint: "Seedream creates character images or, with consent after a real-person restriction, stylizes references. Image calls are billed separately and results require review.",
       modelHint: "mini focuses on cost; fast focuses on generation speed. Actual prices depend on your provider.",
       mergeMode: "Merge mode",
       mergeModeSeamless: "Direct concat (legacy setting)",
@@ -633,13 +752,13 @@
       ffmpegBinary: "ffmpeg path",
       ffprobeBinary: "ffprobe path",
       ffmpegTitle: "Merging long videos needs ffmpeg",
-      ffmpegBody: "Videos exceeding the model limit (15s for 2.0, 30s for 2.5) are generated as several shots and merged into one file on this machine \u2014 that merge needs ffmpeg. Without it you still get the video, just as separate segments instead of one file.",
+      ffmpegBody: "Videos exceeding the model limit (15s for 2.0, 30s for 2.5) are generated as several shots and merged into one file on this machine using ffmpeg. The default merge workflow checks for ffmpeg first; you may explicitly choose separate segments without merging.",
       ffmpegInstallFor: "Install it for your OS (click the button to copy the command):",
       ffmpegCopy: "Copy",
       ffmpegCopied: "Copied",
       ffmpegMore: "Other systems",
       ffmpegLess: "Hide other systems",
-      ffmpegAfter: 'Rather not touch a terminal? Just say "\u5E2E\u6211\u88C5 ffmpeg" in the chat and the plugin runs the install for you (it asks you to confirm the command first). Re-run the generation afterwards and the merge happens automatically \u2014 no need to regenerate. Installed somewhere unusual? Put the absolute path in the "ffmpeg path" field above. The package ships ffprobe too, so segment probing is fixed at the same time.',
+      ffmpegAfter: 'Rather not touch a terminal? Just say "\u5E2E\u6211\u88C5 ffmpeg" in the chat and the plugin runs the install after you confirm the command. Resume the original saved progress to retry downloading or merging without submitting new generation tasks. Installed somewhere unusual? Put the absolute path in the "ffmpeg path" field above. The package ships ffprobe too, so segment probing is fixed at the same time.',
       ffmpegManual: "Installing by hand: Homebrew on macOS, winget on Windows, your distro package manager on Linux \u2014 you are set once `ffmpeg -version` works in a terminal.",
       supportRecharge: "Support",
       supportClose: "Close",
@@ -664,10 +783,10 @@
       versionUpdateCancelled: "Update cancelled.",
       versionUpdateRetry: "Update incomplete. Retrying ({attempt}/{total})\u2026",
       versionUpdateFailed: "Online update failed: {message}",
-      versionUpdateRemoved: "The plugin was uninstalled but could not be reinstalled. Add it again from the Plugins page.",
+      versionUpdateRemoved: "The installation state could not be confirmed. Check the Plugins page and preserve your configuration; do not uninstall immediately.",
       versionUpdateRateLimited: "Gitee is limiting requests. Try again later. Your settings and keys will be kept.",
-      versionUpdateLockfile: "The profile pnpm-lock.yaml still has a metaontic-video entry without integrity, so pnpm refuses to install (ERR_PNPM_MISSING_TARBALL_INTEGRITY). The plugin checks every 2 seconds, clears that entry in the background and keeps a backup, and the update retries once the cleanup is done. If it still fails, quit Harness and delete pnpm-lock.yaml in the plugin install directory.",
-      versionUpdateUnavailable: "This version of Harness does not support online updates. Uninstall and re-add the plugin from the Plugins page.",
+      versionUpdateLockfile: "The profile pnpm-lock.yaml still has metaontic-video entries without integrity, so pnpm refuses to install (ERR_PNPM_MISSING_TARBALL_INTEGRITY). The plugin checks every 2 seconds, clears those invalid entries in the background and keeps a backup, and the update retries once the cleanup is done. If it still fails, quit Harness and delete pnpm-lock.yaml in the plugin install directory.",
+      versionUpdateUnavailable: "This Harness version does not support this update entry. Keep the existing plugin and configuration; follow the guide to update using a stable release package.",
       versionHint: "Check for and install updates here. Your settings and keys will be kept.",
       versionCheckedAt: "checked {time}",
       sectionGeneration: "Generation",
@@ -844,7 +963,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.17.0".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.18.0".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1133,7 +1252,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.17.0",
+    version: "3.18.0",
     description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, image-to-video, text-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects with your own MetaOntic AI key.",
     license: "SEE LICENSE IN LICENSE",
     type: "module",
@@ -1230,12 +1349,12 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.17.0",
+      version: "3.18.0",
       prerelease: false,
-      publishedAt: "2026-11-07T03:12:14.052Z",
+      publishedAt: "2026-11-07T06:17:57.554Z",
       items: [
-        "\u65B0\u589E\uFF1A\u9879\u76EE\u5BA1\u6838\u8BB0\u5F55\u4E0E\u7D2F\u8BA1\u89C6\u9891\u9884\u89C8\u3002",
-        "\u4F18\u5316\uFF1A\u89D2\u8272\u56FE\u9009\u62E9\u524D\u7F6E\uFF0C\u5408\u5E76\u5236\u4F5C\u786E\u8BA4\uFF0C\u8865\u9F50\u5206\u6BB5\u8D39\u7528\uFF1B\u6682\u505C\u4EC5\u9884\u89C8\u65B0\u6BB5\uFF1B\u521B\u4F5C\u9650\u5236\u4EC5\u4F5C\u7528\u4E8E\u89C6\u9891\u521B\u4F5C\u52A9\u624B\uFF1B\u79FB\u9664\u670D\u52A1\u7AEF\u63A5\u5165\u53CA\u767B\u5F55\u5145\u503C\u3002"
+        "\u65B0\u589E\uFF1A\u56FE\u7247\u4E0E\u89C6\u9891\u7ED3\u679C\u76F4\u63A5\u9884\u89C8\uFF0C\u652F\u6301\u56FE\u7247\u653E\u5927\u548C\u672C\u5730\u5931\u6548\u56DE\u9000\u3002",
+        "\u4F18\u5316\uFF1A\u6062\u590D\u5206\u6BB5\u7ED3\u679C\u786E\u8BA4\uFF1B\u89C6\u9891\u8FDB\u5EA6\u4EC5\u5728\u751F\u6210\u65F6\u663E\u793A\uFF1B\u89D2\u8272\u56FE\u9009\u62E9\u4F18\u5148\u76F4\u63A5\u6587\u751F\u89C6\u9891\u3002"
       ]
     }
   };
@@ -2031,7 +2150,8 @@
       const React = require2("react");
       const h = React.createElement;
       const { TOKENS, inputStyle, PAGE_CSS } = createTheme();
-      const { videoExecutionSource, VideoTaskProgress, VideoProgressDock } = createVideoProgress({ React, h, TOKENS });
+      const { MediaPreview } = createMediaPreview({ React, h });
+      const { videoExecutionSource, VideoTaskProgress, VideoProgressDock } = createVideoProgress({ React, h, TOKENS, MediaPreview });
       const { PLUGIN_OWNED_KEYS, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE } = createClientConfig();
       const { zh, en } = createDictionaries();
       const { useSnapshot, same, validateSettings, persistConnection, persistBatch } = createSettingsState({ React });
@@ -2047,7 +2167,7 @@
           const t = ctx.locale.bind(NS);
           ctx.effect(() => ctx.locale.register(NS, { zh, en }), "metaontic-video: dictionaries");
           const form = ctx.configForms.get(NAMESPACE);
-          for (const tool of ["video_generate", "video_extend", "video_status"]) {
+          for (const tool of ["video_generate", "video_extend", "video_status", "video_prepare_image"]) {
             ctx.effect(
               () => ctx.slots.inject("tool.call.toolview", () => ctx.slots.register({ name: "tool.call.toolview", key: tool, locale: NS }, VideoTaskProgress)),
               `metaontic-video: ${tool} progress`

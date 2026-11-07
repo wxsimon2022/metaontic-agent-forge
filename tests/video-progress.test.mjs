@@ -29,7 +29,7 @@ test('video views register immediately when the host declares the tool slot and 
     },
   });
   const disposers = waiting.filter(([name]) => name === 'tool.call.toolview').map(([, install]) => install());
-  assert.deepEqual([...registrations.keys()], ['video_generate', 'video_extend', 'video_status']);
+  assert.deepEqual([...registrations.keys()], ['video_generate', 'video_extend', 'video_status', 'video_prepare_image']);
   for (const dispose of disposers.reverse()) dispose();
   assert.equal(registrations.size, 0);
   const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
@@ -38,7 +38,7 @@ test('video views register immediately when the host declares the tool slot and 
 test('running video card renders progress and a completed success reaches 100 percent', () => {
   const context = vm.createContext({
     React: { useState: () => [30, () => {}], useRef: () => ({ current: 0 }), useEffect() {} },
-    h: (tag, props, ...children) => ({ tag, props, children }), TOKENS: {},
+    h: (tag, props, ...children) => ({ tag, props, children }), TOKENS: {}, MediaPreview: null,
   });
   vm.runInContext(extract('estimatedVideoWait') + '\n' + extract('estimatedVideoProgress') + '\n' + extract('VideoTaskProgress'), context);
   const running = context.VideoTaskProgress({ block: { phase: 'start', name: 'video_generate', args: { duration: 15 } }, callId: 'a', startedAt: 1 });
@@ -57,11 +57,8 @@ test('running video card renders progress and a completed success reaches 100 pe
   assert.match(runningJson, /"className":"mov-task mov-task-running"/, '执行中给卡片加上呼吸灯类');
   assert.match(runningJson, /@keyframes mov-task-breath/, '外边框呼吸灯动画');
   const finished = context.VideoTaskProgress({ block: { kind: 'result', content: [{ type: 'text', text: 'succeeded' }] } });
-  assert.match(JSON.stringify(finished), /"aria-valuenow":100/);
-  assert.doesNotMatch(JSON.stringify(finished), /🐢/, '任务返回后不再显示小乌龟');
-  const finishedJson = JSON.stringify(finished);
-  assert.match(finishedJson, /"className":"mov-task","data-field":"video-task-progress"/);
-  assert.doesNotMatch(finishedJson, /"className":"mov-task mov-task-running"/, '任务返回后停止呼吸灯');
+  assert.equal(finished, null, 'completed results must not display generation progress');
+  for (const toolName of ['video_status', 'video_prepare_image', 'video_project']) assert.equal(context.VideoTaskProgress({ toolName, block: { phase: 'start' }, startedAt: 1 }), null);
   assert.match(JSON.stringify(context.VideoTaskProgress({ block: { phase: 'start', name: 'video_generate', args: { duration: 15 } }, callId: 'a', startedAt: 1 })), /mov-task-rail/);
 });
 
@@ -103,12 +100,12 @@ test('execution signals surround only the actual tool body and settle on errors'
   const tool = context.withVideoExecution({ execute: async () => { signals.push('body'); return 'ok'; } });
   assert.equal(signals.length, 0, 'registration and approval do not emit execution');
   assert.equal(await tool.execute({}, exec), 'ok');
-  assert.deepEqual(signals, [['test', 'start'], 'body', ['test', 'end']]);
+  assert.deepEqual(signals, ['body', ['test', 'end']]);
   signals.length = 0;
   const failure = new Error('failed before task creation');
   const failed = context.withVideoExecution({ execute: async () => { throw failure; } });
   await assert.rejects(failed.execute({}, exec), error => error === failure);
-  assert.deepEqual(signals, [['test', 'start'], ['test', 'end']]);
+  assert.deepEqual(signals, [['test', 'end']]);
 });
 
 test('estimated progress follows video duration and waits for actual success', () => {
@@ -165,3 +162,18 @@ test('outside progress dock is visible only while the current session has active
   assert.equal(context.VideoProgressDock(hooks), null, 'streamed arguments never show progress');
   assert.equal(context.VideoProgressDock({ useChat: selector => selector(undefined) }), null);
 });
+
+ test('generation signals stop before delivery and always clear on failure', async () => {
+  const host = readFileSync(new URL('../index.js', import.meta.url), 'utf8');
+  const start = host.indexOf('async function withGenerationProgress(');
+  const end = host.indexOf('\n}', start) + 2;
+  const signals = [];
+  const context = vm.createContext({ appendVideoExecution: async (_exec, phase) => signals.push(phase) });
+  vm.runInContext(host.slice(start, end), context);
+  await context.withGenerationProgress({}, async () => signals.push('generation'));
+  signals.push('download', 'merge');
+  assert.deepEqual(signals, ['start', 'generation', 'end', 'download', 'merge']);
+  signals.length = 0;
+  await assert.rejects(context.withGenerationProgress({}, async () => { throw Error('stopped'); }));
+  assert.deepEqual(signals, ['start', 'end']);
+ });

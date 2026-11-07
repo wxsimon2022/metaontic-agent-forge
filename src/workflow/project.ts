@@ -1,3 +1,4 @@
+import { assertSegmentReviewed } from './segment-review.js';
 /** 项目身份、真实审核答复与制作参数的持久化。无密钥、无付费调用。 */
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile, rename, rm } from 'node:fs/promises';
@@ -94,6 +95,7 @@ export async function projectCharacterGate(config, exec, args) {
 /** 宿主审批后执行前再核验，避免等待审批期间脚本/配置变化，亦覆盖直接工具执行。 */
 export function withProjectApproval(tool, config) {
   return { ...tool, async execute(args, exec) {
+    await assertSegmentReviewed(exec, args || {});
     await assertProjectApproved(config, { ...exec, name: tool.name }, args || {});
     return tool.execute(args, exec);
   } };

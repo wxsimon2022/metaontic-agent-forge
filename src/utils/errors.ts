@@ -87,7 +87,7 @@ export function abortError(): CodedError {
 }
 
 /**
- * 轮询查询失败里哪些值得重试：网络中断、超时、5xx、限流、以及最像「API密钥抖了一下」的 401/403。
+ * 轮询查询失败里哪些值得重试：网络中断、超时、5xx、限流、以及现有策略允许有界重查的 401/403（鉴权失败，不猜测成因）。
  * 4xx 里那些明确的请求错误（比如路径不对、任务 ID 非法）重试也没用，重试只是白等。
  */
 export function isRetryablePollError(failure): boolean {

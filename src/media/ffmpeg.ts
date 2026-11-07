@@ -174,10 +174,10 @@ export function ffmpegInstallHint(config) {
   const { os, installs } = ffmpegInstallOptions();
   const lines = [
     `本机没有找到可用的 ffmpeg（${binary}），所以「把多段合并成一条」这步暂时没做，`
-      + '分段文件都在，一条都不少。',
+      + '已生成结果以返回的分段列表为准；本地文件是否齐全请核对各段路径。',
     `装一下 ffmpeg 就能合并（你当前是 ${os}）：`,
     ...installs.map((item) => `  · ${item.label}：${item.command}`),
-    '装好后重跑这次生成，分段会自动合并成一条，不用重新生成；'
+    '装好后使用原resume恢复已有任务的下载或合并，不重新提交生成任务；'
       + '如果 ffmpeg 已经装了但不在默认位置，把它的绝对路径填到插件设置里的「ffmpeg 路径」也一样管用。',
     'ffmpeg 的安装包里自带 ffprobe，装完分段探测也一起好了。',
     '想让我来装就说一声 —— 我会用 video_setup 执行安装（执行前宿主会先让你确认命令）。',

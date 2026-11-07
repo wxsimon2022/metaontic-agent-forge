@@ -8,7 +8,7 @@ function previewInstruction(value) {
   return `【下一步：先展示本段视频，等待用户预览】请立即在用户可见正文用可点击链接展示本次完成的分段：${target || '见本次分段结果'}。`
     + `正文附上 ${artifactLink('观看本段视频', latest?.localPath || value?.previewPath || value?.videoPath, latest?.videoUrl || value?.videoUrl)}。`
     + '不要调用 present：交付卡片只登记最终成片，中途登记分段会把成片挤到后面。'
-    + '不能只说“生成成功”或只列任务ID。展示后询问“先看这段，效果可以吗？确认后再继续下一段。”并结束本轮等待回复。'
+    + '不能只说“生成成功”或只列任务ID。正文展示后立即单独调用 video_project(action:review_segment,resume:本次resumeDir)，弹出“分段结果确认”窗口；不能只用文字询问后结束回合。未通过不能提交下一段。'
     + '用户首次授权制作不等于已看过本段，不得自动resume或调用其他生成工具绕过预览；链接不可用时给出可点击视频路径或播放链接，仍须等待明确确认。';
 }
 
@@ -60,7 +60,7 @@ export function deliveryInstruction(value) {
 
 function recoveryInstruction(value, toolName) {
   if (!value?.resumeDir) return '';
-  if (value.deliveryError || value.ffmpegMissing) return `生成进度已保存。交付尚未完成，请用 ${toolName} 的 resume="${value.resumeDir}" 重试下载或合并，不会重新生成或重复扣费。`;
+  if (value.deliveryError || value.ffmpegMissing) return `生成进度已保存。下载或合并尚未完成${value.deliveryError ? `：${value.deliveryError}` : value.ffmpegMissing ? '：缺少可用的FFmpeg工具' : ''}。请用 ${toolName} 的 resume="${value.resumeDir}" 重试下载或合并，仅重试已有成果的下载或合并，不提交新的生成任务。`;
   if (value.pendingTaskId) return `任务 ${value.pendingTaskId} 已提交。请用 ${toolName} 的 resume="${value.resumeDir}" 查询并接回原进度，不会重新提交本段。`;
   return '';
 }
@@ -103,31 +103,31 @@ const RENDER_WORDING = {
   generate: {
     toolName: 'video_generate',
     segmentLabel: (segment) => (segment.kind === 'extend' ? `延长 +${segment.seconds}s` : `直出 ${segment.seconds}s`),
-    pausedHead: '已生成并交付前',
-    pausedTail: '每段生成完都会问一次要不要继续；这次先交付到这里',
+    pausedHead: '已生成前',
+    pausedTail: '请先预览已完成分段并通过结果确认，再确认下一段费用；当前已暂停',
     success: (value) => {
       const { mode, segments = [] } = value || {};
       if (mode === 'extended') return `视频生成成功：先直出 ${formatSeconds(segments[0]?.seconds)} 秒，再延长 ${segments.length - 1} 段。`;
       return `视频生成成功：一次直出 ${formatSeconds(segments[0]?.seconds)} 秒，没有超过单段上限，不需要延长。`;
     },
-    timeout: '任务仍在生成中（已超出单次等待时间）。',
-    unknown: '没能确认任务状态（查询失败，不是任务失败）。任务已经提交，可能仍在生成；用 video_status 按下面的任务 ID 复查，不要重新提交。',
+    timeout: '本次等待已超时，尚未取得生成结果；任务可能仍在运行。',
+    unknown: '没能确认任务状态（查询失败，不能据此判定任务失败）。任务已经提交，可能仍在生成；用 video_status 按下面的任务 ID 复查，不要重新提交。',
     cancelled: '任务已取消。',
     failed: (error) => `视频生成失败${error ? `：${error}` : ''}。`,
-    leftover: (resumeDir) => `要接着做就把 resume 原样传回 video_generate（resume="${resumeDir}"），插件会接着已有的分段往下生成，前面几段不会重新生成、也不会重复扣费。`,
-    noMergedFile: '没有生成合并文件，请按上面的上游链接自行下载分段。',
+    leftover: (resumeDir) => `要接着做就把 resume 原样传回 video_generate（resume="${resumeDir}"），插件会接着已有的分段往下生成，已完成分段不重新生成；新生成的剩余分段仍需确认费用并计费。`,
+    noMergedFile: '未提供本地成片，可通过各分段的上游链接保存视频。',
   },
   extend: {
     toolName: 'video_extend',
     segmentLabel: (segment) => `+${segment.seconds}s`,
-    pausedHead: '已延长并交付前',
-    pausedTail: '每段延长完都会问一次要不要继续；这次先交付到这里',
+    pausedHead: '已完成延长生成前',
+    pausedTail: '请先预览已完成分段并通过结果确认，再确认下一段费用；当前已暂停',
     success: () => '视频延长成功。',
-    timeout: '延长任务仍在生成中（已超出单次等待时间）。',
-    unknown: '没能确认这段延长任务的状态（查询失败，不是任务失败）。任务已经提交，可能仍在生成；用 video_status 按任务 ID 复查，不要重新提交。',
+    timeout: '本次延长等待已超时，尚未取得生成结果；任务可能仍在运行。',
+    unknown: '没能确认这段延长任务的状态（查询失败，不能据此判定任务失败）。任务已经提交，可能仍在生成；用 video_status 按任务 ID 复查，不要重新提交。',
     cancelled: '延长任务已取消。',
     failed: (error) => `视频延长失败${error ? `：${error}` : ''}。`,
-    leftover: (resumeDir) => `要接着做就把 resume="${resumeDir}" 传回 video_extend（prompt 可以省略，其余参数照旧）：前面几段不会重新生成、不会重复扣费。`,
+    leftover: (resumeDir) => `要接着做就把 resume="${resumeDir}" 传回 video_extend（prompt 可以省略，其余参数照旧）：已完成分段不重新生成；新生成的剩余分段仍需确认费用并计费。`,
     noMergedFile: '',
   },
 };
@@ -156,10 +156,11 @@ function renderVideoText(value, variant) {
   const parts = [deliveryInstruction(value), recoveryInstruction(value, wording.toolName), ...(paused ? [previewInstruction(value)] : [])];
   if (status === 'succeeded') {
     if (paused) {
-      const totalSeconds = segments.reduce((sum, item) => sum + (item.seconds || 0), 0);
+      const doneSegments = segments.filter(item => item.status === 'succeeded');
+      const totalSeconds = doneSegments.reduce((sum, item) => sum + (item.seconds || 0), 0);
       parts.push(
-        `${wording.pausedHead} ${segments.length} 段（共 ${formatSeconds(totalSeconds)} 秒）：${wording.pausedTail}`
-        + '（当前暂停等待预览确认；也可能因停止或超时暂停）。',
+        `${wording.pausedHead} ${doneSegments.length} 段（共 ${formatSeconds(totalSeconds)} 秒）：${wording.pausedTail}`
+        + '。',
       );
     } else {
       parts.push(wording.success(value));
@@ -176,9 +177,9 @@ function renderVideoText(value, variant) {
   // 成片行排在分段逐条列表之前：正文、交付清单与结果卡片统一成片在前。
   if (status === 'succeeded') {
     if (videoPath) {
-      parts.push(`成片（本地文件）：${videoPath}（${mergeModeLabel(mergeMode)}）`);
+      parts.push(`${paused || value?.partial ? (value?.merged ? '已完成部分合并视频' : '本段视频') : value?.deliveryError || value?.ffmpegMissing ? '已有本地视频（下载或合并尚未完成）' : '成片'}（本地文件）：${videoPath}（${mergeModeLabel(mergeMode)}）`);
     } else if (segmentsDir) {
-      parts.push(`没有合并成一条：分段文件都在 ${segmentsDir}（每段路径见下面的列表）。`);
+      parts.push(`未提供完整合并视频，分段目录：${segmentsDir}；已下载文件以各段的本地路径为准。`);
     } else if (wording.noMergedFile) {
       parts.push(wording.noMergedFile);
     }
@@ -189,8 +190,8 @@ function renderVideoText(value, variant) {
       `还没生成的部分：还剩 ${formatSeconds(remainingSeconds)} 秒。` + wording.leftover(resumeDir),
     );
   }
-  if (videoUrl) parts.push(`最后一段上游链接（约 24 小时内有效）：${videoUrl}`);
-  else if (variant === 'extend' && status === 'succeeded') parts.push('最后一段上游链接（约 24 小时内有效）：（无）');
+  if (videoUrl) parts.push(`最后一段上游链接（有效期以上游为准，请及时保存）：${videoUrl}`);
+
   if (note) parts.push(note);
   if (status === 'timeout' || status === 'unknown') {
     const taskId = pendingTaskId || segments.at(-1)?.taskId || '（未知）';

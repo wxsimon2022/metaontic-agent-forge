@@ -62,3 +62,24 @@ test('merged video is listed before all individual segments',()=>{
  assert.ok(text.indexOf('[打开合并视频]') < text.indexOf('[第一段]'));
  assert.ok(text.indexOf('[第一段]') < text.indexOf('[第二段]'));
 });
+
+for (const name of ['renderResult', 'renderVideoResult']) test(`${name}: paused or incomplete delivery never claims a full film is ready`, () => {
+ const paused = ctx[name]({status:'succeeded',paused:true,remainingSeconds:15,resumeDir:'/resume',videoPath:'/out/part-1.mp4',segments:[segments[0]]})[0].text;
+ assert.match(paused,/本段视频（本地文件）/);
+ assert.doesNotMatch(paused,/成片（本地文件）|已生成并交付/);
+ assert.match(paused,/剩余分段仍需确认费用并计费/);
+ const failed = ctx[name]({status:'succeeded',deliveryError:'download unavailable',resumeDir:'/resume',segments})[0].text;
+ assert.match(failed,/下载或合并尚未完成：download unavailable/);
+ assert.doesNotMatch(failed,/已.*下载并合并交付/);
+ const timeout = ctx[name]({status:'timeout',pendingTaskId:'pending',segments:[]})[0].text;
+ assert.match(timeout,/尚未取得生成结果/);
+ assert.doesNotMatch(timeout,/任务仍在生成中/);
+});
+test('status success explicitly excludes download and local merging',()=>{
+ const tools=vm.createContext({resolve,formatSeconds:n=>n});
+ vm.runInContext(sourceOf('tools/results','tools/video-status'),tools);
+ const text=tools.taskTool({}).output.render({}, {status:'succeeded',taskId:'task',videoUrl:'https://media.invalid/a.mp4'})[0].text;
+ assert.match(text,/这一段生成成功/);
+ assert.match(text,/不执行下载或本地合并/);
+ assert.doesNotMatch(text,/24 小时/);
+});
