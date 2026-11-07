@@ -62,7 +62,7 @@ If generation stops or a status query fails, check the original task ID or resum
 
 ## License
 
-[MIT](./LICENSE)
+[License (Use Only, No Modification)](./LICENSE)
 
 Release packages bundle the required host schema library and do not require external runtime npm dependencies. If a previous local-development setup still points to a deleted source directory, correct that local loading path before installing a release package.
 

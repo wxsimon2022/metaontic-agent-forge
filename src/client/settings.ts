@@ -354,13 +354,13 @@ function makePage({ form, t, manager }) {
         }
 
         function control(field) {
-          if (field.key === 'apiKey') return h('input', { id: 'metaontic-video-apiKey', className: 'mov-input', style: inputStyle, type: 'text', readOnly: true, value: (snapshot.secrets?.apiKey || value.apiKey) ? t('serviceKeyConfigured') : t('serviceKeyMissing') });
+          if (field.key === 'apiKey') return h('input', { key: 'control', id: 'metaontic-video-apiKey', className: 'mov-input', style: inputStyle, type: 'text', readOnly: true, value: (snapshot.secrets?.apiKey || value.apiKey) ? t('serviceKeyConfigured') : t('serviceKeyMissing') });
           const current = draft[field.key] !== undefined ? draft[field.key] : value[field.key] ?? (field.key === 'imageUseVideoKey' ? true : field.key === 'pollIntervalMs' ? 5000 : field.key === 'maxWaitMs' ? 600000 : undefined);
           const secondsField = field.key === 'pollIntervalMs' || field.key === 'maxWaitMs';
           const displayed = secondsField && current !== undefined && current !== '' ? Number(current) / 1000 : current;
           const id = `metaontic-video-${field.key}`;
           if (field.kind === 'switch') {
-            return h('label', { htmlFor: id, className: 'mov-switch' },
+            return h('label', { key: 'control', htmlFor: id, className: 'mov-switch' },
               h('input', {
                 id,
                 'data-field': field.key,
@@ -381,6 +381,7 @@ function makePage({ form, t, manager }) {
             const retiredImageModel = field.key === 'imageModel' && !options.includes(String(current || ''));
             const list = current && !options.includes(current) && !hiddenModel && !hiddenMode && !legacyMerge && !retiredImageModel ? [...options, current] : options;
             return h('select', {
+              key: 'control',
               id,
               'data-field': field.key,
               className: `mov-input${field.mono ? ' mov-mono' : ''}`,
@@ -397,6 +398,8 @@ function makePage({ form, t, manager }) {
           const canReveal = field.key === 'metaonticApiKey' || field.key === 'volcengineApiKey' || field.key === 'imageApiKey';
           const revealed = canReveal && visibleKey === field.key;
           const input = h('input', {
+            // 这个 input 会和右侧眼睛按钮一起放进数组，React 要求数组子节点带 key
+            key: 'input',
             id,
             'data-field': field.key,
             className: `mov-input${field.mono ? ' mov-mono' : ''}`,
@@ -414,9 +417,10 @@ function makePage({ form, t, manager }) {
             ),
           });
           if (!canReveal) return input;
-          return h('div', { className: 'mov-key-control' }, [
+          return h('div', { key: 'control', className: 'mov-key-control' }, [
             input,
             h('button', {
+              key: 'toggle',
               type: 'button', className: 'mov-key-eye',
               'aria-label': t(revealed ? 'hideKey' : 'showKey'),
               title: t(revealed ? 'hideKey' : 'showKey'),

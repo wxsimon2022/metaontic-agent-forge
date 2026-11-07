@@ -75,10 +75,10 @@ github:wxsimon2022/metaontic-video
 **也可以不下载到本地，直接粘贴成品地址：** 复制下面这条 Gitee 成品地址，粘贴到 DeepSeek Harness「插件 → 添加插件」即可安装，效果与填写本地文件路径相同，无需安装 Git。国内网络优先使用 Gitee。在线安装只认以 `.tgz` 结尾的附件地址；ZIP、`package` 文件夹和发布页网址只能用于本地安装，不能粘贴到在线安装框。
 
 ```text
-https://gitee.com/hackloop/metaontic-video/releases/download/v3.15.2/metaontic-video-3.15.2.tgz
+https://gitee.com/hackloop/metaontic-video/releases/download/v3.16.0/metaontic-video-3.16.0.tgz
 ```
 
-GitHub 同名地址为 `https://github.com/wxsimon2022/metaontic-video/releases/download/v3.15.2/metaontic-video-3.15.2.tgz`。正式版以 Gitee 发布页为主，GitHub 的同步可能晚一些；GitHub 上还没有该版本时用上面的 Gitee 地址。发布新版本后，把地址中的两处版本号换成发布页上的实际版本；也可以打开发布页，在附件中右键复制 `.tgz` 的下载链接。
+GitHub 同名地址为 `https://github.com/wxsimon2022/metaontic-video/releases/download/v3.16.0/metaontic-video-3.16.0.tgz`。正式版以 Gitee 发布页为主，GitHub 的同步可能晚一些；GitHub 上还没有该版本时用上面的 Gitee 地址。发布新版本后，把地址中的两处版本号换成发布页上的实际版本；也可以打开发布页，在附件中右键复制 `.tgz` 的下载链接。
 
 - GitHub 正式版下载页：`https://github.com/wxsimon2022/metaontic-video/releases/latest`
 - Gitee 发布页：`https://gitee.com/hackloop/metaontic-video/releases`
@@ -201,6 +201,16 @@ API密钥只填写在插件密钥输入框内，不要放进脚本或发到聊�
 4. 发送需求后，按助手提示确认清晰度、审核脚本，再确认是否开始制作。
 
 这里的“视频创作助手”是会话模式，不是插件设置里的视频模型。若模式列表里没有它，先检查 MetaOnticVideo 是否已安装并启用，再重新打开模式列表；只有 Deepseek-Harness 提示需要重启时才重启软件。
+
+### 左侧栏的「视频创作助手」入口
+
+插件启用后，左侧栏会多出一行「视频创作助手」，图标是插件 logo。点开是插件自带的引导页，不用进对话也能看：
+
+- **为什么用它**：一个是「新手也能上手」——不用研究提示词，说清创意、时长和画幅就能开始，脚本、分镜、生成、本机合并都由助手完成；另一个是「低成本长视频」——超过单段上限自动续拍，分段生成后在本机合并，超长视频也能把成本压下来。
+- **开始创作**：「新建视频创作会话」等同于新建会话后切到「视频创作助手」模式，直接开始；「打开插件设置」跳到设置页改接入方式与 API密钥；「使用说明」打开在线说明页。
+- **使用流程**：说清创意 → 脚本分镜 → 逐段生成 → 本机合并。四步会依次点亮，只是操作顺序的演示，不需要在这里操作。
+
+左侧栏没有出现这一行时，先确认 MetaOnticVideo 已安装并启用，再按提示重载插件——左侧栏入口由宿主在启动或重载时装配，重载后才会出现。入口不显示也不影响使用，按下面的步骤新建会话、把模式切到「视频创作助手」即可，功能完全一样。
 
 ### 第一次生成视频
 

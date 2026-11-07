@@ -6,6 +6,13 @@ import { createDictionaries } from './client/locale.js';
 import { createSettingsState } from './client/state.js';
 import { createUpdates } from './client/updates.js';
 import { createSettingsPage } from './client/settings.js';
+import { createSidebarPanel } from './client/panel.js';
+import iconMark from '../icon.svg';
+
+/** 左侧栏入参与面板本体共用的面板 id；也是 `main` 键位槽的 key。 */
+const PANEL_ID = 'metaontic-video';
+/** 面板里的「使用说明」指向服务端站点。 */
+const GUIDE_URL = 'https://video.mybfs.cn';
 
 window.__ModuleLoader__.load({
   id: 'metaontic-video',
@@ -74,6 +81,29 @@ window.__ModuleLoader__.load({
           key: NAMESPACE,
           locale: NS,
         }, Page)), 'metaontic-video: configuration page');
+        // 面板组件要用当前配置快照与界面字典（form/t 在 apply 里才有），所以在这里构造。
+        const { PanelIcon, VideoPanel } = createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GUIDE_URL, LOGO_SVG: iconMark });
+        // 左侧栏入口与面板本体是宿主 root 作用域的两个 slot，用同一个 id 关联：
+        // sidebar.panellist 只放一行图标（收到 {size, active}），点它切到 main 里同 id 的面板。
+        // 老版本宿主没有这两个 slot 时 inject 不会触发，其余界面与工具不受影响。
+        ctx.effect(() => ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
+          name: 'sidebar.panellist',
+          id: PANEL_ID,
+          order: 30,
+          locale: NS,
+          // 左侧那一行显示的名字，比面板标题更完整，方便在图标列表里认出来。
+          label: () => t('panelSidebarLabel'),
+        }, PanelIcon)), 'metaontic-video: sidebar entry');
+        ctx.effect(() => ctx.slots.inject('main', () => ctx.slots.register({
+          name: 'main',
+          key: PANEL_ID,
+          locale: NS,
+          // 面板要的两个动作都按需取服务：老宿主没有这些服务时按钮自然失效，不报错。
+          inject: () => ({
+            startSession: () => ctx.get('uiWorkspace')?.startSession(undefined, { agentPreset: 'video-director' }),
+            openSettings: () => ctx.get('pluginNavigation')?.openBundle(NAMESPACE),
+          }),
+        }, VideoPanel)), 'metaontic-video: sidebar panel');
       },
     };
   },

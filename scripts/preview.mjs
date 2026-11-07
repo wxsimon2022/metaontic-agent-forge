@@ -4,6 +4,7 @@ const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url))
 process.chdir(new URL('..', import.meta.url).pathname);
 const ctx = await context({
   entryPoints: ['preview/main.jsx'], bundle: true, format: 'esm', platform: 'browser',
+  loader: { '.svg': 'text' },
   outdir: 'preview/.build', sourcemap: true, define: { __PLUGIN_VERSION__: JSON.stringify(pkg.version) },
 });
 await ctx.watch();

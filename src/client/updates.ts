@@ -38,7 +38,7 @@ export function createUpdates({ h }: any) {
     function updateBell(t, latest, current) {
       if (!isNewerVersion(latest, current)) return null;
       const label = t('versionNew', { version: latest });
-      return h('span', { className: 'mov-update-bell', 'data-field': 'update-bell', role: 'img', 'aria-label': label, title: label },
+      return h('span', { key: 'update-bell', className: 'mov-update-bell', 'data-field': 'update-bell', role: 'img', 'aria-label': label, title: label },
         h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true }, [
           h('path', { key: 'body', d: 'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9' }),
           h('path', { key: 'clapper', d: 'M10 21h4M12 2V1' }),

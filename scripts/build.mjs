@@ -15,4 +15,4 @@ if (target === 'all' || target === 'locale') {
   }
 }
 if (target === 'all' || target === 'host') await build({entryPoints:['src/index.ts'],bundle:true,format:'esm',platform:'node',target:'node20',define:{__PLUGIN_VERSION__:JSON.stringify(version)},outfile:'index.js'});
-if (target === 'all' || target === 'client') await build({entryPoints:['src/client.ts'],bundle:true,format:'iife',platform:'browser',target:'es2022',define:{__PLUGIN_VERSION__:JSON.stringify(version)},outfile:'client.js'});
+if (target === 'all' || target === 'client') await build({entryPoints:['src/client.ts'],bundle:true,format:'iife',platform:'browser',target:'es2022',loader:{'.svg':'text'},define:{__PLUGIN_VERSION__:JSON.stringify(version)},outfile:'client.js'});

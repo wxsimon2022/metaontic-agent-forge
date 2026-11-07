@@ -1,21 +1,71 @@
-MIT License
+MetaOnticVideo 使用许可协议（仅允许使用，禁止修改）
+MetaOnticVideo License — Use Only, No Modification
+版本 1.0 · 生效日期：2026-11-07
+Copyright (c) 2026 wxsimon2022. All rights reserved.
 
-Copyright (c) 2026 wxsimon2022
+本协议适用于 MetaOnticVideo 插件及其随附文件、构建产物、文档与素材（以下统称“本软件”）。
+This license applies to the MetaOnticVideo plugin together with its accompanying files, build
+output, documentation and assets (the "Software").
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+一、授权（您可以做的）
+1. 免费获取、安装、运行本软件，用于个人用途或商业用途，无需支付许可费用。
+2. 在未经任何修改的前提下，将本软件的完整副本转发给他人，但必须完整保留本协议、版权声明
+   以及随附的第三方许可声明（THIRD_PARTY_NOTICES.md）。
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+二、限制（您不可以做的）
+1. 不得修改、改编、翻译、演绎本软件，也不得基于本软件创作衍生作品。
+2. 不得反编译、反汇编、逆向工程，或提取其源码后加以改造（法律强制允许的情形除外）。
+3. 不得制作、发布或传播改造版、二次开发版、套壳版，或以任何方式改变本软件原有行为的版本。
+4. 不得移除、遮蔽、篡改本软件中的版权声明、本协议、插件名称与作者标识。
+5. 不得将本软件或其任何部分作为自己的产品进行分发、销售、出租、再许可或提供付费托管服务。
+6. 不得使用本软件的名称、图标、截图等标识暗示获得作者授权或与作者存在合作，除非事先取得
+   书面同意。
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+三、第三方组件
+本软件包含或依赖的第三方组件仍受其各自原始许可协议约束（详见 THIRD_PARTY_NOTICES.md），
+本协议不限制您依该等协议对这些组件享有的权利。
+
+四、终止
+您一旦违反本协议的任何条款，本协议授予的许可自动终止，您应立即停止使用并删除全部副本。
+
+五、免责声明
+本软件按“现状”提供，不附带任何形式的明示或默示担保，包括但不限于适销性、特定用途适用性
+及不侵权担保。因使用或无法使用本软件产生的任何直接、间接、附带或后果性损失，作者不承担
+责任。您需自行承担使用本软件所产生的第三方服务费用（如模型调用、中转站、充值等）。
+
+六、其他
+未明确授予的权利均由著作权人保留。如需修改、二次开发、商业再分发或其它未授权用途，
+请通过项目仓库（https://github.com/wxsimon2022/metaontic-video/issues 或
+https://gitee.com/hackloop/metaontic-video）联系作者取得书面授权。
+
+------------------------------------------------------------------------------
+English translation (for reference; the Chinese text prevails if they conflict)
+
+MetaOnticVideo License — Use Only, No Modification, Version 1.0 (2026-11-07)
+Copyright (c) 2026 wxsimon2022. All rights reserved.
+
+1. Grant. You may obtain, install and run the Software free of charge for personal or commercial
+   use. You may pass on complete, unmodified copies, provided this license, the copyright notice
+   and the bundled third-party notices (THIRD_PARTY_NOTICES.md) are kept intact.
+2. Restrictions. You may not modify, adapt, translate or create derivative works of the Software;
+   may not decompile, disassemble or reverse engineer it, or extract and alter its source, except
+   where such restriction is prohibited by applicable law; may not publish or distribute modified,
+   customized, repackaged or otherwise altered versions; may not remove or alter copyright
+   notices, this license, the plugin name or the author's marks; may not distribute, sell, rent,
+   sublicense or offer the Software (or any part of it) as your own paid product or hosted service;
+   and may not use its name, icon or screenshots to imply endorsement or partnership without prior
+   written consent.
+3. Third-party components. Bundled or linked third-party components remain governed by their own
+   licenses (see THIRD_PARTY_NOTICES.md); this license does not restrict the rights you hold under
+   those licenses.
+4. Termination. Any breach terminates the rights granted here automatically, and you must stop
+   using the Software and delete all copies.
+5. Disclaimer. The Software is provided "as is", without warranty of any kind. In no event shall
+   the author be liable for any damages arising from the use of, or inability to use, the Software.
+   You are responsible for any third-party service fees incurred (model calls, relay stations,
+   top-ups, etc.).
+6. Reservation. All rights not expressly granted are reserved. For modification, derivative
+   development, commercial redistribution or any other use not granted here, obtain written
+   permission from the author via the project repository
+   (https://github.com/wxsimon2022/metaontic-video/issues or
+   https://gitee.com/hackloop/metaontic-video).

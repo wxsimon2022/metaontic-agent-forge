@@ -441,6 +441,27 @@
   function createDictionaries() {
     const zh = {
       summaryEmpty: "\u8BF7\u9009\u62E9\u63A5\u5165\u65B9\u5F0F\uFF0C\u767B\u5F55\u6216\u586B\u5199 API\u5BC6\u94A5\u540E\u4FDD\u5B58\u3002",
+      panelTitle: "\u89C6\u9891\u521B\u4F5C",
+      panelSidebarLabel: "\u89C6\u9891\u521B\u4F5C\u52A9\u624B",
+      panelIntro: "\u5728\u5BF9\u8BDD\u91CC\u8BF4\u6E05\u521B\u610F\u3001\u65F6\u957F\u4E0E\u753B\u5E45\uFF0C\u811A\u672C\u3001\u5206\u955C\u3001\u751F\u6210\u548C\u672C\u673A\u5408\u5E76\u90FD\u7531\u63D2\u4EF6\u5B8C\u6210\u3002",
+      panelStart: "\u5F00\u59CB\u521B\u4F5C",
+      panelNew: "\u65B0\u5EFA\u89C6\u9891\u521B\u4F5C\u4F1A\u8BDD",
+      panelSettings: "\u6253\u5F00\u63D2\u4EF6\u8BBE\u7F6E",
+      panelGuide: "\u4F7F\u7528\u8BF4\u660E",
+      panelHighlights: "\u4E3A\u4EC0\u4E48\u7528\u5B83",
+      panelHighlight1Title: "\u65B0\u624B\u4E5F\u80FD\u4E0A\u624B",
+      panelHighlight1Desc: "\u4E0D\u7528\u7814\u7A76\u63D0\u793A\u8BCD\uFF1A\u8BF4\u6E05\u521B\u610F\u3001\u65F6\u957F\u548C\u753B\u5E45\u5C31\u80FD\u5F00\u59CB\uFF0C\u811A\u672C\u3001\u5206\u955C\u3001\u751F\u6210\u548C\u672C\u673A\u5408\u5E76\u90FD\u7531\u52A9\u624B\u5B8C\u6210\u3002",
+      panelHighlight2Title: "\u4F4E\u6210\u672C\u957F\u89C6\u9891",
+      panelHighlight2Desc: "\u8D85\u8FC7\u5355\u6BB5\u4E0A\u9650\u81EA\u52A8\u7EED\u62CD\uFF0C\u5206\u6BB5\u751F\u6210\u540E\u5728\u672C\u673A\u5408\u5E76\uFF0C\u8D85\u957F\u89C6\u9891\u4E5F\u80FD\u628A\u6210\u672C\u538B\u4E0B\u6765\u3002",
+      panelFlow: "\u4F7F\u7528\u6D41\u7A0B",
+      panelStep1Title: "\u8BF4\u6E05\u521B\u610F",
+      panelStep1Desc: "\u4E3B\u9898\u3001\u65F6\u957F\u3001\u753B\u5E45\uFF0816:9 / 9:16\uFF09\u4E0E\u6E05\u6670\u5EA6\uFF1B\u6CA1\u5199\u753B\u5E45\u65F6\u52A9\u624B\u4F1A\u5148\u95EE\u3002",
+      panelStep2Title: "\u811A\u672C\u5206\u955C",
+      panelStep2Desc: "\u5148\u51FA\u811A\u672C\u4E0E\u5206\u955C\uFF0C\u4F60\u5BA1\u6838\u786E\u8BA4\u540E\u518D\u7EE7\u7EED\u3002",
+      panelStep3Title: "\u9010\u6BB5\u751F\u6210",
+      panelStep3Desc: "\u786E\u8BA4\u8D39\u7528\u540E\u5F00\u59CB\u751F\u6210\uFF1B\u8D85\u8FC7\u5355\u6BB5\u4E0A\u9650\u81EA\u52A8\u7EED\u62CD\uFF0C\u652F\u6301\u65AD\u70B9\u7EED\u505A\u3002",
+      panelStep4Title: "\u672C\u673A\u5408\u5E76",
+      panelStep4Desc: "\u5206\u6BB5\u751F\u6210\u7684\u7ED3\u679C\u5728\u672C\u673A\u5408\u5E76\u6210\u7247\uFF0C\u53EF\u9010\u6BB5\u9884\u89C8\u3002",
       summary: "{provider} \xB7 {model}",
       apiKeyConfigured: "\u5DF2\u914D\u7F6E\uFF0C\u7559\u7A7A\u4FDD\u7559\u73B0\u6709 API\u5BC6\u94A5",
       connectionMode: "\u63A5\u5165\u65B9\u5F0F",
@@ -631,6 +652,27 @@
     };
     const en = {
       summaryEmpty: "Choose a connection method, then log in or enter an API key and save.",
+      panelTitle: "Video",
+      panelSidebarLabel: "Video Creator",
+      panelIntro: "Describe the idea, duration and aspect ratio in the conversation; the plugin handles script, storyboard, generation and local merging.",
+      panelStart: "Start creating",
+      panelNew: "New video session",
+      panelSettings: "Open plugin settings",
+      panelGuide: "User guide",
+      panelHighlights: "Why it works",
+      panelHighlight1Title: "Made for beginners",
+      panelHighlight1Desc: "No prompt engineering: describe the idea, duration and ratio, and the assistant handles script, storyboard, generation and merging.",
+      panelHighlight2Title: "Long videos, low cost",
+      panelHighlight2Desc: "Clips past the model limit continue automatically and are merged locally, keeping long videos affordable.",
+      panelFlow: "How it works",
+      panelStep1Title: "Describe the idea",
+      panelStep1Desc: "Topic, duration, ratio (16:9 / 9:16) and resolution; the assistant asks when the ratio is missing.",
+      panelStep2Title: "Script & storyboard",
+      panelStep2Desc: "The script and storyboard come first; production waits for your review.",
+      panelStep3Title: "Segment generation",
+      panelStep3Desc: "After you confirm the cost, clips generate in segments and continue automatically past the model limit.",
+      panelStep4Title: "Merge locally",
+      panelStep4Desc: "Segments are merged into the final video on your machine, with per-segment preview.",
       summary: "{provider} \xB7 {model}",
       apiKeyConfigured: "Configured; leave blank to keep the current key",
       connectionMode: "Connection",
@@ -932,7 +974,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.15.2".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.16.0".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -958,7 +1000,7 @@
       const label = t("versionNew", { version: latest });
       return h(
         "span",
-        { className: "mov-update-bell", "data-field": "update-bell", role: "img", "aria-label": label, title: label },
+        { key: "update-bell", className: "mov-update-bell", "data-field": "update-bell", role: "img", "aria-label": label, title: label },
         h("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, [
           h("path", { key: "body", d: "M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" }),
           h("path", { key: "clapper", d: "M10 21h4M12 2V1" })
@@ -1651,9 +1693,9 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.15.2",
+    version: "3.16.0",
     description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, image-to-video, text-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects through the MetaOnticVideo relay with email sign-in and wallet top-up, or your own MetaOntic AI key.",
-    license: "MIT",
+    license: "SEE LICENSE IN LICENSE",
     type: "module",
     keywords: [
       "metaontic-video",
@@ -1748,11 +1790,12 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.15.2",
+      version: "3.16.0",
       prerelease: false,
-      publishedAt: "2026-11-06T04:17:04.251Z",
+      publishedAt: "2026-11-07T01:45:13.030Z",
       items: [
-        "\u4F18\u5316\uFF1A\u5145\u503C\u5165\u53E3\u6539\u7531\u670D\u52A1\u7AEF\u540E\u53F0\u63A7\u5236\uFF0C\u5173\u95ED\u540E\u8BBE\u7F6E\u9875\u4E0D\u518D\u663E\u793A\u300C\u5145\u503C\u300D\uFF0C\u53EA\u63D0\u793A\u8054\u7CFB\u7BA1\u7406\u5458\uFF0C\u4F59\u989D\u4E0E\u751F\u6210\u4E0D\u53D7\u5F71\u54CD\u3002"
+        "\u65B0\u589E\uFF1A\u5DE6\u4FA7\u680F\u65B0\u589E\u300C\u89C6\u9891\u521B\u4F5C\u52A9\u624B\u300D\u5165\u53E3\u4E0E\u5F15\u5BFC\u9875\uFF0C\u53EF\u4E00\u952E\u65B0\u5EFA\u4F1A\u8BDD\uFF0C\u5E76\u5C55\u793A\u4E0A\u624B\u6D41\u7A0B\u4E0E\u957F\u89C6\u9891\u4F4E\u6210\u672C\u65B9\u6848\u3002",
+        "\u4F18\u5316\uFF1A\u8BB8\u53EF\u534F\u8BAE\u8C03\u6574\u4E3A\u4EC5\u5141\u8BB8\u4F7F\u7528\u3001\u7981\u6B62\u4FEE\u6539\uFF0C\u8F6C\u53D1\u9700\u4FDD\u7559\u5B8C\u6574\u5B89\u88C5\u5305\u3002"
       ]
     }
   };
@@ -2205,7 +2248,7 @@
           }
         }
         function control(field) {
-          if (field.key === "apiKey") return h("input", { id: "metaontic-video-apiKey", className: "mov-input", style: inputStyle, type: "text", readOnly: true, value: snapshot.secrets?.apiKey || value.apiKey ? t("serviceKeyConfigured") : t("serviceKeyMissing") });
+          if (field.key === "apiKey") return h("input", { key: "control", id: "metaontic-video-apiKey", className: "mov-input", style: inputStyle, type: "text", readOnly: true, value: snapshot.secrets?.apiKey || value.apiKey ? t("serviceKeyConfigured") : t("serviceKeyMissing") });
           const current = draft[field.key] !== void 0 ? draft[field.key] : value[field.key] ?? (field.key === "imageUseVideoKey" ? true : field.key === "pollIntervalMs" ? 5e3 : field.key === "maxWaitMs" ? 6e5 : void 0);
           const secondsField = field.key === "pollIntervalMs" || field.key === "maxWaitMs";
           const displayed = secondsField && current !== void 0 && current !== "" ? Number(current) / 1e3 : current;
@@ -2213,7 +2256,7 @@
           if (field.kind === "switch") {
             return h(
               "label",
-              { htmlFor: id, className: "mov-switch" },
+              { key: "control", htmlFor: id, className: "mov-switch" },
               h("input", {
                 id,
                 "data-field": field.key,
@@ -2232,6 +2275,7 @@
             const retiredImageModel = field.key === "imageModel" && !options.includes(String(current || ""));
             const list = current && !options.includes(current) && !hiddenModel && !hiddenMode && !legacyMerge && !retiredImageModel ? [...options, current] : options;
             return h("select", {
+              key: "control",
               id,
               "data-field": field.key,
               className: `mov-input${field.mono ? " mov-mono" : ""}`,
@@ -2248,6 +2292,8 @@
           const canReveal = field.key === "metaonticApiKey" || field.key === "volcengineApiKey" || field.key === "imageApiKey";
           const revealed = canReveal && visibleKey === field.key;
           const input = h("input", {
+            // 这个 input 会和右侧眼睛按钮一起放进数组，React 要求数组子节点带 key
+            key: "input",
             id,
             "data-field": field.key,
             className: `mov-input${field.mono ? " mov-mono" : ""}`,
@@ -2263,9 +2309,10 @@
             )
           });
           if (!canReveal) return input;
-          return h("div", { className: "mov-key-control" }, [
+          return h("div", { key: "control", className: "mov-key-control" }, [
             input,
             h("button", {
+              key: "toggle",
               type: "button",
               className: "mov-key-eye",
               "aria-label": t(revealed ? "hideKey" : "showKey"),
@@ -2883,7 +2930,232 @@
     return { makePage };
   }
 
+  // src/client/panel.ts
+  function createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID: PANEL_ID2, GUIDE_URL: GUIDE_URL2, LOGO_SVG }) {
+    const LOGO_SRC = LOGO_SVG ? `data:image/svg+xml,${encodeURIComponent(LOGO_SVG)}` : "";
+    const PANEL_CSS = `
+      .mov-panel { width: 100%; max-width: 880px; margin: 0 auto; padding: 30px 32px 44px; display: flex; flex-direction: column; gap: 18px; }
+      /* \u54C1\u724C\u5934\u56FE\uFF1A\u63D2\u4EF6 logo + \u6807\u9898/\u7B80\u4ECB\uFF0C\u7ED9\u7A7A\u8361\u7684\u5185\u5BB9\u533A\u4E00\u4E2A\u89C6\u89C9\u951A\u70B9 */
+      .mov-panel-hero { display: flex; align-items: center; gap: 14px; }
+      .mov-panel-mark { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: ${TOKENS.primaryFill}; }
+      .mov-panel-logo { width: 100%; height: 100%; object-fit: contain; }
+      /* \u5DE6\u4FA7\u680F\u90A3\u4E00\u884C\u7684 logo\uFF1A\u6309\u5BBF\u4E3B\u7ED9\u7684\u5C3A\u5BF8\u539F\u6837\u94FA\u5F00\uFF0C\u4E0D\u53C2\u4E0E\u4E3B\u9898\u53D6\u8272 */
+      .mov-rail-logo { display: block; object-fit: contain; }
+      .mov-panel-head { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+      .mov-panel-title { margin: 0; font-size: 19px; font-weight: 600; color: ${TOKENS.text}; }
+      .mov-panel-intro { margin: 0; font-size: 13px; line-height: 1.55; color: ${TOKENS.muted}; }
+      /* \u4E3B\u6309\u94AE\u5403\u6389\u591A\u4F59\u5BBD\u5EA6\uFF0C\u6B21\u8981\u6309\u94AE\u4E0E\u94FE\u63A5\u9000\u5230\u7B2C\u4E8C\u6392 */
+      .mov-panel-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+      .mov-panel-actions .mov-btn-primary { flex: 1 1 220px; width: auto; min-width: 160px; height: 38px; }
+      .mov-panel-actions .mov-btn:not(.mov-btn-primary) { min-width: 132px; }
+      .mov-panel-link { margin-left: auto; font-size: 12px; color: ${TOKENS.primaryFill}; text-decoration: none; border-bottom: 1px solid transparent; }
+      .mov-panel-link:hover { border-bottom-color: currentColor; }
+      /* \u4E24\u5757\u4EF7\u503C\u70B9\u5361\u7247\uFF1A\u56FE\u6807 + \u6807\u9898 + \u4E00\u53E5\u8BF4\u660E\uFF0C\u7A84\u5BB9\u5668\u81EA\u52A8\u843D\u6210\u4E00\u5217 */
+      .mov-panel-highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+      .mov-panel-highlight { display: flex; align-items: flex-start; gap: 12px; padding: 13px 14px; border: 1px solid ${TOKENS.border}; border-radius: 12px; background: ${TOKENS.cardFill}; }
+      .mov-panel-highlight-icon { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; }
+      .mov-panel-highlight-body { min-width: 0; }
+      .mov-panel-highlight-title { font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
+      .mov-panel-highlight-desc { margin: 4px 0 0; font-size: 12px; line-height: 1.55; color: ${TOKENS.muted}; }
+      /* \u6D41\u7A0B\u6F14\u793A\uFF1A\u56DB\u6B65\u5361\u7247\u6A2A\u6392\uFF0C\u5361\u7247\u4E4B\u95F4\u7528\u7BAD\u5934\u8FDE\u8D77\u6765\uFF1B\u7A84\u5BB9\u5668\u843D\u6210\u4E00\u5217 */
+      .mov-panel-flow { display: flex; align-items: stretch; }
+      .mov-panel-step { position: relative; overflow: hidden; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 7px; padding: 13px 14px 14px; border: 1px solid ${TOKENS.border}; border-radius: 12px; background: ${TOKENS.cardFill}; animation: mov-flow-card 9s ease-in-out infinite; }
+      .mov-panel-step-head { display: flex; align-items: center; gap: 8px; }
+      .mov-panel-step-badge { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 600; color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; animation: mov-flow-badge 9s ease-in-out infinite; }
+      .mov-panel-step-title { min-width: 0; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
+      .mov-panel-step-desc { margin: 0; font-size: 12px; line-height: 1.55; color: ${TOKENS.muted}; }
+      /* \u53F3\u4E0A\u89D2\u7684\u6DE1\u8272\u6C34\u5370\u56FE\u6807\uFF0C\u53EA\u505A\u88C5\u9970 */
+      .mov-panel-step-icon { position: absolute; top: 10px; right: 10px; color: ${TOKENS.primaryFill}; opacity: .14; pointer-events: none; }
+      /* \u5361\u7247\u4E4B\u95F4\u7684\u7BAD\u5934\uFF1A\u6A2A\u6392\u65F6\u5411\u53F3\uFF0C\u7A84\u5BB9\u5668\u91CC\u8F6C\u6210\u5411\u4E0B */
+      .mov-panel-conn { flex: 0 0 26px; align-self: center; height: 2px; border-radius: 1px; background: ${TOKENS.border}; position: relative; }
+      .mov-panel-conn::after { content: ''; position: absolute; top: 50%; right: -1px; width: 5px; height: 5px; border-top: 2px solid ${TOKENS.border}; border-right: 2px solid ${TOKENS.border}; transform: translateY(-50%) rotate(45deg); }
+      /* \u56DB\u6B65\u4F9D\u6B21\u70B9\u4EAE\uFF0C\u5F62\u6210\u4E00\u6761\u8D70\u52A8\u7684\u6D41\u7A0B\uFF1B\u5EF6\u8FDF\u6309\u6B65\u53F7\u9519\u5F00 */
+      @keyframes mov-flow-card { 0%, 16% { border-color: ${TOKENS.primaryFill}; } 28%, 100% { border-color: ${TOKENS.border}; } }
+      @keyframes mov-flow-badge { 0%, 16% { color: #fff; background: ${TOKENS.primaryFill}; } 28%, 100% { color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; } }
+      .mov-panel-step[data-step="1"], .mov-panel-step[data-step="1"] .mov-panel-step-badge { animation-delay: 2.25s; }
+      .mov-panel-step[data-step="2"], .mov-panel-step[data-step="2"] .mov-panel-step-badge { animation-delay: 4.5s; }
+      .mov-panel-step[data-step="3"], .mov-panel-step[data-step="3"] .mov-panel-step-badge { animation-delay: 6.75s; }
+      .mov-panel { container-type: inline-size; }
+      @container (max-width: 620px) {
+        .mov-panel-flow { flex-direction: column; align-items: stretch; }
+        /* \u7AD6\u5411\u6392\u5E03\u65F6\u4E0D\u80FD\u518D\u6309\u5269\u4F59\u7A7A\u95F4\u62C9\u4F38\uFF0C\u5426\u5219\u5361\u7247\u4F1A\u88AB\u538B\u6241 */
+        .mov-panel-step { flex: 0 0 auto; }
+        .mov-panel-conn { flex: 0 0 18px; width: 2px; height: 18px; align-self: flex-start; margin-left: 24px; }
+        .mov-panel-conn::after { top: auto; right: 50%; bottom: -1px; transform: translateX(50%) rotate(135deg); }
+      }
+      @container (max-width: 560px) {
+        .mov-panel { padding: 22px 18px 34px; }
+        .mov-panel-link { margin-left: 0; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .mov-panel-step, .mov-panel-step-badge { animation: none; }
+      }
+    `;
+    function PanelIcon({ size = 18 }) {
+      const pixels = Number(size) || 18;
+      if (LOGO_SRC) {
+        return h("img", {
+          className: "mov-rail-logo",
+          src: LOGO_SRC,
+          alt: "",
+          width: pixels,
+          height: pixels,
+          "aria-hidden": true
+        });
+      }
+      return h("svg", {
+        width: pixels,
+        height: pixels,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: 1.7,
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        "aria-hidden": true
+      }, [
+        h("rect", { key: "frame", x: 2.5, y: 4.5, width: 13.5, height: 15, rx: 2.5 }),
+        h("path", { key: "lens", d: "M16 10.4 21.5 7.3v9.4L16 13.6z" })
+      ]);
+    }
+    function flowIcon(name, size = 22) {
+      const common = {
+        width: size,
+        height: size,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: 1.6,
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        "aria-hidden": true
+      };
+      if (name === "idea") {
+        return h("svg", common, [
+          h("path", { key: "bulb", d: "M12 3.5a5.5 5.5 0 0 0-3.2 9.9V16h6.4v-2.6A5.5 5.5 0 0 0 12 3.5Z" }),
+          h("path", { key: "base", d: "M9.5 18.5h5M10.5 21h3" })
+        ]);
+      }
+      if (name === "script") {
+        return h("svg", common, [
+          h("rect", { key: "frame", x: 3, y: 4.5, width: 18, height: 15, rx: 2.2 }),
+          h("path", { key: "split", d: "M3 12h18M11 12v7.5" })
+        ]);
+      }
+      if (name === "generate") {
+        return h("svg", common, [
+          h("rect", { key: "frame", x: 3, y: 5, width: 18, height: 14, rx: 2.2 }),
+          h("path", { key: "play", d: "M10.4 9.4 15 12l-4.6 2.6z" })
+        ]);
+      }
+      if (name === "easy") {
+        return h("svg", common, [
+          h("path", { key: "star", d: "M12 4.2l1.9 5.1 5.1 1.9-5.1 1.9L12 18.2l-1.9-5.1L5 11.2l5.1-1.9z" }),
+          h("path", { key: "spark", d: "M19 4.2v3M17.5 5.7h3" })
+        ]);
+      }
+      if (name === "cheap") {
+        return h("svg", common, [
+          h("path", { key: "tag", d: "M11.2 3.8H5.4A1.6 1.6 0 0 0 3.8 5.4v5.8l8.8 8.8a1.6 1.6 0 0 0 2.3 0l5.8-5.8a1.6 1.6 0 0 0 0-2.3z" }),
+          h("circle", { key: "hole", cx: 7.6, cy: 7.6, r: 1.2 })
+        ]);
+      }
+      return h("svg", common, [
+        h("path", { key: "down", d: "M12 3.5v10m0 0 3.6-3.6M12 13.5 8.4 9.9" }),
+        h("path", { key: "tray", d: "M4.5 16.5v2.2a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2.2" })
+      ]);
+    }
+    function highlight(key, icon, title, desc) {
+      return h("div", { key, className: "mov-panel-highlight" }, [
+        h("span", { key: "icon", className: "mov-panel-highlight-icon" }, flowIcon(icon, 20)),
+        h("div", { key: "body", className: "mov-panel-highlight-body" }, [
+          h("div", { key: "title", className: "mov-panel-highlight-title" }, title),
+          h("p", { key: "desc", className: "mov-panel-highlight-desc" }, desc)
+        ])
+      ]);
+    }
+    function VideoPanel(props) {
+      const flow = [
+        { icon: "idea", title: t("panelStep1Title"), desc: t("panelStep1Desc") },
+        { icon: "script", title: t("panelStep2Title"), desc: t("panelStep2Desc") },
+        { icon: "generate", title: t("panelStep3Title"), desc: t("panelStep3Desc") },
+        { icon: "merge", title: t("panelStep4Title"), desc: t("panelStep4Desc") }
+      ];
+      const flowChildren = flow.flatMap((step, index) => {
+        const card = h("div", {
+          key: `step-${index}`,
+          className: "mov-panel-step",
+          "data-step": String(index)
+        }, [
+          h("div", { key: "head", className: "mov-panel-step-head" }, [
+            h("span", { key: "badge", className: "mov-panel-step-badge" }, String(index + 1)),
+            h("span", { key: "title", className: "mov-panel-step-title" }, step.title)
+          ]),
+          h("p", { key: "desc", className: "mov-panel-step-desc" }, step.desc),
+          h("span", { key: "icon", className: "mov-panel-step-icon" }, flowIcon(step.icon))
+        ]);
+        return index === 0 ? [card] : [h("span", { key: `conn-${index}`, className: "mov-panel-conn", "aria-hidden": true }), card];
+      });
+      return h("div", { className: "mov-panel" }, [
+        h("style", { key: "styles" }, PAGE_CSS + PANEL_CSS),
+        h("header", { key: "hero", className: "mov-panel-hero" }, [
+          h(
+            "span",
+            { key: "mark", className: "mov-panel-mark" },
+            LOGO_SRC ? h("img", { key: "logo", className: "mov-panel-logo", src: LOGO_SRC, alt: "", "aria-hidden": true }) : PanelIcon({ size: 24 })
+          ),
+          h("div", { key: "head", className: "mov-panel-head" }, [
+            h("h1", { key: "title", className: "mov-panel-title" }, t("panelTitle")),
+            h("p", { key: "intro", className: "mov-panel-intro" }, t("panelIntro"))
+          ])
+        ]),
+        h("section", { key: "highlights", className: "mov-section" }, [
+          h("div", { key: "highlights-label", className: "mov-section-title" }, t("panelHighlights")),
+          h("div", { key: "highlights-cards", className: "mov-panel-highlights" }, [
+            highlight("easy", "easy", t("panelHighlight1Title"), t("panelHighlight1Desc")),
+            highlight("cheap", "cheap", t("panelHighlight2Title"), t("panelHighlight2Desc"))
+          ])
+        ]),
+        h("section", { key: "start", className: "mov-section" }, [
+          h("div", { key: "start-label", className: "mov-section-title" }, t("panelStart")),
+          h("div", { key: "start-actions", className: "mov-panel-actions" }, [
+            h("button", {
+              key: "new",
+              type: "button",
+              className: "mov-btn mov-btn-primary",
+              onClick: () => props?.startSession?.()
+            }, t("panelNew")),
+            h("button", {
+              key: "settings",
+              type: "button",
+              className: "mov-btn",
+              disabled: typeof props?.openSettings !== "function",
+              onClick: () => props?.openSettings?.()
+            }, t("panelSettings")),
+            h("a", {
+              key: "guide",
+              className: "mov-panel-link",
+              href: GUIDE_URL2,
+              target: "_blank",
+              rel: "noopener noreferrer"
+            }, t("panelGuide"))
+          ])
+        ]),
+        h("section", { key: "flow", className: "mov-section" }, [
+          h("div", { key: "flow-label", className: "mov-section-title" }, t("panelFlow")),
+          h("div", { key: "flow-steps", className: "mov-panel-flow" }, flowChildren)
+        ])
+      ]);
+    }
+    return { PANEL_ID: PANEL_ID2, PanelIcon, VideoPanel };
+  }
+
+  // icon.svg
+  var icon_default = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="MetaOnticVideo"><defs>\n<linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#36e8ee"/><stop offset=".5" stop-color="#1688ff"/><stop offset="1" stop-color="#1742e8"/></linearGradient>\n<linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#341ad5"/><stop offset=".5" stop-color="#7635ff"/><stop offset="1" stop-color="#176bff"/></linearGradient>\n<linearGradient id="c" x1="1" y1="0" x2="0" y2="1"><stop stop-color="#2ce7ef"/><stop offset=".5" stop-color="#087bff"/><stop offset="1" stop-color="#2026ba"/></linearGradient>\n<linearGradient id="d" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#24e5ec"/><stop offset=".45" stop-color="#1168ff"/><stop offset="1" stop-color="#2539d7"/></linearGradient>\n</defs>\n<path d="M9 25Q9 11 21 13L43 29 32 43 20 33V79Q20 85 14 85Q9 85 9 79Z" fill="url(#b)"/>\n<path d="M91 25Q91 11 79 13L43 39 57 53 80 35V78Q80 85 86 85Q91 85 91 79Z" fill="url(#c)"/>\n<path d="M10 23Q14 9 27 17L75 49Q79 52 75 56L43 77Q37 81 33 74L19 39Q15 27 10 23ZM40 40Q38 39 38 42V65Q38 68 41 66L59 54Q62 52 59 50Z" fill="url(#a)" fill-rule="evenodd"/>\n<path d="M75 49Q80 52 81 64L91 80Q89 88 82 84L62 70 43 77Q38 80 34 75Z" fill="url(#d)"/>\n<path d="M40 40Q38 39 38 42V65Q38 68 41 66L59 54Q62 52 59 50Z" fill="none"/>\n</svg>\n';
+
   // src/client.ts
+  var PANEL_ID = "metaontic-video";
+  var GUIDE_URL = "https://video.mybfs.cn";
   window.__ModuleLoader__.load({
     id: "metaontic-video",
     factory(require2) {
@@ -2942,6 +3214,25 @@
             key: NAMESPACE,
             locale: NS
           }, Page)), "metaontic-video: configuration page");
+          const { PanelIcon, VideoPanel } = createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GUIDE_URL, LOGO_SVG: icon_default });
+          ctx.effect(() => ctx.slots.inject("sidebar.panellist", () => ctx.slots.register({
+            name: "sidebar.panellist",
+            id: PANEL_ID,
+            order: 30,
+            locale: NS,
+            // 左侧那一行显示的名字，比面板标题更完整，方便在图标列表里认出来。
+            label: () => t("panelSidebarLabel")
+          }, PanelIcon)), "metaontic-video: sidebar entry");
+          ctx.effect(() => ctx.slots.inject("main", () => ctx.slots.register({
+            name: "main",
+            key: PANEL_ID,
+            locale: NS,
+            // 面板要的两个动作都按需取服务：老宿主没有这些服务时按钮自然失效，不报错。
+            inject: () => ({
+              startSession: () => ctx.get("uiWorkspace")?.startSession(void 0, { agentPreset: "video-director" }),
+              openSettings: () => ctx.get("pluginNavigation")?.openBundle(NAMESPACE)
+            })
+          }, VideoPanel)), "metaontic-video: sidebar panel");
         }
       };
     }
