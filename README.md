@@ -15,8 +15,10 @@ DeepSeek Harness 的 AI 视频创作插件。支持 Seedance 文生视频、图�
 在线安装链接：
 
 ```text
-https://gitee.com/hackloop/metaontic-video/releases/download/v3.19.0/metaontic-video-3.19.0.tgz
+https://gitee.com/hackloop/metaontic-video/releases/download/v3.20.0/metaontic-video-3.20.0.tgz
 ```
+
+预设 **宣传视频助手**：在会话模式中选择，用于产品、品牌和活动宣传；与视频创作助手共用审核、费用确认和逐段预览流程。
 
 ## 制作流程
 
@@ -26,7 +28,7 @@ https://gitee.com/hackloop/metaontic-video/releases/download/v3.19.0/metaontic-v
 - 图片与视频可在工具结果卡片预览，并提供原文件链接；已有任务可按原进度恢复，避免重复提交。
 - 角色图生成与参考图转换单独计费，先经同意，结果审核后才用于视频。已完成分段不重做，新增分段仍计费。
 - 生成成功、下载完成与合并完成分别确认。查询异常不等于生成失败；上游链接请及时保存。
-- 视频创作限制仅作用于“视频创作助手”模式；标准模式可正常处理其他任务。API密钥与模型等配置只在设置页修改。
+- 视频创作限制仅作用于“视频创作助手”和“宣传视频助手”模式；标准模式可正常处理其他任务。API密钥与模型等配置只在设置页修改。
 
 ## 使用与反馈
 
@@ -40,6 +42,16 @@ https://gitee.com/hackloop/metaontic-video/releases/download/v3.19.0/metaontic-v
 ## 开发与发布
 
 [开发、热加载、验证和发布规范](./docs/engineering/development.md) · [维护经验](./docs/engineering/SKILL.md) · [双平台兼容规范](./docs/engineering/platform-compatibility.md)
+
+## v3.20.0 更新内容
+
+### 新增
+
+- 宣传视频助手预设，支持产品、品牌和活动宣传；设置页增加企业微信客服入口。
+
+### 优化
+
+- 两个助手显示中文组件名称与独立图标，便于识别和选择。
 
 ## v3.19.0 更新内容
 

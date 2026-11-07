@@ -1,4 +1,4 @@
-# MetaOnticVideo —— 一个包同时提供两件事：
+# MetaOnticVideo —— 视频工具与创作预设：
 #
 #   1) metaontic-video      视频生成工具（video_generate / video_extend /
 #                           video_status / video_config）+ 设置页卡片
@@ -11,13 +11,13 @@
       name: 'metaontic-video'
       config: {}
     - id: preset-video-director
-      name: '@deepseek-ai/dsh-agent-preset'
+      name: 'metaontic-video/presets/video-director'
       config:
         id: video-director
         name: 视频创作助手
         description: 帮你完善创意、编写脚本，审核确认后制作视频，支持参考图、续拍、逐段预览与断点续做。
         order: 20
-        plugins:
+        plugins: &video-creation-plugins
           - id: persona
             name: '@deepseek-ai/dsh-persona'
             config:
@@ -127,3 +127,11 @@
                   thresholdChars: 16384
                   headChars: 8192
                   tailChars: 2048
+    - id: preset-promo-video
+      name: 'metaontic-video/presets/promo-video'
+      config:
+        id: promo-video
+        name: 宣传视频助手
+        description: 将产品、品牌或活动创意制作成宣传视频，保留原意完善卖点与画面，脚本审核后确认费用，支持逐段预览和恢复。
+        order: 21
+        plugins: *video-creation-plugins

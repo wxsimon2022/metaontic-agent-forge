@@ -171,3 +171,9 @@ Windows解压目录安装在更新时出现空目录/locale缺失：先核对成
 流程修复：普通明确失败段重试前清除旧请求快照并按本次已审核参数构造，pending/真人转换保持原请求。费用卡口注册异常时工具执行也必须拒绝。video_extend的duration是每段秒数，review/估价/执行共同校验上限与segments，禁止静默夹短。合并与单文件交付临时写入成功后rename，不能先删已有成片；Windows文件占用报错并保留旧文件。制作确认只用视频工具付费审批，需求时长在对话中改，不引导设置页。
 
 用户原创意中的时长/横竖屏/分辨率直接作为确认值，仅询问缺失项；完善创意不清空规格。“30秒竖屏720P”不得再问这三项，不支持的参数单独说明并询问可执行替代，不静默改值。
+
+宣传预设promo-video与video-director复用YAML插件列表锚点和公共工具/审批，仅宣传模式注入promo专题。作用域判断以当前预设registry为准，标准/未知预设不得注入。预设新增后核对宿主YAML解析、技能入包和动态模式切换；旧会话固定身份不追溯修改。
+
+组件中文名称：宿主包含组件列表按row.moduleName读取<完整模块名>/locale/en.json及同目录语言文件，不读预设config.name。两个预设用metaontic-video/presets/<id>独立入口转导出宿主dsh-agent-preset，并导出对应locale；不修改宿主文件，不改预设id。打包核对wrapper与locale均纳入，宿主解析名称而非仅模式列表名称。
+
+Agent组件图标使用<完整预设模块>/icon导出，SVG在presets/icons，场记板蓝紫/扩音器橙红区分两个预设；需核对宿主readPluginMeta返回各自图标、成品入包和24/40px明暗背景显示，不修改插件总Logo。

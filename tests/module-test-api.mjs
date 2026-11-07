@@ -13,6 +13,7 @@ export * from './src/client/settings-actions.ts';
 export * from './src/client/state.ts';
 export * from './src/client/updates.ts';
 export * from './src/workflow/planning.ts';
+export * from './src/prompts/scope.ts';
 export {resolveResolution} from './src/config.ts';
 export {isOmniExtendModel} from './src/providers/connection.ts';
 export * from './src/workflow/result-state.ts';

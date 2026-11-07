@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="视频创作助手">
+  <defs><linearGradient id="director" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#12b8d8"/><stop offset=".55" stop-color="#3968ec"/><stop offset="1" stop-color="#6844cf"/></linearGradient></defs>
+  <rect x="3" y="3" width="58" height="58" rx="17" fill="url(#director)"/>
+  <rect x="14" y="16" width="36" height="9" rx="3" fill="#fff"/>
+  <path d="m23 16-5 9m16-9-5 9m16-9-5 9" stroke="#376be5" stroke-width="3.5"/>
+  <rect x="14" y="28" width="36" height="22" rx="5" fill="#fff"/>
+  <path d="M28 33.5a1 1 0 0 1 1.5-.86l9 5.5a1 1 0 0 1 0 1.72l-9 5.5a1 1 0 0 1-1.5-.86Z" fill="#4260d9"/>
+</svg>

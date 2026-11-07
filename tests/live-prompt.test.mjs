@@ -34,3 +34,20 @@ test('an existing prompt registration reads current configuration on each reques
   config.model='seedance-2.5';assert.match(section.text(director),/总时长 ≤ 30 秒/);
  }finally{dispose?.();if(prior===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=prior;await rm(dir,{recursive:true,force:true});}
 });
+
+test('promotional mode adds its brief while standard and general video modes remain scoped', async()=>{
+ let section;let selected='promo-video';
+ const ctx={tools:{register:()=>()=>{}},on:()=>()=>{},get(name){return name==='agentPresets'?{presetForSession:()=>selected}:undefined;},inject(names,install){if(names.includes('systemPrompt'))return install({systemPrompt:{section(v){section=v;return()=>{};}}});}};
+ const dispose=plugin.apply(ctx,{connectionMode:'metaontic'});
+ const request={agent:{session:{header:{agentPreset:'video-director'}}}};
+ try{
+  const promo=section.text(request);
+  assert.match(promo,/当前模式：宣传视频助手/);
+  assert.match(promo,/不得编造价格、优惠、销量/);
+  assert.match(promo,/用户原话或本轮答复已确认时/);
+  assert.match(promo,/video_project/);
+  selected='video-director';assert.doesNotMatch(section.text(request),/当前模式：宣传视频助手/);
+  selected=null;assert.equal(section.text(request),'');
+  selected='unknown';assert.equal(section.text(request),'');
+ }finally{dispose();}
+});

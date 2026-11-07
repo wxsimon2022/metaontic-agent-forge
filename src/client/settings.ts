@@ -394,6 +394,11 @@ function makePage({ form, t, manager }) {
         return h('div', { className: 'mov-page' }, [
           // hover / focus 这类效果内联样式写不出来，集中在这张样式表里（class 都带 mov- 前缀）。
           h('style', { key: 'styles' }, PAGE_CSS),
+          h('div', { key: 'support-actions', className: 'mov-card-head', style: { justifyContent: 'flex-end', marginBottom: 12 } },
+            h('button', { key: 'support', type: 'button', className: 'mov-btn mov-btn-sm',
+              'data-action': 'contact-support', 'aria-haspopup': 'dialog', 'aria-expanded': supportOpen,
+              onClick: () => setSupportOpen(true),
+            }, t('supportContact'))),
           !notice || snapshot.value ? renderUpdateNotice({
             h, t, available: updateAvailable, latest: updateLatest, deferred: updateDeferred,
             status: updateStatus, confirmed: updateConfirm,
@@ -410,12 +415,12 @@ function makePage({ form, t, manager }) {
             onClick: (event) => { if (event.target === event.currentTarget) { const rect = event.currentTarget.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) setSupportOpen(false); } },
           }, h('div', { className: 'mov-support-content' }, [
             h('div', { key: 'heading', className: 'mov-card-head' }, [
-              h('strong', { key: 'title', id: 'mov-support-title' }, t('supportRecharge')),
+              h('strong', { key: 'title', id: 'mov-support-title' }, t('supportContact')),
               h('button', { key: 'close', type: 'button', className: 'mov-btn mov-btn-sm mov-trailing', 'aria-label': t('supportClose'), onClick: () => setSupportOpen(false) }, t('supportClose')),
             ]),
             h('p', { key: 'hint', className: 'mov-hint' }, t('supportScan')),
-            h('iframe', { key: 'qr', className: 'mov-support-frame', title: t('supportRecharge'), src: 'https://work.weixin.qq.com/ca/cawcde20e8080b7f6f', referrerPolicy: 'no-referrer' }),
-            h('a', { key: 'fallback', href: 'https://work.weixin.qq.com/ca/cawcde20e8080b7f6f', target: '_blank', rel: 'noopener noreferrer' }, t('supportOpenPage')),
+            h('iframe', { key: 'qr', className: 'mov-support-frame', title: t('supportContact'), src: 'https://work.weixin.qq.com/kfid/kfcd6fc4ca793eeac18', referrerPolicy: 'no-referrer' }),
+            h('a', { key: 'fallback', href: 'https://work.weixin.qq.com/kfid/kfcd6fc4ca793eeac18', target: '_blank', rel: 'noopener noreferrer' }, t('supportOpenPage')),
           ])) : null,
         ]);
       };

@@ -1,6 +1,7 @@
 import { withMediaPreview } from './workflow/media-preview.js';
 import { createSegmentReview, assertSegmentReviewed } from './workflow/segment-review.js';
-import { isVideoDirector } from './prompts/scope.js';
+import { isVideoDirector, isPromoVideoAssistant } from './prompts/scope.js';
+import { promoVideoGuidance } from './prompts/promo.js';
 import { projectTool } from './tools/video-project.js';
 import { assertProjectApproved, withProjectApproval } from './workflow/project.js';
 import { createStoryboardReviewGuard } from './workflow/storyboard-review.js';
@@ -102,7 +103,7 @@ export function apply(ctx: DshContext, config: any = {}) {
   const promptCleanup = ctx.inject(['systemPrompt'], (promptCtx) => promptCtx.systemPrompt.section({
     name: 'plugin:metaontic-video',
     order: 5200,
-    text: context => isVideoDirector(context, ctx) ? buildPromptGuidance(config) : '',
+    text: context => isVideoDirector(context, ctx) ? buildPromptGuidance(config) + (isPromoVideoAssistant(context, ctx) ? '\n\n' + promoVideoGuidance() : '') : '',
   }));
   for (const dispose of [asDisposer(promptCleanup)]) if (dispose) disposers.push(dispose);
   // 会话工作目录也是可选的：宿主不提供时合并结果落在进程 cwd 下。

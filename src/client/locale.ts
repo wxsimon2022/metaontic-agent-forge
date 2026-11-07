@@ -72,9 +72,9 @@ const zh = {
         + '把绝对路径填到上面的「ffmpeg 路径」也一样管用。安装包自带 ffprobe，分段时长探测会一起解决。',
       ffmpegManual: '想自己装：macOS 用 Homebrew，Windows 用 winget，Linux 用系统包管理器；'
         + '装完确认命令行里能跑 ffmpeg -version 就行。',
-      supportRecharge: '客服',
+      supportContact: '客服',
       supportClose: '关闭',
-      supportScan: '请用微信扫描二维码，联系客服充值。页面未加载时可点击下方链接。',
+      supportScan: '请按页面提示使用微信联系客服，咨询使用或接入问题。页面未加载时可点击下方链接。',
       supportOpenPage: '打开客服页面',
       versionTitle: '插件版本',
       versionCurrent: '当前版本 v{version}',
@@ -220,9 +220,9 @@ const zh = {
         + 'too, so segment probing is fixed at the same time.',
       ffmpegManual: 'Installing by hand: Homebrew on macOS, winget on Windows, your distro package '
         + 'manager on Linux — you are set once `ffmpeg -version` works in a terminal.',
-      supportRecharge: 'Support',
+      supportContact: 'Support',
       supportClose: 'Close',
-      supportScan: 'Scan the QR code with WeChat to contact support for a top-up. If it does not load, use the link below.',
+      supportScan: 'Follow the page instructions to contact support with WeChat for usage or connection questions. If it does not load, use the link below.',
       supportOpenPage: 'Open support page',
       versionTitle: 'Plugin version',
       versionCurrent: 'Installed v{version}',

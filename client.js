@@ -615,9 +615,9 @@
       ffmpegLess: "\u6536\u8D77\u5176\u4ED6\u7CFB\u7EDF",
       ffmpegAfter: "\u4E0D\u60F3\u81EA\u5DF1\u6572\u547D\u4EE4\u7684\u8BDD\uFF0C\u76F4\u63A5\u5728\u5BF9\u8BDD\u91CC\u8BF4\u300C\u5E2E\u6211\u88C5 ffmpeg\u300D\u2014\u2014\u63D2\u4EF6\u4F1A\u6267\u884C\u5B89\u88C5\uFF08\u547D\u4EE4\u4F1A\u5148\u8BA9\u4F60\u786E\u8BA4\uFF09\uFF1B\u88C5\u597D\u540E\u7528\u539F\u6682\u505C\u8FDB\u5EA6\u91CD\u8BD5\u4E0B\u8F7D\u6216\u5408\u5E76\uFF0C\u4E0D\u91CD\u65B0\u63D0\u4EA4\u89C6\u9891\u751F\u6210\u3002ffmpeg \u88C5\u5728\u975E\u9ED8\u8BA4\u4F4D\u7F6E\u7684\u8BDD\uFF0C\u628A\u7EDD\u5BF9\u8DEF\u5F84\u586B\u5230\u4E0A\u9762\u7684\u300Cffmpeg \u8DEF\u5F84\u300D\u4E5F\u4E00\u6837\u7BA1\u7528\u3002\u5B89\u88C5\u5305\u81EA\u5E26 ffprobe\uFF0C\u5206\u6BB5\u65F6\u957F\u63A2\u6D4B\u4F1A\u4E00\u8D77\u89E3\u51B3\u3002",
       ffmpegManual: "\u60F3\u81EA\u5DF1\u88C5\uFF1AmacOS \u7528 Homebrew\uFF0CWindows \u7528 winget\uFF0CLinux \u7528\u7CFB\u7EDF\u5305\u7BA1\u7406\u5668\uFF1B\u88C5\u5B8C\u786E\u8BA4\u547D\u4EE4\u884C\u91CC\u80FD\u8DD1 ffmpeg -version \u5C31\u884C\u3002",
-      supportRecharge: "\u5BA2\u670D",
+      supportContact: "\u5BA2\u670D",
       supportClose: "\u5173\u95ED",
-      supportScan: "\u8BF7\u7528\u5FAE\u4FE1\u626B\u63CF\u4E8C\u7EF4\u7801\uFF0C\u8054\u7CFB\u5BA2\u670D\u5145\u503C\u3002\u9875\u9762\u672A\u52A0\u8F7D\u65F6\u53EF\u70B9\u51FB\u4E0B\u65B9\u94FE\u63A5\u3002",
+      supportScan: "\u8BF7\u6309\u9875\u9762\u63D0\u793A\u4F7F\u7528\u5FAE\u4FE1\u8054\u7CFB\u5BA2\u670D\uFF0C\u54A8\u8BE2\u4F7F\u7528\u6216\u63A5\u5165\u95EE\u9898\u3002\u9875\u9762\u672A\u52A0\u8F7D\u65F6\u53EF\u70B9\u51FB\u4E0B\u65B9\u94FE\u63A5\u3002",
       supportOpenPage: "\u6253\u5F00\u5BA2\u670D\u9875\u9762",
       versionTitle: "\u63D2\u4EF6\u7248\u672C",
       versionCurrent: "\u5F53\u524D\u7248\u672C v{version}",
@@ -757,9 +757,9 @@
       ffmpegLess: "Hide other systems",
       ffmpegAfter: 'Rather not touch a terminal? Just say "\u5E2E\u6211\u88C5 ffmpeg" in the chat and the plugin runs the install after you confirm the command. Resume the original saved progress to retry downloading or merging without submitting new generation tasks. Installed somewhere unusual? Put the absolute path in the "ffmpeg path" field above. The package ships ffprobe too, so segment probing is fixed at the same time.',
       ffmpegManual: "Installing by hand: Homebrew on macOS, winget on Windows, your distro package manager on Linux \u2014 you are set once `ffmpeg -version` works in a terminal.",
-      supportRecharge: "Support",
+      supportContact: "Support",
       supportClose: "Close",
-      supportScan: "Scan the QR code with WeChat to contact support for a top-up. If it does not load, use the link below.",
+      supportScan: "Follow the page instructions to contact support with WeChat for usage or connection questions. If it does not load, use the link below.",
       supportOpenPage: "Open support page",
       versionTitle: "Plugin version",
       versionCurrent: "Installed v{version}",
@@ -960,7 +960,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.19.0".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.20.0".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1389,7 +1389,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.19.0",
+    version: "3.20.0",
     description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, image-to-video, text-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects with your own MetaOntic AI key.",
     license: "SEE LICENSE IN LICENSE",
     type: "module",
@@ -1426,7 +1426,13 @@
       "./client": "./client.js",
       "./locale/*.json": "./locale/*.json",
       "./icon": "./icon.svg",
-      "./package.json": "./package.json"
+      "./package.json": "./package.json",
+      "./presets/video-director": "./presets/video-director.js",
+      "./presets/video-director/locale/*.json": "./locale/presets/video-director/*.json",
+      "./presets/promo-video": "./presets/promo-video.js",
+      "./presets/promo-video/locale/*.json": "./locale/presets/promo-video/*.json",
+      "./presets/video-director/icon": "./presets/icons/video-director.svg",
+      "./presets/promo-video/icon": "./presets/icons/promo-video.svg"
     },
     files: [
       "index.js",
@@ -1443,7 +1449,10 @@
       "LICENSE",
       "docs/guide/*.svg",
       "docs/guide/*.png",
-      "THIRD_PARTY_NOTICES.md"
+      "THIRD_PARTY_NOTICES.md",
+      "presets/*.js",
+      "locale/presets/**/*.json",
+      "presets/icons/*.svg"
     ],
     engines: {
       node: ">=20"
@@ -1486,12 +1495,12 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.19.0",
+      version: "3.20.0",
       prerelease: false,
-      publishedAt: "2026-11-07T13:47:23.841Z",
+      publishedAt: "2026-11-07T14:12:00.784Z",
       items: [
-        "\u65B0\u589E\uFF1A\u5B8C\u5584\u521B\u610F\u65F6\u4E00\u5E76\u786E\u8BA4\u65F6\u957F\uFF0C\u652F\u630115/30/45/60\u79D2\u53CA\u81EA\u5B9A\u4E49\u3002",
-        "\u4F18\u5316\uFF1A\u6CBF\u7528\u5DF2\u660E\u786E\u89C4\u683C\uFF0C\u5B8C\u5584\u4E0D\u504F\u79BB\u539F\u610F\uFF1B\u51CF\u5C11\u91CD\u590D\u786E\u8BA4\uFF0C\u6539\u7A3F\u91CD\u8BD5\u751F\u6548\uFF0C\u7EED\u62CD\u4E0D\u7F29\u65F6\uFF0C\u786E\u8BA4\u5F02\u5E38\u505C\u6B62\u8C03\u7528\uFF0C\u5408\u5E76\u5931\u8D25\u4FDD\u7559\u6210\u7247\uFF0C\u6062\u590D\u5F02\u5E38\u8FDB\u5EA6\u65F6\u660E\u786E\u63D0\u793A\u3002"
+        "\u65B0\u589E\uFF1A\u5BA3\u4F20\u89C6\u9891\u52A9\u624B\u9884\u8BBE\uFF0C\u652F\u6301\u4EA7\u54C1\u3001\u54C1\u724C\u548C\u6D3B\u52A8\u5BA3\u4F20\uFF1B\u8BBE\u7F6E\u9875\u589E\u52A0\u4F01\u4E1A\u5FAE\u4FE1\u5BA2\u670D\u5165\u53E3\u3002",
+        "\u4F18\u5316\uFF1A\u4E24\u4E2A\u52A9\u624B\u663E\u793A\u4E2D\u6587\u7EC4\u4EF6\u540D\u79F0\u4E0E\u72EC\u7ACB\u56FE\u6807\uFF0C\u4FBF\u4E8E\u8BC6\u522B\u548C\u9009\u62E9\u3002"
       ]
     }
   };
@@ -1903,6 +1912,19 @@
         return h("div", { className: "mov-page" }, [
           // hover / focus 这类效果内联样式写不出来，集中在这张样式表里（class 都带 mov- 前缀）。
           h("style", { key: "styles" }, PAGE_CSS),
+          h(
+            "div",
+            { key: "support-actions", className: "mov-card-head", style: { justifyContent: "flex-end", marginBottom: 12 } },
+            h("button", {
+              key: "support",
+              type: "button",
+              className: "mov-btn mov-btn-sm",
+              "data-action": "contact-support",
+              "aria-haspopup": "dialog",
+              "aria-expanded": supportOpen,
+              onClick: () => setSupportOpen(true)
+            }, t("supportContact"))
+          ),
           !notice || snapshot.value ? renderUpdateNotice({
             h,
             t,
@@ -1936,12 +1958,12 @@
             }
           }, h("div", { className: "mov-support-content" }, [
             h("div", { key: "heading", className: "mov-card-head" }, [
-              h("strong", { key: "title", id: "mov-support-title" }, t("supportRecharge")),
+              h("strong", { key: "title", id: "mov-support-title" }, t("supportContact")),
               h("button", { key: "close", type: "button", className: "mov-btn mov-btn-sm mov-trailing", "aria-label": t("supportClose"), onClick: () => setSupportOpen(false) }, t("supportClose"))
             ]),
             h("p", { key: "hint", className: "mov-hint" }, t("supportScan")),
-            h("iframe", { key: "qr", className: "mov-support-frame", title: t("supportRecharge"), src: "https://work.weixin.qq.com/ca/cawcde20e8080b7f6f", referrerPolicy: "no-referrer" }),
-            h("a", { key: "fallback", href: "https://work.weixin.qq.com/ca/cawcde20e8080b7f6f", target: "_blank", rel: "noopener noreferrer" }, t("supportOpenPage"))
+            h("iframe", { key: "qr", className: "mov-support-frame", title: t("supportContact"), src: "https://work.weixin.qq.com/kfid/kfcd6fc4ca793eeac18", referrerPolicy: "no-referrer" }),
+            h("a", { key: "fallback", href: "https://work.weixin.qq.com/kfid/kfcd6fc4ca793eeac18", target: "_blank", rel: "noopener noreferrer" }, t("supportOpenPage"))
           ])) : null
         ]);
       };

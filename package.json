@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.19.0",
+  "version": "3.20.0",
   "description": "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, image-to-video, text-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects with your own MetaOntic AI key.",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
@@ -37,7 +37,13 @@
     "./client": "./client.js",
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.svg",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./presets/video-director": "./presets/video-director.js",
+    "./presets/video-director/locale/*.json": "./locale/presets/video-director/*.json",
+    "./presets/promo-video": "./presets/promo-video.js",
+    "./presets/promo-video/locale/*.json": "./locale/presets/promo-video/*.json",
+    "./presets/video-director/icon": "./presets/icons/video-director.svg",
+    "./presets/promo-video/icon": "./presets/icons/promo-video.svg"
   },
   "files": [
     "index.js",
@@ -54,7 +60,10 @@
     "LICENSE",
     "docs/guide/*.svg",
     "docs/guide/*.png",
-    "THIRD_PARTY_NOTICES.md"
+    "THIRD_PARTY_NOTICES.md",
+    "presets/*.js",
+    "locale/presets/**/*.json",
+    "presets/icons/*.svg"
   ],
   "engines": {
     "node": ">=20"
@@ -97,12 +106,12 @@
   },
   "dependencies": {},
   "releaseNotes": {
-    "version": "3.19.0",
+    "version": "3.20.0",
     "prerelease": false,
-    "publishedAt": "2026-11-07T13:47:23.841Z",
+    "publishedAt": "2026-11-07T14:12:00.784Z",
     "items": [
-      "新增：完善创意时一并确认时长，支持15/30/45/60秒及自定义。",
-      "优化：沿用已明确规格，完善不偏离原意；减少重复确认，改稿重试生效，续拍不缩时，确认异常停止调用，合并失败保留成片，恢复异常进度时明确提示。"
+      "新增：宣传视频助手预设，支持产品、品牌和活动宣传；设置页增加企业微信客服入口。",
+      "优化：两个助手显示中文组件名称与独立图标，便于识别和选择。"
     ]
   }
 }

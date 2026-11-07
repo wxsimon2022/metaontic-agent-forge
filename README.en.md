@@ -15,8 +15,10 @@ An AI video creation plugin for DeepSeek Harness, supporting Seedance text-to-vi
 Online installation URL:
 
 ```text
-https://gitee.com/hackloop/metaontic-video/releases/download/v3.19.0/metaontic-video-3.19.0.tgz
+https://gitee.com/hackloop/metaontic-video/releases/download/v3.20.0/metaontic-video-3.20.0.tgz
 ```
+
+Choose **宣传视频助手** for product, brand or event promos. It shares the script review, cost confirmation and segment preview workflow.
 
 ## Workflow
 
@@ -26,7 +28,7 @@ Choose the concept and optional character reference → review the full script, 
 - Images and videos can be previewed in tool result cards. Original links remain available; resume saved progress to avoid duplicate submissions.
 - Character images and reference conversions require separate consent, billing and result review. Completed segments are reused; new segments are still billed.
 - Upstream generation, local download and merging have separate completion states. Query errors do not establish generation failure. Save upstream results promptly.
-- The video-only scope applies to **视频创作助手** mode. Standard mode supports other tasks. Change API keys and models in plugin settings.
+- The video-only scope applies to **视频创作助手** and **宣传视频助手** modes. Standard mode supports other tasks. Change API keys and models in plugin settings.
 
 ## Documentation and support
 
