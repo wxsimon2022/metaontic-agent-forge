@@ -22,26 +22,9 @@ MetaOnticVideo 是 DeepSeek Harness 的 AI 视频创作插件。使用 Seedance 
 
 | 项目 | Windows | Mac（macOS） |
 |---|---|---|
-| 推荐安装方式 | 正式版 `.tgz` 附件链接或 Windows ZIP | 仓库地址安装；成品包作为备用 |
-| 本地安装备选 | Windows ZIP 解压后的 `package`，或 `.tgz` 解压后的 `package` | `.tgz` 解压后的 `package` |
-| 本地目录示例 | `C:\MetaOnticVideo\package` | `/Users/你的用户名/Applications/MetaOnticVideo/package` |
+| 推荐安装方式 | 正式版 `.tgz` 在线安装链接 | 正式版 `.tgz` 在线安装链接 |
+| 本地安装备选 | `.tgz` 文件完整路径，无需解压 | `.tgz` 文件完整路径，无需解压 |
 | 在线更新入口 | 插件详情 → 检查更新 | 插件详情 → 检查更新 |
-
-### Mac 推荐：仓库地址安装
-
-在 DeepSeek Harness「插件 → 添加插件」中粘贴下面任意一个地址，按提示安装并启用：
-
-```text
-git+https://gitee.com/hackloop/metaontic-video.git
-```
-
-或使用 GitHub：
-
-```text
-github:wxsimon2022/metaontic-video
-```
-
-仓库安装需要 Git 能访问对应站点。若拉取失败，可使用下面的成品包或本地目录方式。
 
 ### 1.2 在线安装：Windows 与 Mac 通用
 
@@ -53,32 +36,17 @@ github:wxsimon2022/metaontic-video
 
 此方式使用已构建成品，不通过 Git 拉取源码。只有 DeepSeek Harness 明确提示需要重启时才重启软件。
 
-### 1.3 Windows 本地安装
+### 1.3 成品安装地址
 
-可在正式发布页的附件中下载 `MetaOnticVideo-Windows-数字版本号.zip`。适合希望随包查看教程，或在线安装不方便的用户。本地安装仍需先安装 DeepSeek Harness，生成图片与视频仍需要联网。
-
-**先记住：新安装选 `.tgz` 文件；恢复旧安装才复制 `package` 文件夹。**
-
-最简单的操作顺序：右键 ZIP → 全部解压 → 找到 `.tgz`（不用再次解压）→ 复制这个文件的完整路径 → 打开 DeepSeek Harness「插件 → 添加插件」→ 粘贴路径 → 安装。若粘贴到界面的路径前后带英文双引号，删掉这两个引号再安装；终端命令里的引号则保留。
-
-**使用 Windows ZIP 资料包：**
-
-1. 右键安装 ZIP，选择「全部解压」。不要在 ZIP 预览窗口内安装。
-2. 打开包内安装教程，找到 `metaontic-video-数字版本号.tgz` 成品文件。
-3. 在 DeepSeek Harness「插件 → 添加插件」中填写该 `.tgz` 文件的完整绝对路径。解压后常出现两层同名文件夹，路径形如 `D:\software\MetaOnticVideo-Windows-数字版本号\MetaOnticVideo-Windows\metaontic-video-数字版本号.tgz`；层级和盘符以你电脑上的实际位置为准，建议右键 `.tgz` 选择「复制文件地址」，不要手打。
-4. 按提示安装、启用，进入设置页配置 API密钥。由安装器管理插件文件，避免直接依赖外部解压目录。
-
-安装框要填的是文件，不是文件夹。如果提示「不是有效的插件包」，通常是填成了文件夹：解压后的 `MetaOnticVideo-Windows` 外层文件夹和 `package` 资料目录都不是安装对象，请改填同目录下 `metaontic-video-数字版本号.tgz` 的完整文件路径。
-
-若拿到的旧 ZIP 只有 `package` 目录，请从正式发布页另外下载 `.tgz` 成品，填写其完整本地路径安装；不要把 ZIP 或发布页地址填进安装框。
+Windows 与 Mac 使用同一个 `.tgz` 成品，无需专用 ZIP，也无需解压。复制下面的在线安装链接，粘贴到 DeepSeek Harness「插件 → 添加插件」。
 
 **也可以不下载到本地，直接粘贴成品地址：** 复制下面这条 Gitee 成品地址，粘贴到 DeepSeek Harness「插件 → 添加插件」即可安装，效果与填写本地文件路径相同，无需安装 Git。国内网络优先使用 Gitee。在线安装只认以 `.tgz` 结尾的附件地址；ZIP、`package` 文件夹和发布页网址只能用于本地安装，不能粘贴到在线安装框。
 
 ```text
-https://gitee.com/hackloop/metaontic-video/releases/download/v3.18.0/metaontic-video-3.18.0.tgz
+https://gitee.com/hackloop/metaontic-video/releases/download/v3.18.1/metaontic-video-3.18.1.tgz
 ```
 
-GitHub 同名地址为 `https://github.com/wxsimon2022/metaontic-video/releases/download/v3.18.0/metaontic-video-3.18.0.tgz`。正式版以 Gitee 发布页为主，GitHub 的同步可能晚一些；GitHub 上还没有该版本时用上面的 Gitee 地址。发布新版本后，把地址中的两处版本号换成发布页上的实际版本；也可以打开发布页，在附件中右键复制 `.tgz` 的下载链接。
+GitHub 同名地址为 `https://github.com/wxsimon2022/metaontic-video/releases/download/v3.18.1/metaontic-video-3.18.1.tgz`。正式版以 Gitee 发布页为主，GitHub 的同步可能晚一些；GitHub 上还没有该版本时用上面的 Gitee 地址。发布新版本后，把地址中的两处版本号换成发布页上的实际版本；也可以打开发布页，在附件中右键复制 `.tgz` 的下载链接。
 
 - GitHub 正式版下载页：`https://github.com/wxsimon2022/metaontic-video/releases/latest`
 - Gitee 发布页：`https://gitee.com/hackloop/metaontic-video/releases`
@@ -89,13 +57,9 @@ GitHub 同名地址为 `https://github.com/wxsimon2022/metaontic-video/releases/
 
 **已有本地目录安装，更新报 `locale` 缺失或目录变空：** 先用完整成品恢复原安装路径下的整个 `package` 目录，确保 `package.json`、`index.js`、`client.js`、`locale` 和 `skills` 等内容齐全。不要只创建空的 `locale` 文件夹，不要重置 API密钥或删除任务记录。恢复后核对当前安装与更新状态；迁移成品安装来源时使用软件提供的安装/修复入口，若提示已安装则停止并保留错误，不先卸载。
 
-### 1.4 Mac 本地安装
+### 1.4 可选：本地成品安装
 
-1. 从正式发布页下载 `.tgz` 附件。
-2. 在 Finder 中双击解压；若得到 `.tar`，再双击解压。找到包含 `package.json`、`index.js` 的 `package` 文件夹。
-3. 将安装目录放到固定位置，例如用户目录下的 `Applications/MetaOnticVideo`，避免留在会定期清理的临时目录。
-4. 打开 DeepSeek Harness「插件 → 添加插件」，选择 `package` 文件夹；若使用地址输入框，填入其完整绝对路径。
-5. 按提示安装、启用，进入设置页配置 API密钥。保留安装目录，不要随意删除或移动。
+在线安装不方便时，可下载正式版 `.tgz` 成品，在 Harness 添加插件中填写该文件的完整绝对路径。Windows 与 Mac 操作相同，无需解压；由安装器管理插件文件。历史 ZIP 中也应使用 `.tgz` 文件，不推荐依赖解压目录安装。
 
 ### 1.5 可选：终端安装
 
@@ -116,10 +80,10 @@ dsh plugin --profile desktop add "C:\MetaOnticVideo\metaontic-video-数字版本
 Mac 终端本地安装：
 
 ```bash
-dsh plugin --profile desktop add "/Users/你的用户名/Applications/MetaOnticVideo/package"
+dsh plugin --profile desktop add "/Users/你的用户名/Downloads/metaontic-video-数字版本号.tgz"
 ```
 
-以上路径与文件名只是示例，Windows替换为实际 `.tgz` 文件路径，Mac目录安装替换为实际 `package` 路径。
+以上路径与文件名只是示例，Windows替换为实际 `.tgz` 文件路径，Mac替换为实际 `.tgz` 文件路径。
 
 ### 1.6 安装是否成功
 

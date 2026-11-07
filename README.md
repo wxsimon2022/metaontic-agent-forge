@@ -8,9 +8,15 @@ DeepSeek Harness 的 AI 视频创作插件。支持 Seedance 文生视频、图�
 
 ## 开始使用
 
-1. 从 [Gitee 发布页](https://gitee.com/hackloop/metaontic-video/releases) 下载 `.tgz` 成品包，在 Harness「插件 → 添加插件」中填写文件路径或附件下载链接。Windows ZIP 请解压后使用其中的 `.tgz`，不要安装 Source code 源码包。
+1. 在 Harness「插件 → 添加插件」中粘贴下方在线安装链接。
 2. 打开插件设置，选择 **MetaOntic AI**，填写自己的 API密钥并保存。申请与配置步骤见[使用说明书](./MetaOnticVideo使用说明书.md)。
 3. 将会话模式切换为 **视频创作助手**，说明主题、时长、画幅和清晰度（480P / 720P）。
+
+在线安装链接：
+
+```text
+https://gitee.com/hackloop/metaontic-video/releases/download/v3.18.1/metaontic-video-3.18.1.tgz
+```
 
 ## 制作流程
 
@@ -34,6 +40,12 @@ DeepSeek Harness 的 AI 视频创作插件。支持 Seedance 文生视频、图�
 ## 开发与发布
 
 [开发、热加载、验证和发布规范](./docs/engineering/development.md) · [维护经验](./docs/engineering/SKILL.md) · [双平台兼容规范](./docs/engineering/platform-compatibility.md)
+
+## v3.18.1 更新内容
+
+### 优化
+
+- Windows 与 Mac 统一使用通用成品在线安装。
 
 ## v3.18.0 更新内容
 

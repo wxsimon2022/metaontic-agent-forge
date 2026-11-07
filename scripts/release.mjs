@@ -43,6 +43,16 @@ export function notesFor(version, items) {
   if(length>NOTES_LIMIT) throw Error(`更新说明共 ${length} 字，超过 ${NOTES_LIMIT} 字上限；版本更新内容只写用户能感知的结论，实现细节留在提交与工程记录里`);
   return NOTES_CATEGORIES.filter(c=>items.some(x=>x.startsWith(c+'：'))).map(c=>({category:c,items:items.filter(x=>x.startsWith(c+'：')).map(x=>x.slice(c.length+1))}));
 }
+/** 标签与发行版仅展示用户更新；验证记录单独写入工程文档。 */
+export function publicReleaseNotes(version, items) {
+  const sections = notesFor(version, items);
+  return `MetaOnticVideo v${version}\n\n` + sections.map(s => s.category + '\n' + s.items.map(i => '- ' + i).join('\n')).join('\n\n') + '\n';
+}
+export function releaseVerification(includeGithub, promoLine = '') {
+  return '验证\n- 本地构建及测试通过。\n'
+    + (includeGithub ? '- Windows/macOS成品安装及升级为CI上传前置条件。\n' : '- 本条按仅 Gitee 发布处理：未运行 GitHub 双平台 CI，也没做 Windows 桌面实测，Windows 兼容性只有构建与打包层面的保证。\n')
+    + promoLine + '- 桌面GUI与付费调用未由发布脚本自动验证。\n';
+}
 const help = `一键发布（准备好完整说明与指南后执行）：
 说明要求：只写「新增」与「优化」两类（修复并入优化），合计不超过 ${NOTES_LIMIT} 字。
 发版会同时把使用说明书的成品地址与宣传页（服务端仓库，可用 METAONTIC_PROMO_PATH 指定，--no-promo 跳过）同步到本次版本。
@@ -93,7 +103,7 @@ export async function main(argv) {
   const tag=`v${version}`,target=`${opts.branch}`;
   const out=path.join(root,'.local/releases',version);
   // Gitee 是默认发布渠道，本地成品直接上传；GitHub 是可选镜像。
-  const assets=[`metaontic-video-${version}.tgz`,`MetaOnticVideo-Windows-${version}.zip`,`MetaOnticVideo-Windows-${version}.zip.sha256`];
+  const assets=[`metaontic-video-${version}.tgz`];
   if(git('branch','--show-current')!==target)throw Error(`请在${target}分支执行，脚本不会切换分支`);
   if(git('ls-files','-u'))throw Error('有未解决的合并冲突');
   const local=git('describe','--tags','--abbrev=0');
@@ -117,7 +127,7 @@ export async function main(argv) {
   if(files.some(f=>/(?:价格对比|计费参考|比价视频)|(?:^|\/)\.env(?:$|\.)|(?:^|\/)\.local\//.test(f)))throw Error('待提交文件中存在本地价格资料或环境文件，请先核对忽略规则');
   console.log(`版本：${tag}\n发布渠道：${includeGithub?'Gitee + GitHub':'仅 Gitee'}\nGitee：${gitee.web}${includeGithub?`\nGitHub：${github.web}`:''}\n本地最近标签：${local}\n提交范围：\n${changes||'（无新提交，包含下列工作区改动）'}\n工作区：\n${dirty||'（干净）'}`);
   console.log(sections.map(x=>x.category+'\n'+x.items.map(i=>'- '+i).join('\n')).join('\n\n'));
-  const printLinks=()=>console.log(`\nGitee发布页：${gitee.web}/releases/tag/${tag}\n插件地址：${gitee.web}/releases/download/${tag}/metaontic-video-${version}.tgz\nWindows包：${gitee.web}/releases/download/${tag}/MetaOnticVideo-Windows-${version}.zip${includeGithub?`\nGitHub发布页：${github.web}/releases/tag/${tag}`:''}\n注意：安装框填写tgz地址，不填写发布页或ZIP地址。`);
+  const printLinks=()=>console.log(`\nGitee发布页：${gitee.web}/releases/tag/${tag}\n插件地址：${gitee.web}/releases/download/${tag}/metaontic-video-${version}.tgz${includeGithub?`\nGitHub发布页：${github.web}/releases/tag/${tag}`:''}\n注意：安装框填写tgz地址，不填写发布页或ZIP地址。`);
   if(opts['dry-run']) {
     const promo=promoStatus(version);
     console.log(promo.file?`宣传页：${promo.file}${promo.needsSync?`（待同步到 v${version}）`:`（已是 v${version}）`}`:'宣传页：未找到，发布时需手动同步安装地址');
@@ -139,9 +149,11 @@ export async function main(argv) {
     return tags.length?tags.reduce((a,b)=>newer(b.slice(1),a.slice(1))?b:a):undefined;
   };
   if(includeGithub)run('gh',['auth','status']);
-  const latest=includeGithub
+  const giteeLatest=await latestOfficial();
+  const githubLatest=includeGithub
     ? JSON.parse(gh('release','list','--repo',github.slug,'--exclude-drafts','--exclude-pre-releases','--limit','1','--json','tagName'))[0]?.tagName
-    : await latestOfficial();
+    : undefined;
+  const latest=[giteeLatest,githubLatest].filter(Boolean).reduce((a,b)=>!a||newer(b.replace(/^v/,''),a.replace(/^v/,''))?b:a,undefined);
   if(!opts.resume && latest && !newer(version,latest.replace(/^v/,'')))throw Error(`目标必须高于最新正式版${latest}`);
   const exists=run('git',['rev-parse','--verify',`refs/tags/${tag}`],{capture:true,optional:true});
   if(opts.resume) {
@@ -160,9 +172,12 @@ export async function main(argv) {
     writeFileSync('package.json',JSON.stringify(pkg,null,2)+'\n');
     const lock=JSON.parse(readFileSync('package-lock.json','utf8'));lock.version=version;lock.packages[''].version=version;
     writeFileSync('package-lock.json',JSON.stringify(lock,null,2)+'\n');
+    const englishReadme=readFileSync('README.en.md','utf8');
+    writeFileSync('README.en.md',englishReadme.replace(/(releases\/download\/)v\d+\.\d+\.\d+\/(metaontic-video-)\d+\.\d+\.\d+(\.tgz)/g,`$1v${version}/$2${version}$3`));
     const markdown=sections.map(s=>'### '+s.category+'\n\n'+s.items.map(i=>'- '+i).join('\n')).join('\n\n');
     for(const [file,header] of [['README.md',`## ${tag} 更新内容`],['CHANGELOG.md',`## ${tag}`]]) {
       let text=readFileSync(file,'utf8');
+      if(file==='README.md')text=text.replace(/(releases\/download\/)v\d+\.\d+\.\d+\/(metaontic-video-)\d+\.\d+\.\d+(\.tgz)/g,`$1v${version}/$2${version}$3`);
       if(text.includes(header)) { const start=text.indexOf(header);const rest=text.slice(start+header.length);const next=rest.search(/^## v\d+\.\d+\.\d+/m);text=text.slice(0,start)+(next<0?'':rest.slice(next)); }
       const at=text.search(/^## v\d+\.\d+\.\d+/m);if(at<0)throw Error(`${file}缺少更新区插入位置`);
       writeFileSync(file,text.slice(0,at)+header+'\n\n'+markdown+'\n\n'+text.slice(at));
@@ -198,11 +213,11 @@ export async function main(argv) {
     const python=process.platform==='win32'?'py':'python3';
     // 包内 README 会被宿主插件页当成「详细介绍」渲染，成品包统一裁掉。
     run(python,[...(python==='py'?['-3']:[]),'scripts/strip-package-readme.py',path.join(out,`metaontic-video-${version}.tgz`)]);
-    run(python,[...(python==='py'?['-3']:[]),'scripts/package-windows.py',path.join(out,`metaontic-video-${version}.tgz`),path.join(out,`MetaOnticVideo-Windows-${version}.zip`)]);
     run('git',['diff','--check']);
-    const body=`MetaOnticVideo ${tag}\n\n`+sections.map(s=>s.category+'\n'+s.items.map(i=>'- '+i).join('\n')).join('\n\n')+'\n\n验证\n- 本地构建及测试通过。\n'+(includeGithub?'- Windows/macOS成品安装及升级为CI上传前置条件。\n':'- 本条按仅 Gitee 发布处理：未运行 GitHub 双平台 CI，也没做 Windows 桌面实测，Windows 兼容性只有构建与打包层面的保证。\n')+promoLine+'- 桌面GUI与付费调用未由发布脚本自动验证。\n';
+    const body=publicReleaseNotes(version,plan.items);
+    const verification=releaseVerification(includeGithub,promoLine);
     const notes=path.join(out,'release-notes.txt');writeFileSync(notes,body);
-    writeFileSync(`docs/engineering/release-${version}.md`,`# ${tag} 发布核对\n\n实际基线：${base}。\n\n${body}\n指南核对：${plan.guideReview}\n`);
+    writeFileSync(`docs/engineering/release-${version}.md`,`# ${tag} 发布核对\n\n实际基线：${base}。\n\n${body}\n${verification}\n指南核对：${plan.guideReview}\n`);
     run('git',['add','-A']);run('git',['commit','-m',`release: ${tag}`]);run('git',['tag','-a',tag,'-F',notes]);
   }
   // 先确认发布渠道凭据，避免推送成功后才因为缺令牌停半路。
@@ -223,14 +238,17 @@ export async function main(argv) {
   if((await Promise.all(remotes.map(([repo,host,label])=>push(repo,host,label)))).some(ok=>!ok)) { printLinks();throw Error('有仓库推送失败；网络恢复后用相同版本 --resume 续跑，不要重新打版本'); }
   // Gitee 是默认发布渠道：本地成品直接建 Release 并上传，省掉 GitHub Actions 打包回传那一大段等待。
   const {publishGitee}=await import('./publish-gitee.mjs');
-  const notesText=readFileSync(path.join(out,'release-notes.txt'),'utf8');
-  for(const name of assets) {
-    const file=path.join(out,name);
-    if(!existsSync(file))throw Error(`缺少成品 ${file}；请先重新构建打包再续跑`);
-    await publishGitee({token,tag,archive:file,notes:notesText,prerelease:false});
+  // 续跑也从结构化条目生成，避免旧的本地说明文件夹带验证信息。
+  const notesText=publicReleaseNotes(version,plan.items);
+  if(!includeGithub) {
+    for(const name of assets) {
+      const file=path.join(out,name);
+      if(!existsSync(file))throw Error(`缺少成品 ${file}；请先重新构建打包再续跑`);
+      await publishGitee({token,tag,archive:file,notes:notesText,prerelease:false});
+    }
+    console.log(`Gitee Release 附件已核对：${assets.join('、')}`);
+    printLinks();return;
   }
-  console.log(`Gitee Release 附件已核对：${assets.join('、')}`);
-  if(!includeGithub) { printLinks();return; }
   // Poll by tag: never watch some unrelated release's run.
   let workflow;
   for(let i=0;i<20;i++) {
@@ -248,5 +266,11 @@ export async function main(argv) {
   const complete=assets.every(x=>names.includes(x));
   console.log(`GitHub附件：${complete?'齐全':'未齐全'}；双仓CI：${watched===null?'未全部成功':'成功'}`);printLinks();
   if(!complete||watched===null)throw Error('发布未全部完成；保留现有标签，用相同版本--resume续跑，不要重新打版本');
+  if(data.body.trim()!==notesText.trim())throw Error('GitHub发行版说明与本版用户更新条目不一致');
+  // 双仓模式必须先通过双平台安装检查，再用GitHub同一成品发布Gitee。
+  run('gh',['release','download',tag,'--repo',github.slug,'--dir',out,'--pattern',`metaontic-video-${version}.tgz`,'--clobber']);
+  for(const name of assets)await publishGitee({token,tag,archive:path.join(out,name),notes:notesText,prerelease:false});
+  console.log(`双平台CI通过，GitHub与Gitee已发布同一成品：${assets.join('、')}`);
+
 }
 if(process.argv[1] && realpathSync(process.argv[1])===fileURLToPath(import.meta.url))main(process.argv.slice(2)).catch(error=>{console.error(`发布停止：${error.message}`);process.exitCode=1;});

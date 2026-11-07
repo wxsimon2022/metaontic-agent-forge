@@ -47,6 +47,8 @@ npm pack --dry-run
 
 ## 发布规范
 
+标签（tag）的附注和发行版（Release）正文仅包含版本标题及面向用户的“新增”“优化”，不写构建、测试、校验、CI、平台实测覆盖、未验证范围或宣传页同步等验证信息。所有验证结果与限制统一记录在 `docs/engineering/release-<版本>.md`；不得为调整说明强制覆盖已公开标签。
+
 只有用户明确提出“发版”时才执行发布。平时开发、修复和验证不因改动完成而自动更新版本号、改写 `releaseNotes`、创建版本标签、推送发布或创建 Release 或上传发布包。
 
 收到发版指令后，先以最近一次已发布版本为起点，检查此后的提交和当前工作区，汇总所有尚未发布的逻辑改动；按新增、优化整理成一份完整的更新内容（修复并入优化），先向用户展示，再核对源码、构建产物、README、CHANGELOG、`releaseNotes` 和标签说明一致，最后按下述步骤一次发版。不能只总结最后一次修改，也不能遗漏此前积累的未发布改动。
@@ -66,10 +68,10 @@ npm pack --dry-run
 3. 同步宣传页的最新安装地址：宣传页在服务端仓库 `MetaOnticVideoService/frontend/public/promo/index.html`，用户会照它复制 `.tgz` 地址，发版脚本会在打包前用 `scripts/sync-promo-address.mjs` 把上面的 Gitee 附件地址、`.tgz` 文件名、结构化数据与页脚版本号一并改为本次版本（用 `METAONTIC_PROMO_PATH` 指定路径，`--no-promo` 才跳过），并把结果写进发布记录的「验证」；找不到宣传页时脚本给出提示，必须手动同步。
 4. 同步锁文件，构建并执行相关验证，检查打包清单，确认包含更新后的操作指南。
 5. 提交源码、构建产物与说明。
-6. 创建**附注标签（annotated tag）**，包含版本标题、变更分类及验证结果。
-7. 默认只发 Gitee：推送分支和标签到 Gitee，由发布脚本用本地成品直接创建 Gitee Release、上传 `.tgz`、Windows ZIP 与校验文件并逐个核对附件；需要同步 GitHub、拿到双平台安装校验证据时，再给发布脚本加 `--both`，等 GitHub Actions 通过后上传两处附件。
+6. 创建**附注标签（annotated tag）**，仅包含版本标题和用户可感知的新增、优化。
+7. 默认只发 Gitee：推送分支和标签到 Gitee，由发布脚本用本地成品直接创建 Gitee Release、仅上传通用 `.tgz` 并核对附件；需要同步 GitHub、拿到双平台安装校验证据时，再给发布脚本加 `--both`，等 GitHub Actions 通过后上传两处附件。
 
-标签说明统一格式如下；只保留本次适用分类，验证结果必须据实填写：
+标签说明统一格式如下；只保留本次适用分类；验证结果与限制仅写入工程发布记录：
 
 ```text
 MetaOnticVideo v<版本>
@@ -80,9 +82,6 @@ MetaOnticVideo v<版本>
 优化
 - 行为或体验变化，含本次修复的问题
 
-验证
-- 构建、测试及实际验证结果
-- 未验证的范围（如未进行付费生成）
 ```
 
 将说明保存到UTF-8文件，例如 `/tmp/metaontic-video-release.txt`，再执行：
@@ -99,13 +98,13 @@ git show --no-patch "v<版本>"
 
 ### 插件包下载
 
-版本包在 [GitHub Releases](https://github.com/wxsimon2022/metaontic-video/releases) 或 [Gitee Releases](https://gitee.com/hackloop/metaontic-video/releases) 下载，通用插件包为 `metaontic-video-<版本>.tgz`；Windows安装资料包为 `MetaOnticVideo-Windows-<版本>.zip`，附带图文教程、完整PDF及SHA-256校验文件。ZIP解压后安装其中tgz成品文件，package目录仅作资料及旧目录恢复；ZIP本身不要粘贴到插件安装框。不再向 npm 注册表发布，无需配置 `NPM_TOKEN` 或 Trusted Publishing。
+版本包在 [GitHub Releases](https://github.com/wxsimon2022/metaontic-video/releases) 或 [Gitee Releases](https://gitee.com/hackloop/metaontic-video/releases) 下载，通用插件包为 `metaontic-video-<版本>.tgz`。Windows与Mac使用同一个 `.tgz`，不再发布ZIP；指南和PDF已包含在通用包中。不再向 npm 注册表发布，无需配置 `NPM_TOKEN` 或 Trusted Publishing。
 
-`v*` 标签触发完整构建与测试，通过后使用 GitHub 自动令牌上传插件包，并使用仓库 Actions Secret `GITEE_TOKEN` 创建 Gitee Release 和上传同一插件包。该密钥应具有 `hackloop/metaontic-video` 的发布权限；缺失或上传失败时工作流明确报错，不将单仓成功报告为双仓成功。手动运行工作流时须选择与包版本匹配的标签。
+`v*` 标签触发完整构建与测试，通过双平台安装检查后，使用 GitHub 自动令牌上传通用tgz。`--both`发布脚本再下载这个同一成品，用本地 `GITEE_TOKEN` 发布Gitee；CI未通过时不上传Gitee，不将单仓成功报告为双仓成功。手动运行工作流时须选择与包版本匹配的标签。
 
-某次发布只补齐镜像时，手动运行 `sync-gitee` 工作流并填写对应标签；它从 GitHub Release 取回该版本的 `.tgz`、Windows ZIP 及校验文件，逐个补传到 Gitee 发布页并核对大小，不会覆盖或改动已有附件。
+某次发布只补齐镜像时，手动运行 `sync-gitee` 工作流并填写对应标签；它从 GitHub Release 取回该版本的 通用 `.tgz`，逐个补传到 Gitee 发布页并核对大小，不会覆盖或改动已有附件。
 
-Gitee 侧另有一条 Gitee Go 流水线（`.workflow/MetaOnticVideo.yml`）：向 `master` 推送、发起面向 `master` 的 PR 或推送 `v*` 标签时，在 Gitee 构建机上安装依赖、构建并运行单元测试，再校验版本元数据；每次运行都会打出成品并作为该次流水线的制品留存，可在 Gitee 的流水线运行结果页直接下载：`metaontic-video-<版本>.tgz` 总会生成，Windows 包 `MetaOnticVideo-Windows-<版本>.zip` 及配套 `.sha256` 需要构建机上有 Python 3（没有时会自动尝试安装，仍不可用时跳过并在日志中提示，此时 Windows 成品以正式发布页附件和校验文件为准）。标签触发时还会核对 `v<版本>` 标签与 `package.json` 里的版本是否一致，不一致直接失败，保证成品按标签出。想在发版前演练一次按标签的流程，可以打以 `ci-` 开头的演练标签（如 `ci-test`）：它同样触发构建与打包，但跳过标签与版本的强校验，制品只作演练用。这条流水线只生成成品，不发布版本：GitHub 与 Gitee 的 Release 成品始终由 `publish` 工作流按 `v*` 标签产出，避免两处各打一份包导致成品不一致。流水线不依赖 Gitee 下拉里提供的版本：构建机上没有可用 Node 时，它会自己从 npmmirror 下载 Node 20（按 glibc 自动选择官方构建或 glibc 2.17 兼容版），并缓存到 `~/.local/node`；因此免费构建机即使镜像较旧也能跑通。
+Gitee 侧另有一条 Gitee Go 流水线（`.workflow/MetaOnticVideo.yml`）：向 `master` 推送、发起面向 `master` 的 PR 或推送 `v*` 标签时，在 Gitee 构建机上安装依赖、构建并运行单元测试，再校验版本元数据；每次运行都会打出成品并作为该次流水线的制品留存，可在 Gitee 的流水线运行结果页直接下载：`metaontic-video-<版本>.tgz` 总会生成，两平台使用同一个tgz，不再生成Windows ZIP。标签触发时还会核对 `v<版本>` 标签与 `package.json` 里的版本是否一致，不一致直接失败，保证成品按标签出。想在发版前演练一次按标签的流程，可以打以 `ci-` 开头的演练标签（如 `ci-test`）：它同样触发构建与打包，但跳过标签与版本的强校验，制品只作演练用。这条流水线只生成成品，不发布版本：GitHub 与 Gitee 的 Release 成品始终由 `publish` 工作流按 `v*` 标签产出，避免两处各打一份包导致成品不一致。流水线不依赖 Gitee 下拉里提供的版本：构建机上没有可用 Node 时，它会自己从 npmmirror 下载 Node 20（按 glibc 自动选择官方构建或 glibc 2.17 兼容版），并缓存到 `~/.local/node`；因此免费构建机即使镜像较旧也能跑通。
 
 本机打包可执行 `npm pack --pack-destination /tmp`。需要目录安装时，将 `.tgz` 解压后使用其中的 `package` 目录：
 
@@ -117,7 +116,7 @@ dsh plugin --profile desktop add "/你的绝对路径/metaontic-video-plugin/pac
 
 ### 推送后的更新总结规范
 
-每次推送后必须提供以下信息，且与 package.json 的 releaseNotes 和附注标签一致：
+向用户汇报发布状态时可提供以下信息，其中“更新内容”须与 package.json 的 releaseNotes 和附注标签一致。验证、限制与发布状态仅用于汇报和工程记录，不得写入 tag 或 Release 正文：
 
 ```text
 版本：vX.Y.Z
@@ -214,7 +213,7 @@ npm run release -- 3.13.3 --dry-run
 npm run release -- 3.13.3
 ```
 
-脚本显示待发布范围与说明，更新版本、锁文件和发布元数据，构建、测试、打包、创建提交及附注标签，推送仓库（默认只推 Gitee，加 `--both` 时与 GitHub 并行推送、各自失败退避重试三次），然后用本地成品直接创建 Gitee Release 并上传核对 `.tgz`、Windows ZIP 与校验文件；带 `--both` 时还会等待 GitHub Actions 的双平台安装/升级检查与附件上传，最后输出发布页、`.tgz` 安装地址和 Windows ZIP 下载地址。使用说明书不写入版本记录。失败立即停止，不强推或覆盖旧标签。
+脚本显示待发布范围与说明，更新版本、锁文件和发布元数据，构建、测试、打包、创建提交及附注标签，推送仓库（默认只推 Gitee，加 `--both` 时与 GitHub 并行推送、各自失败退避重试三次），然后用本地成品直接创建 Gitee Release 并上传核对通用 `.tgz`；带 `--both` 时还会等待 GitHub Actions 的双平台安装/升级检查与附件上传，最后输出发布页及 `.tgz` 安装地址。使用说明书不写入版本记录。失败立即停止，不强推或覆盖旧标签。
 
 发布文件已提交但上传中断时，保留同一版本续跑：
 
@@ -237,3 +236,9 @@ npm run pack:test -- 3.13.9-test.1
 版本号必须是 `X.Y.Z-后缀` 形式，核心版本号压在当前正式版之下；只改包内版本号，不提交、不打标签、不建 Release，因此不影响其他人的正式版，测试者之后仍会收到下一次正式版的更新提示。脚本结束后会把 `package.json`、锁文件和构建产物还原成正式版本。
 
 上传完成后直接给出安装地址，形如 `https://video.mybfs.cn/test/metaontic-video-3.13.9-test.1.tgz`，发给测试者粘进「插件 → 添加插件」即可；目录页 `https://video.mybfs.cn/test/` 可看到历史测试包。加 `--no-upload` 只出本地包，用 `--out <目录>` 换输出目录；上传目标可用 `PACK_TEST_SERVER`、`PACK_TEST_DIR`、`PACK_TEST_URL` 覆盖。该目录由 moyubang 仓库的 `deploy/nginx/video.mybfs.cn.conf` 提供，刻意放在代码部署目录之外，`deploy.sh` 的 `rsync --delete` 不会清掉已上传的测试包。测试者用正式版 `.tgz` 地址重装即可回到正式版。
+
+### 同步已发布正式版到 GitHub
+
+同步使用原版本和 Gitee 已发布的通用 `.tgz` 成品，不重打包。publish.yml 的手动输入 existing_version 指定版本，同时传入原成品 existing_sha256，核对tgz原字节校验值与包版本，再执行 Windows/macOS 安装检查，全部通过后发布 GitHub；说明从结构化 releaseNotes 生成，不读取旧标签中的验证信息，不回写 Gitee 附件。README 首页仅保留在线安装链接，发版时同步至目标成品地址。
+
+正式版和测试版仅提供 Windows/macOS 通用 `.tgz` 成品，不再生成或上传 Windows ZIP 及 `.zip.sha256`；Windows 与 macOS 仍须验证同一 `.tgz` 的安装与升级。历史已发布 ZIP 保留，避免旧链接失效。README 与宣传页仅展示在线安装，不推荐下载解压或目录安装。

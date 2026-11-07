@@ -8,9 +8,15 @@ An AI video creation plugin for DeepSeek Harness, supporting Seedance text-to-vi
 
 ## Quick start
 
-1. Download a `.tgz` release package from [Gitee Releases](https://gitee.com/hackloop/metaontic-video/releases). Add its file path or attachment download URL in Harness → Plugins → Add plugin. For Windows ZIP downloads, extract and install the included `.tgz`, not the Source code archive.
+1. Paste the online installation URL below into Harness → Plugins → Add plugin.
 2. Open plugin settings, choose **MetaOntic AI**, enter your own API key and save. See the [user guide](./MetaOnticVideo使用说明书.md) for setup.
 3. Select **视频创作助手** in the session mode selector. Describe your idea, duration, aspect ratio and resolution (480P or 720P).
+
+Online installation URL:
+
+```text
+https://gitee.com/hackloop/metaontic-video/releases/download/v3.18.1/metaontic-video-3.18.1.tgz
+```
 
 ## Workflow
 

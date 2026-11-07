@@ -4,12 +4,24 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      existing_version:
+        description: "Mirror an existing Gitee stable version using its exact artifacts"
+        required: false
+        type: string
+      existing_sha256:
+        description: "SHA256 of the original tgz, required when mirroring"
+        required: false
+        type: string
 
 jobs:
   prepare:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      SYNC_VERSION: ${{ inputs.existing_version }}
+      SYNC_SHA256: ${{ inputs.existing_sha256 }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,19 +33,27 @@ jobs:
         run: |
           node scripts/validate-release.mjs
           VERSION=$(node -p "require('./package.json').version")
+          if [ -n "$SYNC_VERSION" ]; then test "$SYNC_VERSION" = "$VERSION"; exit; fi
           test "$GITHUB_REF_NAME" = "v$VERSION" || { echo 'Run this workflow on the matching version tag.'; exit 1; }
       - name: Install build tooling
+        if: ${{ !inputs.existing_version }}
         run: npm ci
       - name: Build and test
+        if: ${{ !inputs.existing_version }}
         run: npm run build && node --test tests/*.test.mjs
       - name: Pack plugin
+        if: ${{ !inputs.existing_version }}
         run: |
           mkdir -p dist
           npm pack --pack-destination dist
           VERSION=$(node -p "require('./package.json').version")
-          python3 scripts/package-windows.py "dist/metaontic-video-$VERSION.tgz" "dist/MetaOnticVideo-Windows-$VERSION.zip"
-          git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
-          git for-each-ref --format='%(contents)' "refs/tags/$GITHUB_REF_NAME" > dist/release-notes.txt
+          python3 scripts/strip-package-readme.py "dist/metaontic-video-$VERSION.tgz"
+      - name: Reuse published artifacts
+        if: ${{ inputs.existing_version }}
+        run: python3 scripts/download-published-release.py "$SYNC_VERSION" dist "$SYNC_SHA256"
+      - name: Prepare public release notes
+        run: |
+          node --input-type=module -e 'import {readFileSync,writeFileSync} from "node:fs"; import {publicReleaseNotes} from "./scripts/release.mjs"; const p=JSON.parse(readFileSync("package.json","utf8")); writeFileSync("dist/release-notes.txt", publicReleaseNotes(p.version,p.releaseNotes.items));'
       - uses: actions/upload-artifact@v4
         with:
           name: release-packages
@@ -79,22 +99,16 @@ jobs:
           path: dist
       - name: Upload release package
         env:
+          RELEASE_TAG: ${{ inputs.existing_version && format('v{0}', inputs.existing_version) || github.ref_name }}
           GH_TOKEN: ${{ github.token }}
         run: |
           RELEASE_FLAGS=()
           if [ "$(node -p "Boolean(require('./package.json').releaseNotes.prerelease)")" = "true" ]; then
             RELEASE_FLAGS+=(--prerelease)
           fi
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" dist/*.tgz dist/*.zip dist/*.sha256 --clobber
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release edit "$RELEASE_TAG" --notes-file dist/release-notes.txt
+            gh release upload "$RELEASE_TAG" dist/*.tgz --clobber
           else
-            gh release create "$GITHUB_REF_NAME" dist/*.tgz dist/*.zip dist/*.sha256 --verify-tag --title "MetaOnticVideo $GITHUB_REF_NAME" --notes-file dist/release-notes.txt "${RELEASE_FLAGS[@]}"
+            gh release create "$RELEASE_TAG" dist/*.tgz --verify-tag --title "MetaOnticVideo $RELEASE_TAG" --notes-file dist/release-notes.txt "${RELEASE_FLAGS[@]}"
           fi
-      - name: Upload Gitee release package
-        env:
-          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
-        run: |
-          export GITEE_PRERELEASE=$(node -p "Boolean(require('./package.json').releaseNotes.prerelease)")
-          for ARCHIVE in dist/*.tgz dist/*.zip dist/*.sha256; do
-            node scripts/publish-gitee.mjs "$GITHUB_REF_NAME" "$ARCHIVE" dist/release-notes.txt
-          done

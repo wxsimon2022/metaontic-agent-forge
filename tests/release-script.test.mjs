@@ -49,3 +49,27 @@ test('release dry run changes no files, tags or git index and starts no publicat
   assert.equal(git('status','--porcelain'),before);assert.equal(git('tag'),tags);assert.equal(git('rev-parse','HEAD'),head);assert.equal(await readFile(path.join(dir,'package.json'),'utf8'),pkg);
  }finally{await rm(dir,{recursive:true,force:true});}
 });
+
+test('tag and Release body contain only public changes; verification stays in engineering records', async () => {
+ const { publicReleaseNotes, releaseVerification } = await import('../scripts/release.mjs');
+ const items = ['新增：图片可直接预览。', '优化：分段结果先审核再继续。'];
+ const body = publicReleaseNotes('3.18.1', items);
+ assert.equal(body, 'MetaOnticVideo v3.18.1\n\n新增\n- 图片可直接预览。\n\n优化\n- 分段结果先审核再继续。\n');
+ for (const both of [false, true]) {
+  const verification = releaseVerification(both, '- 宣传页地址已同步。\n');
+  assert.match(verification, /验证/);
+  assert.match(verification, /宣传页地址已同步/);
+  assert.doesNotMatch(body, /验证|测试|构建|CI|桌面|宣传页/);
+ }
+ const source = await readFile(new URL('../scripts/release.mjs', import.meta.url), 'utf8');
+ assert.match(source, /const notesText=publicReleaseNotes\(version,plan.items\)/, 'resume never publishes legacy notes containing verification');
+});
+
+test('release and mirror publish only universal tgz while retaining both platform install checks', async () => {
+ const workflow = await readFile(new URL('../.github/workflows/publish.yml', import.meta.url), 'utf8');
+ const release = await readFile(new URL('../scripts/release.mjs', import.meta.url), 'utf8');
+ assert.match(workflow, /os: \[windows-latest, macos-latest\]/);
+ assert.doesNotMatch(workflow, /package-windows|dist\/\*\.zip/);
+ assert.match(release, /const assets=\[?`metaontic-video-\$\{version\}\.tgz`\]/);
+ assert.doesNotMatch(release, /scripts\/package-windows\.py/);
+});

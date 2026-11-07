@@ -963,7 +963,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.18.0".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.18.1".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1252,7 +1252,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.18.0",
+    version: "3.18.1",
     description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, image-to-video, text-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects with your own MetaOntic AI key.",
     license: "SEE LICENSE IN LICENSE",
     type: "module",
@@ -1349,12 +1349,11 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.18.0",
+      version: "3.18.1",
       prerelease: false,
-      publishedAt: "2026-11-07T06:17:57.554Z",
+      publishedAt: "2026-11-07T10:16:03.990Z",
       items: [
-        "\u65B0\u589E\uFF1A\u56FE\u7247\u4E0E\u89C6\u9891\u7ED3\u679C\u76F4\u63A5\u9884\u89C8\uFF0C\u652F\u6301\u56FE\u7247\u653E\u5927\u548C\u672C\u5730\u5931\u6548\u56DE\u9000\u3002",
-        "\u4F18\u5316\uFF1A\u6062\u590D\u5206\u6BB5\u7ED3\u679C\u786E\u8BA4\uFF1B\u89C6\u9891\u8FDB\u5EA6\u4EC5\u5728\u751F\u6210\u65F6\u663E\u793A\uFF1B\u89D2\u8272\u56FE\u9009\u62E9\u4F18\u5148\u76F4\u63A5\u6587\u751F\u89C6\u9891\u3002"
+        "\u4F18\u5316\uFF1AWindows \u4E0E Mac \u7EDF\u4E00\u4F7F\u7528\u901A\u7528\u6210\u54C1\u5728\u7EBF\u5B89\u88C5\u3002"
       ]
     }
   };
