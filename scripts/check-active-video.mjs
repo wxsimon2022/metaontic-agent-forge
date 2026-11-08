@@ -38,7 +38,7 @@ async function walk(directory) {
         }
       }
       for (const line of content.toString('utf8').split('\n')) {
-        if (!line.includes('plugin:metaontic-video/execution')) continue;
+        if (!line.includes('plugin:metaontic-agent-forge/execution') && !line.includes('plugin:metaontic-video/execution')) continue;
         try { scan(JSON.parse(line)); }
         catch { throw new Error(`无法解析视频执行记录：${file}；请先核对任务状态。`); }
       }

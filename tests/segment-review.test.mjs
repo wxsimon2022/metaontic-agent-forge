@@ -6,7 +6,7 @@ import os from 'node:os';
 import {workflowApi as api} from './workflow-test-api.mjs';
 async function fixture(run){
  const dir=await mkdtemp(path.join(os.tmpdir(),'分段 review '));
- const saved={plugin:'metaontic-video',toolName:'video_generate',plan:[{kind:'generate',seconds:15},{kind:'extend',seconds:15},{kind:'extend',seconds:15}],done:1,cursor:15,options:{},steps:[{index:1,kind:'generate',seconds:15,taskId:'task-1',videoUrl:'https://mock.invalid/1.mp4'}]};
+ const saved={plugin:'metaontic-agent-forge',toolName:'video_generate',plan:[{kind:'generate',seconds:15},{kind:'extend',seconds:15},{kind:'extend',seconds:15}],done:1,cursor:15,options:{},steps:[{index:1,kind:'generate',seconds:15,taskId:'task-1',videoUrl:'https://mock.invalid/1.mp4'}]};
  const record=path.join(dir,'paused-plan.json');const save=()=>writeFile(record,JSON.stringify(saved));await save();
  const exec={callId:'review',agent:{session:{id:'test-session',header:{cwd:dir}}}};
  let asks=0,choice='效果可以，继续下一段',during=null;

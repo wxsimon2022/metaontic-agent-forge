@@ -26,7 +26,7 @@ export async function characterChoiceGate(ctx, config, exec, args) {
   const stableId = typeof session.id === 'string' ? session.id : typeof session.header?.id === 'string' ? session.header.id : null;
   if (!localIds.has(session)) localIds.set(session, `live-${++nextId}`);
   const key = createHash('sha256').update(JSON.stringify(project ? [project.id] : [stableId || localIds.get(session), args?.prompt || '', args?.duration, args?.resolution, args?.ratio])).digest('hex');
-  const file = path.join(dshHome(), 'metaontic-video', 'character-choices', key + '.json');
+  const file = path.join(dshHome(), 'metaontic-agent-forge', 'character-choices', key + '.json');
   try {
     async function choose() {
       if (project?.choice && args?.resetCharacterChoice !== true) return project.choice;

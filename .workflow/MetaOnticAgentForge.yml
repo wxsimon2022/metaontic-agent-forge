@@ -1,7 +1,7 @@
 version: '1.0'
 # 流水线唯一标识，对应 Gitee 网页上已有的这条流水线，改名会与网页记录对不上，请勿随意修改
 name: 流水线-202611021547
-displayName: MetaOnticVideo 构建与测试
+displayName: MetaOntic Agent Forge 构建与测试
 triggers:
   # 开启自动触发
   trigger: auto
@@ -69,8 +69,8 @@ stages:
           - 'node scripts/validate-release.mjs'
           - 'mkdir -p dist'
           - 'npm pack --pack-destination dist'
-          - 'TGZ=$(ls dist/metaontic-video-*.tgz | head -1)'
-          - 'VERSION=${TGZ##*/metaontic-video-}; VERSION=${VERSION%.tgz}'
+          - 'TGZ=$(ls dist/metaontic-agent-forge-*.tgz | head -1)'
+          - 'VERSION=${TGZ##*/metaontic-agent-forge-}; VERSION=${VERSION%.tgz}'
           - 'echo "成品版本 $VERSION"'
           - 'TAG=$(git describe --tags --exact-match HEAD 2>/dev/null || echo "")'
           - 'if [ -n "$TAG" ]; then echo "本次由标签 $TAG 触发"; case "$TAG" in ci-*) echo "演练标签 ${TAG}：跳过标签与包内版本的强校验，本次制品只用于演练，不能作为发布附件";; *) [ "v$VERSION" = "$TAG" ] || { echo "标签 $TAG 与包内版本 v$VERSION 不一致，停止打包：请先按标签更新版本和 releaseNotes 再发"; exit 1; };; esac; else echo "本次不是标签触发，制品仅用于核对"; fi'

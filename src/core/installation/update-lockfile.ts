@@ -14,10 +14,10 @@ import { existsSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const PACKAGE_NAME = 'metaontic-video';
+const PACKAGE_NAME = 'metaontic-agent-forge';
 const LOCKFILE = 'pnpm-lock.yaml';
 /** 本插件成品包的发布地址；这类记录必须能验签，否则 pnpm 会拒绝整次安装。 */
-const RELEASE_URL = /^https?:\/\/(?:gitee\.com\/hackloop|github\.com\/wxsimon2022)\/metaontic-video\/releases\/download\//i;
+const RELEASE_URL = /^https?:\/\/(?:gitee\.com\/hadlooop|github\.com\/wxsimon2022)\/metaontic-agent-forge\/releases\/download\//i;
 /** 真正的校验值形如 sha512-xxxx；null、空值和缺字段都算不可校验。 */
 const SHA = /^sha\d+-[A-Za-z0-9+/=]+$/;
 const indentOf = (line) => line.length - line.trimStart().length;
@@ -28,7 +28,7 @@ function integrityOf(block) {
   return match ? match[1] : '';
 }
 
-/** 远程 tgz 的 packages/snapshots 键，例如 metaontic-video@https://host/path.tgz（缩进两级）。 */
+/** 远程 tgz 的 packages/snapshots 键，例如 metaontic-agent-forge@https://host/path.tgz（缩进两级）。 */
 function remoteEntry(line) {
   const match = /^ {2}(\S+)@(https?:\/\/\S+?):(?:\s.*)?$/.exec(line);
   return match ? { name: match[1], url: match[2] } : null;
@@ -81,7 +81,7 @@ export function stripUnverifiableEntries(text) {
     index -= 1;
   }
   for (let index = 0; index < lines.length; index += 1) {
-    if (!/^ {6}metaontic-video:\s*$/.test(lines[index])) continue;
+    if (!/^ {6}metaontic-agent-forge:\s*$/.test(lines[index])) continue;
     const specifier = (/^\s+specifier:\s*(\S+)\s*$/.exec(lines[index + 1] || '') || [])[1]
       || (/^\s+version:\s*(\S+)\s*$/.exec(lines[index + 2] || '') || [])[1]
       || '';
@@ -92,7 +92,7 @@ export function stripUnverifiableEntries(text) {
   return { text: lines.join(newline), removed: [...removed] };
 }
 
-/** 插件安装目录里的 profile 根：<profile>/node_modules/metaontic-video/index.js 往上三级。 */
+/** 插件安装目录里的 profile 根：<profile>/node_modules/metaontic-agent-forge/index.js 往上三级。 */
 export function locateProfileDir(moduleUrl) {
   let dir = fileURLToPath(moduleUrl);
   for (let up = 0; up < 3; up += 1) dir = path.dirname(dir);

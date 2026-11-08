@@ -52,7 +52,7 @@ export function canvasSize(ratio) {
 
 /** 适配后的参考图放这里：同一张图反复提交时不必每次重跑 ffmpeg。 */
 function referenceCacheDir() {
-  return path.join(os.tmpdir(), 'metaontic-video-reference');
+  return path.join(os.tmpdir(), 'metaontic-agent-forge-reference');
 }
 
 /**

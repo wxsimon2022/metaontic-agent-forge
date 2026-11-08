@@ -8,14 +8,14 @@ import { promoStatus } from '../scripts/release.mjs';
 
 const FIXTURE = [
   '<script type="application/ld+json">{"softwareVersion": "3.13.9"}</script>',
-  '<code id="install-windows-tgz">https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.13/metaontic-video-3.13.13.tgz</code>',
-  '<footer>MetaOnticVideo · 为 DeepSeek Harness 而作 · v3.13.13</footer>',
+  '<code id="install-windows-tgz">https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/v3.13.13/metaontic-agent-forge-3.13.13.tgz</code>',
+  '<footer>云智工坊 · 智能体平台 · 为 DeepSeek Harness 而作 · v3.13.13</footer>',
 ].join('\n');
 
 test('promo page version addresses are rewritten to the release version', () => {
   const { text, results } = syncPromoText(FIXTURE, '3.15.1');
   assert.ok(text.includes('https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/'));
-  assert.match(text, /releases\/download\/v3\.15\.1\/metaontic-video-3\.15\.1\.tgz/);
+  assert.match(text, /releases\/download\/v3\.15\.1\/metaontic-agent-forge-3\.15\.1\.tgz/);
   assert.match(text, /"softwareVersion": "3\.15\.1"/);
   assert.match(text, /而作 · v3\.15\.1</);
   assert.doesNotMatch(text, /3\.13\.13|3\.13\.9/);

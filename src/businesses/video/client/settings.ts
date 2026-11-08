@@ -156,16 +156,16 @@ function makePage({ form, t, manager }) {
 
         /** 一个可编辑字段：标签 + 控件（开关自带标签，就不重复画）。 */
         function fieldCell(field) {
-          const classes = ['mov-field'];
+          const classes = ['forge-field'];
           // 开关没有标签行，靠底对齐才能跟旁边输入框/下拉框的控制线齐平
-          if (field.kind === 'switch') classes.push('mov-field-switch');
-          if (field.wide) classes.push('mov-field-wide');
+          if (field.kind === 'switch') classes.push('forge-field-switch');
+          if (field.wide) classes.push('forge-field-wide');
           return h('div', { key: field.key, className: classes.join(' ') }, [
             field.kind === 'switch'
               ? null
-              : h('label', { key: 'label', className: 'mov-label', htmlFor: `metaontic-video-${field.key}` }, t(['metaonticApiKey', 'volcengineApiKey'].includes(field.key) ? (!directMode && ((draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false) ? 'sharedModelKey' : 'videoModelKey') : field.key)),
+              : h('label', { key: 'label', className: 'forge-label', htmlFor: `metaontic-agent-forge-${field.key}` }, t(['metaonticApiKey', 'volcengineApiKey'].includes(field.key) ? (!directMode && ((draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false) ? 'sharedModelKey' : 'videoModelKey') : field.key)),
             control(field),
-            hints[field.key] ? h('span', { key: 'hint', className: 'mov-hint', style: { marginTop: 4 } }, hints[field.key]) : null,
+            hints[field.key] ? h('span', { key: 'hint', className: 'forge-hint', style: { marginTop: 4 } }, hints[field.key]) : null,
           ]);
         }
 
@@ -177,24 +177,24 @@ function makePage({ form, t, manager }) {
               ? [fieldCell(FIELD_BY_KEY.imageUseVideoKey), ...(shared ? [fieldCell(FIELD_BY_KEY.metaonticApiKey)] : [])] : [];
             const videoFields = ['model', ...((directMode || !shared) ? [directMode ? 'volcengineApiKey' : 'metaonticApiKey'] : [])];
             const imageFields = ['imageModel', ...(!shared ? ['imageApiKey'] : [])];
-            return h('div', { key: section.key, className: 'mov-model-settings' }, [
+            return h('div', { key: section.key, className: 'forge-model-settings' }, [
               ...common,
-              h('div', { key: 'models', className: `mov-model-grid${directMode ? ' mov-model-grid-single' : ''}` }, [
-                h('div', { key: 'video', className: 'mov-model-card', 'data-group': 'video-model' }, videoFields.map(key => fieldCell(FIELD_BY_KEY[key]))),
-                !directMode ? h('div', { key: 'image', className: 'mov-model-card', 'data-group': 'image-model' }, imageFields.map(key => fieldCell(FIELD_BY_KEY[key]))) : null,
+              h('div', { key: 'models', className: `forge-model-grid${directMode ? ' forge-model-grid-single' : ''}` }, [
+                h('div', { key: 'video', className: 'forge-model-card', 'data-group': 'video-model' }, videoFields.map(key => fieldCell(FIELD_BY_KEY[key]))),
+                !directMode ? h('div', { key: 'image', className: 'forge-model-card', 'data-group': 'image-model' }, imageFields.map(key => fieldCell(FIELD_BY_KEY[key]))) : null,
               ]),
             ]);
           }
           if (section.key === 'sectionVideo') {
-            return h('div', { key: section.key, className: 'mov-av-grid' }, [
-              h('div', { key: 'picture', className: 'mov-av-card' }, [
+            return h('div', { key: section.key, className: 'forge-av-grid' }, [
+              h('div', { key: 'picture', className: 'forge-av-card' }, [
                 fieldCell(FIELD_BY_KEY.ratio),
-                h('span', { key: 'hint', className: 'mov-hint' }, t('ratioLayoutHint')),
+                h('span', { key: 'hint', className: 'forge-hint' }, t('ratioLayoutHint')),
               ]),
-              h('div', { key: 'audio', className: 'mov-av-card mov-av-audio' }, [
-                h('span', { key: 'label', className: 'mov-label' }, t('audioSettings')),
+              h('div', { key: 'audio', className: 'forge-av-card forge-av-audio' }, [
+                h('span', { key: 'label', className: 'forge-label' }, t('audioSettings')),
                 control(FIELD_BY_KEY.generateAudio),
-                h('span', { key: 'hint', className: 'mov-hint' }, t('audioLayoutHint')),
+                h('span', { key: 'hint', className: 'forge-hint' }, t('audioLayoutHint')),
               ]),
             ]);
           }
@@ -205,7 +205,7 @@ function makePage({ form, t, manager }) {
               : shared ? ['imageUseVideoKey', videoKey, 'model', 'imageModel']
                 : ['imageUseVideoKey', 'model', videoKey, 'imageModel', 'imageApiKey']
             : section.fields;
-          return h('div', { key: section.key, className: 'mov-grid' },
+          return h('div', { key: section.key, className: 'forge-grid' },
           fields.filter((key) => (key !== 'volcengineApiKey' || directMode)
             && (!['imageModel', 'imageUseVideoKey', 'imageApiKey'].includes(key) || !directMode)
             && (key !== 'imageApiKey' || (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) === false)
@@ -213,30 +213,30 @@ function makePage({ form, t, manager }) {
             .map((key) => fieldCell(FIELD_BY_KEY[key])).filter(Boolean));
         };
         const settingsRows = () => [
-          h('div', { key: 'generation', className: 'mov-section' }, [
-            h('div', { key: 'title', className: 'mov-section-title' }, t('sectionGeneration')),
+          h('div', { key: 'generation', className: 'forge-section' }, [
+            h('div', { key: 'title', className: 'forge-section-title' }, t('sectionGeneration')),
             ...SECTIONS.map(section =>
-              h('div', { key: section.key, className: 'mov-parameter-group' }, [
-                h('div', { key: 'heading', className: 'mov-parameter-heading' }, t(section.key)),
+              h('div', { key: section.key, className: 'forge-parameter-group' }, [
+                h('div', { key: 'heading', className: 'forge-parameter-heading' }, t(section.key)),
                 renderGrid(section),
               ])),
           ]),
-          h('details', { key: 'advanced', className: 'mov-section mov-advanced' }, [
-            h('summary', { key: 'toggle', className: 'mov-advanced-toggle' }, [
+          h('details', { key: 'advanced', className: 'forge-section forge-advanced' }, [
+            h('summary', { key: 'toggle', className: 'forge-advanced-toggle' }, [
               h('span', { key: 'title' }, t('sectionCombined')),
-              h('span', { key: 'hint', className: 'mov-hint' }, t('sectionCombinedHint')),
+              h('span', { key: 'hint', className: 'forge-hint' }, t('sectionCombinedHint')),
             ]),
-            h('div', { key: 'body', className: 'mov-advanced-body' }, [
+            h('div', { key: 'body', className: 'forge-advanced-body' }, [
               ...[
                 { key: 'advancedPicture', fields: ['watermark'] },
                 { key: 'advancedMerge', fields: ['mergeMode', 'seamTrimSeconds'], hint: 'segmentsRetained' },
                 { key: 'advancedWait', fields: ['pollIntervalMs', 'maxWaitMs'] },
                 { key: 'advancedTools', fields: ['ffmpegBinary', 'ffprobeBinary'], hint: 'toolsHint' },
                 { key: 'advancedStats', fields: ['usageStatsEnabled'], hint: 'usageStatsHint' },
-              ].map(group => h('div', { key: group.key, className: `mov-advanced-group${group.key === 'advancedTools' ? ' mov-advanced-tools' : ''}`, 'data-group': group.key }, [
-                h('div', { key: 'title', className: 'mov-parameter-heading' }, t(group.key)),
+              ].map(group => h('div', { key: group.key, className: `forge-advanced-group${group.key === 'advancedTools' ? ' forge-advanced-tools' : ''}`, 'data-group': group.key }, [
+                h('div', { key: 'title', className: 'forge-parameter-heading' }, t(group.key)),
                 renderGrid(group),
-                group.hint ? h('p', { key: 'hint', className: 'mov-hint', style: { margin: 0 } }, t(group.hint)) : null,
+                group.hint ? h('p', { key: 'hint', className: 'forge-hint', style: { margin: 0 } }, t(group.hint)) : null,
               ])),
             ]),
           ]),
@@ -251,7 +251,7 @@ function makePage({ form, t, manager }) {
             ? (saveError || t('saveFailed'))
             : (pending.length ? t('dirty') : ''));
         const footer = (pending.length || status !== 'idle')
-          ? h('div', { key: 'footer', className: 'mov-footer' }, [
+          ? h('div', { key: 'footer', className: 'forge-footer' }, [
             footerMessage
               ? h('span', {
                 key: 'status',
@@ -266,14 +266,14 @@ function makePage({ form, t, manager }) {
 
         // 底部操作区：保存位于重置左侧；即使尚无覆盖配置，有草稿时也显示。
         const resetRow = overrides.length || pending.length
-          ? h('div', { key: 'reset-row', className: 'mov-footer mov-reset-row' }, [
-            h('span', { key: 'hint', className: 'mov-hint', style: { flex: '1 1 200px' } }, t('resetHint')),
+          ? h('div', { key: 'reset-row', className: 'forge-footer forge-reset-row' }, [
+            h('span', { key: 'hint', className: 'forge-hint', style: { flex: '1 1 200px' } }, t('resetHint')),
             pending.length
               ? h('button', {
                 key: 'save',
                 'data-action': 'save',
                 type: 'button',
-                className: 'mov-btn mov-btn-primary',
+                className: 'forge-btn forge-btn-primary',
                 disabled: status === 'saving' || snapshot.writable === false,
                 onClick: save,
               }, status === 'saving' ? t('saving') : t('save'))
@@ -282,7 +282,7 @@ function makePage({ form, t, manager }) {
               key: 'reset',
               'data-action': 'reset',
               type: 'button',
-              className: 'mov-btn',
+              className: 'forge-btn',
               disabled: status === 'saving' || snapshot.writable === false,
               onClick: reset,
             }, t('reset')),
@@ -311,32 +311,32 @@ function makePage({ form, t, manager }) {
         const versionBox = h('div', {
           key: 'version',
           'data-field': 'version',
-          className: 'mov-card',
+          className: 'forge-card',
         }, [
-          h('div', { key: 'head', className: 'mov-card-head' }, [
-            h('span', { key: 'title', className: 'mov-card-title' }, t('versionTitle')),
+          h('div', { key: 'head', className: 'forge-card-head' }, [
+            h('span', { key: 'title', className: 'forge-card-title' }, t('versionTitle')),
             h('span', {
               key: 'current',
               'data-field': 'versionCurrent',
-              className: 'mov-hint mov-current-version',
+              className: 'forge-hint forge-current-version',
             }, [
               h('span', { key: 'label' }, PLUGIN_VERSION ? t('versionCurrent', { version: PLUGIN_VERSION }) : ''),
               updateBell(t, updateLatest, PLUGIN_VERSION),
             ]),
-            h('a', { key: 'history', className: 'mov-hint', href: 'https://github.com/wxsimon2022/metaontic-agent-forge/blob/master/CHANGELOG.md', target: '_blank', rel: 'noopener noreferrer' }, t('versionHistory')),
+            h('a', { key: 'history', className: 'forge-hint', href: 'https://github.com/wxsimon2022/metaontic-agent-forge/blob/master/CHANGELOG.md', target: '_blank', rel: 'noopener noreferrer' }, t('versionHistory')),
             h('button', {
               key: 'check',
               'data-action': 'update-check',
               type: 'button',
-              className: 'mov-btn mov-btn-sm mov-trailing',
+              className: 'forge-btn forge-btn-sm forge-trailing',
               disabled: updateStatus === 'working' || updateStatus === 'installing',
               onClick: () => { checkForUpdate(false).catch(() => {}); },
             }, updateStatus === 'working' ? t('versionChecking') : t('versionCheck')),
           ]),
           releaseNotes?.items?.length ? h('div', { key: 'release-notes', 'data-field': 'releaseNotes' }, [
             h('div', { key: 'heading', style: { display: 'flex', alignItems: 'baseline', gap: 12 } }, [
-              h('span', { key: 'title', className: 'mov-card-title' }, `${releaseNotes.version} · ${t('releaseNotesTitle')}`),
-              formatReleaseTime(releaseNotes.publishedAt) ? h('span', { key: 'published-at', 'data-field': 'releasePublishedAt', className: 'mov-foot-note' }, t('releaseUpdatedAt', { time: formatReleaseTime(releaseNotes.publishedAt) })) : null,
+              h('span', { key: 'title', className: 'forge-card-title' }, `${releaseNotes.version} · ${t('releaseNotesTitle')}`),
+              formatReleaseTime(releaseNotes.publishedAt) ? h('span', { key: 'published-at', 'data-field': 'releasePublishedAt', className: 'forge-foot-note' }, t('releaseUpdatedAt', { time: formatReleaseTime(releaseNotes.publishedAt) })) : null,
             ]),
             h('ul', { key: 'items', style: { margin: '8px 0 0', paddingLeft: 18, fontSize: 12, lineHeight: 1.7, color: TOKENS.muted } },
               releaseNotes.items.map((item, index) => h('li', { key: index }, item))),
@@ -345,18 +345,18 @@ function makePage({ form, t, manager }) {
             ? h('span', {
               key: 'state',
               'data-field': 'versionState',
-              className: 'mov-hint',
+              className: 'forge-hint',
               style: { color: updateTone },
             }, updateText)
             : null,
           updateAvailable
-            ? h('div', { key: 'command', className: 'mov-cmd-row' }, [
+            ? h('div', { key: 'command', className: 'forge-cmd-row' }, [
               // 点一下转成「确认更新」，再点一下让宿主重装本插件
               h('button', {
                 key: 'online',
                 'data-action': 'update-online',
                 type: 'button',
-                className: 'mov-btn mov-btn-sm mov-btn-primary',
+                className: 'forge-btn forge-btn-sm forge-btn-primary',
                 disabled: updateStatus === 'installing',
                 onClick: () => {
                   if (updateConfirm) runOnlineUpdate().catch(() => {});
@@ -373,12 +373,12 @@ function makePage({ form, t, manager }) {
             ? h('span', {
               key: 'confirm-hint',
               'data-field': 'updateConfirmHint',
-              className: 'mov-hint',
+              className: 'forge-hint',
             }, t('versionUpdateConfirmHint'))
             : null,
-          updateAvailable ? h('span', { key: 'hint', className: 'mov-hint' }, t('versionHint')) : null,
+          updateAvailable ? h('span', { key: 'hint', className: 'forge-hint' }, t('versionHint')) : null,
           (updateStatus === 'ok' && updateAt)
-            ? h('span', { key: 'at', className: 'mov-foot-note' }, t('versionCheckedAt', { time: updateAt }))
+            ? h('span', { key: 'at', className: 'forge-foot-note' }, t('versionCheckedAt', { time: updateAt }))
             : null,
         ]);
 
@@ -392,11 +392,11 @@ function makePage({ form, t, manager }) {
           ? []
           : [footer, versionBox, resetRow];
 
-        return h('div', { className: 'mov-page' }, [
-          // hover / focus 这类效果内联样式写不出来，集中在这张样式表里（class 都带 mov- 前缀）。
+        return h('div', { className: 'forge-page' }, [
+          // hover / focus 这类效果内联样式写不出来，集中在这张样式表里（class 都带 forge- 前缀）。
           h('style', { key: 'styles' }, PAGE_CSS),
-          h('div', { key: 'support-actions', className: 'mov-card-head', style: { justifyContent: 'flex-end', marginBottom: 12 } },
-            h('button', { key: 'support', type: 'button', className: 'mov-btn mov-btn-sm',
+          h('div', { key: 'support-actions', className: 'forge-card-head', style: { justifyContent: 'flex-end', marginBottom: 12 } },
+            h('button', { key: 'support', type: 'button', className: 'forge-btn forge-btn-sm',
               'data-action': 'contact-support', 'aria-haspopup': 'dialog', 'aria-expanded': supportOpen,
               onClick: () => setSupportOpen(true),
             }, t('supportContact'))),
@@ -406,21 +406,21 @@ function makePage({ form, t, manager }) {
             onUpdate: () => { if (updateConfirm) runOnlineUpdate().catch(() => {}); else setUpdateConfirm(true); },
             onLater: deferUpdate,
           }) : null,
-          notice ? h('p', { key: 'notice', className: 'mov-notice' }, notice) : null,
+          notice ? h('p', { key: 'notice', className: 'forge-notice' }, notice) : null,
           ...(notice && !snapshot.value ? [] : settingsRows()),
           ...blobs,
           supportOpen ? h('dialog', {
-            key: 'support-dialog', ref: supportDialog, className: 'mov-support-dialog',
-            'aria-labelledby': 'mov-support-title',
+            key: 'support-dialog', ref: supportDialog, className: 'forge-support-dialog',
+            'aria-labelledby': 'forge-support-title',
             onCancel: () => setSupportOpen(false), onClose: () => setSupportOpen(false),
             onClick: (event) => { if (event.target === event.currentTarget) { const rect = event.currentTarget.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) setSupportOpen(false); } },
-          }, h('div', { className: 'mov-support-content' }, [
-            h('div', { key: 'heading', className: 'mov-card-head' }, [
-              h('strong', { key: 'title', id: 'mov-support-title' }, t('supportContact')),
-              h('button', { key: 'close', type: 'button', className: 'mov-btn mov-btn-sm mov-trailing', 'aria-label': t('supportClose'), onClick: () => setSupportOpen(false) }, t('supportClose')),
+          }, h('div', { className: 'forge-support-content' }, [
+            h('div', { key: 'heading', className: 'forge-card-head' }, [
+              h('strong', { key: 'title', id: 'forge-support-title' }, t('supportContact')),
+              h('button', { key: 'close', type: 'button', className: 'forge-btn forge-btn-sm forge-trailing', 'aria-label': t('supportClose'), onClick: () => setSupportOpen(false) }, t('supportClose')),
             ]),
-            h('p', { key: 'hint', className: 'mov-hint' }, t('supportScan')),
-            h('iframe', { key: 'qr', className: 'mov-support-frame', title: t('supportContact'), src: 'https://work.weixin.qq.com/kfid/kfcd6fc4ca793eeac18', referrerPolicy: 'no-referrer' }),
+            h('p', { key: 'hint', className: 'forge-hint' }, t('supportScan')),
+            h('iframe', { key: 'qr', className: 'forge-support-frame', title: t('supportContact'), src: 'https://work.weixin.qq.com/kfid/kfcd6fc4ca793eeac18', referrerPolicy: 'no-referrer' }),
             h('a', { key: 'fallback', href: 'https://work.weixin.qq.com/kfid/kfcd6fc4ca793eeac18', target: '_blank', rel: 'noopener noreferrer' }, t('supportOpenPage')),
           ])) : null,
         ]);

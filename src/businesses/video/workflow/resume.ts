@@ -241,7 +241,7 @@ export function pickResumeOptions(args) {
 /** 暂停时写进分段目录的记录：接着做时照它恢复计划、进度和最后一段的链接。 */
 function pauseRecordAt({ stamp, prompt, fullPlan, done, cursor, lastVideoUrl, options, segments }) {
   return {
-    plugin: 'metaontic-video',
+    plugin: 'metaontic-agent-forge',
     kind: 'paused-plan',
     version: 1,
     createdAt: new Date().toISOString(),

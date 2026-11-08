@@ -5,7 +5,7 @@ import { apply } from '../index.js';
 function setup(config) {
  const tools = new Map(); let prompt;
  apply({tools:{register(t){tools.set(t.name,t);return ()=>{};}},inject(names,fn){if(names.includes('systemPrompt'))return fn({systemPrompt:{section(v){prompt=v;return ()=>{};}}});},on(){return ()=>{};}},config);
- return {tool:tools.get('video_estimate'),prompt:()=>prompt.text({agent:{session:{header:{agentPreset:'video-director'}}}})};
+ return {tool:tools.get('video_estimate'),prompt:()=>prompt.text({agent:{session:{header:{agentPreset:'forge-video-director'}}}})};
 }
 const base={connectionMode:'metaontic',model:'doubao-seedance-2-0-fast-260128'};
 const args={duration:30,resolution:'720p',ratio:'16:9'};

@@ -11,7 +11,7 @@ export const videoConfigFields = {
   metaonticApiKey: z.string().default('').description('MetaOntic AI API密钥').volatile(),
   volcengineApiKey: z.string().default('').description('火山引擎直连模式的火山 API密钥').volatile(),
   entryId: z.string()
-    .default('metaontic-video')
+    .default('metaontic-agent-forge')
     .description('本插件在 profile patch 里的条目 id；配置工具用它把改动写回')
     .volatile(),
   baseUrl: z.string()
@@ -61,7 +61,7 @@ export const videoConfigFields = {
     .description('旧配置兼容字段，当前直接拼接不使用音频交叉淡化，修改此值不生效。').volatile(),
   outputDir: z.string()
     .default('')
-    .description('成片输出目录；留空用会话工作目录下的 metaontic-video/')
+    .description('成片输出目录；留空用会话工作目录下的 metaontic-agent-forge/')
     .volatile(),
   keepSegments: z.boolean()
     .default(true)
@@ -148,7 +148,7 @@ export function resolveResolution(config, args: any = {}) {
 }
 
 /** 输出目录的默认子目录名。 */
-export const DEFAULT_OUTPUT_DIR = 'metaontic-video';
+export const DEFAULT_OUTPUT_DIR = 'metaontic-agent-forge';
 
 /** 判断「上游返回的是累计成片」的容差：累计时长的 25%，且至少 1.5 秒。 */
 export const CUMULATIVE_TOLERANCE_RATIO = 0.25;

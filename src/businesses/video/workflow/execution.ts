@@ -19,7 +19,7 @@ export async function appendVideoExecution(exec, phase) {
     });
     progressRecordModule ??= import(pathToFileURL(modulePath).href);
     const { appendPluginRecord } = await progressRecordModule;
-    appendPluginRecord(exec.agent.session, 'plugin:metaontic-video/execution', { callId: exec.callId, phase });
+    appendPluginRecord(exec.agent.session, 'plugin:metaontic-agent-forge/execution', { callId: exec.callId, phase });
   } catch {
     // A missing display capability must never fail or repeat a paid request.
   }

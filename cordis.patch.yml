@@ -1,14 +1,14 @@
-# MetaOnticVideo：公共工具入口与 Agent 预设。
+# MetaOntic Agent Forge：公共工具入口与 Agent 预设。
 # 顺序：公共插件 → 云智工坊总控 → 视频创作助手 → 宣传视频助手。
 # order 同步界面展示顺序；视频公共插件列表先定义锚点，再由宣传预设引用。
 - insert:
-    - id: metaontic-video
-      name: 'metaontic-video'
+    - id: metaontic-agent-forge
+      name: 'metaontic-agent-forge'
       config: {}
-    - id: preset-cloud-studio
-      name: 'metaontic-video/presets/cloud-studio'
+    - id: preset-forge-studio
+      name: 'metaontic-agent-forge/presets/forge-studio'
       config:
-        id: cloud-studio
+        id: forge-studio
         name: 云智工坊 · 智能体平台
         description: 总控助手，按白名单委派视频专业助手，跟进任务并汇总成果。
         order: 10
@@ -18,7 +18,7 @@
             config:
               prefix: |-
                 你是「云智工坊 · 智能体平台」总控助手。负责理解需求、选择已接入的专业助手、跟进任务并汇总真实成果。
-                当前只允许委派 video-director（视频创作助手）和 promo-video（宣传视频助手）。通过 delegate_agent 创建任务，提供完整需求、素材路径、已确认规格与审核状态；不传 API密钥。
+                当前只允许委派 forge-video-director（视频创作助手）和 forge-promo-video（宣传视频助手）。通过 delegate_agent 创建任务，提供完整需求、素材路径、已确认规格与审核状态；不传 API密钥。
                 工具返回子任务 ID 只代表启动，等待宿主完成通知后才汇总成果。查看任务用 list_agents，修改或续做用 send_message 和原 agent_id；不要为等待或查询重复创建任务。
                 视频脚本、付费调用与逐段结果均由用户在专业助手流程中确认，不代答允许，不直接调用视频或图片工具绕过审批。只允许一层委派，专业助手不再委派。
                 子任务暂停、待确认、状态未知或部分完成时如实说明，不能称整条成片已完成。汇总附原文件链接、未完成事项与下一步。
@@ -27,8 +27,8 @@
             config:
               provider: spawn
               toolName: delegate_agent
-              agentPreset: video-director
-              allowedAgentPresets: [video-director, promo-video]
+              agentPreset: forge-video-director
+              allowedAgentPresets: [forge-video-director, forge-promo-video]
               maxDepth: 1
           - id: studio-subagent-control
             name: '@deepseek-ai/dsh-tool-subagent-control'
@@ -44,10 +44,10 @@
             name: '@deepseek-ai/dsh-tool-ask-user'
           - id: present
             name: '@deepseek-ai/dsh-tool-present'
-    - id: preset-video-director
-      name: 'metaontic-video/presets/video-director'
+    - id: preset-forge-video-director
+      name: 'metaontic-agent-forge/presets/forge-video-director'
       config:
-        id: video-director
+        id: forge-video-director
         name: 视频创作助手
         description: 帮你完善创意、编写脚本，审核确认后制作视频，支持参考图、续拍、逐段预览与断点续做。
         order: 20
@@ -74,10 +74,10 @@
 
                 时长规则：≤模型单次上限（2.0：15 秒；2.5：30 秒）只调用一次 video_generate。
                 按故事选择一镜到底或少量有动机的切镜，在审核脚本中说明，切镜写进同一次生成提示词；叙事镜头数不等于付费调用数。用户指定的镜头形式优先；超过模型单次上限的连续剧情直接传总时长，由插件分段续拍。
-                已有视频延长无需完整脚本，说明方向、剧情、时长和计费方式（仅 MetaOnticVideo 模式提供预估费用），用户确认后调用 video_extend。
-                详细制作流程与提示词示例读取 video-director 技能；按宿主实际可用的工具名称调用。
+                已有视频延长无需完整脚本，说明方向、剧情、时长和计费方式（仅 MetaOntic Agent Forge 模式提供预估费用），用户确认后调用 video_extend。
+                详细制作流程与提示词示例读取 forge-video-director 技能；按宿主实际可用的工具名称调用。
 
-                写新脚本或改剧情前读取 video-director 技能及 references/scriptwriting.md：明确人物目标与阻碍，用画面和动作推进，台词自然且留足反应时间，结尾兑现铺垫。氛围与展示类不强行套冲突或反转。
+                写新脚本或改剧情前读取 forge-video-director 技能及 references/scriptwriting.md：明确人物目标与阻碍，用画面和动作推进，台词自然且留足反应时间，结尾兑现铺垫。氛围与展示类不强行套冲突或反转。
                 展示前自查因果、人物声音、可拍性、时长预算和分段交接；先改好再给用户一版成稿，不展示内部推演。
                 展示顺序：完善后的故事方案（看点、发展、结尾）→ 规格/风格/声音 → 人物或主体 → 时间/画面/完整对白/声音表 → 脚本审核问题。先讲故事，再展示执行细节，不贴模型提示词与参数清单；无人物或无对白明确注明，不硬加角色口播。
                 可在审核问题后给2–3个贴合内容的改稿建议，如“更搞笑一点”“少点对白”“换个结尾”。用户用口语提意见时，落实到故事、画面和节奏，保留满意的部分，不要求用户自己改提示词；改后重新审核和确认制作。
@@ -139,7 +139,7 @@
             name: '@deepseek-ai/dsh-skill-filesystem'
             config:
               customSkillDirs:
-                - !!js process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('metaontic-video/package.json')), 'skills')
+                - !!js process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('metaontic-agent-forge/package.json')), 'skills')
           - id: tool-skill
             name: '@deepseek-ai/dsh-tool-skill'
           - id: present
@@ -161,10 +161,10 @@
                   thresholdChars: 16384
                   headChars: 8192
                   tailChars: 2048
-    - id: preset-promo-video
-      name: 'metaontic-video/presets/promo-video'
+    - id: preset-forge-promo-video
+      name: 'metaontic-agent-forge/presets/forge-promo-video'
       config:
-        id: promo-video
+        id: forge-promo-video
         name: 宣传视频助手
         description: 将产品、品牌或活动创意制作成宣传视频，保留原意完善卖点与画面，脚本审核后确认费用，支持逐段预览和恢复。
         order: 30

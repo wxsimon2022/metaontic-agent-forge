@@ -23,7 +23,7 @@ export function sessionOwner(exec) {
 }
 function projectFile(id) {
   if (!/^[a-f0-9-]{36}$/.test(String(id || ''))) throw new Error('缺少有效 projectId，请先调用 video_project(action:prepare)。');
-  return path.join(dshHome(), 'metaontic-video', 'projects', `${id}.json`);
+  return path.join(dshHome(), 'metaontic-agent-forge', 'projects', `${id}.json`);
 }
 export async function readProject(id, exec) {
   const data = JSON.parse(await readFile(projectFile(id), 'utf8'));

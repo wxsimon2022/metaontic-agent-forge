@@ -1,3 +1,4 @@
+import './no-network-analytics.mjs';
 import { workflowApi } from './workflow-test-api.mjs';
 // Mocked API integration tests: no network or paid generation.
 import assert from 'node:assert/strict';

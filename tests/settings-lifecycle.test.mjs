@@ -117,8 +117,8 @@ test('online updates report hot application, required restart and inactive insta
     const states = [], messages = [];
     const ctx = vm.createContext({
       setUpdateConfirm() {}, setUpdateStatus: value => states.push(value), setUpdateMessage: value => messages.push(value),
-      manager: () => ({ manager: { listBundles: async () => ({ok:true,value:[{name:'metaontic-video',installed:true,source:'https://example.invalid/metaontic-video.tgz'}]}), installBundle: async () => ({ ok: true, value: { application, version: '3.4.0' } }) } }),
-      PLUGIN_PACKAGE: 'metaontic-video', UPDATE_SPEC: 'git+https://example.invalid/plugin.git', UPDATE_ATTEMPTS: 2,
+      manager: () => ({ manager: { listBundles: async () => ({ok:true,value:[{name:'metaontic-agent-forge',installed:true,source:'https://example.invalid/metaontic-agent-forge.tgz'}]}), installBundle: async () => ({ ok: true, value: { application, version: '3.4.0' } }) } }),
+      PLUGIN_PACKAGE: 'metaontic-agent-forge', UPDATE_SPEC: 'git+https://example.invalid/plugin.git', UPDATE_ATTEMPTS: 2,
       updateConfirm: true, updateCommit: { current: '' }, updateLatest: '3.4.0', setUpdateLatest() {}, forgetUpdateCheck() {},
       t: key => key,
     });

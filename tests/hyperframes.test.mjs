@@ -10,7 +10,7 @@ import { test } from 'node:test';
 import { apply } from '../index.js';
 
 test('Hyperframes is hidden unless the internal environment flag is explicit', () => {
-  const key = 'METAONTIC_VIDEO_INTERNAL_HYPERFRAMES';
+  const key = 'METAONTIC_AGENT_FORGE_INTERNAL_HYPERFRAMES';
   const previous = process.env[key];
   try {
     for (const enabled of [false, true]) {

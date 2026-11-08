@@ -10,18 +10,18 @@ const GUIDE_URL = 'https://video.mybfs.cn';
 /** 面板与字典都在 TS 里，按仓库既有做法在隔离上下文里跑纯函数，再用桩 h 收集渲染树。 */
 function harness({ locale = 'zh', props = {}, logo = '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/></svg>' } = {}) {
   const context = vm.createContext({});
-  vm.runInContext(sourceOf('businesses/video/client/panel', 'businesses/video/client/locale'), context);
-  const dictionaries = context.createDictionaries();
+  vm.runInContext(sourceOf('client/panel', 'client/locale'), context);
+  const dictionaries = context.createPlatformDictionaries();
   const t = (key, args = {}) => String(dictionaries[locale][key] ?? key)
     .replace(/\{(\w+)\}/g, (_, name) => args[name] ?? `{${name}}`);
   const calls = [];
   const panel = context.createSidebarPanel({
     React: { createElement: () => {} },
     h: (type, elementProps, children) => ({ type, props: elementProps || {}, children: Array.isArray(children) ? children : children === undefined ? [] : [children] }),
-    TOKENS, PAGE_CSS: '.mov-btn{}', t,
-    PANEL_ID: 'metaontic-video', GUIDE_URL, LOGO_SVG: logo,
+    TOKENS, PAGE_CSS: '.forge-btn{}', t,
+    PANEL_ID: 'metaontic-agent-forge', GUIDE_URL, LOGO_SVG: logo,
   });
-  const tree = panel.VideoPanel({
+  const tree = panel.ForgePanel({
     startSession: () => calls.push({ action: 'startSession' }),
     ...props,
   });
@@ -47,11 +47,11 @@ function find(tree, match) {
 test('面板给出新会话入口，并显示插件 logo', () => {
   const { tree, calls, panel } = harness({});
   const labels = texts(tree);
-  for (const expected of ['视频创作', '开始创作', '新建视频创作会话', '打开插件设置', '使用说明']) {
+  for (const expected of ['云智工坊 · 智能体平台', '开始协作', '打开云智工坊', '打开插件设置', '使用说明']) {
     assert.ok(labels.includes(expected), expected);
   }
-  const button = find(tree, (node) => node.type === 'button' && node.children.includes('新建视频创作会话'));
-  assert.equal(button.props.className, 'mov-btn mov-btn-primary');
+  const button = find(tree, (node) => node.type === 'button' && node.children.includes('打开云智工坊'));
+  assert.equal(button.props.className, 'forge-btn forge-btn-primary');
   button.props.onClick();
   assert.deepEqual(calls, [{ action: 'startSession' }]);
   assert.equal(typeof panel.PanelIcon, 'function');
@@ -61,18 +61,18 @@ test('面板给出新会话入口，并显示插件 logo', () => {
   assert.equal(logo.props.alt, '');
 });
 
-test('面板写明两个价值点：新手好上手、低成本长视频', () => {
+test('面板说明平台统筹与业务扩展', () => {
   const { tree, t } = harness({});
   const cards = [];
-  walk(tree, (node) => { if (node.props?.className === 'mov-panel-highlight') cards.push(node); });
+  walk(tree, (node) => { if (node.props?.className === 'forge-panel-highlight') cards.push(node); });
   assert.equal(cards.length, 2, '应有两条价值点');
   const titles = [];
-  walk(tree, (node) => { if (node.props?.className === 'mov-panel-highlight-title') titles.push(node.children[0]); });
+  walk(tree, (node) => { if (node.props?.className === 'forge-panel-highlight-title') titles.push(node.children[0]); });
   assert.deepEqual(titles, [t('panelHighlight1Title'), t('panelHighlight2Title')]);
   assert.ok(texts(tree).includes(t('panelHighlights')), '价值点要有分组标题');
   const descs = [];
-  walk(tree, (node) => { if (node.props?.className === 'mov-panel-highlight-desc') descs.push(node.children[0]); });
-  assert.match(descs[0], /创意/, '第一条讲怎么开始');
+  walk(tree, (node) => { if (node.props?.className === 'forge-panel-highlight-desc') descs.push(node.children[0]); });
+  assert.match(descs[0], /白名单|总控/, '第一条讲总控协作');
   assert.match(descs[1], /续拍|合并/, '第二条讲长视频方案');
   for (const node of cards) {
     const icons = [];
@@ -84,18 +84,18 @@ test('面板写明两个价值点：新手好上手、低成本长视频', () =>
 test('面板用四步流程演示使用过程', () => {
   const { tree, t } = harness({});
   const steps = [];
-  walk(tree, (node) => { if (node.props?.className === 'mov-panel-step') steps.push(node); });
+  walk(tree, (node) => { if (node.props?.className === 'forge-panel-step') steps.push(node); });
   assert.equal(steps.length, 4, '应为四步');
   assert.deepEqual(steps.map((node) => node.props['data-step']), ['0', '1', '2', '3'], '步号按顺序错开动画延迟');
   const titles = [];
-  walk(tree, (node) => { if (node.props?.className === 'mov-panel-step-title') titles.push(node.children[0]); });
+  walk(tree, (node) => { if (node.props?.className === 'forge-panel-step-title') titles.push(node.children[0]); });
   assert.deepEqual(titles, [t('panelStep1Title'), t('panelStep2Title'), t('panelStep3Title'), t('panelStep4Title')]);
   for (const node of steps) assert.ok(texts(node).some((text) => text.length > 8), '每步都要有说明');
   const conns = [];
-  walk(tree, (node) => { if (node.props?.className === 'mov-panel-conn') conns.push(node); });
+  walk(tree, (node) => { if (node.props?.className === 'forge-panel-conn') conns.push(node); });
   assert.equal(conns.length, 3, '四步之间三个箭头');
   const css = find(tree, (node) => node.type === 'style').children.join('');
-  assert.match(css, /@keyframes mov-flow-card/, '流程要有点亮动效');
+  assert.match(css, /@keyframes forge-flow-card/, '流程要有点亮动效');
   assert.match(css, /prefers-reduced-motion/, '要尊重系统的减弱动效设置');
 });
 
@@ -154,10 +154,10 @@ test('英文界面下面板文案全部走字典', () => {
   const labels = texts(tree);
   assert.ok(labels.includes(dictionaries.en.panelTitle));
   assert.ok(labels.includes(dictionaries.en.panelNew));
-  assert.equal(dictionaries.zh.panelNew, '新建视频创作会话');
+  assert.equal(dictionaries.zh.panelNew, '打开云智工坊');
   // 左侧栏那一行的名字比面板标题更完整，两个字典都要有。
-  assert.equal(dictionaries.zh.panelSidebarLabel, '视频创作助手');
-  assert.equal(dictionaries.en.panelSidebarLabel, 'Video Creator');
+  assert.equal(dictionaries.zh.panelSidebarLabel, '云智工坊');
+  assert.equal(dictionaries.en.panelSidebarLabel, 'Agent Forge');
 });
 
 test('面板文案不再出现裸露的 Key 字样，样式随组件注入', () => {
@@ -169,15 +169,15 @@ test('面板文案不再出现裸露的 Key 字样，样式随组件注入', () 
     }
   }
   const style = find(tree, (node) => node.type === 'style');
-  assert.match(style.children.join(''), /\.mov-panel \{/);
+  assert.match(style.children.join(''), /\.forge-panel \{/);
 });
 
 test('入口用同一个 id 注册左侧栏图标与 main 面板', () => {
-  const source = readFileSync(new URL('../src/businesses/video/client.ts', import.meta.url), 'utf8');
-  assert.match(source, /const PANEL_ID = 'metaontic-video';/);
+  const source = readFileSync(new URL('../src/client/platform.ts', import.meta.url), 'utf8');
+  assert.match(source, /const PANEL_ID = 'metaontic-agent-forge';/);
   assert.match(source, /name: 'sidebar\.panellist',\s*id: PANEL_ID/);
   assert.match(source, /label: \(\) => t\('panelSidebarLabel'\)/);
   assert.match(source, /name: 'main',\s*key: PANEL_ID/);
-  assert.match(source, /agentPreset: 'video-director'/);
+  assert.match(source, /agentPreset: 'forge-studio'/);
   assert.match(source, /openBundle\(NAMESPACE\)/);
 });

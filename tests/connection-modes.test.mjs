@@ -8,7 +8,7 @@ function harness({ serviceAvailable = true } = {}) {
   const context = vm.createContext({ characterChoiceGate: async () => null,
     METAONTIC_BASE_URL: 'https://ai.bileego.com',
     SERVICE_MODE_AVAILABLE: serviceAvailable,
-    SERVICE_UNAVAILABLE_MESSAGE: 'MetaOnticVideo 服务端方式暂时不可用：请在插件设置页把「接入方式」改为 MetaOntic AI 或火山引擎直连，填好 API密钥保存后重试。',
+    SERVICE_UNAVAILABLE_MESSAGE: 'MetaOntic Agent Forge 服务端方式暂时不可用：请在插件设置页把「接入方式」改为 MetaOntic AI 或火山引擎直连，填好 API密钥保存后重试。',
     ref: (config, key, fallback) => config[key] ?? fallback,
     envValue: () => '',
     relayPreset: () => ({ baseUrl: 'https://ai.bileego.com', submitPath: '/doubao/api/v3/contents/generations/tasks', queryPath: '/doubao/api/v3/contents/generations/tasks/{task_id}' }),
@@ -28,7 +28,7 @@ function harness({ serviceAvailable = true } = {}) {
     estimateUsage: () => { throw new Error('must not estimate'); },
     resolveRegisterApi: () => { throw new Error('must not query service'); },
     isServerIssuedKey: () => false,
-    DEFAULT_REGISTER_TOKEN: 'metaontic-video-register-v1',
+    DEFAULT_REGISTER_TOKEN: 'metaontic-agent-forge-register-v1',
     PLUGIN_VERSION: '3.14.0',
   });
   const mocks = {estimateArgsFor:context.estimateArgsFor, ffmpegConsentGate:context.ffmpegConsentGate};

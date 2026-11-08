@@ -72,7 +72,7 @@ function applyVideoBusiness(runtime: BusinessRuntime) {
   register(withVideoExecution(jsonSafeTool(withActualCost(taskTool(config), config))));
   register(jsonSafeTool(setupTool(config)));
   // 雪藏功能：默认不注册，不进入对外技能和提示词，仅供内部显式启用。
-  if (process.env.METAONTIC_VIDEO_INTERNAL_HYPERFRAMES === '1') {
+  if (process.env.METAONTIC_AGENT_FORGE_INTERNAL_HYPERFRAMES === '1') {
     runtime.defer(register(jsonSafeTool(hyperframesTool(config, deps))));
   }
   // 配置工具依赖宿主的 settings 服务；没有该服务时插件其余功能照常可用。
@@ -139,7 +139,7 @@ function applyVideoBusiness(runtime: BusinessRuntime) {
     confirmationReady = true;
   } catch (error) {
     ctx.logger?.warn?.(
-      `metaontic-video: 调用前的人工确认卡口注册失败：${error?.message || error}`,
+      `metaontic-agent-forge: 调用前的人工确认卡口注册失败：${error?.message || error}`,
     );
   }
   if (typeof gateCleanup === 'function') runtime.defer(gateCleanup);

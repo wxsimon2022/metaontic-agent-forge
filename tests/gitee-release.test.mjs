@@ -7,7 +7,7 @@ import { publishGitee } from '../scripts/publish-gitee.mjs';
 
 for (const prerelease of [false,true]) test(`Gitee publishes and verifies ${prerelease ? 'prerelease' : 'stable'} releases safely`, async () => {
   const version = prerelease ? '3.3.0-beta.1' : '3.3.0';
-  const tag = `v${version}`; const filename = `metaontic-video-${version}.tgz`;
+  const tag = `v${version}`; const filename = `metaontic-agent-forge-${version}.tgz`;
   const dir = await mkdtemp(join(tmpdir(), 'gitee-release-'));
   try {
     const archive = join(dir, filename); await writeFile(archive, 'archive');
@@ -46,7 +46,7 @@ for (const prerelease of [false,true]) test(`Gitee publishes and verifies ${prer
 test('slow Gitee upload survives a client timeout only when the attachment is verified', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'gitee-timeout-'));
   try {
-    const filename = 'MetaOnticVideo-Windows-3.3.0.zip';
+    const filename = 'MetaOntic Agent Forge-Windows-3.3.0.zip';
     const archive = join(dir, filename); await writeFile(archive, 'archive-bytes');
     const release = { id: 1, body: 'release notes', prerelease: false };
     const makeRequest = ({ stored }) => async (url, options) => {
@@ -65,7 +65,7 @@ test('slow Gitee upload survives a client timeout only when the attachment is ve
 test('a transient Gitee upload failure is retried and reports the server body when it keeps failing', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'gitee-retry-'));
   try {
-    const filename = 'MetaOnticVideo-Windows-3.3.0.zip';
+    const filename = 'MetaOntic Agent Forge-Windows-3.3.0.zip';
     const archive = join(dir, filename); await writeFile(archive, 'archive-bytes');
     const release = { id: 1, body: 'release notes', prerelease: false };
     const makeRequest = failures => {

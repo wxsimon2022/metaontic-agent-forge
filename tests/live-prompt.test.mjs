@@ -15,7 +15,7 @@ test('an existing prompt registration reads current configuration on each reques
   dispose=plugin.apply({tools:{register:()=>()=>{}},on:()=>()=>{},inject(names,install){
    if(names.includes('systemPrompt'))return install({systemPrompt:{section(value){section=value;return()=>{};}}});
   }},config);
-  const director={agent:{session:{header:{agentPreset:'video-director'}}}};
+  const director={agent:{session:{header:{agentPreset:'forge-video-director'}}}};
   assert.equal(typeof section.text,'function');
   assert.match(section.text(director),/总时长 ≤ 15 秒/);
   const prompt=section.text(director);
@@ -37,17 +37,17 @@ test('an existing prompt registration reads current configuration on each reques
 });
 
 test('promotional mode adds its brief while standard and general video modes remain scoped', async()=>{
- let section;let selected='promo-video';
+ let section;let selected='forge-promo-video';
  const ctx={tools:{register:()=>()=>{}},on:()=>()=>{},get(name){return name==='agentPresets'?{presetForSession:()=>selected}:undefined;},inject(names,install){if(names.includes('systemPrompt'))return install({systemPrompt:{section(v){section=v;return()=>{};}}});}};
  const dispose=plugin.apply(ctx,{connectionMode:'metaontic'});
- const request={agent:{session:{header:{agentPreset:'video-director'}}}};
+ const request={agent:{session:{header:{agentPreset:'forge-video-director'}}}};
  try{
   const promo=section.text(request);
   assert.match(promo,/当前模式：宣传视频助手/);
   assert.match(promo,/不得编造价格、优惠、销量/);
   assert.match(promo,/用户原话或本轮答复已确认时/);
   assert.match(promo,/video_project/);
-  selected='video-director';assert.doesNotMatch(section.text(request),/当前模式：宣传视频助手/);
+  selected='forge-video-director';assert.doesNotMatch(section.text(request),/当前模式：宣传视频助手/);
   selected=null;assert.equal(section.text(request),'');
   selected='unknown';assert.equal(section.text(request),'');
  }finally{dispose();}

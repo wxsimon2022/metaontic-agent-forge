@@ -1,3 +1,4 @@
+import './no-network-analytics.mjs';
 // Low-level generation fixtures keep testing recovery separately from project approval.
 // Project approval itself is exercised through the real public plugin in project-workflow.test.mjs.
 import { build } from 'esbuild';

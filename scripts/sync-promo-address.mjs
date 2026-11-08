@@ -21,9 +21,9 @@ export const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url
 /** 宣传页里所有写死版本的地方；每条都要能被替换到，否则视为宣传页结构变了。 */
 export const PROMO_RULES = [
   { name: 'Gitee 附件地址', re: /(releases\/download\/)v\d+\.\d+\.\d+\//g, to: (v) => `$1v${v}/` },
-  { name: 'tgz 附件名', re: /(metaontic-video-)\d+\.\d+\.\d+(\.tgz)/g, to: (v) => `$1${v}$2` },
+  { name: 'tgz 附件名', re: /(metaontic-agent-forge-)\d+\.\d+\.\d+(\.tgz)/g, to: (v) => `$1${v}$2` },
   { name: '结构化数据版本号', re: /("softwareVersion":\s*")\d+\.\d+\.\d+(")/g, to: (v) => `$1${v}$2` },
-  { name: '页脚版本号', re: /(MetaOnticVideo · 为 DeepSeek Harness 而作 · )v\d+\.\d+\.\d+/g, to: (v) => `$1v${v}` },
+  { name: '页脚版本号', re: /(云智工坊 · 智能体平台 · 为 DeepSeek Harness 而作 · )v\d+\.\d+\.\d+/g, to: (v) => `$1v${v}` },
 ];
 
 /** 默认候选路径：先本机开发布局，再插件仓库同级/上级的同名服务项目。 */
@@ -46,7 +46,7 @@ export function findPromoPage(root = REPO_ROOT, env = process.env) {
 /** 纯文本替换：返回新内容与每条规则的命中次数，方便发版时核对都改到了。 */
 export function syncPromoText(text, version) {
   const results = [];
-  let output = text.replaceAll('https://gitee.com/hackloop/metaontic-video/', 'https://gitee.com/hadlooop/metaontic-agent-forge/').replaceAll('https://github.com/wxsimon2022/metaontic-video/', 'https://github.com/wxsimon2022/metaontic-agent-forge/');
+  let output = text.replaceAll('https://gitee.com/hadlooop/metaontic-agent-forge/', 'https://gitee.com/hadlooop/metaontic-agent-forge/').replaceAll('https://github.com/wxsimon2022/metaontic-agent-forge/', 'https://github.com/wxsimon2022/metaontic-agent-forge/');
   for (const rule of PROMO_RULES) {
     const count = (output.match(rule.re) || []).length;
     output = output.replace(rule.re, rule.to(version));

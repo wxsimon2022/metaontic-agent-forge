@@ -32,8 +32,8 @@ test('release dry run changes no files, tags or git index and starts no publicat
   await copyFile(new URL('../scripts/release.mjs',import.meta.url),path.join(dir,'scripts/release.mjs'));
   await copyFile(new URL('../scripts/sync-promo-address.mjs',import.meta.url),path.join(dir,'scripts/sync-promo-address.mjs'));
   await writeFile(path.join(dir,'package.json'),'{"type":"module","version":"1.0.0"}');
-  await writeFile(path.join(dir,'MetaOnticVideo使用说明书.md'),'# 安装指南\n使用正式成品。');
-  await writeFile(path.join(dir,'MetaOnticVideo使用说明书.pdf'),'test fixture');
+  await writeFile(path.join(dir,'MetaOnticAgentForge使用说明书.md'),'# 安装指南\n使用正式成品。');
+  await writeFile(path.join(dir,'MetaOnticAgentForge使用说明书.pdf'),'test fixture');
   await writeFile(path.join(dir,'plan.json'),JSON.stringify({items:['优化：覆盖整个待发布范围的具体改动。'],guideReview:'已核对安装步骤与操作指南，本次无变化。'}));
   const git=(...a)=>execFileSync('git',a,{cwd:dir,encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
   git('init','-b','master');git('add','.');git('-c','user.name=Test','-c','user.email=test@localhost','commit','-m','fixture');git('tag','v1.0.0');
@@ -41,7 +41,7 @@ test('release dry run changes no files, tags or git index and starts no publicat
   // 宣传页路径显式指向不存在的文件：演练环境不该去碰本机服务端仓库里的真实宣传页。
   const env={...process.env,METAONTIC_PROMO_PATH:path.join(dir,'no-promo','index.html')};
   const result=spawnSync(process.execPath,[path.join(dir,'scripts/release.mjs'),'1.0.1','--notes',path.join(dir,'plan.json'),'--dry-run'],{encoding:'utf8',timeout:10000,env});
-  assert.equal(result.status,0,result.stderr);assert.match(result.stdout,/DRY RUN/);assert.match(result.stdout,/metaontic-video-1.0.1.tgz/);
+  assert.equal(result.status,0,result.stderr);assert.match(result.stdout,/DRY RUN/);assert.match(result.stdout,/metaontic-agent-forge-1.0.1.tgz/);
   // 默认只发 Gitee：不碰 GitHub，也不会打印 GitHub 的发布页与附件地址。
   assert.match(result.stdout,/仅 Gitee/);assert.doesNotMatch(result.stdout,/github\.com/);
   const both=spawnSync(process.execPath,[path.join(dir,'scripts/release.mjs'),'1.0.1','--notes',path.join(dir,'plan.json'),'--dry-run','--both'],{encoding:'utf8',timeout:10000,env});
@@ -54,7 +54,7 @@ test('tag and Release body contain only public changes; verification stays in en
  const { publicReleaseNotes, releaseVerification } = await import('../scripts/release.mjs');
  const items = ['新增：图片可直接预览。', '优化：分段结果先审核再继续。'];
  const body = publicReleaseNotes('3.18.1', items);
- assert.equal(body, 'MetaOnticVideo v3.18.1\n\n新增\n- 图片可直接预览。\n\n优化\n- 分段结果先审核再继续。\n');
+ assert.equal(body, 'MetaOntic Agent Forge v3.18.1\n\n新增\n- 图片可直接预览。\n\n优化\n- 分段结果先审核再继续。\n');
  for (const both of [false, true]) {
   const verification = releaseVerification(both, '- 宣传页地址已同步。\n');
   assert.match(verification, /验证/);
@@ -70,6 +70,6 @@ test('release and mirror publish only universal tgz while retaining both platfor
  const release = await readFile(new URL('../scripts/release.mjs', import.meta.url), 'utf8');
  assert.match(workflow, /os: \[windows-latest, macos-latest\]/);
  assert.doesNotMatch(workflow, /package-windows|dist\/\*\.zip/);
- assert.match(release, /const assets=\[?`metaontic-video-\$\{version\}\.tgz`\]/);
+ assert.match(release, /const assets=\[?`metaontic-agent-forge-\$\{version\}\.tgz`\]/);
  assert.doesNotMatch(release, /scripts\/package-windows\.py/);
 });

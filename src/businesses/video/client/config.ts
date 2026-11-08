@@ -3,9 +3,9 @@ import { VOLCENGINE_MODE_AVAILABLE, IMAGE_MODEL } from '../connection-defaults.j
 
 export function createClientConfig() {
 /** Host 侧条目的 id，与 cordis.patch.yml 里那条覆盖项一致。 */
-    const NAMESPACE = 'metaontic-video';
+    const NAMESPACE = 'metaontic-agent-forge';
     /** 本模块自己的界面字典命名空间。 */
-    const NS = 'settings.metaonticVideo';
+    const NS = 'settings.metaonticAgentForge';
 
     /**
      * 模型下拉的候选：中转站当前上架的 seedance 视频型号。

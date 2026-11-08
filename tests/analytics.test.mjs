@@ -8,7 +8,7 @@ function fixture(request=async()=>({ok:true}),extra={}){
 }
 test('analytics payload contains only allowlisted metadata and approved basic device fields',async()=>{
  let body;const r=fixture(async(_url,options)=>{assert.equal(options.redirect,'error');assert.equal(options.credentials,'omit');assert.deepEqual(Object.keys(options.headers),['Content-Type']);body=JSON.parse(options.body);return{ok:true};});
- try{r.record('tool_finished',{tool:'video_generate',mode:'promo-video',status:'succeeded',durationMs:12,prompt:'private story',apiKey:'secret',videoUrl:'private-url',hostname:'private-host',errorCode:'unknown private details'});await r.flush();
+ try{r.record('tool_finished',{tool:'video_generate',mode:'forge-promo-video',status:'succeeded',durationMs:12,prompt:'private story',apiKey:'secret',videoUrl:'private-url',hostname:'private-host',errorCode:'unknown private details'});await r.flush();
  assert.equal(body.installationId,id);assert.equal(body.device.arch,'arm64');assert.equal(body.events[0].errorCode,'other');
  assert.doesNotMatch(JSON.stringify(body),/private|secret/);assert.equal(body.events[0].attempts,undefined);
  }finally{r.dispose();}
@@ -49,5 +49,5 @@ test('hot reload startup dedupes within one process and task IDs are hashed, sta
 });
 test('unsupported business tools cannot poison an otherwise valid analytics batch',async()=>{
  let body;const r=fixture(async(_u,o)=>{body=JSON.parse(o.body);return{ok:true};});
- try{r.record('tool_started',{tool:'writing_outline',mode:'writer'});r.record('tool_started',{tool:'video_generate',mode:'video-director'});await r.flush();assert.equal(body.events.length,1);assert.equal(body.events[0].tool,'video_generate');}finally{r.dispose();}
+ try{r.record('tool_started',{tool:'writing_outline',mode:'writer'});r.record('tool_started',{tool:'video_generate',mode:'forge-video-director'});await r.flush();assert.equal(body.events.length,1);assert.equal(body.events[0].tool,'video_generate');}finally{r.dispose();}
 });

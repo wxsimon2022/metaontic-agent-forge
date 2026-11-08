@@ -10,7 +10,7 @@ Harness 默认启用 HMR 配置重载，但不监听本地插件源码。对于�
 - id: hmr
   disabled: false
   config:
-    base: /你的路径/metaontic-video
+    base: /你的路径/metaontic-agent-forge
     root: [index.js]
 ```
 
@@ -61,7 +61,7 @@ npm pack --dry-run
 每次发布必须：
 
 1. 更新 `package.json` 的版本及 `releaseNotes`，其 `version` 必须与包版本一致，`items` 写用户能理解的变更；将 `CHANGELOG.md` 的未发布内容整理到对应版本，记录日期并同步完整更新说明。
-2. 同步更新本地根目录 `MetaOnticVideo使用说明书.md`（Markdown、PDF 和配图不提交源码仓库），逐项核对本次全部变更涉及的配置、操作步骤、默认行为及常见问题，删除过时说明，确保指南与当前版本一致；指南里写死的 `.tgz` 成品地址（Gitee 与 GitHub 各一条）同步改为本次版本，发布脚本会校验不一致直接失败；指南仅面向用户使用，不得加入插件版本号、适用版本、版本更新内容、更新日志、发布说明或发布核对记录；配图也遵守此约定。适用版本和本次核对结果仅记录在 `docs/engineering/release-<版本>.md`，更新内容统一放在 CHANGELOG 及包内 releaseNotes。未完成指南同步不得发布。
+2. 同步更新本地根目录 `MetaOnticAgentForge使用说明书.md`（Markdown、PDF 和配图不提交源码仓库），逐项核对本次全部变更涉及的配置、操作步骤、默认行为及常见问题，删除过时说明，确保指南与当前版本一致；指南里写死的 `.tgz` 成品地址（Gitee 与 GitHub 各一条）同步改为本次版本，发布脚本会校验不一致直接失败；指南仅面向用户使用，不得加入插件版本号、适用版本、版本更新内容、更新日志、发布说明或发布核对记录；配图也遵守此约定。适用版本和本次核对结果仅记录在 `docs/engineering/release-<版本>.md`，更新内容统一放在 CHANGELOG 及包内 releaseNotes。未完成指南同步不得发布。
 3. 同步宣传页的最新安装地址：宣传页在服务端仓库 `MetaOnticVideoService/frontend/public/promo/index.html`，用户会照它复制 `.tgz` 地址，发版脚本会在打包前用 `scripts/sync-promo-address.mjs` 把上面的 Gitee 附件地址、`.tgz` 文件名、结构化数据与页脚版本号一并改为本次版本（用 `METAONTIC_PROMO_PATH` 指定路径，`--no-promo` 才跳过），并把结果写进发布记录的「验证」；找不到宣传页时脚本给出提示，必须手动同步。
 4. 同步锁文件，构建并执行相关验证，检查打包清单，确认包含更新后的操作指南。
 5. 提交源码、构建产物与说明。
@@ -71,7 +71,7 @@ npm pack --dry-run
 标签说明统一格式如下；只保留本次适用分类；验证结果与限制仅写入工程发布记录：
 
 ```text
-MetaOnticVideo v<版本>
+MetaOntic Agent Forge v<版本>
 
 新增
 - 面向用户的新增能力
@@ -81,11 +81,11 @@ MetaOnticVideo v<版本>
 
 ```
 
-将说明保存到UTF-8文件，例如 `/tmp/metaontic-video-release.txt`，再执行：
+将说明保存到UTF-8文件，例如 `/tmp/metaontic-agent-forge-release.txt`，再执行：
 
 ```bash
 # 将 <版本> 换成实际版本号
-git tag -a "v<版本>" -F /tmp/metaontic-video-release.txt
+git tag -a "v<版本>" -F /tmp/metaontic-agent-forge-release.txt
 git push origin master "v<版本>"
 git show --no-patch "v<版本>"
 ```
@@ -95,20 +95,20 @@ git show --no-patch "v<版本>"
 
 ### 插件包下载
 
-版本包在 [GitHub Releases](https://github.com/wxsimon2022/metaontic-agent-forge/releases) 或 [Gitee Releases](https://gitee.com/hadlooop/metaontic-agent-forge/releases) 下载，通用插件包为 `metaontic-video-<版本>.tgz`。Windows与Mac使用同一个 `.tgz`，不再发布ZIP；指南和PDF已包含在通用包中。不再向 npm 注册表发布，无需配置 `NPM_TOKEN` 或 Trusted Publishing。
+版本包在 [GitHub Releases](https://github.com/wxsimon2022/metaontic-agent-forge/releases) 或 [Gitee Releases](https://gitee.com/hadlooop/metaontic-agent-forge/releases) 下载，通用插件包为 `metaontic-agent-forge-<版本>.tgz`。Windows与Mac使用同一个 `.tgz`，不再发布ZIP；指南和PDF已包含在通用包中。不再向 npm 注册表发布，无需配置 `NPM_TOKEN` 或 Trusted Publishing。
 
 `v*` 标签触发完整构建与测试，通过双平台安装检查后，使用 GitHub 自动令牌上传通用tgz。`--both`发布脚本再下载这个同一成品，用本地 `GITEE_TOKEN` 发布Gitee；CI未通过时不上传Gitee，不将单仓成功报告为双仓成功。手动运行工作流时须选择与包版本匹配的标签。
 
 某次发布只补齐镜像时，手动运行 `sync-gitee` 工作流并填写对应标签；它从 GitHub Release 取回该版本的 通用 `.tgz`，逐个补传到 Gitee 发布页并核对大小，不会覆盖或改动已有附件。
 
-Gitee 侧另有一条 Gitee Go 流水线（`.workflow/MetaOnticVideo.yml`）：向 `master` 推送、发起面向 `master` 的 PR 或推送 `v*` 标签时，在 Gitee 构建机上安装依赖、构建并运行单元测试，再校验版本元数据；每次运行都会打出成品并作为该次流水线的制品留存，可在 Gitee 的流水线运行结果页直接下载：`metaontic-video-<版本>.tgz` 总会生成，两平台使用同一个tgz，不再生成Windows ZIP。标签触发时还会核对 `v<版本>` 标签与 `package.json` 里的版本是否一致，不一致直接失败，保证成品按标签出。想在发版前演练一次按标签的流程，可以打以 `ci-` 开头的演练标签（如 `ci-test`）：它同样触发构建与打包，但跳过标签与版本的强校验，制品只作演练用。这条流水线只生成成品，不发布版本：GitHub 与 Gitee 的 Release 成品始终由 `publish` 工作流按 `v*` 标签产出，避免两处各打一份包导致成品不一致。流水线不依赖 Gitee 下拉里提供的版本：构建机上没有可用 Node 时，它会自己从 npmmirror 下载 Node 20（按 glibc 自动选择官方构建或 glibc 2.17 兼容版），并缓存到 `~/.local/node`；因此免费构建机即使镜像较旧也能跑通。
+Gitee 侧另有一条 Gitee Go 流水线（`.workflow/MetaOntic Agent Forge.yml`）：向 `master` 推送、发起面向 `master` 的 PR 或推送 `v*` 标签时，在 Gitee 构建机上安装依赖、构建并运行单元测试，再校验版本元数据；每次运行都会打出成品并作为该次流水线的制品留存，可在 Gitee 的流水线运行结果页直接下载：`metaontic-agent-forge-<版本>.tgz` 总会生成，两平台使用同一个tgz，不再生成Windows ZIP。标签触发时还会核对 `v<版本>` 标签与 `package.json` 里的版本是否一致，不一致直接失败，保证成品按标签出。想在发版前演练一次按标签的流程，可以打以 `ci-` 开头的演练标签（如 `ci-test`）：它同样触发构建与打包，但跳过标签与版本的强校验，制品只作演练用。这条流水线只生成成品，不发布版本：GitHub 与 Gitee 的 Release 成品始终由 `publish` 工作流按 `v*` 标签产出，避免两处各打一份包导致成品不一致。流水线不依赖 Gitee 下拉里提供的版本：构建机上没有可用 Node 时，它会自己从 npmmirror 下载 Node 20（按 glibc 自动选择官方构建或 glibc 2.17 兼容版），并缓存到 `~/.local/node`；因此免费构建机即使镜像较旧也能跑通。
 
 本机打包可执行 `npm pack --pack-destination /tmp`。需要目录安装时，将 `.tgz` 解压后使用其中的 `package` 目录：
 
 ```bash
-mkdir metaontic-video-plugin
-tar -xzf metaontic-video-<版本>.tgz -C metaontic-video-plugin
-dsh plugin --profile desktop add "/你的绝对路径/metaontic-video-plugin/package"
+mkdir metaontic-agent-forge-plugin
+tar -xzf metaontic-agent-forge-<版本>.tgz -C metaontic-agent-forge-plugin
+dsh plugin --profile desktop add "/你的绝对路径/metaontic-agent-forge-plugin/package"
 ```
 
 ### 推送后的更新总结规范
@@ -160,7 +160,7 @@ npm run clean:releases -- --apply
 
 ## 请求日志
 
-创建与查询视频任务会写入 `~/.dsh/logs/metaontic-video/YYYYMMDD/requests.jsonl`（目录日期使用本机时间；设置 `DSH_HOME` 时跟随该目录）。
+创建与查询视频任务会写入 `~/.dsh/logs/metaontic-agent-forge/YYYYMMDD/requests.jsonl`（目录日期使用本机时间；设置 `DSH_HOME` 时跟随该目录）。
 每次请求都有独立 `requestId`，记录开始、完成或失败事件，以及接入方式、模型、时长、素材数量、HTTP状态、耗时、任务ID和上游请求ID（接口提供时）。
 统计 `operation=create_task` 且 `event=request_started` 可核对插件尝试提交的次数；`query_task` 只表示查询，不能算新增生成。
 开始后没有结束日志可能是进程退出；网络错误也不能证明上游未受理，先复查任务与上游记录。
@@ -232,7 +232,7 @@ npm run pack:test -- 3.13.9-test.1
 
 版本号必须是 `X.Y.Z-后缀` 形式，核心版本号压在当前正式版之下；只改包内版本号，不提交、不打标签、不建 Release，因此不影响其他人的正式版，测试者之后仍会收到下一次正式版的更新提示。脚本结束后会把 `package.json`、锁文件和构建产物还原成正式版本。
 
-上传完成后直接给出安装地址，形如 `https://video.mybfs.cn/test/metaontic-video-3.13.9-test.1.tgz`，发给测试者粘进「插件 → 添加插件」即可；目录页 `https://video.mybfs.cn/test/` 可看到历史测试包。加 `--no-upload` 只出本地包，用 `--out <目录>` 换输出目录；上传目标可用 `PACK_TEST_SERVER`、`PACK_TEST_DIR`、`PACK_TEST_URL` 覆盖。该目录由 moyubang 仓库的 `deploy/nginx/video.mybfs.cn.conf` 提供，刻意放在代码部署目录之外，`deploy.sh` 的 `rsync --delete` 不会清掉已上传的测试包。测试者用正式版 `.tgz` 地址重装即可回到正式版。
+上传完成后直接给出安装地址，形如 `https://video.mybfs.cn/test/metaontic-agent-forge-3.13.9-test.1.tgz`，发给测试者粘进「插件 → 添加插件」即可；目录页 `https://video.mybfs.cn/test/` 可看到历史测试包。加 `--no-upload` 只出本地包，用 `--out <目录>` 换输出目录；上传目标可用 `PACK_TEST_SERVER`、`PACK_TEST_DIR`、`PACK_TEST_URL` 覆盖。该目录由 moyubang 仓库的 `deploy/nginx/video.mybfs.cn.conf` 提供，刻意放在代码部署目录之外，`deploy.sh` 的 `rsync --delete` 不会清掉已上传的测试包。测试者用正式版 `.tgz` 地址重装即可回到正式版。
 
 ### 同步已发布正式版到 GitHub
 
@@ -240,10 +240,10 @@ npm run pack:test -- 3.13.9-test.1
 
 正式版和测试版仅提供 Windows/macOS 通用 `.tgz` 成品，不再生成或上传 Windows ZIP 及 `.zip.sha256`；Windows 与 macOS 仍须验证同一 `.tgz` 的安装与升级。历史已发布 ZIP 保留，避免旧链接失效。README 与宣传页仅展示在线安装，不推荐下载解压或目录安装。
 
-## Gitee 仓库迁移
+## 产品标识与仓库
 
-Git 远端与发布目标已改为 `git@gitee.com:hadlooop/metaontic-agent-forge.git`。GitHub 远端为 `git@github.com:wxsimon2022/metaontic-agent-forge.git`，插件包名、预设 ID、配置与任务目录保持兼容。新仓库起始为空，未迁移历史标签或发行版附件；现有 README 与线上宣传页中的已发布版本成品链接保留旧地址，不能指向空附件。下次用户明确发版时，脚本会将 README 和宣传页下载根地址一起切换到新仓库。发行版 API、上传、更新检查、未来成品下载及清理默认目标已切换。原有历史安装来源与旧锁文件仍须兼容识别。
+平台名为“云智工坊 · 智能体平台”，包名、安装更新目标、内部数据命名空间统一为 metaontic-agent-forge。GitHub/Gitee 两端仓库均使用 metaontic-agent-forge。三个预设 ID 为 forge-studio、forge-video-director、forge-promo-video。按用户要求作为独立新产品，不迁移旧插件数据。
 
-总控委派配置与验收见 [云智工坊委派](./delegation.md)。
+## Git 远端与安装来源
 
-README 不展示发版记录或最新更新区；发版只同步其在线安装地址，更新内容保留在 CHANGELOG、包内 releaseNotes 与正式发行版说明。
+GitHub/Gitee 的 `git@主机:用户/仓库.git` 地址用于 Git 推送与拉取，不直接交给 Harness 插件安装器。当前宿主虽识别此形式为 Git 来源，pnpm 11 会将 `git@github.com:用户/仓库.git` 拆成依赖名 `git` 与 `github.com:...`，报 `ERR_PNPM_UNSUPPORTED_PROTOCOL`；已在隔离 profile、离线且禁止 SSH 的条件下复现，不是锁文件 integrity 错误，不添加 overrides、不删除锁文件、不放宽供应链策略。正常使用已发布 `.tgz` 链接，本机开发安装用验证过的本地成品路径。新仓库还没有 Release 时不能凭空构造附件链接。

@@ -1,2 +1,2 @@
 // Tests never report statistics to the production service.
-process.env.METAONTIC_VIDEO_ANALYTICS_DISABLED = '1';
+process.env.METAONTIC_AGENT_FORGE_ANALYTICS_DISABLED = '1';

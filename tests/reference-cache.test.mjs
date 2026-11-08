@@ -78,5 +78,5 @@ test('参考图缓存清理：并发适配正在写的临时文件不动', async
 });
 
 test('参考图缓存目录固定放在系统临时目录下', () => {
-  assert.equal(context.referenceCacheDir(), path.join(os.tmpdir(), 'metaontic-video-reference'));
+  assert.equal(context.referenceCacheDir(), path.join(os.tmpdir(), 'metaontic-agent-forge-reference'));
 });

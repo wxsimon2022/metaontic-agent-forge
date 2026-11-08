@@ -8,6 +8,6 @@ test('browser bundle loads as a classic Harness script without external imports'
   let entry;
   const script = new vm.Script(source);
   script.runInNewContext({ window: { __ModuleLoader__: { load(value) { entry = value; } } } });
-  assert.equal(entry.id, 'metaontic-video');
+  assert.equal(entry.id, 'metaontic-agent-forge');
   assert.equal(typeof entry.factory, 'function');
 });

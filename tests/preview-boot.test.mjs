@@ -15,24 +15,24 @@ test('standalone preview host mounts the real client and registers settings and 
   const host = createPreviewHost({ form: {}, components, dictionaries, getLocale: () => 'zh', onUpdate() {} });
   for (const service of plugin.inject) assert.ok(host[service], service);
   assert.doesNotThrow(() => plugin.apply(host));
-  for (const key of ['metaontic-video', 'video_generate', 'video_extend', 'video_status', 'metaontic-video-progress']) {
+  for (const key of ['metaontic-agent-forge', 'video_generate', 'video_extend', 'video_status', 'metaontic-agent-forge-progress']) {
     assert.equal(typeof components[key], 'function', key);
   }
-  assert.equal(host.locale.bind('settings.metaonticVideo')('save'), '保存');
-  assert.equal(host.locale.bind('settings.metaonticVideo')('panelTitle'), '视频创作');
-  assert.equal(typeof components['plugins.bundle.config:metaontic-video'], 'function', '设置页');
+  assert.equal(host.locale.bind('settings.metaonticAgentForge')('save'), '保存');
+  assert.equal(host.locale.bind('platform.metaonticAgentForge')('panelTitle'), '云智工坊 · 智能体平台');
+  assert.equal(typeof components['plugins.bundle.config:metaontic-agent-forge'], 'function', '设置页');
   assert.equal(typeof components['tool.call.toolview:video_generate'], 'function', '工具卡片');
-  assert.equal(typeof components['conversation.input.dock:metaontic-video-progress'], 'function', '输入框进度');
-  assert.equal(typeof components['sidebar.panellist:metaontic-video'], 'function', '左侧栏图标');
-  assert.equal(typeof components['main:metaontic-video'], 'function', '左侧栏面板本体');
-  const panel = components['main:metaontic-video:props']();
+  assert.equal(typeof components['conversation.input.dock:metaontic-agent-forge-progress'], 'function', '输入框进度');
+  assert.equal(typeof components['sidebar.panellist:metaontic-agent-forge'], 'function', '左侧栏图标');
+  assert.equal(typeof components['main:metaontic-agent-forge'], 'function', '左侧栏面板本体');
+  const panel = components['main:metaontic-agent-forge:props']();
   panel.startSession();
   const started = host.calls.at(-1);
   assert.equal(started.action, 'startSession');
   assert.equal(started.workspaceId, undefined);
-  assert.equal(started.options.agentPreset, 'video-director');
+  assert.equal(started.options.agentPreset, 'forge-studio');
   panel.openSettings();
   const opened = host.calls.at(-1);
   assert.equal(opened.action, 'openBundle');
-  assert.equal(opened.bundle, 'metaontic-video');
+  assert.equal(opened.bundle, 'metaontic-agent-forge');
 });

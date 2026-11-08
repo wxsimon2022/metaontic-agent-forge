@@ -19,7 +19,7 @@ test('remote-only success, single local clip, partial failure and absent results
  assert.equal(api.videoResultState({status:'failed'}).phase,'failed');
  assert.equal(api.videoResultState({status:'succeeded'}).phase,'unknown');
 });
-const record=()=>({plugin:'metaontic-video',version:1,plan:[{kind:'generate',seconds:15},{kind:'extend',seconds:15}],done:1,cursor:15,steps:[{...segments[0]}],pendingTask:{taskId:'pending',index:2}});
+const record=()=>({plugin:'metaontic-agent-forge',version:1,plan:[{kind:'generate',seconds:15},{kind:'extend',seconds:15}],done:1,cursor:15,steps:[{...segments[0]}],pendingTask:{taskId:'pending',index:2}});
 test('old and current pause files are validated without changing their bytes or requiring new fields',()=>{
  const current=record();const before=JSON.stringify(current);assert.equal(api.validatePauseRecord(current),current);assert.equal(JSON.stringify(current),before);
  delete current.version;delete current.pendingTask.index;delete current.steps[0].seconds;

@@ -47,7 +47,7 @@ jobs:
           mkdir -p dist
           npm pack --pack-destination dist
           VERSION=$(node -p "require('./package.json').version")
-          python3 scripts/strip-package-readme.py "dist/metaontic-video-$VERSION.tgz"
+          python3 scripts/strip-package-readme.py "dist/metaontic-agent-forge-$VERSION.tgz"
       - name: Reuse published artifacts
         if: ${{ inputs.existing_version }}
         run: python3 scripts/download-published-release.py "$SYNC_VERSION" dist "$SYNC_SHA256"
@@ -110,5 +110,5 @@ jobs:
             gh release edit "$RELEASE_TAG" --notes-file dist/release-notes.txt
             gh release upload "$RELEASE_TAG" dist/*.tgz --clobber
           else
-            gh release create "$RELEASE_TAG" dist/*.tgz --verify-tag --title "MetaOnticVideo $RELEASE_TAG" --notes-file dist/release-notes.txt "${RELEASE_FLAGS[@]}"
+            gh release create "$RELEASE_TAG" dist/*.tgz --verify-tag --title "MetaOntic Agent Forge $RELEASE_TAG" --notes-file dist/release-notes.txt "${RELEASE_FLAGS[@]}"
           fi

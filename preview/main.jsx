@@ -14,9 +14,9 @@ function preset(mode) {
   if (mode === 'service' || mode === 'error') Object.assign(value, { apiKey: 'preview-service-key', keyOrigin: 'register', registerEmail: 'preview@example.com', deviceId: 'preview-device', deviceSecret: 'preview-device-secret' });
   if (mode === 'metaontic') value.metaonticApiKey = 'preview-metaontic-key';
   if (mode === 'volcengine') value.volcengineApiKey = 'preview-volcano-key';
-  localStorage.removeItem('metaontic-video.update-check-v2');
-  if (mode === 'empty') localStorage.setItem('metaontic-video.logged-out', '1');
-  else localStorage.removeItem('metaontic-video.logged-out');
+  localStorage.removeItem('metaontic-agent-forge.update-check-v2');
+  if (mode === 'empty') localStorage.setItem('metaontic-agent-forge.logged-out', '1');
+  else localStorage.removeItem('metaontic-agent-forge.logged-out');
   user = { ...value }; emit();
 }
 let cachedSnapshot;
@@ -68,11 +68,11 @@ function App() {
   const calls = host.calls;
   const [, render] = useState(0);
   React.useEffect(() => form.subscribe(() => render(n => n + 1)), []);
-  const Page = components['plugins.bundle.config:metaontic-video'];
-  const Panel = components['main:metaontic-video'];
-  const PanelIcon = components['sidebar.panellist:metaontic-video'];
-  const PanelLabel = host.labels['sidebar.panellist:metaontic-video'];
-  const panelProps = components['main:metaontic-video:props']?.() ?? {};
+  const Page = components['plugins.bundle.config:metaontic-agent-forge'];
+  const Panel = components['main:metaontic-agent-forge'];
+  const PanelIcon = components['sidebar.panellist:metaontic-agent-forge'];
+  const PanelLabel = host.labels['sidebar.panellist:metaontic-agent-forge'];
+  const panelProps = components['main:metaontic-agent-forge:props']?.() ?? {};
   // 面板按钮只记录宿主动作，点完要重渲染才能看到记录。
   const panelCalls = React.useMemo(() => ({
     startSession: () => { panelProps.startSession?.(); render((n) => n + 1); },
@@ -82,7 +82,7 @@ function App() {
   const block = task === 'success' ? { kind: 'result', content: [{ type: 'text', text: '视频生成成功 · succeeded\n示例路径：/preview/video.mp4' }] } : task === 'failed' ? { kind: 'result', isError: true, content: [{ type: 'text', text: '预览：模拟生成失败，请检查错误详情。' }] } : { phase: 'start', args: { duration: 15 } };
   const masked = Object.fromEntries(Object.entries(value).map(([k, v]) => [k, secretFields.includes(k) && v ? '（模拟 Key 已隐藏）' : v]));
   return <>
-    <header className="preview-bar"><strong>MetaOnticVideo · 样式预览</strong>
+    <header className="preview-bar"><strong>MetaOntic Agent Forge · 样式预览</strong>
       <select aria-label="预览场景" value={scenario} onChange={e => { preset(e.target.value); bump(epoch + 1); }}>
         <option value="service">服务端 · 已登录</option><option value="empty">服务端 · 未登录</option><option value="metaontic">MetaOntic AI</option><option value="volcengine">火山直连</option><option value="error">服务请求失败</option>
       </select>

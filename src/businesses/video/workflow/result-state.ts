@@ -72,7 +72,7 @@ export function videoResultState(value: VideoResultSnapshot = {}): VideoResultSt
 /** 只验证影响恢复安全的字段，兼容没有version的新旧v1断点；不改写原文件。 */
 export function validatePauseRecord(data, file = 'paused-plan.json') {
     const invalid = () => { throw new Error(`暂停记录内容不对：${file}。请保留原文件并核对原任务，不要重新提交。`); };
-    if (!data || data.plugin !== 'metaontic-video' || (data.version != null && data.version !== 1)
+    if (!data || data.plugin !== 'metaontic-agent-forge' || (data.version != null && data.version !== 1)
         || !Array.isArray(data.plan) || !data.plan.length)
         invalid();
     if (data.plan.some(step => !step || !['generate', 'extend'].includes(step.kind)

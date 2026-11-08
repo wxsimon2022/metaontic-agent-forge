@@ -152,7 +152,7 @@ test('单段暂停时成片就是这一段本身，只有一条记录不涉及�
 });
 
 const wiring=vm.createContext({path,process,stat,appendRequestLog:async()=>{}});
-vm.runInContext(sourceOf('businesses/video/workflow/result-state','businesses/video/workflow/delivery-order','businesses/video/workflow/execution').replaceAll('import.meta.url',"'file:///tmp/metaontic-video.js'")
+vm.runInContext(sourceOf('businesses/video/workflow/result-state','businesses/video/workflow/delivery-order','businesses/video/workflow/execution').replaceAll('import.meta.url',"'file:///tmp/metaontic-agent-forge.js'")
  +'\nObject.assign(globalThis,{createDeliveryOrderGuard,withVideoExecution});',wiring);
 
 test('withVideoExecution 把真实工具结果交给顺序守卫，记录失败不影响交付',async()=>{

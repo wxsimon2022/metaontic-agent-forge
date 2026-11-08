@@ -1,12 +1,12 @@
 /** 浏览器端 updates：由入口注入宿主 React 与共享依赖。 */
 export function createUpdates({ h, fetchSource }: any) {
 /** 「检查更新」的数据源：Gitee 镜像仓库（Gitee 的 API 带 CORS 头，浏览器半侧能直接读）。 */
-    const PLUGIN_PACKAGE = 'metaontic-video';
+    const PLUGIN_PACKAGE = 'metaontic-agent-forge';
     const UPDATE_SPEC = 'git+https://gitee.com/hadlooop/metaontic-agent-forge.git';
     /** 在线更新最多试几次：Gitee 的匿名 HTTPS 克隆会排队，429 一般过一会儿就好。 */
     const UPDATE_ATTEMPTS = 3;
     /** 版本检查结果的本地缓存：打开设置页先显示，再后台刷新。 */
-    const UPDATE_CACHE_KEY = 'metaontic-video.update-check-v3';
+    const UPDATE_CACHE_KEY = 'metaontic-agent-forge.update-check-v3';
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
     /** 构建时由 esbuild --define 注入的版本号；从源码直接跑（没注入）时为空串。 */
     const PLUGIN_VERSION = typeof __PLUGIN_VERSION__ === 'string'
@@ -38,7 +38,7 @@ export function createUpdates({ h, fetchSource }: any) {
     function updateBell(t, latest, current) {
       if (!isNewerVersion(latest, current)) return null;
       const label = t('versionNew', { version: latest });
-      return h('span', { key: 'update-bell', className: 'mov-update-bell', 'data-field': 'update-bell', role: 'img', 'aria-label': label, title: label },
+      return h('span', { key: 'update-bell', className: 'forge-update-bell', 'data-field': 'update-bell', role: 'img', 'aria-label': label, title: label },
         h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true }, [
           h('path', { key: 'body', d: 'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9' }),
           h('path', { key: 'clapper', d: 'M10 21h4M12 2V1' }),
@@ -234,8 +234,8 @@ async function runOnlineUpdate() {
         return;
     }
     const candidates = [
-      `https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`,
-      `https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`,
+      `https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/v${context.updateLatest}/metaontic-agent-forge-${context.updateLatest}.tgz`,
+      `https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/v${context.updateLatest}/metaontic-agent-forge-${context.updateLatest}.tgz`,
     ];
     /** 这条 spec 装不上时值不值得换下一条：只有「这个 committish 解析不出来」才换。 */
     const specUnresolvable = (text) => /Could not resolve|No matching version|ERR_PNPM_NO_MATCHING_VERSION|ERR_PNPM_FETCH_40[34]|HTTP[ :]+40[34]|404 Not Found|403 Forbidden/i.test(text);
@@ -321,15 +321,15 @@ function deferUpdate() {
 /** Ordinary updates are optional: checking and dismissing never install anything. */
 export function renderUpdateNotice({ h, t, available, latest, deferred, status, confirmed, onUpdate, onLater }) {
   if (!available || deferred === latest || status === 'installing') return null;
-  return h('div', { key: 'update-notice', className: 'mov-notice', role: 'status', 'data-field': 'update-notice' }, [
+  return h('div', { key: 'update-notice', className: 'forge-notice', role: 'status', 'data-field': 'update-notice' }, [
     h('strong', { key: 'title' }, t('versionNew', { version: latest })),
     h('p', { key: 'optional' }, t('versionOptional')),
     confirmed ? h('p', { key: 'confirm' }, t('versionUpdateConfirmHint')) : null,
-    h('div', { key: 'actions', className: 'mov-cmd-row' }, [
-      h('button', { key: 'update', type: 'button', className: 'mov-btn mov-btn-sm mov-btn-primary',
+    h('div', { key: 'actions', className: 'forge-cmd-row' }, [
+      h('button', { key: 'update', type: 'button', className: 'forge-btn forge-btn-sm forge-btn-primary',
         'data-action': confirmed ? 'update-notice-confirm' : 'update-notice-open', onClick: onUpdate },
         confirmed ? t('versionUpdateConfirm', { version: latest }) : t('versionUpdate')),
-      h('button', { key: 'later', type: 'button', className: 'mov-btn mov-btn-sm', 'data-action': 'update-later', onClick: onLater }, t('versionLater')),
+      h('button', { key: 'later', type: 'button', className: 'forge-btn forge-btn-sm', 'data-action': 'update-later', onClick: onLater }, t('versionLater')),
     ]),
   ]);
 }

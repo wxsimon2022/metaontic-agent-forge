@@ -33,7 +33,7 @@ function harness(config, directory) {
     on(event, listener) { if (event === 'session/event') observers.push(listener); else gate = listener; return () => {}; },
   };
   const dispose = plugin.apply(ctx, config);
-  return { tools, observe: (session, event) => Promise.all(observers.map(f => f(session, event))), prompt: () => prompt.text({agent:{session:{header:{agentPreset:'video-director'}}}}), gate: (...args) => gate(...args), dispose, disposed: () => disposed };
+  return { tools, observe: (session, event) => Promise.all(observers.map(f => f(session, event))), prompt: () => prompt.text({agent:{session:{header:{agentPreset:'forge-video-director'}}}}), gate: (...args) => gate(...args), dispose, disposed: () => disposed };
 }
 
 test('published host preserves schema, tool registration, live configuration and cleanup', async () => {
@@ -75,8 +75,8 @@ test('style guidance asks only when the idea has no style, then refines along th
   for (const needle of ['style-library.md', '没有指定画面风格', '已经说清风格', '不重复推荐', '写入 script.md 的规格']) {
     assert.ok(prompt.includes(needle), needle);
   }
-  const skill = await readFile(new URL('../skills/video-director/SKILL.md', import.meta.url), 'utf8');
-  const library = await readFile(new URL('../skills/video-director/references/style-library.md', import.meta.url), 'utf8');
+  const skill = await readFile(new URL('../skills/forge-video-director/SKILL.md', import.meta.url), 'utf8');
+  const library = await readFile(new URL('../skills/forge-video-director/references/style-library.md', import.meta.url), 'utf8');
   assert.match(skill, /\[画面风格库\]\(references\/style-library\.md\)/);
   assert.match(skill, /已经说清风格/);
   assert.match(library, /没有指定画面风格/);

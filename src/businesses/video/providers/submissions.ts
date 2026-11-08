@@ -12,7 +12,7 @@ const hash = (value) => createHash('sha256').update(value).digest('hex');
 export function submissionIdentity(config) {
   return hash(JSON.stringify([isVolcengine(config) ? 'volcengine' : 'metaontic', resolveBaseUrl(config), hash(resolveApiKey(config))]));
 }
-function directory() { return path.join(dshHome(), 'state', 'metaontic-video', 'submissions'); }
+function directory() { return path.join(dshHome(), 'state', 'metaontic-agent-forge', 'submissions'); }
 async function save(file, record) {
   const temporary = `${file}.${randomUUID()}.tmp`;
   try { await writeFile(temporary, JSON.stringify(record), { mode: 0o600 }); await rename(temporary, file); }

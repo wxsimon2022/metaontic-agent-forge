@@ -3,8 +3,8 @@ import type { PluginLocale } from './zh';
 
 export const locale: PluginLocale = {
   meta: {
-    title: 'MetaOnticVideo',
-    description: 'Get started with video creation quickly, even as a beginner: describe an idea and follow the guided script-to-video workflow. Create longer videos with a low-cost segment continuation and local merging workflow.',
+    title: 'MetaOntic Agent Forge',
+    description: 'An extensible agent platform for DeepSeek Harness. Coordinate specialist agents, review their results, and add independent business modules. Includes video creation and promotional video workflows.',
   },
 };
 

@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 168" fill="none"><g transform="translate(16 16) scale(2.8)">
-  <defs><linearGradient id="cloud-studio-bg" x1="5" y1="3" x2="43" y2="47" gradientUnits="userSpaceOnUse"><stop stop-color="#145C81"/><stop offset="1" stop-color="#242D70"/></linearGradient><linearGradient id="cloud-studio-node" x1="10" y1="32" x2="38" y2="41" gradientUnits="userSpaceOnUse"><stop stop-color="#6FF3DC"/><stop offset="1" stop-color="#8DCAFF"/></linearGradient></defs>
-  <rect width="48" height="48" rx="12" fill="url(#cloud-studio-bg)"/>
+  <defs><linearGradient id="forge-studio-bg" x1="5" y1="3" x2="43" y2="47" gradientUnits="userSpaceOnUse"><stop stop-color="#145C81"/><stop offset="1" stop-color="#242D70"/></linearGradient><linearGradient id="forge-studio-node" x1="10" y1="32" x2="38" y2="41" gradientUnits="userSpaceOnUse"><stop stop-color="#6FF3DC"/><stop offset="1" stop-color="#8DCAFF"/></linearGradient></defs>
+  <rect width="48" height="48" rx="12" fill="url(#forge-studio-bg)"/>
   <path d="M16 23.5a5.5 5.5 0 0 1-.8-10.94 8.1 8.1 0 0 1 15.57 1.29 4.85 4.85 0 1 1 1.08 9.65H16Z" fill="#F5FDFF"/>
   <path d="M24 24v5M12 33v-4h24v4M24 29v4" stroke="#A8E9F4" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
-  <g fill="url(#cloud-studio-node)"><rect x="7.5" y="33" width="9" height="8" rx="2.5"/><rect x="19.5" y="33" width="9" height="8" rx="2.5"/><rect x="31.5" y="33" width="9" height="8" rx="2.5"/></g>
+  <g fill="url(#forge-studio-node)"><rect x="7.5" y="33" width="9" height="8" rx="2.5"/><rect x="19.5" y="33" width="9" height="8" rx="2.5"/><rect x="31.5" y="33" width="9" height="8" rx="2.5"/></g>
   <path d="m22 15 4 3-4 3v-6Z" fill="#247B9F"/>
 </g><text x="178" y="79" fill="#183B62" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="43" font-weight="650" letter-spacing="2">云智工坊</text><text x="180" y="119" fill="#52748D" font-family="PingFang SC,Microsoft YaHei,sans-serif" font-size="23" letter-spacing="5">智能体平台</text></svg>

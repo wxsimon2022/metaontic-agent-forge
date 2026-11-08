@@ -66,7 +66,7 @@ export async function exists(file) {
   }
 }
 
-/** 成片目录：配置优先，否则用会话工作目录下的 metaontic-video/。 */
+/** 成片目录：配置优先，否则用会话工作目录下的 metaontic-agent-forge/。 */
 export async function resolveOutputDir(config, exec, deps) {
   const configured = String(ref(config, 'outputDir', '')).trim();
   if (configured) return path.resolve(configured);

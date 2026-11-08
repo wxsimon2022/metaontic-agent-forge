@@ -111,10 +111,10 @@ test('approval estimates include previous full video input and refuse unknown ra
 }));
 
 test('video-only prompt uses current preset projection; standard and unknown modes receive no restriction',()=>{
-  let section, selected='video-director';
+  let section, selected='forge-video-director';
   const ctx={tools:{register(){return ()=>{};}},on(){return ()=>{};},get(name){return name==='agentPresets'?{presetForSession:()=>selected}:undefined;},inject(names,fn){if(names.includes('systemPrompt'))return fn({systemPrompt:{section(value){section=value;}}});}};
   const dispose=apply(ctx,{});
-  const context={agent:{session:{header:{agentPreset:'video-director'}}}};
+  const context={agent:{session:{header:{agentPreset:'forge-video-director'}}}};
   assert.match(section.text(context),/本对话只做视频创作/);
   selected=null;assert.equal(section.text(context),'','current standard selection overrides original video header');
   selected='standard';assert.equal(section.text(context),'');

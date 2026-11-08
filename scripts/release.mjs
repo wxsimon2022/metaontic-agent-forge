@@ -46,7 +46,7 @@ export function notesFor(version, items) {
 /** 标签与发行版仅展示用户更新；验证记录单独写入工程文档。 */
 export function publicReleaseNotes(version, items) {
   const sections = notesFor(version, items);
-  return `MetaOnticVideo v${version}\n\n` + sections.map(s => s.category + '\n' + s.items.map(i => '- ' + i).join('\n')).join('\n\n') + '\n';
+  return `MetaOntic Agent Forge v${version}\n\n` + sections.map(s => s.category + '\n' + s.items.map(i => '- ' + i).join('\n')).join('\n\n') + '\n';
 }
 export function releaseVerification(includeGithub, promoLine = '') {
   return '验证\n- 本地构建及测试通过。\n'
@@ -103,13 +103,17 @@ export async function main(argv) {
   const tag=`v${version}`,target=`${opts.branch}`;
   const out=path.join(root,'.local/releases',version);
   // Gitee 是默认发布渠道，本地成品直接上传；GitHub 是可选镜像。
-  const assets=[`metaontic-video-${version}.tgz`];
+  const assets=[`metaontic-agent-forge-${version}.tgz`];
   if(git('branch','--show-current')!==target)throw Error(`请在${target}分支执行，脚本不会切换分支`);
   if(git('ls-files','-u'))throw Error('有未解决的合并冲突');
-  const local=git('describe','--tags','--abbrev=0');
-  const changes=git('log',`${local}..HEAD`,'--oneline');
-  const dirty=git('status','--short');
   const pkg=JSON.parse(readFileSync('package.json','utf8'));
+  // A newly named product must not inherit another package's version sequence.
+  const local=git('tag','--sort=-version:refname').split(/\r?\n/).find(tag => {
+    if (!/^v\d+\.\d+\.\d+$/.test(tag)) return false;
+    try { return JSON.parse(git('show', `${tag}:package.json`)).name === pkg.name; } catch { return false; }
+  });
+  const changes=local ? git('log',`${local}..HEAD`,'--oneline') : git('log','--oneline');
+  const dirty=git('status','--short');
   let plan;
   if(opts.notes) plan=JSON.parse(readFileSync(path.resolve(opts.notes),'utf8'));
   else if(existsSync('release-plan.json'))plan=JSON.parse(readFileSync('release-plan.json','utf8'));
@@ -118,8 +122,8 @@ export async function main(argv) {
   const sections=notesFor(version,plan.items);
   if(plan.items.some(x=>/请填写|请替换|占位/.test(x))||/请替换/.test(plan.guideReview||''))throw Error('请先替换发布计划中的模板占位文字');
   if(typeof plan.guideReview!=='string'||plan.guideReview.trim().length<8)throw Error('请填写具体guideReview，记录本次指南核对结果');
-  for(const f of ['MetaOnticVideo使用说明书.md','MetaOnticVideo使用说明书.pdf'])if(!existsSync(f))throw Error(`缺少${f}`);
-  const guide=readFileSync('MetaOnticVideo使用说明书.md','utf8');
+  for(const f of ['MetaOnticAgentForge使用说明书.md','MetaOnticAgentForge使用说明书.pdf'])if(!existsSync(f))throw Error(`缺少${f}`);
+  const guide=readFileSync('MetaOnticAgentForge使用说明书.md','utf8');
   if(/适用版本|发布核对|^#{1,6}.*(?:更新日志|发布说明|版本更新)/m.test(guide))throw Error('使用说明书含发布内容，请移至工程发布记录');
   // 指南里写死的成品地址必须指向本次版本，否则用户会照旧版本地址安装。
   for(const match of guide.matchAll(/releases\/download\/v(\d+\.\d+\.\d+)\//g))if(match[1]!==version)throw Error(`使用说明书里的成品地址仍指向 v${match[1]}，请更新为 v${version}`);
@@ -127,7 +131,7 @@ export async function main(argv) {
   if(files.some(f=>/(?:价格对比|计费参考|比价视频)|(?:^|\/)\.env(?:$|\.)|(?:^|\/)\.local\//.test(f)))throw Error('待提交文件中存在本地价格资料或环境文件，请先核对忽略规则');
   console.log(`版本：${tag}\n发布渠道：${includeGithub?'Gitee + GitHub':'仅 Gitee'}\nGitee：${gitee.web}${includeGithub?`\nGitHub：${github.web}`:''}\n本地最近标签：${local}\n提交范围：\n${changes||'（无新提交，包含下列工作区改动）'}\n工作区：\n${dirty||'（干净）'}`);
   console.log(sections.map(x=>x.category+'\n'+x.items.map(i=>'- '+i).join('\n')).join('\n\n'));
-  const printLinks=()=>console.log(`\nGitee发布页：${gitee.web}/releases/tag/${tag}\n插件地址：${gitee.web}/releases/download/${tag}/metaontic-video-${version}.tgz${includeGithub?`\nGitHub发布页：${github.web}/releases/tag/${tag}`:''}\n注意：安装框填写tgz地址，不填写发布页或ZIP地址。`);
+  const printLinks=()=>console.log(`\nGitee发布页：${gitee.web}/releases/tag/${tag}\n插件地址：${gitee.web}/releases/download/${tag}/metaontic-agent-forge-${version}.tgz${includeGithub?`\nGitHub发布页：${github.web}/releases/tag/${tag}`:''}\n注意：安装框填写tgz地址，不填写发布页或ZIP地址。`);
   if(opts['dry-run']) {
     const promo=promoStatus(version);
     console.log(promo.file?`宣传页：${promo.file}${promo.needsSync?`（待同步到 v${version}）`:`（已是 v${version}）`}`:'宣传页：未找到，发布时需手动同步安装地址');
@@ -145,8 +149,7 @@ export async function main(argv) {
         }
       } catch(error) { console.log(`读取 Gitee 正式版列表失败：${error.message}`); }
     }
-    const tags=git('tag','-l','v*').split('\n').filter(t=>/^v\d+\.\d+\.\d+$/.test(t));
-    return tags.length?tags.reduce((a,b)=>newer(b.slice(1),a.slice(1))?b:a):undefined;
+    return local;
   };
   if(includeGithub)run('gh',['auth','status']);
   const giteeLatest=await latestOfficial();
@@ -161,28 +164,30 @@ export async function main(argv) {
   } else {
     if(exists)throw Error('标签已存在，禁止覆盖；如仅重试发布请使用--resume');
     run(process.execPath,['scripts/check-active-video.mjs']);
-    const base=latest||local;
+    const base=latest||local||git('rev-list','--max-parents=0','HEAD');
     console.log(`实际待发布范围 ${base}..HEAD：\n${git('log',`${base}..HEAD`,'--oneline')}`);
     // Refuse a changed guide without a refreshed PDF; explicit review also covers unchanged guides.
-    const before=run('git',['show',`${base}:MetaOnticVideo使用说明书.md`],{capture:true,optional:true});
-    const priorPdf=run('git',['rev-parse',`${base}:MetaOnticVideo使用说明书.pdf`],{capture:true,optional:true});
-    if(before!==guide.trim() && priorPdf===git('hash-object','MetaOnticVideo使用说明书.pdf'))throw Error('指南正文已变更，但PDF未同步');
+    const before=run('git',['show',`${base}:MetaOnticAgentForge使用说明书.md`],{capture:true,optional:true});
+    const priorPdf=run('git',['rev-parse',`${base}:MetaOnticAgentForge使用说明书.pdf`],{capture:true,optional:true});
+    if(before!==guide.trim() && priorPdf===git('hash-object','MetaOnticAgentForge使用说明书.pdf'))throw Error('指南正文已变更，但PDF未同步');
     const now=new Date().toISOString();
     pkg.version=version;pkg.releaseNotes={version,prerelease:false,publishedAt:now,items:plan.items};
     writeFileSync('package.json',JSON.stringify(pkg,null,2)+'\n');
     const lock=JSON.parse(readFileSync('package-lock.json','utf8'));lock.version=version;lock.packages[''].version=version;
     writeFileSync('package-lock.json',JSON.stringify(lock,null,2)+'\n');
+    const installBlock = lang => '<!-- forge:installation:start -->\n' + (lang === 'zh' ? '在 Harness「插件 → 添加插件」中填写以下成品链接：\n\n' : 'Paste a package URL into Harness → Plugins → Add plugin:\n\n') + `Gitee: https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/v${version}/metaontic-agent-forge-${version}.tgz\n\nGitHub: https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/v${version}/metaontic-agent-forge-${version}.tgz\n` + '<!-- forge:installation:end -->';
+    const updateInstallBlock = (text, lang) => text.replace(/<!-- forge:installation:start -->[\s\S]*?<!-- forge:installation:end -->/, installBlock(lang));
     const englishReadme=readFileSync('README.en.md','utf8');
-    writeFileSync('README.en.md',englishReadme.replaceAll('https://gitee.com/hackloop/metaontic-video/releases/download/', 'https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/').replaceAll('https://github.com/wxsimon2022/metaontic-video/releases/download/', 'https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/').replace(/(releases\/download\/)v\d+\.\d+\.\d+\/(metaontic-video-)\d+\.\d+\.\d+(\.tgz)/g,`$1v${version}/$2${version}$3`));
+    writeFileSync('README.en.md',updateInstallBlock(englishReadme, 'en').replaceAll('https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/', 'https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/').replaceAll('https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/', 'https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/').replace(/(releases\/download\/)v\d+\.\d+\.\d+\/(metaontic-agent-forge-)\d+\.\d+\.\d+(\.tgz)/g,`$1v${version}/$2${version}$3`));
     const markdown=sections.map(s=>'### '+s.category+'\n\n'+s.items.map(i=>'- '+i).join('\n')).join('\n\n');
     for(const [file,header] of [['README.md',`## ${tag} 更新内容`],['CHANGELOG.md',`## ${tag}`]]) {
       let text=readFileSync(file,'utf8');
-      if(file==='README.md')text=text.replaceAll('https://gitee.com/hackloop/metaontic-video/releases/download/', 'https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/').replaceAll('https://github.com/wxsimon2022/metaontic-video/releases/download/', 'https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/').replace(/(releases\/download\/)v\d+\.\d+\.\d+\/(metaontic-video-)\d+\.\d+\.\d+(\.tgz)/g,`$1v${version}/$2${version}$3`);
+      if(file==='README.md')text=updateInstallBlock(text, 'zh').replaceAll('https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/', 'https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/').replaceAll('https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/', 'https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/').replace(/(releases\/download\/)v\d+\.\d+\.\d+\/(metaontic-agent-forge-)\d+\.\d+\.\d+(\.tgz)/g,`$1v${version}/$2${version}$3`);
       // README 仅同步安装地址，不再写入发版记录。
       if(file==='README.md') { writeFileSync(file,text); continue; }
       if(text.includes(header)) { const start=text.indexOf(header);const rest=text.slice(start+header.length);const next=rest.search(/^## v\d+\.\d+\.\d+/m);text=text.slice(0,start)+(next<0?'':rest.slice(next)); }
-      const at=text.search(/^## v\d+\.\d+\.\d+/m);if(at<0)throw Error(`${file}缺少更新区插入位置`);
-      writeFileSync(file,text.slice(0,at)+header+'\n\n'+markdown+'\n\n'+text.slice(at));
+      let at=text.search(/^## v\d+\.\d+\.\d+/m);if(at<0)at=text.indexOf('\n')+1;
+      writeFileSync(file,(text.slice(0,at)+header+'\n\n'+markdown+'\n\n'+text.slice(at)).trimEnd()+'\n');
     }
     // 宣传页在服务端仓库、不属于这个包，但用户会照它复制安装地址：发版时一并改到目标版本。
     // 只在这里（真正发版的路径）写文件，--dry-run 不会动宣传页。
@@ -214,7 +219,7 @@ export async function main(argv) {
     // Python is a packaging tool only; Windows py launcher is accepted.
     const python=process.platform==='win32'?'py':'python3';
     // 包内 README 会被宿主插件页当成「详细介绍」渲染，成品包统一裁掉。
-    run(python,[...(python==='py'?['-3']:[]),'scripts/strip-package-readme.py',path.join(out,`metaontic-video-${version}.tgz`)]);
+    run(python,[...(python==='py'?['-3']:[]),'scripts/strip-package-readme.py',path.join(out,`metaontic-agent-forge-${version}.tgz`)]);
     run('git',['diff','--check']);
     const body=publicReleaseNotes(version,plan.items);
     const verification=releaseVerification(includeGithub,promoLine);
@@ -270,7 +275,7 @@ export async function main(argv) {
   if(!complete||watched===null)throw Error('发布未全部完成；保留现有标签，用相同版本--resume续跑，不要重新打版本');
   if(data.body.trim()!==notesText.trim())throw Error('GitHub发行版说明与本版用户更新条目不一致');
   // 双仓模式必须先通过双平台安装检查，再用GitHub同一成品发布Gitee。
-  run('gh',['release','download',tag,'--repo',github.slug,'--dir',out,'--pattern',`metaontic-video-${version}.tgz`,'--clobber']);
+  run('gh',['release','download',tag,'--repo',github.slug,'--dir',out,'--pattern',`metaontic-agent-forge-${version}.tgz`,'--clobber']);
   for(const name of assets)await publishGitee({token,tag,archive:path.join(out,name),notes:notesText,prerelease:false});
   console.log(`双平台CI通过，GitHub与Gitee已发布同一成品：${assets.join('、')}`);
 

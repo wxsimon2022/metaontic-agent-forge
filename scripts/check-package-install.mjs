@@ -51,12 +51,12 @@ try {
   const taskFile = path.join(profile, 'saved-task.json');
   await writeFile(settingsFile, '# preserve existing settings sentinel\n');
   await writeFile(taskFile, '{"task_id":"existing-task-do-not-resubmit"}');
-  assert.equal(JSON.parse(await readFile(path.join(profile, 'node_modules/metaontic-video/package.json'), 'utf8')).version, '0.0.0');
+  assert.equal(JSON.parse(await readFile(path.join(profile, 'node_modules/metaontic-agent-forge/package.json'), 'utf8')).version, '0.0.0');
   console.log(runInstall(downloaded));
   assert.deepEqual(await readFile(previousArchive), previousBytes, 'Update must preserve the original installation file');
   assert.equal(await readFile(settingsFile, 'utf8'), '# preserve existing settings sentinel\n');
   assert.equal(await readFile(taskFile, 'utf8'), '{"task_id":"existing-task-do-not-resubmit"}');
-  const installed = path.join(profile, 'node_modules/metaontic-video');
+  const installed = path.join(profile, 'node_modules/metaontic-agent-forge');
   const relative = path.relative(await realpath(profile), await realpath(installed));
   assert.ok(relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative), 'Installed files must be managed inside the profile');
   // Once installed, moving the source must not break metadata or loading.
@@ -69,7 +69,7 @@ try {
     const parsed = JSON.parse(await readFile(path.join(installed, 'locale', locale), 'utf8'));
     assert.ok(parsed.meta?.title, `Missing ${locale} metadata title`);
   }
-  for (const file of ['index.js', 'client.js', 'cordis.patch.yml', 'MetaOnticVideo使用说明书.md', 'MetaOnticVideo使用说明书.pdf']) {
+  for (const file of ['index.js', 'client.js', 'cordis.patch.yml', 'MetaOnticAgentForge使用说明书.md', 'MetaOnticAgentForge使用说明书.pdf']) {
     assert.ok((await readFile(path.join(installed, file))).length, `Missing ${file}`);
   }
   assert.ok((await readdir(path.join(installed, 'skills'))).length);

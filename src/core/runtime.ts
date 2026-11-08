@@ -50,15 +50,15 @@ export function createPluginRuntime(definitions: { agents: readonly AgentDefinit
       if (ctx.get?.('subagents')) defer(ctx.on('tools/pre-execute', async (exec, next) => delegationDecision(agents, ctx, exec) || next()));
       for (const business of businesses.values()) defer(business.apply(runtime));
       defer(ctx.inject(['systemPrompt'], promptCtx => promptCtx.systemPrompt.section({
-        name: 'plugin:metaontic-video', order: 5200,
+        name: 'plugin:metaontic-agent-forge', order: 5200,
         text: context => {
           const agent = agents.resolve(context, ctx);
           if (!agent) return '';
           return [...agent.businesses.map(id => businesses.get(id)?.prompt?.(config) || ''), agent.prompt?.(config) || ''].filter(Boolean).join('\n\n');
         },
       })));
-      try { defer(startUpdateLockfileRepair(import.meta.url, undefined, message => ctx.logger?.warn?.(`metaontic-video: ${message}`))); }
-      catch { ctx.logger?.warn?.('metaontic-video: 安装目录锁文件自愈未启用。'); }
+      try { defer(startUpdateLockfileRepair(import.meta.url, undefined, message => ctx.logger?.warn?.(`metaontic-agent-forge: ${message}`))); }
+      catch { ctx.logger?.warn?.('metaontic-agent-forge: 安装目录锁文件自愈未启用。'); }
       analytics.start();
       return dispose;
     } catch (error) { dispose(); throw error; }

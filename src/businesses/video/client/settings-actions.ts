@@ -72,9 +72,9 @@ export function createSettingsActions(context: any) {
         const current = draft[field.key] !== undefined ? draft[field.key] : value[field.key] ?? (['imageUseVideoKey', 'usageStatsEnabled'].includes(field.key) ? true : field.key === 'pollIntervalMs' ? 5000 : field.key === 'maxWaitMs' ? 600000 : undefined);
         const secondsField = field.key === 'pollIntervalMs' || field.key === 'maxWaitMs';
         const displayed = secondsField && current !== undefined && current !== '' ? Number(current) / 1000 : current;
-        const id = `metaontic-video-${field.key}`;
+        const id = `metaontic-agent-forge-${field.key}`;
         if (field.kind === 'switch') {
-            return h('label', { key: 'control', htmlFor: id, className: 'mov-switch' }, h('input', {
+            return h('label', { key: 'control', htmlFor: id, className: 'forge-switch' }, h('input', {
                 id,
                 'data-field': field.key,
                 type: 'checkbox',
@@ -97,7 +97,7 @@ export function createSettingsActions(context: any) {
                 key: 'control',
                 id,
                 'data-field': field.key,
-                className: `mov-input${field.mono ? ' mov-mono' : ''}`,
+                className: `forge-input${field.mono ? ' forge-mono' : ''}`,
                 style: inputStyle,
                 value: removedMode ? '' : legacyMerge ? 'copy' : retiredImageModel ? options[0] ?? '' : current ?? '',
                 onChange: (event) => edit(field.key, event.target.value),
@@ -116,7 +116,7 @@ export function createSettingsActions(context: any) {
             key: 'input',
             id,
             'data-field': field.key,
-            className: `mov-input${field.mono ? ' mov-mono' : ''}`,
+            className: `forge-input${field.mono ? ' forge-mono' : ''}`,
             style: inputStyle,
             type: field.kind === 'number' ? 'number' : (field.secret && !revealed ? 'password' : 'text'),
             value: displayed ?? '',
@@ -129,11 +129,11 @@ export function createSettingsActions(context: any) {
         });
         if (!canReveal)
             return input;
-        return h('div', { key: 'control', className: 'mov-key-control' }, [
+        return h('div', { key: 'control', className: 'forge-key-control' }, [
             input,
             h('button', {
                 key: 'toggle',
-                type: 'button', className: 'mov-key-eye',
+                type: 'button', className: 'forge-key-eye',
                 'aria-label': t(revealed ? 'hideKey' : 'showKey'),
                 title: t(revealed ? 'hideKey' : 'showKey'),
                 'data-action': `toggle-${field.key}`,

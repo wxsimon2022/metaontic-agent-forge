@@ -28,7 +28,7 @@ export function createFormState({ React }: any) {
       }
       // 只记录固定分类及修订号；不记录操作、字段值或宿主原始错误。
       function fail(code, before, after) {
-        globalThis.console?.warn?.('[MetaOnticVideo] settings-save', {
+        globalThis.console?.warn?.('[MetaOntic Agent Forge] settings-save', {
           code, beforeRevision: before?.revision ?? null, afterRevision: after?.revision ?? null,
         });
         throw new Error(code);

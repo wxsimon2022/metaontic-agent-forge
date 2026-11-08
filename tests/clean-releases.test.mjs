@@ -21,9 +21,9 @@ test('标签模式与成品附件名按当前约定推导', () => {
   assert.equal(matchesPattern('ci-test', ['v*', 'ci-*']), true);
   assert.equal(matchesPattern('release-v1', ['v*']), false);
   assert.deepEqual(expectedAssets('v3.13.11'), [
-    'metaontic-video-3.13.11.tgz',
-    'MetaOnticVideo-Windows-3.13.11.zip',
-    'MetaOnticVideo-Windows-3.13.11.zip.sha256',
+    'metaontic-agent-forge-3.13.11.tgz',
+    'MetaOntic Agent Forge-Windows-3.13.11.zip',
+    'MetaOntic Agent Forge-Windows-3.13.11.zip.sha256',
   ]);
 });
 
@@ -31,7 +31,7 @@ test('清理计划保留最新正式版，删除历史发行版与预发布', ()
   const plan = planCleanup({
     tags: ['v3.2.0', 'v3.13.11', 'v3.10.0-beta.2', 'ci-test'],
     releases: {
-      github: [release('v3.13.11', { assets: [{ id: 1, name: 'metaontic-video-3.13.11.tgz' }] }), release('v3.2.0'), release('v3.10.0-beta.2', { prerelease: true })],
+      github: [release('v3.13.11', { assets: [{ id: 1, name: 'metaontic-agent-forge-3.13.11.tgz' }] }), release('v3.2.0'), release('v3.10.0-beta.2', { prerelease: true })],
       gitee: [release('v3.13.11'), release('v3.2.0')],
     },
     currentVersion: '3.13.11', keep: 1, keepTags: 1,
@@ -64,7 +64,7 @@ test('按时间保护、保留当前版本并识别保留版本里的多余附�
     tags: ['v3.13.11', 'v3.13.10', 'v3.12.0'],
     releases: {
       github: [
-        release('v3.13.11', { createdAt: '2026-11-01T00:00:00Z', assets: [{ id: 1, name: 'metaontic-video-3.13.11.tgz' }, { id: 2, name: 'metaontic-video-3.13.11.tgz.old' }] }),
+        release('v3.13.11', { createdAt: '2026-11-01T00:00:00Z', assets: [{ id: 1, name: 'metaontic-agent-forge-3.13.11.tgz' }, { id: 2, name: 'metaontic-agent-forge-3.13.11.tgz.old' }] }),
         release('v3.13.10', { createdAt: '2026-11-02T00:00:00Z' }),
         release('v3.12.0', { createdAt: '2026-01-01T00:00:00Z' }),
       ],
@@ -75,7 +75,7 @@ test('按时间保护、保留当前版本并识别保留版本里的多余附�
   assert.ok(plan.keep.find(item => item.tag === 'v3.12.0').reason.includes('当前'));
   assert.deepEqual(plan.retained.map(item => item.tag), ['v3.13.10'], '7 天内发布的历史版本本次不动');
   assert.deepEqual(plan.remove, []);
-  assert.deepEqual(plan.staleAssets, [{ host: 'github', tag: 'v3.13.11', assets: ['metaontic-video-3.13.11.tgz.old'] }]);
+  assert.deepEqual(plan.staleAssets, [{ host: 'github', tag: 'v3.13.11', assets: ['metaontic-agent-forge-3.13.11.tgz.old'] }]);
 });
 
 test('计划拒绝会清空仓库的参数，并且永不删除唯一的最新标签', () => {
@@ -91,8 +91,8 @@ test('执行阶段按附件、发行版、标签顺序删除两个仓库并清�
   const plan = planCleanup({
     tags: ['v3.13.11', 'v3.2.0', 'ci-test'],
     releases: {
-      github: [release('v3.13.11', { id: 11 }), release('v3.2.0', { id: 20, assets: [{ id: 21, name: 'metaontic-video-3.2.0.tgz' }] }), { id: 99, tag: '', draft: true, prerelease: false, createdAt: null, assets: [] }],
-      gitee: [release('v3.13.11', { id: 11 }), release('v3.2.0', { id: 20, assets: [{ id: 31, name: 'metaontic-video-3.2.0.tgz' }] })],
+      github: [release('v3.13.11', { id: 11 }), release('v3.2.0', { id: 20, assets: [{ id: 21, name: 'metaontic-agent-forge-3.2.0.tgz' }] }), { id: 99, tag: '', draft: true, prerelease: false, createdAt: null, assets: [] }],
+      gitee: [release('v3.13.11', { id: 11 }), release('v3.2.0', { id: 20, assets: [{ id: 31, name: 'metaontic-agent-forge-3.2.0.tgz' }] })],
     },
     currentVersion: '3.13.11', patterns: ['v*', 'ci-*'], keep: 1, keepTags: 1,
   });
@@ -194,13 +194,13 @@ test('只在 Gitee 存在的标签也会进入清理计划', async () => {
 test('执行阶段汇总失败项，保留版本的多余附件按当前远端状态重新核对', async () => {
   const plan = planCleanup({
     tags: ['v3.13.11', 'v3.2.0'],
-    releases: { github: [release('v3.13.11', { id: 11, assets: [{ id: 1, name: 'metaontic-video-3.13.11.tgz' }, { id: 2, name: 'stale.zip' }] }), release('v3.2.0', { id: 20 })] },
+    releases: { github: [release('v3.13.11', { id: 11, assets: [{ id: 1, name: 'metaontic-agent-forge-3.13.11.tgz' }, { id: 2, name: 'stale.zip' }] }), release('v3.2.0', { id: 20 })] },
     currentVersion: '3.13.11', keep: 1, keepTags: 1,
   });
   const calls = [];
   const github = {
     slug: 'owner/repo',
-    listReleases: async () => [release('v3.13.11', { id: 11, assets: [{ id: 1, name: 'metaontic-video-3.13.11.tgz' }, { id: 2, name: 'stale.zip' }] })],
+    listReleases: async () => [release('v3.13.11', { id: 11, assets: [{ id: 1, name: 'metaontic-agent-forge-3.13.11.tgz' }, { id: 2, name: 'stale.zip' }] })],
     remove: async path => { calls.push(path); if (path.endsWith('/releases/20')) throw new Error('远端拒绝'); return true; },
   };
   await assert.rejects(applyCleanup({ plan, github, pruneAssets: true, log: () => {} }), /清理未全部成功[\s\S]*远端拒绝/);
@@ -210,9 +210,9 @@ test('执行阶段汇总失败项，保留版本的多余附件按当前远端�
 
 test('文档里写死的下载地址对应版本受保护，不会被回收', () => {
   const guide = [
-    'https://gitee.com/hackloop/metaontic-video/releases/download/v3.13.10/metaontic-video-3.13.10.tgz',
-    '形如 https://github.com/x/y/releases/download/v数字版本号/metaontic-video-数字版本号.tgz',
-    'https://github.com/x/y/releases/download/v3.13.10/MetaOnticVideo-Windows-3.13.10.zip',
+    'https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/v3.13.10/metaontic-agent-forge-3.13.10.tgz',
+    '形如 https://github.com/x/y/releases/download/v数字版本号/metaontic-agent-forge-数字版本号.tgz',
+    'https://github.com/x/y/releases/download/v3.13.10/MetaOntic Agent Forge-Windows-3.13.10.zip',
   ];
   assert.deepEqual(documentedTags(guide), ['v3.13.10'], '同一版本不重复，占位写法不算版本');
   assert.deepEqual(documentedTags([]), []);

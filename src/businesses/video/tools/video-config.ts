@@ -50,13 +50,13 @@ export function configTool(config, settings) {
   return {
     name: 'video_config',
     description:
-      '只读查看 MetaOnticVideo 插件自己的配置（baseUrl、submitPath、queryPath、model、imageModel、'
+      '只读查看 MetaOntic Agent Forge 插件自己的配置（baseUrl、submitPath、queryPath、model、imageModel、'
       + 'duration、singleMaxSeconds、ratio、generateAudio、'
       + 'watermark、extraParams、pollIntervalMs、maxWaitMs、mergeMode、'
       + 'outputDir、resumeLockStaleMinutes、'
       + 'ffmpegBinary、ffprobeBinary、estimateGroupRatio）。'
       + '对话里禁止改配置：接入方式、API密钥、模型、地址等任何一项都只能由用户在插件设置页'
-      + '（「插件 → 已安装插件 → MetaOnticVideo → 查看」）修改并保存，宿主重载后生效；'
+      + '（「插件 → 已安装插件 → MetaOntic Agent Forge → 查看」）修改并保存，宿主重载后生效；'
       + '本工具没有修改能力，action=set 会被直接拒绝。'
       + '用户要改配置时，说明改的是哪一项并引导他去设置页改，不要代改、不要索取或展示 API密钥。'
       + '看当前值用 action=get；'
@@ -113,7 +113,7 @@ export function configTool(config, settings) {
           enum: ['seamless', 'copy', 'reencode'],
           description: '合并方式：copy=直接无损拼接（默认，不做画面叠化）；reencode=统一重编码后直接拼接；旧配置 seamless 按 copy 处理。',
         },
-        outputDir: { type: 'string', description: '成片输出目录；留空用会话工作目录下的 metaontic-video/。' },
+        outputDir: { type: 'string', description: '成片输出目录；留空用会话工作目录下的 metaontic-agent-forge/。' },
         resumeLockStaleMinutes: {
           type: 'number',
           minimum: 0,
@@ -168,7 +168,7 @@ export function configTool(config, settings) {
       if (action === 'set') {
         throw new Error(
           '插件配置不能在对话里改：video_config 是只读的，接入方式、API密钥、模型、地址等任何一项都只能由用户'
-          + '在插件设置页（「插件 → 已安装插件 → MetaOnticVideo → 查看」）修改并保存。'
+          + '在插件设置页（「插件 → 已安装插件 → MetaOntic Agent Forge → 查看」）修改并保存。'
           + '请说明要改的是哪一项并引导用户去设置页，不要代改、不要索取或展示 API密钥。',
         );
       }

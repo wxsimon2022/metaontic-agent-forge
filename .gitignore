@@ -1,4 +1,4 @@
-# 生成物：插件默认把成片落到会话工作目录下的 metaontic-video/，
+# 生成物：插件默认把成片落到会话工作目录下的 metaontic-agent-forge/，
 # 当工作目录正好是本仓库时，这些文件会弄脏 git 状态。
 *.mp4
 *.concat.txt
@@ -29,6 +29,9 @@ preview/.build/
 
 
 # 使用说明书与配图仅在本地维护，不提交仓库
+/MetaOnticAgentForge使用说明书.md
+/MetaOnticAgentForge使用说明书.pdf
+/docs/guide/
+
 /MetaOnticVideo使用说明书.md
 /MetaOnticVideo使用说明书.pdf
-/docs/guide/

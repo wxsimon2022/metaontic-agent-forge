@@ -29,10 +29,10 @@ export async function publishGitee({ token, tag, archive, notes, prerelease = fa
   }
   let release = await api(`/releases/tags/${tag}`, { allow404: true });
   if (!release) release = await api('/releases', { method: 'POST', data: {
-    tag_name: tag, name: `MetaOnticVideo ${tag}`, body: notes, target_commitish: 'master', prerelease: String(prerelease),
+    tag_name: tag, name: `MetaOntic Agent Forge ${tag}`, body: notes, target_commitish: 'master', prerelease: String(prerelease),
   } });
   if (release?.id && (release.body !== notes || release.prerelease !== prerelease)) {
-    release = await api(`/releases/${release.id}`, { method: 'PATCH', data: { tag_name: tag, name: `MetaOnticVideo ${tag}`, body: notes, prerelease: String(prerelease) } });
+    release = await api(`/releases/${release.id}`, { method: 'PATCH', data: { tag_name: tag, name: `MetaOntic Agent Forge ${tag}`, body: notes, prerelease: String(prerelease) } });
     if (release.body !== notes || release.prerelease !== prerelease) throw new Error('Gitee release notes or channel verification failed.');
   }
   if (!release?.id) throw new Error('Gitee did not return a release ID.');

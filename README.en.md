@@ -1,74 +1,59 @@
-<img src="./logo.svg" width="240" alt="MetaOnticVideo" />
+<img src="./logo.svg" width="480" alt="MetaOntic Agent Forge" />
 
-# MetaOnticVideo
+# MetaOntic Agent Forge
 
 [简体中文](./README.md) · [Gitee](https://gitee.com/hadlooop/metaontic-agent-forge) · [GitHub](https://github.com/wxsimon2022/metaontic-agent-forge)
 
-A DeepSeek Harness plugin for **beginner-friendly video creation and a low-cost long-video workflow**.
+An extensible agent platform for DeepSeek Harness. The coordinator delegates tasks and summarizes results; specialist agents execute independently assembled business workflows.
 
-## Start creating videos quickly
+## Agents
 
-Describe what you want to make and follow the assistant through your first video, without first learning prompting or editing workflows.
+| Agent | ID | Role |
+|---|---|---|
+| 云智工坊 · 智能体平台 | `forge-studio` | Coordination, task tracking and result summaries |
+| Video creation assistant | `forge-video-director` | Concepts, scripts, generation and continuation |
+| Promotional video assistant | `forge-promo-video` | Product, brand and event videos |
 
-1. **Share your idea**: start with a brief thought or a complete concept. Any refinement stays true to your original idea.
-2. **Review the script**: read what will be filmed, ask for changes in plain language, then confirm production.
-3. **Watch the result**: preview the generated video and keep the finished file locally.
+Delegation is limited to approved specialists and one level. Task creation is not completion. Users still review scripts, costs and each generated video segment.
 
-For example: “Make a 30-second vertical 720P video showing a peaceful lake at dawn.” Duration, orientation and resolution already supplied are reused; only missing details are requested.
+## Available business: video creation
 
-## A low-cost long-video workflow
+- **Beginner-friendly creation**: guided ideas, scripts and previews. Reuse specifications already provided by the user.
+- **A low-cost long-video workflow**: generate segments, continue them and merge locally; retain completed work and resume saved progress.
 
-Use **segment generation → continuation → local merging** to make videos beyond the model’s single-call duration limit.
-
-- Review each result before continuing to the next segment.
-- Keep and reuse completed segments, pause and resume saved progress, and avoid starting over.
-- Merge completed segments locally with FFmpeg while retaining the original clips.
-
-Bring your own API key. Image and video calls are billed by the chosen provider, with cost confirmation before each new segment.
+Bring your own API key. Image/video calls are billed by the provider; local merging uses FFmpeg.
 
 ## Online installation
 
-Paste an online installation URL into Harness → Plugins → Add plugin. Windows and macOS use the same package.
+<!-- forge:installation:start -->
+Paste a package URL into Harness → Plugins → Add plugin:
 
-Gitee:
+Gitee: https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/v1.0.0/metaontic-agent-forge-1.0.0.tgz
 
-```text
-https://gitee.com/hackloop/metaontic-video/releases/download/v3.20.2/metaontic-video-3.20.2.tgz
-```
+GitHub: https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/v1.0.0/metaontic-agent-forge-1.0.0.tgz
+<!-- forge:installation:end -->
 
-GitHub mirror:
+Git SSH remote addresses are for source control and should not be entered in the plugin installation field. Open Cloud Studio from the sidebar, or select a specialist directly in the conversation mode menu.
 
-```text
-https://github.com/wxsimon2022/metaontic-video/releases/download/v3.20.2/metaontic-video-3.20.2.tgz
-```
-
-Open plugin settings, choose **MetaOntic AI**, enter your API key and save. Select **视频创作助手** in a conversation to begin; **宣传视频助手** is also available for product, brand or event content. Both specialists share the production workflow. Select **云智工坊 · 智能体平台** for orchestration: it delegates to these approved specialists and summarizes results, while video reviews and cost confirmations remain required. Standard mode remains general-purpose.
-
-[Online user guide](https://ai.mybfs.cn) · [Report an issue](https://github.com/wxsimon2022/metaontic-agent-forge/issues) · [Changelog](./CHANGELOG.md) · [Development](./docs/engineering/development.md)
-
-## Plugin architecture
-
-Agents declare their business dependencies; the shared framework assembles them. Cloud Studio coordinates two specialist assistants that share the video module. New business modules can be added independently.
+## Architecture
 
 ```mermaid
 flowchart TB
-    Harness[DeepSeek Harness]
-    Harness --> Host["Host entry: src/index.ts"]
-    Harness --> Client["Browser entry: src/client.ts"]
-    Studio[Cloud Studio · Agent Platform] -->|Approved targets, one level| Director[Video creation assistant]
-    Studio -->|Approved targets, one level| Promo[Promotional video assistant]
-    Studio --> Agents["Agent definitions: src/agents"]
-    Director --> Agents["Agent definitions: src/agents"]
-    Promo[Promotional video assistant] --> Agents
-    Agents --> Core["Shared framework: src/core<br/>Agent and tool registration · Scope · Lifecycle"]
-    Host --> Core
-    Core --> Video["Video module: src/businesses/video<br/>Review · Generation · Continuation · Recovery · Delivery"]
+    Harness[DeepSeek Harness] --> Entry[metaontic-agent-forge]
+    Entry --> Core["src/core: registration, scope, lifecycle, settings"]
+    Entry --> UI["src/client: platform UI and business assembly"]
+    Studio[forge-studio] -->|Approved targets, one level| VideoAgent[forge-video-director]
+    Studio -->|Approved targets, one level| PromoAgent[forge-promo-video]
+    Studio --> Agents[src/agents]
+    VideoAgent --> Agents
+    PromoAgent --> Agents
+    Agents --> Core
+    Core --> Video["src/businesses/video: approvals, generation, recovery, delivery"]
     Video --> Providers[Image and video providers]
     Video --> Media[Local download and FFmpeg merging]
-    Client --> UI["Shared UI: src/client<br/>Module assembly · Settings composition · Updates"]
-    UI --> VideoUI["Video UI<br/>Settings · Progress · Media preview"]
+    UI --> VideoUI[Video settings, progress and previews]
 ```
 
-[Module structure and adding agents or businesses](./docs/engineering/structure-refactor.md)
+[Online guide](https://ai.mybfs.cn) · [Adding agents and businesses](./docs/engineering/structure-refactor.md) · [Development](./docs/engineering/development.md) · [Issues](https://github.com/wxsimon2022/metaontic-agent-forge/issues)
 
 See [LICENSE](./LICENSE).

@@ -92,7 +92,7 @@ if (!TEST_VERSION.test(version)) {
     const npmCli = process.env.npm_execpath || require.resolve('npm/bin/npm-cli.js');
     mkdirSync(out, { recursive: true });
     run(process.execPath, [npmCli, 'pack', '--pack-destination', out, '--cache', path.join(root, '.local/npm-cache')]);
-    const file = path.join(out, `metaontic-video-${version}.tgz`);
+    const file = path.join(out, `metaontic-agent-forge-${version}.tgz`);
     if (!existsSync(file)) throw Error(`未生成 ${file}`);
     // 包内 README 会被宿主插件页当成「详细介绍」渲染，成品包统一裁掉（放在算 sha256 之前）。
     const python = process.env.PYTHON || (process.platform === 'win32' ? 'py' : 'python3');

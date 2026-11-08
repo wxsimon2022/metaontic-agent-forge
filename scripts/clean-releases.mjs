@@ -12,7 +12,7 @@ import { repository as parseRepository } from './release.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DAY = 86400000;
 /** 这些文件里写死的 .tgz 下载地址对应版本必须保留，否则现成链接会失效。 */
-const DOCUMENTED_FILES = ['README.md', 'README.en.md', 'MetaOnticVideo使用说明书.md', 'CHANGELOG.md', 'docs/engineering/SKILL.md'];
+const DOCUMENTED_FILES = ['README.md', 'README.en.md', 'MetaOnticAgentForge使用说明书.md', 'CHANGELOG.md', 'docs/engineering/SKILL.md'];
 const USAGE = `清理历史标签、发行版及附件（默认演练，加 --apply 才删除）
 
   npm run clean:releases                    # 演练：打印保留与待删清单
@@ -75,9 +75,9 @@ export function matchesPattern(tag, patterns) {
 export function expectedAssets(tag) {
   const version = String(tag).replace(/^v/, '');
   return [
-    `metaontic-video-${version}.tgz`,
-    `MetaOnticVideo-Windows-${version}.zip`,
-    `MetaOnticVideo-Windows-${version}.zip.sha256`,
+    `metaontic-agent-forge-${version}.tgz`,
+    `MetaOntic Agent Forge-Windows-${version}.zip`,
+    `MetaOntic Agent Forge-Windows-${version}.zip.sha256`,
   ];
 }
 

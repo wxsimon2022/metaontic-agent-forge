@@ -1,5 +1,5 @@
 ---
-name: metaontic-video-maintenance
+name: metaontic-agent-forge-maintenance
 description: 用于本仓库视频与图片接入、断点恢复、费用确认、清晰度设置、构建验证及发布维护；修改相关流程时读取并执行这些已验证约定。
 ---
 
@@ -21,11 +21,11 @@ description: 用于本仓库视频与图片接入、断点恢复、费用确认�
 - 每次调用固定配置快照，后续轮询不得混用新地址或 API密钥。密钥不写断点/日志，私有状态文件限制权限。
 - 分段续做的审批文案必须先合并暂停记录 options，再解析清晰度；不得用仅含 resume 的原始参数回退到 720P。覆盖30秒480P两段流程，断言确认文案、估价与两次实际请求一致。
 - 清晰度不在插件设置中配置；工具参数、实际请求、估价和恢复保持一致：480p/720p，脚本阶段须由用户明确选择480P/720P（本次需求已指定不重复问），记录到脚本、制作确认并显式传入工具。恢复已提交任务使用原请求参数。
-- 对话边界：对话只做视频创作，无关话题不承接（一句话说明后请用户回到视频需求，不展开、不代办）；插件配置（接入方式、API密钥、模型、地址等）只能在设置页修改，`video_config` 只读、`action=set` 直接拒绝并引导设置页，不索取/展示 API密钥。提示词、video-director 技能、README（中英）与使用说明书同步维护；回归用例在 `tests/host-integration.test.mjs`、`tests/config-tool-save.test.mjs`、`tests/image-tasks.test.mjs`。
+- 对话边界：对话只做视频创作，无关话题不承接（一句话说明后请用户回到视频需求，不展开、不代办）；插件配置（接入方式、API密钥、模型、地址等）只能在设置页修改，`video_config` 只读、`action=set` 直接拒绝并引导设置页，不索取/展示 API密钥。提示词、forge-video-director 技能、README（中英）与使用说明书同步维护；回归用例在 `tests/host-integration.test.mjs`、`tests/config-tool-save.test.mjs`、`tests/image-tasks.test.mjs`。
 
 ## 对白准确性
 
-脚本审核前使用 video-director/references/pronunciation.md：正确原文与发音文本分离，仅对读音明确的易错词用同音常用字，不猜专名、不全局替换。生成和前后延长都保留对白执行约束，不覆盖无对白或关闭音频的选择。预算按实际发声时间，完整句不跨段；验收必须试听，不能把任务成功等同读音正确。误读重做仍需费用同意，不承诺自动配音/口型修复。
+脚本审核前使用 forge-video-director/references/pronunciation.md：正确原文与发音文本分离，仅对读音明确的易错词用同音常用字，不猜专名、不全局替换。生成和前后延长都保留对白执行约束，不覆盖无对白或关闭音频的选择。预算按实际发声时间，完整句不跨段；验收必须试听，不能把任务成功等同读音正确。误读重做仍需费用同意，不承诺自动配音/口型修复。
 
 ## 验证与构建
 
@@ -43,7 +43,7 @@ description: 用于本仓库视频与图片接入、断点恢复、费用确认�
 - Gitee 更新已有 Release 使用 PATCH，携带 tag_name；发布后核对 GitHub/Gitee 的说明与附件，不只看工作流绿色。
 - 发布慢的主因是等 GitHub Actions（GitHub SSH 443 还常整段超时）；改成本地成品直传 Gitee 后，一次发版只剩本地构建测试打包约 3 分钟加三个附件上传，双仓并行推送也避免一仓超时拖累另一仓。GitHub Actions 只在--both时使用，作为双平台安装校验证据；仅 Gitee 发布的 Windows 缺口写进 release 文档。
 - 测试包不进 Release：`npm run pack:test -- X.Y.Z-test.N` 会构建、跑测试、打 `.tgz`，直接上传 `https://video.mybfs.cn/test/` 并核对线上 sha256，最后还原包内版本号；版本核心号压在当前正式版之下，更新检查只读正式 Release，因此测试包不影响他人正式版，`--no-upload` 可只出本地包。线上 `/test/` 由 moyubang 仓库 `deploy/nginx/video.mybfs.cn.conf` 提供，目录放在部署目录之外，`deploy.sh` 的 `rsync --delete` 不会清理已上传包。
-- Gitee Go 流水线 `.workflow/MetaOnticVideo.yml` 只在 master 推送、面向 master 的 PR、`v*` 标签时做构建与测试校验，并打出 tgz 与 Windows ZIP（ZIP 依赖构建机 Python3，缺失时自动安装、仍失败则跳过并在日志提示）留作流水线制品（制品有保留期），不发版；GitHub/Gitee Release 成品统一由 GitHub Actions `publish` 产出，不在 Gitee 侧另打一份包。标签触发时用 `git describe --tags --exact-match` 核对标签与包内版本一致，不一致立即失败（取不到标签时只提示，不阻断）；`ci-` 开头的演练标签跳过该强校验，只演练不出发布件；脚本里变量后紧跟中文标点时必须写 `${VAR}`，否则 bash 会把全角标点并入变量名导致展开为空；构建机不保证自带 Node，命令里先探测常见安装路径，找不到就从 `cdn.npmmirror.com` 下载 Node 20（glibc 低于 2.28 时自动换 `node-unofficial-builds` 的 glibc-217 兼容版），并缓存到 `~/.local/node`，不依赖插件下拉版本；Gitee 免费构建机的 Node 版本字段因此只作占位。
+- Gitee Go 流水线 `.workflow/MetaOntic Agent Forge.yml` 只在 master 推送、面向 master 的 PR、`v*` 标签时做构建与测试校验，并打出 tgz 与 Windows ZIP（ZIP 依赖构建机 Python3，缺失时自动安装、仍失败则跳过并在日志提示）留作流水线制品（制品有保留期），不发版；GitHub/Gitee Release 成品统一由 GitHub Actions `publish` 产出，不在 Gitee 侧另打一份包。标签触发时用 `git describe --tags --exact-match` 核对标签与包内版本一致，不一致立即失败（取不到标签时只提示，不阻断）；`ci-` 开头的演练标签跳过该强校验，只演练不出发布件；脚本里变量后紧跟中文标点时必须写 `${VAR}`，否则 bash 会把全角标点并入变量名导致展开为空；构建机不保证自带 Node，命令里先探测常见安装路径，找不到就从 `cdn.npmmirror.com` 下载 Node 20（glibc 低于 2.28 时自动换 `node-unofficial-builds` 的 glibc-217 兼容版），并缓存到 `~/.local/node`，不依赖插件下拉版本；Gitee 免费构建机的 Node 版本字段因此只作占位。
 
 API密钥共用规则：MetaOntic AI 可选择共用或独立图片 API密钥，关闭共用不得回退。
 
@@ -146,7 +146,7 @@ Windows解压目录安装在更新时出现空目录/locale缺失：先核对成
 
 插件已移除服务端登录接入、账户额度、钱包及充值逻辑。默认 MetaOntic AI，火山已有配置仍支持；独立服务端仓库保留。旧服务端凭据仅供清理，不迁移为其他渠道密钥。
 
-项目流程由video_project管理，review通过后生成工具付费审批即制作确认，不再另问开始制作；正文完整展示脚本并内嵌分镜才允许审核。状态绑定项目、脚本摘要和制作参数，改稿重审，审核后不再改script.md状态。分段暂停默认只交付新段，最终合并；resume+cumulativePreview:true只交付已有累计视频，不生成、不改变deliveryPending。动态创作提示词仅在当前agentPresets.presetForSession为video-director时注入，标准模式返回空串，不能由历史header覆盖当前标准选择。
+项目流程由video_project管理，review通过后生成工具付费审批即制作确认，不再另问开始制作；正文完整展示脚本并内嵌分镜才允许审核。状态绑定项目、脚本摘要和制作参数，改稿重审，审核后不再改script.md状态。分段暂停默认只交付新段，最终合并；resume+cumulativePreview:true只交付已有累计视频，不生成、不改变deliveryPending。动态创作提示词仅在当前agentPresets.presetForSession为forge-video-director时注入，标准模式返回空串，不能由历史header覆盖当前标准选择。
 
 分段结果审核不得并入或省略：paused返回后，助手先正文展示最新分段可点击链接，再立即调用video_project(action:review_segment,resume:原目录)；只在独立工具中用userQuestions弹窗，不能在生成循环里等待。续做入口和执行前校验segment-review.json中的会话/完成段数/末段taskId；未答、取消、拒绝均不放行，下一段必须新审。原任务查询、交付恢复及累计预览不新增任务则跳过，重载可复用已通过记录。Windows/macOS均用node:path和原子写入，Windows占用失败保留原文件并报错；已跑自动模拟，未跑付费与双平台桌面实测。
 
@@ -172,9 +172,9 @@ Windows解压目录安装在更新时出现空目录/locale缺失：先核对成
 
 用户原创意中的时长/横竖屏/分辨率直接作为确认值，仅询问缺失项；完善创意不清空规格。“30秒竖屏720P”不得再问这三项，不支持的参数单独说明并询问可执行替代，不静默改值。
 
-宣传预设promo-video与video-director复用YAML插件列表锚点和公共工具/审批，仅宣传模式注入promo专题。作用域判断以当前预设registry为准，标准/未知预设不得注入。预设新增后核对宿主YAML解析、技能入包和动态模式切换；旧会话固定身份不追溯修改。
+宣传预设forge-promo-video与forge-video-director复用YAML插件列表锚点和公共工具/审批，仅宣传模式注入promo专题。作用域判断以当前预设registry为准，标准/未知预设不得注入。预设新增后核对宿主YAML解析、技能入包和动态模式切换；旧会话固定身份不追溯修改。
 
-组件中文名称：宿主包含组件列表按row.moduleName读取<完整模块名>/locale/en.json及同目录语言文件，不读预设config.name。两个预设用metaontic-video/presets/<id>独立入口转导出宿主dsh-agent-preset，并导出对应locale；不修改宿主文件，不改预设id。打包核对wrapper与locale均纳入，宿主解析名称而非仅模式列表名称。
+组件中文名称：宿主包含组件列表按row.moduleName读取<完整模块名>/locale/en.json及同目录语言文件，不读预设config.name。两个预设用metaontic-agent-forge/presets/<id>独立入口转导出宿主dsh-agent-preset，并导出对应locale；不修改宿主文件，不改预设id。打包核对wrapper与locale均纳入，宿主解析名称而非仅模式列表名称。
 
 Agent组件图标使用<完整预设模块>/icon导出，SVG在presets/icons，场记板蓝紫/扩音器橙红区分两个预设；需核对宿主readPluginMeta返回各自图标、成品入包和24/40px明暗背景显示，不修改插件总Logo。
 

@@ -1,4 +1,461 @@
 (() => {
+  // src/client/theme.ts
+  function createTheme() {
+    const TOKENS = {
+      text: "var(--dsw-alias-label-primary, inherit)",
+      muted: "var(--dsw-alias-label-caption, #8886)",
+      border: "var(--dsw-alias-border-l2, #8884)",
+      cardFill: "var(--dsw-alias-settings-card-fill, transparent)",
+      controlFill: "var(--dsw-specific-input-major, transparent)",
+      primaryFill: "var(--dsw-alias-button-primary-fill, #247bbf)",
+      error: "var(--dsw-alias-state-error-primary, #d9534f)",
+      success: "var(--dsw-alias-state-success-primary, #2e9e5b)"
+    };
+    const inputStyle = { width: "100%", boxSizing: "border-box" };
+    const PAGE_CSS = `
+      /* \u6574\u9875\u7EB5\u5411\u6392\u5E03\uFF1A\u5757\u4E0E\u5757\u4E4B\u95F4\u7EDF\u4E00 16px\uFF0C\u6BD4\u4E00\u6574\u7247\u8868\u5355\u597D\u626B */
+      .forge-page { display: flex; flex-direction: column; gap: 16px; padding: 4px 0; color: ${TOKENS.text}; }
+      /* \u5206\u7EC4\u5361\u7247\uFF1A16 \u4E2A\u5B57\u6BB5\u644A\u5728\u4E00\u683C\u91CC\u592A\u7CCA\uFF0C\u6309\u7528\u9014\u5404\u88C5\u4E00\u5F20\u5361 */
+      .forge-section { display: flex; flex-direction: column; gap: 14px; padding: 14px 16px 16px; border-radius: 12px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.cardFill}; }
+      .forge-advanced { display: block; }
+      .forge-advanced-toggle { cursor: pointer; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
+      .forge-advanced-toggle .forge-hint { display: block; margin: 5px 0 0 16px; font-weight: 400; }
+      .forge-advanced-toggle:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 5px; border-radius: 4px; }
+      .forge-advanced-body { display: flex; flex-direction: column; gap: 18px; border-top: 1px solid ${TOKENS.border}; margin-top: 14px; padding-top: 16px; }
+      .forge-advanced-body .forge-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; align-items: start; }
+      .forge-advanced-body .forge-field-wide { grid-column: auto; }
+      .forge-advanced-group { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+      .forge-advanced-group + .forge-advanced-group { border-top: 1px solid ${TOKENS.border}; padding-top: 16px; }
+      .forge-advanced-group .forge-label { min-height: 30px; display: flex; align-items: flex-end; }
+      .forge-advanced-tools .forge-grid { grid-template-columns: minmax(0, 1fr); }
+      .forge-advanced-tools .forge-label { min-height: 0; }
+      .forge-advanced-group[data-group="advancedPicture"] .forge-grid { grid-template-columns: minmax(0, 1fr); }
+      .forge-advanced-group[data-group="advancedPicture"] .forge-switch { justify-content: space-between; flex-direction: row-reverse; }
+
+      @container (max-width: 480px) { .forge-advanced-body .forge-grid { grid-template-columns: minmax(0, 1fr); } .forge-advanced-group .forge-label { min-height: 0; } }
+      .forge-advanced { container-type: inline-size; }
+      .forge-section-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
+      /* \u6807\u9898\u5DE6\u8FB9\u4E00\u9053\u4E3B\u8272\u7AD6\u6761\uFF0C\u4EE3\u66FF\u7EAF\u6587\u5B57\u5206\u7EC4\u6807\u9898 */
+      .forge-section-title::before { content: ""; flex: 0 0 auto; width: 3px; height: 13px; border-radius: 2px; background: ${TOKENS.primaryFill}; }
+      .forge-section-title::after { content: ""; flex: 1 1 auto; height: 1px; background: ${TOKENS.border}; }
+      /* \u4E24\u5217\u81EA\u9002\u5E94\uFF1A\u5355\u5217\u81F3\u5C11 240px\uFF0C\u7A84\u9762\u677F\u81EA\u52A8\u843D\u6210\u4E00\u5217 */
+      .forge-parameter-group { container-type: inline-size; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+      .forge-parameter-group + .forge-parameter-group { border-top: 1px solid ${TOKENS.border}; padding-top: 16px; }
+      .forge-parameter-heading { font-size: 12px; font-weight: 600; color: ${TOKENS.muted}; }
+      .forge-parameter-group .forge-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+      @container (max-width: 480px) { .forge-parameter-group .forge-grid { grid-template-columns: minmax(0, 1fr); } }
+      .forge-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 14px 18px; }
+      .forge-field { display: flex; flex-direction: column; min-width: 0; }
+      .forge-model-settings { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+      .forge-model-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .forge-model-grid-single { grid-template-columns: minmax(0, 1fr); }
+      .forge-model-card { display: flex; flex-direction: column; gap: 14px; padding: 12px; border: 1px solid ${TOKENS.border}; border-radius: 10px; min-width: 0; }
+      .forge-parameter-group > .forge-card { border: 0; padding: 0; background: transparent; }
+      @container (max-width: 600px) { .forge-model-grid { grid-template-columns: minmax(0, 1fr); } }
+
+      .forge-av-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .forge-av-card { display: flex; flex-direction: column; min-width: 0; padding: 12px; gap: 8px; border: 1px solid ${TOKENS.border}; border-radius: 10px; background: ${TOKENS.cardFill}; }
+      .forge-av-card > .forge-label { margin-bottom: -2px; }
+      .forge-av-card .forge-hint { margin-top: auto; }
+      .forge-av-audio .forge-switch { justify-content: space-between; gap: 12px; padding: 0; border: 0; background: transparent; }
+      .forge-av-audio .forge-switch span { order: 0; }
+      .forge-av-audio .forge-switch input { appearance: none; order: 1; flex: 0 0 34px; width: 34px; height: 20px; margin: 0; border: 1px solid ${TOKENS.border}; border-radius: 999px; background: ${TOKENS.border}; position: relative; transition: background .15s; }
+      .forge-av-audio .forge-switch input::after { content: ''; position: absolute; width: 14px; height: 14px; left: 2px; top: 2px; border-radius: 50%; background: white; transition: transform .15s; }
+      .forge-av-audio .forge-switch input:checked { background: ${TOKENS.primaryFill}; border-color: ${TOKENS.primaryFill}; }
+      .forge-av-audio .forge-switch input:checked::after { transform: translateX(14px); }
+      .forge-av-audio .forge-switch input:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 3px; }
+      @container (max-width: 480px) { .forge-av-grid { grid-template-columns: minmax(0, 1fr); } }
+      @media (prefers-reduced-motion: reduce) { .forge-av-audio .forge-switch input, .forge-av-audio .forge-switch input::after { transition: none; } }
+
+      /* \u5F00\u5173\u6CA1\u6709\u6807\u7B7E\u884C\uFF0C\u9760\u5E95\u5BF9\u9F50\u624D\u80FD\u8DDF\u65C1\u8FB9\u8F93\u5165\u6846\u7684\u63A7\u5236\u7EBF\u9F50\u5E73 */
+      .forge-field-switch { justify-content: flex-end; }
+      .forge-field-wide { grid-column: 1 / -1; }
+      .forge-label { display: block; font-size: 12px; color: ${TOKENS.muted}; margin-bottom: 6px; }
+      .forge-input { padding: 8px 10px; border-radius: 8px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.controlFill}; color: ${TOKENS.text}; font: inherit; font-size: 13px; height: 36px; }
+      .forge-key-control { position: relative; min-width: 0; }
+      .forge-key-control .forge-input { padding-right: 40px; }
+      .forge-key-eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 30px; height: 28px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 5px; background: transparent; color: ${TOKENS.muted}; cursor: pointer; }
+      .forge-key-eye:hover { color: ${TOKENS.text}; background: ${TOKENS.border}; }
+      .forge-key-eye:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 1px; }
+      .forge-input:focus, .forge-input:focus-visible { outline: none; border-color: ${TOKENS.primaryFill}; box-shadow: 0 0 0 3px rgba(36, 123, 191, .18); }
+      /* \u6A21\u578B ID \u4E0E\u53EF\u6267\u884C\u6587\u4EF6\u8DEF\u5F84\u5F88\u957F\uFF1A\u7B49\u5BBD\u5B57\u4F53 + \u7701\u7565\uFF0C\u4E0D\u628A\u6574\u884C\u6491\u53D8\u5F62 */
+      .forge-mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; }
+      /* \u5F00\u5173\u505A\u6210\u8DDF\u8F93\u5165\u6846\u540C\u9AD8\u7684\u5C0F\u65B9\u5757\uFF0C\u548C\u5468\u56F4\u63A7\u4EF6\u4E00\u6761\u7EBF */
+      .forge-switch { display: flex; align-items: center; gap: 8px; padding: 0 10px; height: 36px; box-sizing: border-box; border: 1px solid ${TOKENS.border}; border-radius: 8px; background: ${TOKENS.controlFill}; font-size: 13px; color: ${TOKENS.text}; cursor: pointer; }
+      .forge-switch:hover { border-color: ${TOKENS.primaryFill}; }
+      .forge-switch input { width: 15px; height: 15px; accent-color: ${TOKENS.primaryFill}; cursor: pointer; }
+      .forge-card { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 12px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.cardFill}; }
+      .forge-current-version { display: inline-flex; align-items: center; gap: 6px; flex: 1 1 120px; }
+      .forge-update-bell { display: inline-flex; flex: 0 0 auto; color: ${TOKENS.primaryFill}; transform-origin: 50% 10%; animation: forge-bell-swing 1.6s ease-in-out infinite; }
+      @keyframes forge-bell-swing { 0%, 60%, 100% { transform: rotate(0deg); } 10%, 30% { transform: rotate(-18deg); } 20%, 40% { transform: rotate(18deg); } 50% { transform: rotate(-8deg); } }
+      @media (prefers-reduced-motion: reduce) { .forge-update-bell { animation: none; } }
+      .forge-card-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .forge-card-title { font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
+      .forge-hint { font-size: 12px; color: ${TOKENS.muted}; line-height: 1.5; }
+      .forge-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-sizing: border-box; flex: 0 0 120px; width: 120px; min-width: 120px; height: 36px; min-height: 36px; padding: 4px 10px; border-radius: 8px; border: 1px solid ${TOKENS.border}; background: transparent; color: ${TOKENS.text}; font: inherit; font-size: 12px; line-height: 1.2; text-align: center; cursor: pointer; white-space: normal; overflow-wrap: anywhere; transition: background .15s, border-color .15s, color .15s, opacity .15s; }
+      .forge-btn:hover:not(:disabled) { border-color: ${TOKENS.primaryFill}; color: ${TOKENS.primaryFill}; }
+      .forge-btn:disabled { opacity: .5; cursor: default; }
+      .forge-btn-primary { border-color: ${TOKENS.primaryFill}; background: ${TOKENS.primaryFill}; color: #fff; font-weight: 600; }
+      .forge-btn-primary:hover:not(:disabled) { color: #fff; opacity: .88; }
+      .forge-quota-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+      .forge-support-dialog { width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 0; border: 1px solid ${TOKENS.border}; border-radius: 12px; color: ${TOKENS.text}; background: ${TOKENS.cardFill}; overflow: auto; }
+      .forge-support-dialog::backdrop { background: rgba(0, 0, 0, .45); }
+      .forge-support-content { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+      .forge-support-content p { margin: 0; }
+      .forge-support-frame { width: 100%; height: min(480px, 62vh); border: 0; border-radius: 8px; background: white; }
+      .forge-trailing { margin-left: auto; }
+      /* \u989D\u5EA6\uFF1A\u4E09\u4E2A\u6570\u5B57\u5757\uFF0C\u4E00\u773C\u5206\u6E05\u5269\u4F59 / \u5DF2\u7528 / \u603B\u989D\u5EA6 */
+      .forge-quota-compact { padding: 8px 12px; gap: 10px 14px; flex-direction: row; align-items: center; flex-wrap: wrap; }
+      .forge-quota-compact .forge-card-head { min-height: 24px; flex: 0 0 auto; gap: 8px; }
+      .forge-quota-compact .forge-stats { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 8px 16px; min-width: 0; }
+      .forge-quota-compact .forge-stat { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 6px; padding: 0; border: 0; border-radius: 0; white-space: nowrap; }
+      .forge-quota-compact .forge-stat-label { font-size: 11px; white-space: nowrap; }
+      .forge-quota-compact .forge-stat-value { font-size: 14px; }
+      .forge-quota-compact .forge-foot-note { font-size: 10px; white-space: nowrap; flex: 0 0 auto; }
+      .forge-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+      .forge-stat { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 10px; border: 1px solid ${TOKENS.border}; }
+      .forge-stat-label { font-size: 11.5px; color: ${TOKENS.muted}; }
+      .forge-stat-value { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+      .forge-foot-note { font-size: 11.5px; color: ${TOKENS.muted}; }
+      /* ffmpeg \u5B89\u88C5\u547D\u4EE4\uFF1A\u4E00\u884C\u7B49\u5BBD\u3001\u53EF\u590D\u5236\uFF0C\u4E0D\u7528\u6491\u6EE1\u6574\u884C */
+      .forge-cmd-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .forge-tag { flex: 0 0 auto; min-width: 132px; font-size: 12px; color: ${TOKENS.muted}; }
+      .forge-code { flex: 0 0 auto; max-width: 100%; padding: 6px 10px; border-radius: 8px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.controlFill}; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+      /* \u4F7F\u7528\u8BB0\u5F55\uFF1A\u6591\u9A6C\u7EB9 + \u7EC6\u8868\u5934\uFF0C\u6A21\u578B\u5217\u5403\u6389\u5269\u4F59\u5BBD\u5EA6 */
+      /* \u9762\u677F\u5F88\u7A84\u65F6\u8868\u683C\u6A2A\u5411\u6EDA\u52A8\uFF0C\u4E5F\u4E0D\u628A\u300C\u65F6\u95F4\u300D\u6324\u6210\u4E24\u884C */
+      .forge-table { display: flex; flex-direction: column; margin: 0 -6px; overflow-x: auto; }
+      .forge-table-head, .forge-table-row { display: grid; grid-template-columns: 106px 78px minmax(72px, 1fr) 84px 60px; align-items: center; gap: 10px; padding: 8px 10px; }
+      .forge-table-head > :nth-child(1), .forge-table-row > :nth-child(1) { white-space: nowrap; }
+      .forge-table-head { font-size: 11px; letter-spacing: .03em; color: ${TOKENS.muted}; border-bottom: 1px solid ${TOKENS.border}; }
+      .forge-table-row { font-size: 12.5px; border-radius: 8px; }
+      .forge-table-row:nth-child(even) { background: rgba(127, 127, 127, .05); }
+      .forge-table-row:hover { background: rgba(127, 127, 127, .1); }
+      /* \u8D39\u7528\u4E0E\u7ED3\u679C\u4E24\u5217\u53F3\u5BF9\u9F50\uFF0C\u6570\u5B57\u7AD6\u7740\u5BF9\u5F97\u9F50 */
+      .forge-table-head > :nth-child(4), .forge-table-row > :nth-child(4),
+      .forge-table-head > :nth-child(5), .forge-table-row > :nth-child(5) { text-align: right; }
+      .forge-model { min-width: 0; overflow: hidden; color: ${TOKENS.muted}; white-space: nowrap; text-overflow: ellipsis; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; }
+      .forge-num { font-variant-numeric: tabular-nums; }
+      /* \u7ED3\u679C\u7528\u80F6\u56CA\u6807\u7B7E\uFF0C\u6BD4\u88F8\u6587\u5B57\u66F4\u5BB9\u6613\u4E00\u773C\u626B\u5230 */
+      .forge-chip { display: inline-flex; align-items: center; justify-content: center; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; line-height: 1.7; }
+      .forge-chip-ok { color: ${TOKENS.success}; background: rgba(46, 158, 91, .12); }
+      .forge-chip-bad { color: ${TOKENS.error}; background: rgba(217, 83, 79, .12); }
+      /* \u6CE8\u518C\u8868\u5355\uFF1A\u8F93\u5165\u6846\u5403\u6389\u591A\u4F59\u5BBD\u5EA6\uFF0C\u4E24\u4E2A\u6309\u94AE\u4E0D\u6362\u884C */
+      .forge-register-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      /* \u5E95\u90E8\u64CD\u4F5C\u6761\uFF1A\u4E0A\u8FB9\u7EBF\u628A\u300C\u4FDD\u5B58\u300D\u548C\u914D\u7F6E\u5185\u5BB9\u5206\u5F00 */
+      .forge-footer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 2px 2px; border-top: 1px solid ${TOKENS.border}; }
+      .forge-notice { margin: 0; font-size: 12px; color: ${TOKENS.muted}; line-height: 1.5; }
+    `;
+    return { TOKENS, inputStyle, PAGE_CSS };
+  }
+
+  // src/client/panel.ts
+  function createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID: PANEL_ID2, GUIDE_URL: GUIDE_URL2, LOGO_SVG }) {
+    const LOGO_SRC = LOGO_SVG ? `data:image/svg+xml,${encodeURIComponent(LOGO_SVG)}` : "";
+    const PANEL_CSS = `
+      .forge-panel { width: 100%; max-width: 880px; margin: 0 auto; padding: 30px 32px 44px; display: flex; flex-direction: column; gap: 18px; }
+      /* \u54C1\u724C\u5934\u56FE\uFF1A\u63D2\u4EF6 logo + \u6807\u9898/\u7B80\u4ECB\uFF0C\u7ED9\u7A7A\u8361\u7684\u5185\u5BB9\u533A\u4E00\u4E2A\u89C6\u89C9\u951A\u70B9 */
+      .forge-panel-hero { display: flex; align-items: center; gap: 14px; }
+      .forge-panel-mark { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: ${TOKENS.primaryFill}; }
+      .forge-panel-logo { width: 100%; height: 100%; object-fit: contain; }
+      /* \u5DE6\u4FA7\u680F\u90A3\u4E00\u884C\u7684 logo\uFF1A\u6309\u5BBF\u4E3B\u7ED9\u7684\u5C3A\u5BF8\u539F\u6837\u94FA\u5F00\uFF0C\u4E0D\u53C2\u4E0E\u4E3B\u9898\u53D6\u8272 */
+      .forge-rail-logo { display: block; object-fit: contain; }
+      .forge-panel-head { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+      .forge-panel-title { margin: 0; font-size: 19px; font-weight: 600; color: ${TOKENS.text}; }
+      .forge-panel-intro { margin: 0; font-size: 13px; line-height: 1.55; color: ${TOKENS.muted}; }
+      /* \u4E3B\u6309\u94AE\u5403\u6389\u591A\u4F59\u5BBD\u5EA6\uFF0C\u6B21\u8981\u6309\u94AE\u4E0E\u94FE\u63A5\u9000\u5230\u7B2C\u4E8C\u6392 */
+      .forge-panel-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+      .forge-panel-actions .forge-btn-primary { flex: 1 1 220px; width: auto; min-width: 160px; height: 38px; }
+      .forge-panel-actions .forge-btn:not(.forge-btn-primary) { min-width: 132px; }
+      .forge-panel-link { margin-left: auto; font-size: 12px; color: ${TOKENS.primaryFill}; text-decoration: none; border-bottom: 1px solid transparent; }
+      .forge-panel-link:hover { border-bottom-color: currentColor; }
+      /* \u4E24\u5757\u4EF7\u503C\u70B9\u5361\u7247\uFF1A\u56FE\u6807 + \u6807\u9898 + \u4E00\u53E5\u8BF4\u660E\uFF0C\u7A84\u5BB9\u5668\u81EA\u52A8\u843D\u6210\u4E00\u5217 */
+      .forge-panel-highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+      .forge-panel-highlight { display: flex; align-items: flex-start; gap: 12px; padding: 13px 14px; border: 1px solid ${TOKENS.border}; border-radius: 12px; background: ${TOKENS.cardFill}; }
+      .forge-panel-highlight-icon { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; }
+      .forge-panel-highlight-body { min-width: 0; }
+      .forge-panel-highlight-title { font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
+      .forge-panel-highlight-desc { margin: 4px 0 0; font-size: 12px; line-height: 1.55; color: ${TOKENS.muted}; }
+      /* \u6D41\u7A0B\u6F14\u793A\uFF1A\u56DB\u6B65\u5361\u7247\u6A2A\u6392\uFF0C\u5361\u7247\u4E4B\u95F4\u7528\u7BAD\u5934\u8FDE\u8D77\u6765\uFF1B\u7A84\u5BB9\u5668\u843D\u6210\u4E00\u5217 */
+      .forge-panel-flow { display: flex; align-items: stretch; }
+      .forge-panel-step { position: relative; overflow: hidden; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 7px; padding: 13px 14px 14px; border: 1px solid ${TOKENS.border}; border-radius: 12px; background: ${TOKENS.cardFill}; animation: forge-flow-card 9s ease-in-out infinite; }
+      .forge-panel-step-head { display: flex; align-items: center; gap: 8px; }
+      .forge-panel-step-badge { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 600; color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; animation: forge-flow-badge 9s ease-in-out infinite; }
+      .forge-panel-step-title { min-width: 0; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
+      .forge-panel-step-desc { margin: 0; font-size: 12px; line-height: 1.55; color: ${TOKENS.muted}; }
+      /* \u53F3\u4E0A\u89D2\u7684\u6DE1\u8272\u6C34\u5370\u56FE\u6807\uFF0C\u53EA\u505A\u88C5\u9970 */
+      .forge-panel-step-icon { position: absolute; top: 10px; right: 10px; color: ${TOKENS.primaryFill}; opacity: .14; pointer-events: none; }
+      /* \u5361\u7247\u4E4B\u95F4\u7684\u7BAD\u5934\uFF1A\u6A2A\u6392\u65F6\u5411\u53F3\uFF0C\u7A84\u5BB9\u5668\u91CC\u8F6C\u6210\u5411\u4E0B */
+      .forge-panel-conn { flex: 0 0 26px; align-self: center; height: 2px; border-radius: 1px; background: ${TOKENS.border}; position: relative; }
+      .forge-panel-conn::after { content: ''; position: absolute; top: 50%; right: -1px; width: 5px; height: 5px; border-top: 2px solid ${TOKENS.border}; border-right: 2px solid ${TOKENS.border}; transform: translateY(-50%) rotate(45deg); }
+      /* \u56DB\u6B65\u4F9D\u6B21\u70B9\u4EAE\uFF0C\u5F62\u6210\u4E00\u6761\u8D70\u52A8\u7684\u6D41\u7A0B\uFF1B\u5EF6\u8FDF\u6309\u6B65\u53F7\u9519\u5F00 */
+      @keyframes forge-flow-card { 0%, 16% { border-color: ${TOKENS.primaryFill}; } 28%, 100% { border-color: ${TOKENS.border}; } }
+      @keyframes forge-flow-badge { 0%, 16% { color: #fff; background: ${TOKENS.primaryFill}; } 28%, 100% { color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; } }
+      .forge-panel-step[data-step="1"], .forge-panel-step[data-step="1"] .forge-panel-step-badge { animation-delay: 2.25s; }
+      .forge-panel-step[data-step="2"], .forge-panel-step[data-step="2"] .forge-panel-step-badge { animation-delay: 4.5s; }
+      .forge-panel-step[data-step="3"], .forge-panel-step[data-step="3"] .forge-panel-step-badge { animation-delay: 6.75s; }
+      .forge-panel { container-type: inline-size; }
+      @container (max-width: 620px) {
+        .forge-panel-flow { flex-direction: column; align-items: stretch; }
+        /* \u7AD6\u5411\u6392\u5E03\u65F6\u4E0D\u80FD\u518D\u6309\u5269\u4F59\u7A7A\u95F4\u62C9\u4F38\uFF0C\u5426\u5219\u5361\u7247\u4F1A\u88AB\u538B\u6241 */
+        .forge-panel-step { flex: 0 0 auto; }
+        .forge-panel-conn { flex: 0 0 18px; width: 2px; height: 18px; align-self: flex-start; margin-left: 24px; }
+        .forge-panel-conn::after { top: auto; right: 50%; bottom: -1px; transform: translateX(50%) rotate(135deg); }
+      }
+      @container (max-width: 560px) {
+        .forge-panel { padding: 22px 18px 34px; }
+        .forge-panel-link { margin-left: 0; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .forge-panel-step, .forge-panel-step-badge { animation: none; }
+      }
+    `;
+    function PanelIcon({ size = 18 }) {
+      const pixels = Number(size) || 18;
+      if (LOGO_SRC) {
+        return h("img", {
+          className: "forge-rail-logo",
+          src: LOGO_SRC,
+          alt: "",
+          width: pixels,
+          height: pixels,
+          "aria-hidden": true
+        });
+      }
+      return h("svg", {
+        width: pixels,
+        height: pixels,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: 1.7,
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        "aria-hidden": true
+      }, [
+        h("rect", { key: "frame", x: 2.5, y: 4.5, width: 13.5, height: 15, rx: 2.5 }),
+        h("path", { key: "lens", d: "M16 10.4 21.5 7.3v9.4L16 13.6z" })
+      ]);
+    }
+    function flowIcon(name, size = 22) {
+      const common = {
+        width: size,
+        height: size,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: 1.6,
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        "aria-hidden": true
+      };
+      if (name === "idea") {
+        return h("svg", common, [
+          h("path", { key: "bulb", d: "M12 3.5a5.5 5.5 0 0 0-3.2 9.9V16h6.4v-2.6A5.5 5.5 0 0 0 12 3.5Z" }),
+          h("path", { key: "base", d: "M9.5 18.5h5M10.5 21h3" })
+        ]);
+      }
+      if (name === "script") {
+        return h("svg", common, [
+          h("rect", { key: "frame", x: 3, y: 4.5, width: 18, height: 15, rx: 2.2 }),
+          h("path", { key: "split", d: "M3 12h18M11 12v7.5" })
+        ]);
+      }
+      if (name === "generate") {
+        return h("svg", common, [
+          h("rect", { key: "frame", x: 3, y: 5, width: 18, height: 14, rx: 2.2 }),
+          h("path", { key: "play", d: "M10.4 9.4 15 12l-4.6 2.6z" })
+        ]);
+      }
+      if (name === "easy") {
+        return h("svg", common, [
+          h("path", { key: "star", d: "M12 4.2l1.9 5.1 5.1 1.9-5.1 1.9L12 18.2l-1.9-5.1L5 11.2l5.1-1.9z" }),
+          h("path", { key: "spark", d: "M19 4.2v3M17.5 5.7h3" })
+        ]);
+      }
+      if (name === "cheap") {
+        return h("svg", common, [
+          h("path", { key: "tag", d: "M11.2 3.8H5.4A1.6 1.6 0 0 0 3.8 5.4v5.8l8.8 8.8a1.6 1.6 0 0 0 2.3 0l5.8-5.8a1.6 1.6 0 0 0 0-2.3z" }),
+          h("circle", { key: "hole", cx: 7.6, cy: 7.6, r: 1.2 })
+        ]);
+      }
+      return h("svg", common, [
+        h("path", { key: "down", d: "M12 3.5v10m0 0 3.6-3.6M12 13.5 8.4 9.9" }),
+        h("path", { key: "tray", d: "M4.5 16.5v2.2a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2.2" })
+      ]);
+    }
+    function highlight(key, icon, title, desc) {
+      return h("div", { key, className: "forge-panel-highlight" }, [
+        h("span", { key: "icon", className: "forge-panel-highlight-icon" }, flowIcon(icon, 20)),
+        h("div", { key: "body", className: "forge-panel-highlight-body" }, [
+          h("div", { key: "title", className: "forge-panel-highlight-title" }, title),
+          h("p", { key: "desc", className: "forge-panel-highlight-desc" }, desc)
+        ])
+      ]);
+    }
+    function ForgePanel(props) {
+      const flow = [
+        { icon: "idea", title: t("panelStep1Title"), desc: t("panelStep1Desc") },
+        { icon: "script", title: t("panelStep2Title"), desc: t("panelStep2Desc") },
+        { icon: "generate", title: t("panelStep3Title"), desc: t("panelStep3Desc") },
+        { icon: "merge", title: t("panelStep4Title"), desc: t("panelStep4Desc") }
+      ];
+      const flowChildren = flow.flatMap((step, index) => {
+        const card = h("div", {
+          key: `step-${index}`,
+          className: "forge-panel-step",
+          "data-step": String(index)
+        }, [
+          h("div", { key: "head", className: "forge-panel-step-head" }, [
+            h("span", { key: "badge", className: "forge-panel-step-badge" }, String(index + 1)),
+            h("span", { key: "title", className: "forge-panel-step-title" }, step.title)
+          ]),
+          h("p", { key: "desc", className: "forge-panel-step-desc" }, step.desc),
+          h("span", { key: "icon", className: "forge-panel-step-icon" }, flowIcon(step.icon))
+        ]);
+        return index === 0 ? [card] : [h("span", { key: `conn-${index}`, className: "forge-panel-conn", "aria-hidden": true }), card];
+      });
+      return h("div", { className: "forge-panel" }, [
+        h("style", { key: "styles" }, PAGE_CSS + PANEL_CSS),
+        h("header", { key: "hero", className: "forge-panel-hero" }, [
+          h(
+            "span",
+            { key: "mark", className: "forge-panel-mark" },
+            LOGO_SRC ? h("img", { key: "logo", className: "forge-panel-logo", src: LOGO_SRC, alt: "", "aria-hidden": true }) : PanelIcon({ size: 24 })
+          ),
+          h("div", { key: "head", className: "forge-panel-head" }, [
+            h("h1", { key: "title", className: "forge-panel-title" }, t("panelTitle")),
+            h("p", { key: "intro", className: "forge-panel-intro" }, t("panelIntro"))
+          ])
+        ]),
+        h("section", { key: "highlights", className: "forge-section" }, [
+          h("div", { key: "highlights-label", className: "forge-section-title" }, t("panelHighlights")),
+          h("div", { key: "highlights-cards", className: "forge-panel-highlights" }, [
+            highlight("easy", "easy", t("panelHighlight1Title"), t("panelHighlight1Desc")),
+            highlight("cheap", "cheap", t("panelHighlight2Title"), t("panelHighlight2Desc"))
+          ])
+        ]),
+        h("section", { key: "start", className: "forge-section" }, [
+          h("div", { key: "start-label", className: "forge-section-title" }, t("panelStart")),
+          h("div", { key: "start-actions", className: "forge-panel-actions" }, [
+            h("button", {
+              key: "new",
+              type: "button",
+              className: "forge-btn forge-btn-primary",
+              onClick: () => props?.startSession?.()
+            }, t("panelNew")),
+            h("button", {
+              key: "settings",
+              type: "button",
+              className: "forge-btn",
+              disabled: typeof props?.openSettings !== "function",
+              onClick: () => props?.openSettings?.()
+            }, t("panelSettings")),
+            h("a", {
+              key: "guide",
+              className: "forge-panel-link",
+              href: GUIDE_URL2,
+              target: "_blank",
+              rel: "noopener noreferrer"
+            }, t("panelGuide"))
+          ])
+        ]),
+        h("section", { key: "flow", className: "forge-section" }, [
+          h("div", { key: "flow-label", className: "forge-section-title" }, t("panelFlow")),
+          h("div", { key: "flow-steps", className: "forge-panel-flow" }, flowChildren)
+        ])
+      ]);
+    }
+    return { PANEL_ID: PANEL_ID2, PanelIcon, ForgePanel };
+  }
+
+  // src/client/locale.ts
+  function createPlatformDictionaries() {
+    const zh = {
+      panelTitle: "\u4E91\u667A\u5DE5\u574A \xB7 \u667A\u80FD\u4F53\u5E73\u53F0",
+      panelSidebarLabel: "\u4E91\u667A\u5DE5\u574A",
+      panelIntro: "\u7531\u603B\u63A7\u62C6\u89E3\u9700\u6C42\u3001\u59D4\u6D3E\u4E13\u4E1A Agent \u5E76\u6C47\u603B\u6210\u679C\uFF0C\u5F53\u524D\u5DF2\u63A5\u5165\u89C6\u9891\u521B\u4F5C\u4E0E\u5BA3\u4F20\u89C6\u9891\u4E1A\u52A1\u3002",
+      panelStart: "\u5F00\u59CB\u534F\u4F5C",
+      panelNew: "\u6253\u5F00\u4E91\u667A\u5DE5\u574A",
+      panelSettings: "\u6253\u5F00\u63D2\u4EF6\u8BBE\u7F6E",
+      panelGuide: "\u4F7F\u7528\u8BF4\u660E",
+      panelHighlights: "\u4E3A\u4EC0\u4E48\u7528\u5B83",
+      panelHighlight1Title: "\u603B\u63A7\u7EDF\u7B79\uFF0C\u4E13\u4E1A\u6267\u884C",
+      panelHighlight1Desc: "\u4E91\u667A\u5DE5\u574A\u6309\u767D\u540D\u5355\u5206\u914D\u52A9\u624B\u3001\u8DDF\u8FDB\u4EFB\u52A1\u5E76\u6C47\u603B\u6210\u679C\uFF0C\u5173\u952E\u5BA1\u6838\u4E0E\u8D39\u7528\u7531\u4F60\u786E\u8BA4\u3002",
+      panelHighlight2Title: "\u72EC\u7ACB\u4E1A\u52A1\uFF0C\u6301\u7EED\u6269\u5C55",
+      panelHighlight2Desc: "\u4E1A\u52A1\u6A21\u5757\u4E0E Agent \u5B9A\u4E49\u5206\u79BB\uFF0C\u73B0\u6709\u89C6\u9891\u4E1A\u52A1\u652F\u6301\u5206\u6BB5\u7EED\u62CD\u3001\u9010\u6BB5\u5BA1\u6838\u548C\u672C\u673A\u5408\u5E76\u3002",
+      panelFlow: "\u4F7F\u7528\u6D41\u7A0B",
+      panelStep1Title: "\u660E\u786E\u9700\u6C42",
+      panelStep1Desc: "\u8BF4\u660E\u76EE\u6807\u3001\u5DF2\u6709\u7D20\u6750\u4E0E\u9650\u5236\uFF0C\u5DF2\u63D0\u4F9B\u7684\u4FE1\u606F\u76F4\u63A5\u6CBF\u7528\u3002",
+      panelStep2Title: "\u5206\u914D\u52A9\u624B",
+      panelStep2Desc: "\u603B\u63A7\u9009\u62E9\u767D\u540D\u5355\u4E2D\u7684\u4E13\u4E1A\u52A9\u624B\uFF0C\u4E00\u5C42\u59D4\u6D3E\uFF0C\u4E0D\u5FAA\u73AF\u8C03\u7528\u3002",
+      panelStep3Title: "\u6267\u884C\u5BA1\u6838",
+      panelStep3Desc: "\u4E13\u4E1A\u52A9\u624B\u5904\u7406\u4EFB\u52A1\uFF0C\u811A\u672C\u3001\u8D39\u7528\u4E0E\u89C6\u9891\u5206\u6BB5\u7EE7\u7EED\u7531\u4F60\u786E\u8BA4\u3002",
+      panelStep4Title: "\u6C47\u603B\u6210\u679C",
+      panelStep4Desc: "\u5B8C\u6210\u901A\u77E5\u56DE\u5230\u603B\u63A7\uFF0C\u6C47\u603B\u6210\u679C\u94FE\u63A5\u548C\u5F85\u529E\uFF0C\u4E0D\u5C06\u542F\u52A8\u5F53\u4F5C\u5B8C\u6210\u3002"
+    };
+    const en = {
+      panelTitle: "MetaOntic Agent Forge",
+      panelSidebarLabel: "Agent Forge",
+      panelIntro: "Coordinate specialist agents and review their results. Video creation and promotional video are currently available.",
+      panelStart: "Start collaborating",
+      panelNew: "Open Cloud Studio",
+      panelSettings: "Open plugin settings",
+      panelGuide: "User guide",
+      panelHighlights: "Why it works",
+      panelHighlight1Title: "Coordinator and specialists",
+      panelHighlight1Desc: "Delegate approved tasks, track progress, and keep user review and cost approval.",
+      panelHighlight2Title: "Independent business modules",
+      panelHighlight2Desc: "Extend business modules independently. Video workflows include continuation, review and local merging.",
+      panelFlow: "How it works",
+      panelStep1Title: "Define the task",
+      panelStep1Desc: "Share the goal, source material and constraints.",
+      panelStep2Title: "Choose a specialist",
+      panelStep2Desc: "Use approved specialists with one delegation level.",
+      panelStep3Title: "Execute and review",
+      panelStep3Desc: "Review scripts, costs and generated video segments.",
+      panelStep4Title: "Collect results",
+      panelStep4Desc: "Summarize completed deliverables and unfinished work."
+    };
+    return { zh, en };
+  }
+
+  // icon.svg
+  var icon_default = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"><defs><linearGradient id="forge-brand-bg" x1="3" y1="2" x2="45" y2="47" gradientUnits="userSpaceOnUse"><stop stop-color="#163C66"/><stop offset="1" stop-color="#26254F"/></linearGradient></defs><rect width="48" height="48" rx="12" fill="url(#forge-brand-bg)"/><path d="M24 15v7m-10 9 7-5m13 5-7-5" stroke="#D7E8FA" stroke-width="2.2" stroke-linecap="round"/><path d="m24 6 7 4v8l-7 4-7-4v-8l7-4Z" fill="#87A7F7"/><path d="m24 6 7 4-7 4-7-4 7-4Z" fill="#C4D4FF"/><path d="M24 14v8l7-4v-8l-7 4Z" fill="#6C86D3"/><path d="m12 26 7 4v8l-7 4-7-4v-8l7-4Z" fill="#64DDCF"/><path d="m12 26 7 4-7 4-7-4 7-4Z" fill="#B3F5E7"/><path d="M12 34v8l7-4v-8l-7 4Z" fill="#38B4AE"/><path d="m36 26 7 4v8l-7 4-7-4v-8l7-4Z" fill="#72C2F3"/><path d="m36 26 7 4-7 4-7-4 7-4Z" fill="#C2E7FF"/><path d="M36 34v8l7-4v-8l-7 4Z" fill="#4C98D5"/><path d="m24 19 2.3 4.2L31 25l-4.7 2.1L24 32l-2.1-4.9L17 25l4.9-1.8L24 19Z" fill="#FFD68A"/></svg>\n';
+
+  // src/client/platform.ts
+  var PANEL_ID = "metaontic-agent-forge";
+  var NAMESPACE = "metaontic-agent-forge";
+  var NS = "platform.metaonticAgentForge";
+  var GUIDE_URL = "https://ai.mybfs.cn";
+  function createPlatformClient(require2) {
+    const React = require2("react"), h = React.createElement;
+    const { TOKENS, PAGE_CSS } = createTheme();
+    return {
+      inject: ["slots", "locale"],
+      apply(ctx) {
+        ctx.effect(() => ctx.locale.register(NS, createPlatformDictionaries()), "forge: platform dictionaries");
+        const t = ctx.locale.bind(NS);
+        const { PanelIcon, ForgePanel } = createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GUIDE_URL, LOGO_SVG: icon_default });
+        ctx.effect(() => ctx.slots.inject("sidebar.panellist", () => ctx.slots.register({
+          name: "sidebar.panellist",
+          id: PANEL_ID,
+          order: 30,
+          locale: NS,
+          label: () => t("panelSidebarLabel")
+        }, PanelIcon)), "forge: platform entry");
+        ctx.effect(() => ctx.slots.inject("main", () => ctx.slots.register({
+          name: "main",
+          key: PANEL_ID,
+          locale: NS,
+          inject: () => ({
+            startSession: () => ctx.get("uiWorkspace")?.startSession(void 0, { agentPreset: "forge-studio" }),
+            openSettings: () => ctx.get("pluginNavigation")?.openBundle(NAMESPACE)
+          })
+        }, ForgePanel)), "forge: platform dashboard");
+      }
+    };
+  }
+
   // src/core/settings/client.ts
   function createSettingsPages(h) {
     const pages = /* @__PURE__ */ new Map();
@@ -138,22 +595,22 @@
         else setFailed(true);
       };
       const label = String(item.label || (item.kind === "image" ? "\u56FE\u7247" : "\u89C6\u9891"));
-      const media = !source || failed ? h("p", { role: "status", className: "mov-media-error" }, item.kind === "image" ? "\u56FE\u7247\u9884\u89C8\u65E0\u6CD5\u52A0\u8F7D\uFF0C\u6587\u4EF6\u53EF\u80FD\u5DF2\u79FB\u52A8\u6216\u94FE\u63A5\u5DF2\u8FC7\u671F\u3002\u8BF7\u5C1D\u8BD5\u6253\u5F00\u539F\u56FE\u3002" : "\u89C6\u9891\u9884\u89C8\u65E0\u6CD5\u64AD\u653E\uFF0C\u53EF\u80FD\u662F\u6587\u4EF6\u5DF2\u79FB\u52A8\u3001\u94FE\u63A5\u5DF2\u8FC7\u671F\u6216\u7F16\u7801\u4E0D\u53D7\u652F\u6301\u3002\u8BF7\u5C1D\u8BD5\u6253\u5F00\u539F\u89C6\u9891\u6216\u4E0B\u8F7D\u540E\u64AD\u653E\u3002") : item.kind === "image" ? h("button", { type: "button", className: "mov-media-image-button", onClick: () => setZoom(true), "aria-label": `\u653E\u5927${label}` }, h("img", { src: source, alt: label, loading: "lazy", onError: error, className: "mov-media-image", referrerPolicy: "no-referrer" })) : h("video", { key: source, src: source, controls: true, playsInline: true, preload: "metadata", onError: error, className: "mov-media-video", "aria-label": label, referrerPolicy: "no-referrer" });
-      return h("figure", { className: "mov-media-item", "data-media-kind": item.kind }, [
-        h("figcaption", { key: "caption", className: "mov-media-caption" }, label),
-        h("div", { key: "body", className: "mov-media-surface" }, media),
-        sources.length ? h("div", { key: "links", className: "mov-media-links" }, [
+      const media = !source || failed ? h("p", { role: "status", className: "forge-media-error" }, item.kind === "image" ? "\u56FE\u7247\u9884\u89C8\u65E0\u6CD5\u52A0\u8F7D\uFF0C\u6587\u4EF6\u53EF\u80FD\u5DF2\u79FB\u52A8\u6216\u94FE\u63A5\u5DF2\u8FC7\u671F\u3002\u8BF7\u5C1D\u8BD5\u6253\u5F00\u539F\u56FE\u3002" : "\u89C6\u9891\u9884\u89C8\u65E0\u6CD5\u64AD\u653E\uFF0C\u53EF\u80FD\u662F\u6587\u4EF6\u5DF2\u79FB\u52A8\u3001\u94FE\u63A5\u5DF2\u8FC7\u671F\u6216\u7F16\u7801\u4E0D\u53D7\u652F\u6301\u3002\u8BF7\u5C1D\u8BD5\u6253\u5F00\u539F\u89C6\u9891\u6216\u4E0B\u8F7D\u540E\u64AD\u653E\u3002") : item.kind === "image" ? h("button", { type: "button", className: "forge-media-image-button", onClick: () => setZoom(true), "aria-label": `\u653E\u5927${label}` }, h("img", { src: source, alt: label, loading: "lazy", onError: error, className: "forge-media-image", referrerPolicy: "no-referrer" })) : h("video", { key: source, src: source, controls: true, playsInline: true, preload: "metadata", onError: error, className: "forge-media-video", "aria-label": label, referrerPolicy: "no-referrer" });
+      return h("figure", { className: "forge-media-item", "data-media-kind": item.kind }, [
+        h("figcaption", { key: "caption", className: "forge-media-caption" }, label),
+        h("div", { key: "body", className: "forge-media-surface" }, media),
+        sources.length ? h("div", { key: "links", className: "forge-media-links" }, [
           h("a", { key: "open", href: source || sources[0], target: "_blank", rel: "noopener noreferrer", referrerPolicy: "no-referrer" }, item.kind === "image" ? "\u6253\u5F00\u539F\u56FE" : "\u6253\u5F00\u539F\u89C6\u9891"),
           item.localPath && remoteMediaUrl(item.url) ? h("a", { key: "remote", href: remoteMediaUrl(item.url), target: "_blank", rel: "noopener noreferrer", referrerPolicy: "no-referrer" }, "\u4E0A\u6E38\u94FE\u63A5") : null
         ]) : null,
-        zoom && item.kind === "image" ? h("dialog", { key: "zoom", ref: dialog, className: "mov-media-dialog", "aria-label": label, onCancel: () => setZoom(false), onClose: () => setZoom(false), onClick: (e) => {
+        zoom && item.kind === "image" ? h("dialog", { key: "zoom", ref: dialog, className: "forge-media-dialog", "aria-label": label, onCancel: () => setZoom(false), onClose: () => setZoom(false), onClick: (e) => {
           if (e.target === e.currentTarget) setZoom(false);
         } }, [
-          h("button", { key: "close", type: "button", className: "mov-media-close", onClick: () => {
+          h("button", { key: "close", type: "button", className: "forge-media-close", onClick: () => {
             dialog.current?.close();
             setZoom(false);
           }, "aria-label": "\u5173\u95ED\u56FE\u7247\u9884\u89C8" }, "\u5173\u95ED"),
-          h("img", { key: "image", src: source, alt: label, className: "mov-media-zoom", referrerPolicy: "no-referrer", onError: error })
+          h("img", { key: "image", src: source, alt: label, className: "forge-media-zoom", referrerPolicy: "no-referrer", onError: error })
         ]) : null
       ]);
     }
@@ -162,180 +619,31 @@
       const [expanded, setExpanded] = React.useState(false);
       if (!items.length) return null;
       const visible = expanded ? items : items.slice(0, 2);
-      return h("section", { className: "mov-media-preview", "aria-label": "\u751F\u6210\u7ED3\u679C\u9884\u89C8", "data-field": "media-preview" }, [
+      return h("section", { className: "forge-media-preview", "aria-label": "\u751F\u6210\u7ED3\u679C\u9884\u89C8", "data-field": "media-preview" }, [
         h("style", { key: "styles" }, `
-        .mov-media-preview{margin-top:12px;min-width:0;color:var(--dsw-alias-label-primary,inherit)}
-        .mov-media-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;min-width:0}
-        .mov-media-item{margin:0;min-width:0;border:1px solid var(--dsw-alias-border-l2,#dfe3eb);border-radius:10px;overflow:hidden}
-        .mov-media-caption{padding:8px 12px;font-size:13px;font-weight:600;overflow-wrap:anywhere}
-        .mov-media-surface{min-width:0;background:var(--dsw-specific-input-major,#f5f6f8)}
-        .mov-media-image-button{display:block;width:100%;padding:0;border:0;background:transparent;cursor:zoom-in}
-        .mov-media-image{display:block;width:100%;max-height:320px;object-fit:contain}
-        .mov-media-video{display:block;width:100%;max-height:420px;background:#10131a;object-fit:contain}
-        .mov-media-links{display:flex;gap:16px;flex-wrap:wrap;padding:8px 12px;font-size:12px}
-        .mov-media-links a{color:var(--dsw-alias-link,#247bbf);text-decoration:underline;overflow-wrap:anywhere}
-        .mov-media-error{margin:0;padding:18px 12px;font-size:12px;line-height:1.6;color:var(--dsw-alias-label-caption,#737b8b)}
-        .mov-media-more{margin-top:10px;border:1px solid var(--dsw-alias-border-l2,#dfe3eb);border-radius:6px;padding:6px 10px;background:transparent;color:inherit;cursor:pointer}
-        .mov-media-dialog{box-sizing:border-box;max-width:94vw;max-height:94vh;padding:42px 12px 12px;border:0;border-radius:12px;background:var(--dsw-alias-settings-card-fill,#fff);color:inherit}
-        .mov-media-dialog::backdrop{background:rgba(0,0,0,.7)}
-        .mov-media-zoom{display:block;max-width:calc(94vw - 24px);max-height:calc(94vh - 70px);object-fit:contain}
-        .mov-media-close{position:absolute;top:8px;right:10px;background:transparent;color:inherit;border:1px solid var(--dsw-alias-border-l2,#dfe3eb);border-radius:6px;padding:4px 10px;cursor:pointer}
-        .mov-media-image-button:focus-visible,.mov-media-more:focus-visible,.mov-media-close:focus-visible{outline:2px solid #247bbf;outline-offset:-2px}
+        .forge-media-preview{margin-top:12px;min-width:0;color:var(--dsw-alias-label-primary,inherit)}
+        .forge-media-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;min-width:0}
+        .forge-media-item{margin:0;min-width:0;border:1px solid var(--dsw-alias-border-l2,#dfe3eb);border-radius:10px;overflow:hidden}
+        .forge-media-caption{padding:8px 12px;font-size:13px;font-weight:600;overflow-wrap:anywhere}
+        .forge-media-surface{min-width:0;background:var(--dsw-specific-input-major,#f5f6f8)}
+        .forge-media-image-button{display:block;width:100%;padding:0;border:0;background:transparent;cursor:zoom-in}
+        .forge-media-image{display:block;width:100%;max-height:320px;object-fit:contain}
+        .forge-media-video{display:block;width:100%;max-height:420px;background:#10131a;object-fit:contain}
+        .forge-media-links{display:flex;gap:16px;flex-wrap:wrap;padding:8px 12px;font-size:12px}
+        .forge-media-links a{color:var(--dsw-alias-link,#247bbf);text-decoration:underline;overflow-wrap:anywhere}
+        .forge-media-error{margin:0;padding:18px 12px;font-size:12px;line-height:1.6;color:var(--dsw-alias-label-caption,#737b8b)}
+        .forge-media-more{margin-top:10px;border:1px solid var(--dsw-alias-border-l2,#dfe3eb);border-radius:6px;padding:6px 10px;background:transparent;color:inherit;cursor:pointer}
+        .forge-media-dialog{box-sizing:border-box;max-width:94vw;max-height:94vh;padding:42px 12px 12px;border:0;border-radius:12px;background:var(--dsw-alias-settings-card-fill,#fff);color:inherit}
+        .forge-media-dialog::backdrop{background:rgba(0,0,0,.7)}
+        .forge-media-zoom{display:block;max-width:calc(94vw - 24px);max-height:calc(94vh - 70px);object-fit:contain}
+        .forge-media-close{position:absolute;top:8px;right:10px;background:transparent;color:inherit;border:1px solid var(--dsw-alias-border-l2,#dfe3eb);border-radius:6px;padding:4px 10px;cursor:pointer}
+        .forge-media-image-button:focus-visible,.forge-media-more:focus-visible,.forge-media-close:focus-visible{outline:2px solid #247bbf;outline-offset:-2px}
       `),
-        h("div", { key: "grid", className: "mov-media-grid" }, visible.map((item) => h(MediaItem, { key: `${item.kind}:${item.localPath || item.url}`, item }))),
-        items.length > 2 ? h("button", { key: "more", type: "button", className: "mov-media-more", onClick: () => setExpanded(!expanded), "aria-expanded": expanded }, expanded ? "\u6536\u8D77\u5176\u4ED6\u6210\u679C" : `\u5C55\u5F00\u5176\u4ED6\u6210\u679C\uFF08${items.length - 2}\uFF09`) : null
+        h("div", { key: "grid", className: "forge-media-grid" }, visible.map((item) => h(MediaItem, { key: `${item.kind}:${item.localPath || item.url}`, item }))),
+        items.length > 2 ? h("button", { key: "more", type: "button", className: "forge-media-more", onClick: () => setExpanded(!expanded), "aria-expanded": expanded }, expanded ? "\u6536\u8D77\u5176\u4ED6\u6210\u679C" : `\u5C55\u5F00\u5176\u4ED6\u6210\u679C\uFF08${items.length - 2}\uFF09`) : null
       ]);
     }
     return { MediaPreview };
-  }
-
-  // src/client/theme.ts
-  function createTheme() {
-    const TOKENS = {
-      text: "var(--dsw-alias-label-primary, inherit)",
-      muted: "var(--dsw-alias-label-caption, #8886)",
-      border: "var(--dsw-alias-border-l2, #8884)",
-      cardFill: "var(--dsw-alias-settings-card-fill, transparent)",
-      controlFill: "var(--dsw-specific-input-major, transparent)",
-      primaryFill: "var(--dsw-alias-button-primary-fill, #247bbf)",
-      error: "var(--dsw-alias-state-error-primary, #d9534f)",
-      success: "var(--dsw-alias-state-success-primary, #2e9e5b)"
-    };
-    const inputStyle = { width: "100%", boxSizing: "border-box" };
-    const PAGE_CSS = `
-      /* \u6574\u9875\u7EB5\u5411\u6392\u5E03\uFF1A\u5757\u4E0E\u5757\u4E4B\u95F4\u7EDF\u4E00 16px\uFF0C\u6BD4\u4E00\u6574\u7247\u8868\u5355\u597D\u626B */
-      .mov-page { display: flex; flex-direction: column; gap: 16px; padding: 4px 0; color: ${TOKENS.text}; }
-      /* \u5206\u7EC4\u5361\u7247\uFF1A16 \u4E2A\u5B57\u6BB5\u644A\u5728\u4E00\u683C\u91CC\u592A\u7CCA\uFF0C\u6309\u7528\u9014\u5404\u88C5\u4E00\u5F20\u5361 */
-      .mov-section { display: flex; flex-direction: column; gap: 14px; padding: 14px 16px 16px; border-radius: 12px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.cardFill}; }
-      .mov-advanced { display: block; }
-      .mov-advanced-toggle { cursor: pointer; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
-      .mov-advanced-toggle .mov-hint { display: block; margin: 5px 0 0 16px; font-weight: 400; }
-      .mov-advanced-toggle:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 5px; border-radius: 4px; }
-      .mov-advanced-body { display: flex; flex-direction: column; gap: 18px; border-top: 1px solid ${TOKENS.border}; margin-top: 14px; padding-top: 16px; }
-      .mov-advanced-body .mov-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; align-items: start; }
-      .mov-advanced-body .mov-field-wide { grid-column: auto; }
-      .mov-advanced-group { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-      .mov-advanced-group + .mov-advanced-group { border-top: 1px solid ${TOKENS.border}; padding-top: 16px; }
-      .mov-advanced-group .mov-label { min-height: 30px; display: flex; align-items: flex-end; }
-      .mov-advanced-tools .mov-grid { grid-template-columns: minmax(0, 1fr); }
-      .mov-advanced-tools .mov-label { min-height: 0; }
-      .mov-advanced-group[data-group="advancedPicture"] .mov-grid { grid-template-columns: minmax(0, 1fr); }
-      .mov-advanced-group[data-group="advancedPicture"] .mov-switch { justify-content: space-between; flex-direction: row-reverse; }
-
-      @container (max-width: 480px) { .mov-advanced-body .mov-grid { grid-template-columns: minmax(0, 1fr); } .mov-advanced-group .mov-label { min-height: 0; } }
-      .mov-advanced { container-type: inline-size; }
-      .mov-section-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
-      /* \u6807\u9898\u5DE6\u8FB9\u4E00\u9053\u4E3B\u8272\u7AD6\u6761\uFF0C\u4EE3\u66FF\u7EAF\u6587\u5B57\u5206\u7EC4\u6807\u9898 */
-      .mov-section-title::before { content: ""; flex: 0 0 auto; width: 3px; height: 13px; border-radius: 2px; background: ${TOKENS.primaryFill}; }
-      .mov-section-title::after { content: ""; flex: 1 1 auto; height: 1px; background: ${TOKENS.border}; }
-      /* \u4E24\u5217\u81EA\u9002\u5E94\uFF1A\u5355\u5217\u81F3\u5C11 240px\uFF0C\u7A84\u9762\u677F\u81EA\u52A8\u843D\u6210\u4E00\u5217 */
-      .mov-parameter-group { container-type: inline-size; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-      .mov-parameter-group + .mov-parameter-group { border-top: 1px solid ${TOKENS.border}; padding-top: 16px; }
-      .mov-parameter-heading { font-size: 12px; font-weight: 600; color: ${TOKENS.muted}; }
-      .mov-parameter-group .mov-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
-      @container (max-width: 480px) { .mov-parameter-group .mov-grid { grid-template-columns: minmax(0, 1fr); } }
-      .mov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 14px 18px; }
-      .mov-field { display: flex; flex-direction: column; min-width: 0; }
-      .mov-model-settings { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-      .mov-model-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-      .mov-model-grid-single { grid-template-columns: minmax(0, 1fr); }
-      .mov-model-card { display: flex; flex-direction: column; gap: 14px; padding: 12px; border: 1px solid ${TOKENS.border}; border-radius: 10px; min-width: 0; }
-      .mov-parameter-group > .mov-card { border: 0; padding: 0; background: transparent; }
-      @container (max-width: 600px) { .mov-model-grid { grid-template-columns: minmax(0, 1fr); } }
-
-      .mov-av-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-      .mov-av-card { display: flex; flex-direction: column; min-width: 0; padding: 12px; gap: 8px; border: 1px solid ${TOKENS.border}; border-radius: 10px; background: ${TOKENS.cardFill}; }
-      .mov-av-card > .mov-label { margin-bottom: -2px; }
-      .mov-av-card .mov-hint { margin-top: auto; }
-      .mov-av-audio .mov-switch { justify-content: space-between; gap: 12px; padding: 0; border: 0; background: transparent; }
-      .mov-av-audio .mov-switch span { order: 0; }
-      .mov-av-audio .mov-switch input { appearance: none; order: 1; flex: 0 0 34px; width: 34px; height: 20px; margin: 0; border: 1px solid ${TOKENS.border}; border-radius: 999px; background: ${TOKENS.border}; position: relative; transition: background .15s; }
-      .mov-av-audio .mov-switch input::after { content: ''; position: absolute; width: 14px; height: 14px; left: 2px; top: 2px; border-radius: 50%; background: white; transition: transform .15s; }
-      .mov-av-audio .mov-switch input:checked { background: ${TOKENS.primaryFill}; border-color: ${TOKENS.primaryFill}; }
-      .mov-av-audio .mov-switch input:checked::after { transform: translateX(14px); }
-      .mov-av-audio .mov-switch input:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 3px; }
-      @container (max-width: 480px) { .mov-av-grid { grid-template-columns: minmax(0, 1fr); } }
-      @media (prefers-reduced-motion: reduce) { .mov-av-audio .mov-switch input, .mov-av-audio .mov-switch input::after { transition: none; } }
-
-      /* \u5F00\u5173\u6CA1\u6709\u6807\u7B7E\u884C\uFF0C\u9760\u5E95\u5BF9\u9F50\u624D\u80FD\u8DDF\u65C1\u8FB9\u8F93\u5165\u6846\u7684\u63A7\u5236\u7EBF\u9F50\u5E73 */
-      .mov-field-switch { justify-content: flex-end; }
-      .mov-field-wide { grid-column: 1 / -1; }
-      .mov-label { display: block; font-size: 12px; color: ${TOKENS.muted}; margin-bottom: 6px; }
-      .mov-input { padding: 8px 10px; border-radius: 8px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.controlFill}; color: ${TOKENS.text}; font: inherit; font-size: 13px; height: 36px; }
-      .mov-key-control { position: relative; min-width: 0; }
-      .mov-key-control .mov-input { padding-right: 40px; }
-      .mov-key-eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 30px; height: 28px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 5px; background: transparent; color: ${TOKENS.muted}; cursor: pointer; }
-      .mov-key-eye:hover { color: ${TOKENS.text}; background: ${TOKENS.border}; }
-      .mov-key-eye:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 1px; }
-      .mov-input:focus, .mov-input:focus-visible { outline: none; border-color: ${TOKENS.primaryFill}; box-shadow: 0 0 0 3px rgba(36, 123, 191, .18); }
-      /* \u6A21\u578B ID \u4E0E\u53EF\u6267\u884C\u6587\u4EF6\u8DEF\u5F84\u5F88\u957F\uFF1A\u7B49\u5BBD\u5B57\u4F53 + \u7701\u7565\uFF0C\u4E0D\u628A\u6574\u884C\u6491\u53D8\u5F62 */
-      .mov-mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; }
-      /* \u5F00\u5173\u505A\u6210\u8DDF\u8F93\u5165\u6846\u540C\u9AD8\u7684\u5C0F\u65B9\u5757\uFF0C\u548C\u5468\u56F4\u63A7\u4EF6\u4E00\u6761\u7EBF */
-      .mov-switch { display: flex; align-items: center; gap: 8px; padding: 0 10px; height: 36px; box-sizing: border-box; border: 1px solid ${TOKENS.border}; border-radius: 8px; background: ${TOKENS.controlFill}; font-size: 13px; color: ${TOKENS.text}; cursor: pointer; }
-      .mov-switch:hover { border-color: ${TOKENS.primaryFill}; }
-      .mov-switch input { width: 15px; height: 15px; accent-color: ${TOKENS.primaryFill}; cursor: pointer; }
-      .mov-card { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 12px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.cardFill}; }
-      .mov-current-version { display: inline-flex; align-items: center; gap: 6px; flex: 1 1 120px; }
-      .mov-update-bell { display: inline-flex; flex: 0 0 auto; color: ${TOKENS.primaryFill}; transform-origin: 50% 10%; animation: mov-bell-swing 1.6s ease-in-out infinite; }
-      @keyframes mov-bell-swing { 0%, 60%, 100% { transform: rotate(0deg); } 10%, 30% { transform: rotate(-18deg); } 20%, 40% { transform: rotate(18deg); } 50% { transform: rotate(-8deg); } }
-      @media (prefers-reduced-motion: reduce) { .mov-update-bell { animation: none; } }
-      .mov-card-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-      .mov-card-title { font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
-      .mov-hint { font-size: 12px; color: ${TOKENS.muted}; line-height: 1.5; }
-      .mov-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-sizing: border-box; flex: 0 0 120px; width: 120px; min-width: 120px; height: 36px; min-height: 36px; padding: 4px 10px; border-radius: 8px; border: 1px solid ${TOKENS.border}; background: transparent; color: ${TOKENS.text}; font: inherit; font-size: 12px; line-height: 1.2; text-align: center; cursor: pointer; white-space: normal; overflow-wrap: anywhere; transition: background .15s, border-color .15s, color .15s, opacity .15s; }
-      .mov-btn:hover:not(:disabled) { border-color: ${TOKENS.primaryFill}; color: ${TOKENS.primaryFill}; }
-      .mov-btn:disabled { opacity: .5; cursor: default; }
-      .mov-btn-primary { border-color: ${TOKENS.primaryFill}; background: ${TOKENS.primaryFill}; color: #fff; font-weight: 600; }
-      .mov-btn-primary:hover:not(:disabled) { color: #fff; opacity: .88; }
-      .mov-quota-actions { display: flex; gap: 8px; flex: 0 0 auto; }
-      .mov-support-dialog { width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 0; border: 1px solid ${TOKENS.border}; border-radius: 12px; color: ${TOKENS.text}; background: ${TOKENS.cardFill}; overflow: auto; }
-      .mov-support-dialog::backdrop { background: rgba(0, 0, 0, .45); }
-      .mov-support-content { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-      .mov-support-content p { margin: 0; }
-      .mov-support-frame { width: 100%; height: min(480px, 62vh); border: 0; border-radius: 8px; background: white; }
-      .mov-trailing { margin-left: auto; }
-      /* \u989D\u5EA6\uFF1A\u4E09\u4E2A\u6570\u5B57\u5757\uFF0C\u4E00\u773C\u5206\u6E05\u5269\u4F59 / \u5DF2\u7528 / \u603B\u989D\u5EA6 */
-      .mov-quota-compact { padding: 8px 12px; gap: 10px 14px; flex-direction: row; align-items: center; flex-wrap: wrap; }
-      .mov-quota-compact .mov-card-head { min-height: 24px; flex: 0 0 auto; gap: 8px; }
-      .mov-quota-compact .mov-stats { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 8px 16px; min-width: 0; }
-      .mov-quota-compact .mov-stat { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 6px; padding: 0; border: 0; border-radius: 0; white-space: nowrap; }
-      .mov-quota-compact .mov-stat-label { font-size: 11px; white-space: nowrap; }
-      .mov-quota-compact .mov-stat-value { font-size: 14px; }
-      .mov-quota-compact .mov-foot-note { font-size: 10px; white-space: nowrap; flex: 0 0 auto; }
-      .mov-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
-      .mov-stat { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 10px; border: 1px solid ${TOKENS.border}; }
-      .mov-stat-label { font-size: 11.5px; color: ${TOKENS.muted}; }
-      .mov-stat-value { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-      .mov-foot-note { font-size: 11.5px; color: ${TOKENS.muted}; }
-      /* ffmpeg \u5B89\u88C5\u547D\u4EE4\uFF1A\u4E00\u884C\u7B49\u5BBD\u3001\u53EF\u590D\u5236\uFF0C\u4E0D\u7528\u6491\u6EE1\u6574\u884C */
-      .mov-cmd-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-      .mov-tag { flex: 0 0 auto; min-width: 132px; font-size: 12px; color: ${TOKENS.muted}; }
-      .mov-code { flex: 0 0 auto; max-width: 100%; padding: 6px 10px; border-radius: 8px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.controlFill}; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
-      /* \u4F7F\u7528\u8BB0\u5F55\uFF1A\u6591\u9A6C\u7EB9 + \u7EC6\u8868\u5934\uFF0C\u6A21\u578B\u5217\u5403\u6389\u5269\u4F59\u5BBD\u5EA6 */
-      /* \u9762\u677F\u5F88\u7A84\u65F6\u8868\u683C\u6A2A\u5411\u6EDA\u52A8\uFF0C\u4E5F\u4E0D\u628A\u300C\u65F6\u95F4\u300D\u6324\u6210\u4E24\u884C */
-      .mov-table { display: flex; flex-direction: column; margin: 0 -6px; overflow-x: auto; }
-      .mov-table-head, .mov-table-row { display: grid; grid-template-columns: 106px 78px minmax(72px, 1fr) 84px 60px; align-items: center; gap: 10px; padding: 8px 10px; }
-      .mov-table-head > :nth-child(1), .mov-table-row > :nth-child(1) { white-space: nowrap; }
-      .mov-table-head { font-size: 11px; letter-spacing: .03em; color: ${TOKENS.muted}; border-bottom: 1px solid ${TOKENS.border}; }
-      .mov-table-row { font-size: 12.5px; border-radius: 8px; }
-      .mov-table-row:nth-child(even) { background: rgba(127, 127, 127, .05); }
-      .mov-table-row:hover { background: rgba(127, 127, 127, .1); }
-      /* \u8D39\u7528\u4E0E\u7ED3\u679C\u4E24\u5217\u53F3\u5BF9\u9F50\uFF0C\u6570\u5B57\u7AD6\u7740\u5BF9\u5F97\u9F50 */
-      .mov-table-head > :nth-child(4), .mov-table-row > :nth-child(4),
-      .mov-table-head > :nth-child(5), .mov-table-row > :nth-child(5) { text-align: right; }
-      .mov-model { min-width: 0; overflow: hidden; color: ${TOKENS.muted}; white-space: nowrap; text-overflow: ellipsis; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; }
-      .mov-num { font-variant-numeric: tabular-nums; }
-      /* \u7ED3\u679C\u7528\u80F6\u56CA\u6807\u7B7E\uFF0C\u6BD4\u88F8\u6587\u5B57\u66F4\u5BB9\u6613\u4E00\u773C\u626B\u5230 */
-      .mov-chip { display: inline-flex; align-items: center; justify-content: center; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; line-height: 1.7; }
-      .mov-chip-ok { color: ${TOKENS.success}; background: rgba(46, 158, 91, .12); }
-      .mov-chip-bad { color: ${TOKENS.error}; background: rgba(217, 83, 79, .12); }
-      /* \u6CE8\u518C\u8868\u5355\uFF1A\u8F93\u5165\u6846\u5403\u6389\u591A\u4F59\u5BBD\u5EA6\uFF0C\u4E24\u4E2A\u6309\u94AE\u4E0D\u6362\u884C */
-      .mov-register-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-      /* \u5E95\u90E8\u64CD\u4F5C\u6761\uFF1A\u4E0A\u8FB9\u7EBF\u628A\u300C\u4FDD\u5B58\u300D\u548C\u914D\u7F6E\u5185\u5BB9\u5206\u5F00 */
-      .mov-footer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 2px 2px; border-top: 1px solid ${TOKENS.border}; }
-      .mov-notice { margin: 0; font-size: 12px; color: ${TOKENS.muted}; line-height: 1.5; }
-    `;
-    return { TOKENS, inputStyle, PAGE_CSS };
   }
 
   // src/businesses/video/client/progress.ts
@@ -380,7 +688,7 @@
           return snapshot;
         const next = /* @__PURE__ */ new Map();
         for (const { event } of window2.entries) {
-          if (event.type === "plugin:metaontic-video/execution") {
+          if (event.type === "plugin:metaontic-agent-forge/execution") {
             const { callId, phase } = event.data || {};
             if (typeof callId !== "string")
               continue;
@@ -422,42 +730,42 @@
       const progress = estimatedVideoProgress(elapsed, duration);
       const waitingDots = ".".repeat(elapsed % 3 + 1);
       const title = toolName === "video_extend" ? "\u89C6\u9891\u7EED\u62CD" : "\u89C6\u9891\u751F\u6210";
-      return h("div", { className: "mov-task mov-task-running", "data-field": "video-task-progress" }, [
+      return h("div", { className: "forge-task forge-task-running", "data-field": "video-task-progress" }, [
         h("style", { key: "style" }, `
-          @keyframes mov-task-spin { to { transform: rotate(360deg); } }
-          @keyframes mov-task-flow { from { background-position:0 0; } to { background-position:32px 0; } }
-          @keyframes mov-task-shimmer { from { transform:translateX(-120%); } to { transform:translateX(420%); } }
-          @keyframes mov-task-pulse { 0%,100% { opacity:.45; } 50% { opacity:1; } }
-          @keyframes mov-task-breath { 0%,100% { border-color:${TOKENS.border}; box-shadow:0 0 0 0 transparent; } 50% { border-color:${TOKENS.primaryFill}; box-shadow:0 0 12px 0 ${TOKENS.primaryFill}; } }
-          .mov-task { box-sizing:border-box; min-width:0; width:100%; border:1px solid ${TOKENS.border}; border-radius:10px; padding:10px 12px; color:${TOKENS.text}; margin:6px 0; overflow-wrap:anywhere; }
-          .mov-task-running { animation:mov-task-breath 2.4s ease-in-out infinite; }
-          .mov-task-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:13px; }
-          .mov-task-spinner { width:14px; height:14px; border:2px solid ${TOKENS.border}; border-top-color:${TOKENS.primaryFill}; border-radius:50%; animation:mov-task-spin .9s linear infinite; }
-          .mov-task-note { font-size:12px; color:${TOKENS.muted}; margin-top:8px; }
-          .mov-task-rail { position:relative; margin-top:20px; }
-          .mov-task-track { height:5px; border-radius:999px; overflow:hidden; background:${TOKENS.border}; }
-          .mov-task-turtle { position:absolute; top:-14px; transform:translateX(-50%) scaleX(-1); font-size:12px; line-height:1; transition:left 1s ease; }
-          .mov-task-fill { height:100%; border-radius:999px; background:${TOKENS.primaryFill}; transition:width 1s ease; position:relative; overflow:hidden; }
-          .mov-task-active .mov-task-fill { background-image:repeating-linear-gradient(110deg,transparent 0px,transparent 12px,rgba(255,255,255,.22) 12px,rgba(255,255,255,.22) 22px,transparent 22px,transparent 32px); background-size:32px 100%; animation:mov-task-flow 1s linear infinite; }
-          .mov-task-active .mov-task-fill::after { content:''; position:absolute; inset:0; width:30%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent); animation:mov-task-shimmer 2s linear infinite; }
-          .mov-task-live { display:inline-block; width:6px; height:6px; border-radius:50%; background:${TOKENS.primaryFill}; margin-right:6px; animation:mov-task-pulse 1.4s ease-in-out infinite; }
-          .mov-task-dots { display:inline-block; width:18px; text-align:left; }
-          @media(prefers-reduced-motion:reduce) { .mov-task-spinner, .mov-task-live, .mov-task-active .mov-task-fill, .mov-task-active .mov-task-fill::after { animation:none; } .mov-task-turtle { transition:none; } .mov-task-running { animation:none; } }
+          @keyframes forge-task-spin { to { transform: rotate(360deg); } }
+          @keyframes forge-task-flow { from { background-position:0 0; } to { background-position:32px 0; } }
+          @keyframes forge-task-shimmer { from { transform:translateX(-120%); } to { transform:translateX(420%); } }
+          @keyframes forge-task-pulse { 0%,100% { opacity:.45; } 50% { opacity:1; } }
+          @keyframes forge-task-breath { 0%,100% { border-color:${TOKENS.border}; box-shadow:0 0 0 0 transparent; } 50% { border-color:${TOKENS.primaryFill}; box-shadow:0 0 12px 0 ${TOKENS.primaryFill}; } }
+          .forge-task { box-sizing:border-box; min-width:0; width:100%; border:1px solid ${TOKENS.border}; border-radius:10px; padding:10px 12px; color:${TOKENS.text}; margin:6px 0; overflow-wrap:anywhere; }
+          .forge-task-running { animation:forge-task-breath 2.4s ease-in-out infinite; }
+          .forge-task-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:13px; }
+          .forge-task-spinner { width:14px; height:14px; border:2px solid ${TOKENS.border}; border-top-color:${TOKENS.primaryFill}; border-radius:50%; animation:forge-task-spin .9s linear infinite; }
+          .forge-task-note { font-size:12px; color:${TOKENS.muted}; margin-top:8px; }
+          .forge-task-rail { position:relative; margin-top:20px; }
+          .forge-task-track { height:5px; border-radius:999px; overflow:hidden; background:${TOKENS.border}; }
+          .forge-task-turtle { position:absolute; top:-14px; transform:translateX(-50%) scaleX(-1); font-size:12px; line-height:1; transition:left 1s ease; }
+          .forge-task-fill { height:100%; border-radius:999px; background:${TOKENS.primaryFill}; transition:width 1s ease; position:relative; overflow:hidden; }
+          .forge-task-active .forge-task-fill { background-image:repeating-linear-gradient(110deg,transparent 0px,transparent 12px,rgba(255,255,255,.22) 12px,rgba(255,255,255,.22) 22px,transparent 22px,transparent 32px); background-size:32px 100%; animation:forge-task-flow 1s linear infinite; }
+          .forge-task-active .forge-task-fill::after { content:''; position:absolute; inset:0; width:30%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent); animation:forge-task-shimmer 2s linear infinite; }
+          .forge-task-live { display:inline-block; width:6px; height:6px; border-radius:50%; background:${TOKENS.primaryFill}; margin-right:6px; animation:forge-task-pulse 1.4s ease-in-out infinite; }
+          .forge-task-dots { display:inline-block; width:18px; text-align:left; }
+          @media(prefers-reduced-motion:reduce) { .forge-task-spinner, .forge-task-live, .forge-task-active .forge-task-fill, .forge-task-active .forge-task-fill::after { animation:none; } .forge-task-turtle { transition:none; } .forge-task-running { animation:none; } }
         `),
-        h("div", { key: "head", className: "mov-task-head" }, [
-          h("span", { key: "spinner", className: "mov-task-spinner", "aria-hidden": true }),
+        h("div", { key: "head", className: "forge-task-head" }, [
+          h("span", { key: "spinner", className: "forge-task-spinner", "aria-hidden": true }),
           h("strong", { key: "title" }, title),
-          h("span", { key: "status", role: "status" }, [status, h("span", { key: "dots", className: "mov-task-dots", "aria-hidden": true }, waitingDots)]),
+          h("span", { key: "status", role: "status" }, [status, h("span", { key: "dots", className: "forge-task-dots", "aria-hidden": true }, waitingDots)]),
           h("span", { key: "elapsed", style: { marginLeft: "auto", fontVariantNumeric: "tabular-nums" } }, `\u5DF2\u7B49\u5F85 ${Math.floor(elapsed / 60)}\u5206${String(elapsed % 60).padStart(2, "0")}\u79D2`)
         ]),
-        h("div", { key: "progress", className: "mov-task-rail" }, [
-          h("div", { className: "mov-task-track mov-task-active", role: "progressbar", "aria-label": "\u4F30\u7B97\u8FDB\u5EA6", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": progress }, h("div", { className: "mov-task-fill", style: { width: `${progress}%` } })),
+        h("div", { key: "progress", className: "forge-task-rail" }, [
+          h("div", { className: "forge-task-track forge-task-active", role: "progressbar", "aria-label": "\u4F30\u7B97\u8FDB\u5EA6", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": progress }, h("div", { className: "forge-task-fill", style: { width: `${progress}%` } })),
           // 装饰用的小乌龟：跟着进度条填充的右端一起从左往右爬，只表示「还在忙」，不代表真实进度；屏幕阅读器不读它。
-          h("span", { key: "turtle", className: "mov-task-turtle", style: { left: `${progress}%` }, "aria-hidden": true }, "\u{1F422}")
+          h("span", { key: "turtle", className: "forge-task-turtle", style: { left: `${progress}%` }, "aria-hidden": true }, "\u{1F422}")
         ]),
-        h("div", { key: "percent", className: "mov-task-note" }, `${progress}% \xB7 \u4F30\u7B97\u8FDB\u5EA6`),
-        h("div", { key: "note", className: "mov-task-note" }, [
-          h("span", { key: "live", className: "mov-task-live", "aria-hidden": true }),
+        h("div", { key: "percent", className: "forge-task-note" }, `${progress}% \xB7 \u4F30\u7B97\u8FDB\u5EA6`),
+        h("div", { key: "note", className: "forge-task-note" }, [
+          h("span", { key: "live", className: "forge-task-live", "aria-hidden": true }),
           `${duration ? `\u76EE\u6807 ${duration} \u79D2 \xB7 \u9884\u8BA1\u7B49\u5F85\u7EA6 ${Math.round(estimatedWait)} \u79D2 \xB7 ` : ""}${progress >= 99 ? "\u4EFB\u52A1\u4ECD\u5728\u7B49\u5F85\u7ED3\u679C\uFF0C\u8FDB\u5EA6\u505C\u572899%\u4E0D\u8868\u793A\u5931\u8D25\u3002" : "\u4EFB\u52A1\u5904\u7406\u4E2D\uFF0C\u5B8C\u6210\u540E\u81EA\u52A8\u663E\u793A\u7ED3\u679C\u3002"}\u8BF7\u52FF\u91CD\u590D\u63D0\u4EA4\u3002`
         ])
       ]);
@@ -509,8 +817,8 @@
 
   // src/businesses/video/client/config.ts
   function createClientConfig() {
-    const NAMESPACE = "metaontic-video";
-    const NS = "settings.metaonticVideo";
+    const NAMESPACE2 = "metaontic-agent-forge";
+    const NS2 = "settings.metaonticAgentForge";
     const MODEL_OPTIONS = [
       "doubao-seedance-2-0-mini-260615",
       "doubao-seedance-2-0-fast-260128"
@@ -607,34 +915,13 @@
       }
       return option;
     }
-    return { PLUGIN_OWNED_KEYS, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE };
+    return { PLUGIN_OWNED_KEYS, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS: NS2, NAMESPACE: NAMESPACE2 };
   }
 
   // src/businesses/video/client/locale.ts
   function createDictionaries() {
     const zh = {
       summaryEmpty: "\u8BF7\u9009\u62E9\u63A5\u5165\u65B9\u5F0F\uFF0C\u586B\u5199 API\u5BC6\u94A5\u540E\u4FDD\u5B58\u3002",
-      panelTitle: "\u89C6\u9891\u521B\u4F5C",
-      panelSidebarLabel: "\u89C6\u9891\u521B\u4F5C\u52A9\u624B",
-      panelIntro: "\u5728\u5BF9\u8BDD\u91CC\u8BF4\u6E05\u521B\u610F\u3001\u65F6\u957F\u4E0E\u753B\u5E45\uFF0C\u811A\u672C\u3001\u5206\u955C\u3001\u751F\u6210\u548C\u672C\u673A\u5408\u5E76\u90FD\u7531\u63D2\u4EF6\u5B8C\u6210\u3002",
-      panelStart: "\u5F00\u59CB\u521B\u4F5C",
-      panelNew: "\u65B0\u5EFA\u89C6\u9891\u521B\u4F5C\u4F1A\u8BDD",
-      panelSettings: "\u6253\u5F00\u63D2\u4EF6\u8BBE\u7F6E",
-      panelGuide: "\u4F7F\u7528\u8BF4\u660E",
-      panelHighlights: "\u4E3A\u4EC0\u4E48\u7528\u5B83",
-      panelHighlight1Title: "\u65B0\u624B\u4E5F\u80FD\u4E0A\u624B",
-      panelHighlight1Desc: "\u4E0D\u7528\u7814\u7A76\u63D0\u793A\u8BCD\uFF1A\u8BF4\u6E05\u521B\u610F\u3001\u65F6\u957F\u548C\u753B\u5E45\u5C31\u80FD\u5F00\u59CB\uFF0C\u811A\u672C\u3001\u5206\u955C\u3001\u751F\u6210\u548C\u672C\u673A\u5408\u5E76\u90FD\u7531\u52A9\u624B\u5B8C\u6210\u3002",
-      panelHighlight2Title: "\u5206\u6BB5\u5236\u4F5C\u957F\u89C6\u9891",
-      panelHighlight2Desc: "\u8D85\u8FC7\u5355\u6BB5\u4E0A\u9650\u65F6\u5206\u6BB5\u7EED\u62CD\uFF0C\u6BCF\u6BB5\u9884\u89C8\u786E\u8BA4\u540E\u7EE7\u7EED\uFF0C\u5168\u90E8\u5B8C\u6210\u540E\u5728\u672C\u673A\u5408\u5E76\u3002",
-      panelFlow: "\u4F7F\u7528\u6D41\u7A0B",
-      panelStep1Title: "\u8BF4\u6E05\u521B\u610F",
-      panelStep1Desc: "\u4E3B\u9898\u3001\u65F6\u957F\u3001\u753B\u5E45\uFF0816:9 / 9:16\uFF09\u4E0E\u6E05\u6670\u5EA6\uFF1B\u6CA1\u5199\u753B\u5E45\u65F6\u52A9\u624B\u4F1A\u5148\u95EE\u3002",
-      panelStep2Title: "\u811A\u672C\u5206\u955C",
-      panelStep2Desc: "\u5148\u51FA\u811A\u672C\u4E0E\u5206\u955C\uFF0C\u4F60\u5BA1\u6838\u786E\u8BA4\u540E\u518D\u7EE7\u7EED\u3002",
-      panelStep3Title: "\u9010\u6BB5\u751F\u6210",
-      panelStep3Desc: "\u786E\u8BA4\u8D39\u7528\u540E\u751F\u6210\uFF1B\u5206\u6BB5\u9884\u89C8\u786E\u8BA4\u540E\u7EE7\u7EED\u4E0B\u4E00\u6BB5\uFF0C\u652F\u6301\u65AD\u70B9\u7EED\u505A\u3002",
-      panelStep4Title: "\u672C\u673A\u5408\u5E76",
-      panelStep4Desc: "\u5206\u6BB5\u751F\u6210\u7684\u7ED3\u679C\u5728\u672C\u673A\u5408\u5E76\u6210\u7247\uFF0C\u53EF\u9010\u6BB5\u9884\u89C8\u3002",
       summary: "{provider} \xB7 {model}",
       apiKeyConfigured: "\u5DF2\u914D\u7F6E\uFF0C\u7559\u7A7A\u4FDD\u7559\u73B0\u6709 API\u5BC6\u94A5",
       connectionMode: "\u63A5\u5165\u65B9\u5F0F",
@@ -761,27 +1048,6 @@
     };
     const en = {
       summaryEmpty: "Choose a connection method, then log in or enter an API key and save.",
-      panelTitle: "Video",
-      panelSidebarLabel: "Video Creator",
-      panelIntro: "Describe the idea, duration and aspect ratio in the conversation; the plugin handles script, storyboard, generation and local merging.",
-      panelStart: "Start creating",
-      panelNew: "New video session",
-      panelSettings: "Open plugin settings",
-      panelGuide: "User guide",
-      panelHighlights: "Why it works",
-      panelHighlight1Title: "Made for beginners",
-      panelHighlight1Desc: "No prompt engineering: describe the idea, duration and ratio, and the assistant handles script, storyboard, generation and merging.",
-      panelHighlight2Title: "Create longer videos in segments",
-      panelHighlight2Desc: "Videos beyond the model limit are continued in segments. Review each segment before continuing; merge locally when all segments are complete.",
-      panelFlow: "How it works",
-      panelStep1Title: "Describe the idea",
-      panelStep1Desc: "Topic, duration, ratio (16:9 / 9:16) and resolution; the assistant asks when the ratio is missing.",
-      panelStep2Title: "Script & storyboard",
-      panelStep2Desc: "The script and storyboard come first; production waits for your review.",
-      panelStep3Title: "Segment generation",
-      panelStep3Desc: "Confirm the cost to generate, then review each segment before continuing to the next. Resume saved progress when needed.",
-      panelStep4Title: "Merge locally",
-      panelStep4Desc: "Segments are merged into the final video on your machine, with per-segment preview.",
       summary: "{provider} \xB7 {model}",
       apiKeyConfigured: "Configured; leave blank to keep the current key",
       connectionMode: "Connection",
@@ -857,7 +1123,7 @@
       versionUpdateFailed: "Online update failed: {message}",
       versionUpdateRemoved: "The installation state could not be confirmed. Check the Plugins page and preserve your configuration; do not uninstall immediately.",
       versionUpdateRateLimited: "Gitee is limiting requests. Try again later. Your settings and keys will be kept.",
-      versionUpdateLockfile: "The profile pnpm-lock.yaml still has metaontic-video entries without integrity, so pnpm refuses to install (ERR_PNPM_MISSING_TARBALL_INTEGRITY). The plugin checks every 2 seconds, clears those invalid entries in the background and keeps a backup, and the update retries once the cleanup is done. If it still fails, quit Harness and delete pnpm-lock.yaml in the plugin install directory.",
+      versionUpdateLockfile: "The profile pnpm-lock.yaml still has metaontic-agent-forge entries without integrity, so pnpm refuses to install (ERR_PNPM_MISSING_TARBALL_INTEGRITY). The plugin checks every 2 seconds, clears those invalid entries in the background and keeps a backup, and the update retries once the cleanup is done. If it still fails, quit Harness and delete pnpm-lock.yaml in the plugin install directory.",
       versionUpdateUnavailable: "This Harness version does not support this update entry. Keep the existing plugin and configuration; follow the guide to update using a stable release package.",
       versionHint: "Check for and install updates here. Your settings and keys will be kept.",
       versionCheckedAt: "checked {time}",
@@ -936,7 +1202,7 @@
         }
       }
       function fail(code, before2, after2) {
-        globalThis.console?.warn?.("[MetaOnticVideo] settings-save", {
+        globalThis.console?.warn?.("[MetaOntic Agent Forge] settings-save", {
           code,
           beforeRevision: before2?.revision ?? null,
           afterRevision: after2?.revision ?? null
@@ -1036,12 +1302,12 @@
 
   // src/client/updates.ts
   function createUpdates({ h, fetchSource }) {
-    const PLUGIN_PACKAGE = "metaontic-video";
+    const PLUGIN_PACKAGE = "metaontic-agent-forge";
     const UPDATE_SPEC = "git+https://gitee.com/hadlooop/metaontic-agent-forge.git";
     const UPDATE_ATTEMPTS = 3;
-    const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
+    const UPDATE_CACHE_KEY = "metaontic-agent-forge.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.20.2".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "1.0.0".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1067,7 +1333,7 @@
       const label = t("versionNew", { version: latest });
       return h(
         "span",
-        { key: "update-bell", className: "mov-update-bell", "data-field": "update-bell", role: "img", "aria-label": label, title: label },
+        { key: "update-bell", className: "forge-update-bell", "data-field": "update-bell", role: "img", "aria-label": label, title: label },
         h("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, [
           h("path", { key: "body", d: "M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" }),
           h("path", { key: "clapper", d: "M10 21h4M12 2V1" })
@@ -1224,8 +1490,8 @@
         return;
       }
       const candidates = [
-        `https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`,
-        `https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`
+        `https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/v${context.updateLatest}/metaontic-agent-forge-${context.updateLatest}.tgz`,
+        `https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/v${context.updateLatest}/metaontic-agent-forge-${context.updateLatest}.tgz`
       ];
       const specUnresolvable = (text) => /Could not resolve|No matching version|ERR_PNPM_NO_MATCHING_VERSION|ERR_PNPM_FETCH_40[34]|HTTP[ :]+40[34]|404 Not Found|403 Forbidden/i.test(text);
       const trySpec = async (spec) => {
@@ -1300,23 +1566,23 @@
   }
   function renderUpdateNotice({ h, t, available, latest, deferred, status, confirmed, onUpdate, onLater }) {
     if (!available || deferred === latest || status === "installing") return null;
-    return h("div", { key: "update-notice", className: "mov-notice", role: "status", "data-field": "update-notice" }, [
+    return h("div", { key: "update-notice", className: "forge-notice", role: "status", "data-field": "update-notice" }, [
       h("strong", { key: "title" }, t("versionNew", { version: latest })),
       h("p", { key: "optional" }, t("versionOptional")),
       confirmed ? h("p", { key: "confirm" }, t("versionUpdateConfirmHint")) : null,
-      h("div", { key: "actions", className: "mov-cmd-row" }, [
+      h("div", { key: "actions", className: "forge-cmd-row" }, [
         h(
           "button",
           {
             key: "update",
             type: "button",
-            className: "mov-btn mov-btn-sm mov-btn-primary",
+            className: "forge-btn forge-btn-sm forge-btn-primary",
             "data-action": confirmed ? "update-notice-confirm" : "update-notice-open",
             onClick: onUpdate
           },
           confirmed ? t("versionUpdateConfirm", { version: latest }) : t("versionUpdate")
         ),
-        h("button", { key: "later", type: "button", className: "mov-btn mov-btn-sm", "data-action": "update-later", onClick: onLater }, t("versionLater"))
+        h("button", { key: "later", type: "button", className: "forge-btn forge-btn-sm", "data-action": "update-later", onClick: onLater }, t("versionLater"))
       ])
     ]);
   }
@@ -1393,9 +1659,9 @@
       const current = draft[field.key] !== void 0 ? draft[field.key] : value[field.key] ?? (["imageUseVideoKey", "usageStatsEnabled"].includes(field.key) ? true : field.key === "pollIntervalMs" ? 5e3 : field.key === "maxWaitMs" ? 6e5 : void 0);
       const secondsField = field.key === "pollIntervalMs" || field.key === "maxWaitMs";
       const displayed = secondsField && current !== void 0 && current !== "" ? Number(current) / 1e3 : current;
-      const id = `metaontic-video-${field.key}`;
+      const id = `metaontic-agent-forge-${field.key}`;
       if (field.kind === "switch") {
-        return h("label", { key: "control", htmlFor: id, className: "mov-switch" }, h("input", {
+        return h("label", { key: "control", htmlFor: id, className: "forge-switch" }, h("input", {
           id,
           "data-field": field.key,
           type: "checkbox",
@@ -1415,7 +1681,7 @@
           key: "control",
           id,
           "data-field": field.key,
-          className: `mov-input${field.mono ? " mov-mono" : ""}`,
+          className: `forge-input${field.mono ? " forge-mono" : ""}`,
           style: inputStyle,
           value: removedMode ? "" : legacyMerge ? "copy" : retiredImageModel ? options[0] ?? "" : current ?? "",
           onChange: (event) => edit(field.key, event.target.value)
@@ -1434,7 +1700,7 @@
         key: "input",
         id,
         "data-field": field.key,
-        className: `mov-input${field.mono ? " mov-mono" : ""}`,
+        className: `forge-input${field.mono ? " forge-mono" : ""}`,
         style: inputStyle,
         type: field.kind === "number" ? "number" : field.secret && !revealed ? "password" : "text",
         value: displayed ?? "",
@@ -1445,12 +1711,12 @@
       });
       if (!canReveal)
         return input;
-      return h("div", { key: "control", className: "mov-key-control" }, [
+      return h("div", { key: "control", className: "forge-key-control" }, [
         input,
         h("button", {
           key: "toggle",
           type: "button",
-          className: "mov-key-eye",
+          className: "forge-key-eye",
           "aria-label": t(revealed ? "hideKey" : "showKey"),
           title: t(revealed ? "hideKey" : "showKey"),
           "data-action": `toggle-${field.key}`,
@@ -1469,30 +1735,22 @@
 
   // package.json
   var package_default = {
-    name: "metaontic-video",
-    version: "3.20.2",
-    description: "DeepSeek Harness video plugin: beginner-friendly guided video creation and a low-cost long-video workflow using segment continuation and local merging.",
+    name: "metaontic-agent-forge",
+    version: "1.0.0",
+    description: "\u4E91\u667A\u5DE5\u574A \xB7 \u667A\u80FD\u4F53\u5E73\u53F0\uFF1A\u4E3A DeepSeek Harness \u63D0\u4F9B\u603B\u63A7\u8C03\u5EA6\u3001\u4E13\u4E1A Agent \u4E0E\u53EF\u6269\u5C55\u4E1A\u52A1\u6A21\u5757\uFF0C\u5185\u7F6E\u89C6\u9891\u521B\u4F5C\u4E0E\u5BA3\u4F20\u89C6\u9891\u5DE5\u4F5C\u6D41\u3002",
     license: "SEE LICENSE IN LICENSE",
     type: "module",
     keywords: [
-      "metaontic-video",
+      "metaontic-agent-forge",
       "deepseek-harness",
-      "deepseek-harness-plugin",
       "dsh-plugin",
+      "agent-platform",
+      "agent-orchestration",
+      "multi-agent",
       "ai-video",
-      "ai-video-generation",
       "seedance",
-      "seedance-2",
       "long-video",
-      "video-generation",
-      "image-to-video",
-      "text-to-video",
-      "video-continuation",
-      "video-extension",
-      "storyboard",
-      "ffmpeg",
-      "new-api",
-      "video-director"
+      "ffmpeg"
     ],
     repository: {
       type: "git",
@@ -1508,15 +1766,15 @@
       "./locale/*.json": "./locale/*.json",
       "./icon": "./icon.svg",
       "./package.json": "./package.json",
-      "./presets/video-director": "./presets/video-director.js",
-      "./presets/video-director/locale/*.json": "./locale/presets/video-director/*.json",
-      "./presets/promo-video": "./presets/promo-video.js",
-      "./presets/promo-video/locale/*.json": "./locale/presets/promo-video/*.json",
-      "./presets/video-director/icon": "./presets/icons/video-director.svg",
-      "./presets/promo-video/icon": "./presets/icons/promo-video.svg",
-      "./presets/cloud-studio": "./presets/cloud-studio.js",
-      "./presets/cloud-studio/locale/*.json": "./locale/presets/cloud-studio/*.json",
-      "./presets/cloud-studio/icon": "./presets/icons/cloud-studio.svg"
+      "./presets/forge-video-director": "./presets/forge-video-director.js",
+      "./presets/forge-video-director/locale/*.json": "./locale/presets/forge-video-director/*.json",
+      "./presets/forge-promo-video": "./presets/forge-promo-video.js",
+      "./presets/forge-promo-video/locale/*.json": "./locale/presets/forge-promo-video/*.json",
+      "./presets/forge-video-director/icon": "./presets/icons/forge-video-director.svg",
+      "./presets/forge-promo-video/icon": "./presets/icons/forge-promo-video.svg",
+      "./presets/forge-studio": "./presets/forge-studio.js",
+      "./presets/forge-studio/locale/*.json": "./locale/presets/forge-studio/*.json",
+      "./presets/forge-studio/icon": "./presets/icons/forge-studio.svg"
     },
     files: [
       "index.js",
@@ -1527,12 +1785,10 @@
       "icon.svg",
       "logo.svg",
       "README.en.md",
-      "MetaOnticVideo\u4F7F\u7528\u8BF4\u660E\u4E66.md",
-      "MetaOnticVideo\u4F7F\u7528\u8BF4\u660E\u4E66.pdf",
+      "MetaOnticAgentForge\u4F7F\u7528\u8BF4\u660E\u4E66.md",
+      "MetaOnticAgentForge\u4F7F\u7528\u8BF4\u660E\u4E66.pdf",
       "CHANGELOG.md",
       "LICENSE",
-      "docs/guide/*.svg",
-      "docs/guide/*.png",
       "THIRD_PARTY_NOTICES.md",
       "presets/*.js",
       "locale/presets/**/*.json",
@@ -1579,9 +1835,9 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.20.2",
+      version: "1.0.0",
       prerelease: false,
-      publishedAt: "2026-11-08T03:02:31.736Z",
+      publishedAt: "2026-11-08T08:28:33.088Z",
       items: [
         "\u4F18\u5316\uFF1A\u5E38\u89C4\u4F53\u9A8C\u4F18\u5316\u3002"
       ]
@@ -1814,13 +2070,13 @@
           maxWaitMs: t("waitSecondsHint")
         };
         function fieldCell(field) {
-          const classes = ["mov-field"];
-          if (field.kind === "switch") classes.push("mov-field-switch");
-          if (field.wide) classes.push("mov-field-wide");
+          const classes = ["forge-field"];
+          if (field.kind === "switch") classes.push("forge-field-switch");
+          if (field.wide) classes.push("forge-field-wide");
           return h("div", { key: field.key, className: classes.join(" ") }, [
-            field.kind === "switch" ? null : h("label", { key: "label", className: "mov-label", htmlFor: `metaontic-video-${field.key}` }, t(["metaonticApiKey", "volcengineApiKey"].includes(field.key) ? !directMode && (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false ? "sharedModelKey" : "videoModelKey" : field.key)),
+            field.kind === "switch" ? null : h("label", { key: "label", className: "forge-label", htmlFor: `metaontic-agent-forge-${field.key}` }, t(["metaonticApiKey", "volcengineApiKey"].includes(field.key) ? !directMode && (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false ? "sharedModelKey" : "videoModelKey" : field.key)),
             control(field),
-            hints[field.key] ? h("span", { key: "hint", className: "mov-hint", style: { marginTop: 4 } }, hints[field.key]) : null
+            hints[field.key] ? h("span", { key: "hint", className: "forge-hint", style: { marginTop: 4 } }, hints[field.key]) : null
           ]);
         }
         const renderGrid = (section) => {
@@ -1829,24 +2085,24 @@
             const common = !directMode ? [fieldCell(FIELD_BY_KEY.imageUseVideoKey), ...shared2 ? [fieldCell(FIELD_BY_KEY.metaonticApiKey)] : []] : [];
             const videoFields = ["model", ...directMode || !shared2 ? [directMode ? "volcengineApiKey" : "metaonticApiKey"] : []];
             const imageFields = ["imageModel", ...!shared2 ? ["imageApiKey"] : []];
-            return h("div", { key: section.key, className: "mov-model-settings" }, [
+            return h("div", { key: section.key, className: "forge-model-settings" }, [
               ...common,
-              h("div", { key: "models", className: `mov-model-grid${directMode ? " mov-model-grid-single" : ""}` }, [
-                h("div", { key: "video", className: "mov-model-card", "data-group": "video-model" }, videoFields.map((key) => fieldCell(FIELD_BY_KEY[key]))),
-                !directMode ? h("div", { key: "image", className: "mov-model-card", "data-group": "image-model" }, imageFields.map((key) => fieldCell(FIELD_BY_KEY[key]))) : null
+              h("div", { key: "models", className: `forge-model-grid${directMode ? " forge-model-grid-single" : ""}` }, [
+                h("div", { key: "video", className: "forge-model-card", "data-group": "video-model" }, videoFields.map((key) => fieldCell(FIELD_BY_KEY[key]))),
+                !directMode ? h("div", { key: "image", className: "forge-model-card", "data-group": "image-model" }, imageFields.map((key) => fieldCell(FIELD_BY_KEY[key]))) : null
               ])
             ]);
           }
           if (section.key === "sectionVideo") {
-            return h("div", { key: section.key, className: "mov-av-grid" }, [
-              h("div", { key: "picture", className: "mov-av-card" }, [
+            return h("div", { key: section.key, className: "forge-av-grid" }, [
+              h("div", { key: "picture", className: "forge-av-card" }, [
                 fieldCell(FIELD_BY_KEY.ratio),
-                h("span", { key: "hint", className: "mov-hint" }, t("ratioLayoutHint"))
+                h("span", { key: "hint", className: "forge-hint" }, t("ratioLayoutHint"))
               ]),
-              h("div", { key: "audio", className: "mov-av-card mov-av-audio" }, [
-                h("span", { key: "label", className: "mov-label" }, t("audioSettings")),
+              h("div", { key: "audio", className: "forge-av-card forge-av-audio" }, [
+                h("span", { key: "label", className: "forge-label" }, t("audioSettings")),
                 control(FIELD_BY_KEY.generateAudio),
-                h("span", { key: "hint", className: "mov-hint" }, t("audioLayoutHint"))
+                h("span", { key: "hint", className: "forge-hint" }, t("audioLayoutHint"))
               ])
             ]);
           }
@@ -1855,41 +2111,41 @@
           const fields = section.key === "sectionModels" ? directMode ? ["model", videoKey] : shared ? ["imageUseVideoKey", videoKey, "model", "imageModel"] : ["imageUseVideoKey", "model", videoKey, "imageModel", "imageApiKey"] : section.fields;
           return h(
             "div",
-            { key: section.key, className: "mov-grid" },
+            { key: section.key, className: "forge-grid" },
             fields.filter((key) => (key !== "volcengineApiKey" || directMode) && (!["imageModel", "imageUseVideoKey", "imageApiKey"].includes(key) || !directMode) && (key !== "imageApiKey" || (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) === false) && (key !== "metaonticApiKey" || selectedMode === "metaontic")).map((key) => fieldCell(FIELD_BY_KEY[key])).filter(Boolean)
           );
         };
         const settingsRows = () => [
-          h("div", { key: "generation", className: "mov-section" }, [
-            h("div", { key: "title", className: "mov-section-title" }, t("sectionGeneration")),
-            ...SECTIONS.map((section) => h("div", { key: section.key, className: "mov-parameter-group" }, [
-              h("div", { key: "heading", className: "mov-parameter-heading" }, t(section.key)),
+          h("div", { key: "generation", className: "forge-section" }, [
+            h("div", { key: "title", className: "forge-section-title" }, t("sectionGeneration")),
+            ...SECTIONS.map((section) => h("div", { key: section.key, className: "forge-parameter-group" }, [
+              h("div", { key: "heading", className: "forge-parameter-heading" }, t(section.key)),
               renderGrid(section)
             ]))
           ]),
-          h("details", { key: "advanced", className: "mov-section mov-advanced" }, [
-            h("summary", { key: "toggle", className: "mov-advanced-toggle" }, [
+          h("details", { key: "advanced", className: "forge-section forge-advanced" }, [
+            h("summary", { key: "toggle", className: "forge-advanced-toggle" }, [
               h("span", { key: "title" }, t("sectionCombined")),
-              h("span", { key: "hint", className: "mov-hint" }, t("sectionCombinedHint"))
+              h("span", { key: "hint", className: "forge-hint" }, t("sectionCombinedHint"))
             ]),
-            h("div", { key: "body", className: "mov-advanced-body" }, [
+            h("div", { key: "body", className: "forge-advanced-body" }, [
               ...[
                 { key: "advancedPicture", fields: ["watermark"] },
                 { key: "advancedMerge", fields: ["mergeMode", "seamTrimSeconds"], hint: "segmentsRetained" },
                 { key: "advancedWait", fields: ["pollIntervalMs", "maxWaitMs"] },
                 { key: "advancedTools", fields: ["ffmpegBinary", "ffprobeBinary"], hint: "toolsHint" },
                 { key: "advancedStats", fields: ["usageStatsEnabled"], hint: "usageStatsHint" }
-              ].map((group) => h("div", { key: group.key, className: `mov-advanced-group${group.key === "advancedTools" ? " mov-advanced-tools" : ""}`, "data-group": group.key }, [
-                h("div", { key: "title", className: "mov-parameter-heading" }, t(group.key)),
+              ].map((group) => h("div", { key: group.key, className: `forge-advanced-group${group.key === "advancedTools" ? " forge-advanced-tools" : ""}`, "data-group": group.key }, [
+                h("div", { key: "title", className: "forge-parameter-heading" }, t(group.key)),
                 renderGrid(group),
-                group.hint ? h("p", { key: "hint", className: "mov-hint", style: { margin: 0 } }, t(group.hint)) : null
+                group.hint ? h("p", { key: "hint", className: "forge-hint", style: { margin: 0 } }, t(group.hint)) : null
               ]))
             ])
           ])
         ];
         const overrides = Object.keys(snapshot.user || {});
         const footerMessage = status === "saved" ? t("saved") : status === "reset" ? t("resetDone") : status === "failed" ? saveError || t("saveFailed") : pending.length ? t("dirty") : "";
-        const footer = pending.length || status !== "idle" ? h("div", { key: "footer", className: "mov-footer" }, [
+        const footer = pending.length || status !== "idle" ? h("div", { key: "footer", className: "forge-footer" }, [
           footerMessage ? h("span", {
             key: "status",
             style: {
@@ -1898,13 +2154,13 @@
             }
           }, footerMessage) : null
         ]) : null;
-        const resetRow = overrides.length || pending.length ? h("div", { key: "reset-row", className: "mov-footer mov-reset-row" }, [
-          h("span", { key: "hint", className: "mov-hint", style: { flex: "1 1 200px" } }, t("resetHint")),
+        const resetRow = overrides.length || pending.length ? h("div", { key: "reset-row", className: "forge-footer forge-reset-row" }, [
+          h("span", { key: "hint", className: "forge-hint", style: { flex: "1 1 200px" } }, t("resetHint")),
           pending.length ? h("button", {
             key: "save",
             "data-action": "save",
             type: "button",
-            className: "mov-btn mov-btn-primary",
+            className: "forge-btn forge-btn-primary",
             disabled: status === "saving" || snapshot.writable === false,
             onClick: save
           }, status === "saving" ? t("saving") : t("save")) : null,
@@ -1912,7 +2168,7 @@
             key: "reset",
             "data-action": "reset",
             type: "button",
-            className: "mov-btn",
+            className: "forge-btn",
             disabled: status === "saving" || snapshot.writable === false,
             onClick: reset
           }, t("reset"))
@@ -1923,24 +2179,24 @@
         const versionBox = h("div", {
           key: "version",
           "data-field": "version",
-          className: "mov-card"
+          className: "forge-card"
         }, [
-          h("div", { key: "head", className: "mov-card-head" }, [
-            h("span", { key: "title", className: "mov-card-title" }, t("versionTitle")),
+          h("div", { key: "head", className: "forge-card-head" }, [
+            h("span", { key: "title", className: "forge-card-title" }, t("versionTitle")),
             h("span", {
               key: "current",
               "data-field": "versionCurrent",
-              className: "mov-hint mov-current-version"
+              className: "forge-hint forge-current-version"
             }, [
               h("span", { key: "label" }, PLUGIN_VERSION ? t("versionCurrent", { version: PLUGIN_VERSION }) : ""),
               updateBell(t, updateLatest, PLUGIN_VERSION)
             ]),
-            h("a", { key: "history", className: "mov-hint", href: "https://github.com/wxsimon2022/metaontic-agent-forge/blob/master/CHANGELOG.md", target: "_blank", rel: "noopener noreferrer" }, t("versionHistory")),
+            h("a", { key: "history", className: "forge-hint", href: "https://github.com/wxsimon2022/metaontic-agent-forge/blob/master/CHANGELOG.md", target: "_blank", rel: "noopener noreferrer" }, t("versionHistory")),
             h("button", {
               key: "check",
               "data-action": "update-check",
               type: "button",
-              className: "mov-btn mov-btn-sm mov-trailing",
+              className: "forge-btn forge-btn-sm forge-trailing",
               disabled: updateStatus === "working" || updateStatus === "installing",
               onClick: () => {
                 checkForUpdate(false).catch(() => {
@@ -1950,8 +2206,8 @@
           ]),
           releaseNotes?.items?.length ? h("div", { key: "release-notes", "data-field": "releaseNotes" }, [
             h("div", { key: "heading", style: { display: "flex", alignItems: "baseline", gap: 12 } }, [
-              h("span", { key: "title", className: "mov-card-title" }, `${releaseNotes.version} \xB7 ${t("releaseNotesTitle")}`),
-              formatReleaseTime(releaseNotes.publishedAt) ? h("span", { key: "published-at", "data-field": "releasePublishedAt", className: "mov-foot-note" }, t("releaseUpdatedAt", { time: formatReleaseTime(releaseNotes.publishedAt) })) : null
+              h("span", { key: "title", className: "forge-card-title" }, `${releaseNotes.version} \xB7 ${t("releaseNotesTitle")}`),
+              formatReleaseTime(releaseNotes.publishedAt) ? h("span", { key: "published-at", "data-field": "releasePublishedAt", className: "forge-foot-note" }, t("releaseUpdatedAt", { time: formatReleaseTime(releaseNotes.publishedAt) })) : null
             ]),
             h(
               "ul",
@@ -1962,16 +2218,16 @@
           updateText ? h("span", {
             key: "state",
             "data-field": "versionState",
-            className: "mov-hint",
+            className: "forge-hint",
             style: { color: updateTone }
           }, updateText) : null,
-          updateAvailable ? h("div", { key: "command", className: "mov-cmd-row" }, [
+          updateAvailable ? h("div", { key: "command", className: "forge-cmd-row" }, [
             // 点一下转成「确认更新」，再点一下让宿主重装本插件
             h("button", {
               key: "online",
               "data-action": "update-online",
               type: "button",
-              className: "mov-btn mov-btn-sm mov-btn-primary",
+              className: "forge-btn forge-btn-sm forge-btn-primary",
               disabled: updateStatus === "installing",
               onClick: () => {
                 if (updateConfirm) runOnlineUpdate().catch(() => {
@@ -1983,26 +2239,26 @@
           updateAvailable && updateConfirm ? h("span", {
             key: "confirm-hint",
             "data-field": "updateConfirmHint",
-            className: "mov-hint"
+            className: "forge-hint"
           }, t("versionUpdateConfirmHint")) : null,
-          updateAvailable ? h("span", { key: "hint", className: "mov-hint" }, t("versionHint")) : null,
-          updateStatus === "ok" && updateAt ? h("span", { key: "at", className: "mov-foot-note" }, t("versionCheckedAt", { time: updateAt })) : null
+          updateAvailable ? h("span", { key: "hint", className: "forge-hint" }, t("versionHint")) : null,
+          updateStatus === "ok" && updateAt ? h("span", { key: "at", className: "forge-foot-note" }, t("versionCheckedAt", { time: updateAt })) : null
         ]);
         let notice = null;
         if (snapshot.status === "loading") notice = t("loading");
         else if (snapshot.value === void 0) notice = t("unavailable");
         else if (snapshot.writable === false) notice = t("readOnly");
         const blobs = notice && !snapshot.value ? [] : [footer, versionBox, resetRow];
-        return h("div", { className: "mov-page" }, [
-          // hover / focus 这类效果内联样式写不出来，集中在这张样式表里（class 都带 mov- 前缀）。
+        return h("div", { className: "forge-page" }, [
+          // hover / focus 这类效果内联样式写不出来，集中在这张样式表里（class 都带 forge- 前缀）。
           h("style", { key: "styles" }, PAGE_CSS),
           h(
             "div",
-            { key: "support-actions", className: "mov-card-head", style: { justifyContent: "flex-end", marginBottom: 12 } },
+            { key: "support-actions", className: "forge-card-head", style: { justifyContent: "flex-end", marginBottom: 12 } },
             h("button", {
               key: "support",
               type: "button",
-              className: "mov-btn mov-btn-sm",
+              className: "forge-btn forge-btn-sm",
               "data-action": "contact-support",
               "aria-haspopup": "dialog",
               "aria-expanded": supportOpen,
@@ -2024,14 +2280,14 @@
             },
             onLater: deferUpdate
           }) : null,
-          notice ? h("p", { key: "notice", className: "mov-notice" }, notice) : null,
+          notice ? h("p", { key: "notice", className: "forge-notice" }, notice) : null,
           ...notice && !snapshot.value ? [] : settingsRows(),
           ...blobs,
           supportOpen ? h("dialog", {
             key: "support-dialog",
             ref: supportDialog,
-            className: "mov-support-dialog",
-            "aria-labelledby": "mov-support-title",
+            className: "forge-support-dialog",
+            "aria-labelledby": "forge-support-title",
             onCancel: () => setSupportOpen(false),
             onClose: () => setSupportOpen(false),
             onClick: (event) => {
@@ -2040,13 +2296,13 @@
                 if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) setSupportOpen(false);
               }
             }
-          }, h("div", { className: "mov-support-content" }, [
-            h("div", { key: "heading", className: "mov-card-head" }, [
-              h("strong", { key: "title", id: "mov-support-title" }, t("supportContact")),
-              h("button", { key: "close", type: "button", className: "mov-btn mov-btn-sm mov-trailing", "aria-label": t("supportClose"), onClick: () => setSupportOpen(false) }, t("supportClose"))
+          }, h("div", { className: "forge-support-content" }, [
+            h("div", { key: "heading", className: "forge-card-head" }, [
+              h("strong", { key: "title", id: "forge-support-title" }, t("supportContact")),
+              h("button", { key: "close", type: "button", className: "forge-btn forge-btn-sm forge-trailing", "aria-label": t("supportClose"), onClick: () => setSupportOpen(false) }, t("supportClose"))
             ]),
-            h("p", { key: "hint", className: "mov-hint" }, t("supportScan")),
-            h("iframe", { key: "qr", className: "mov-support-frame", title: t("supportContact"), src: "https://work.weixin.qq.com/kfid/kfcd6fc4ca793eeac18", referrerPolicy: "no-referrer" }),
+            h("p", { key: "hint", className: "forge-hint" }, t("supportScan")),
+            h("iframe", { key: "qr", className: "forge-support-frame", title: t("supportContact"), src: "https://work.weixin.qq.com/kfid/kfcd6fc4ca793eeac18", referrerPolicy: "no-referrer" }),
             h("a", { key: "fallback", href: "https://work.weixin.qq.com/kfid/kfcd6fc4ca793eeac18", target: "_blank", rel: "noopener noreferrer" }, t("supportOpenPage"))
           ])) : null
         ]);
@@ -2055,232 +2311,7 @@
     return { makePage };
   }
 
-  // src/businesses/video/client/panel.ts
-  function createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID: PANEL_ID2, GUIDE_URL: GUIDE_URL2, LOGO_SVG }) {
-    const LOGO_SRC = LOGO_SVG ? `data:image/svg+xml,${encodeURIComponent(LOGO_SVG)}` : "";
-    const PANEL_CSS = `
-      .mov-panel { width: 100%; max-width: 880px; margin: 0 auto; padding: 30px 32px 44px; display: flex; flex-direction: column; gap: 18px; }
-      /* \u54C1\u724C\u5934\u56FE\uFF1A\u63D2\u4EF6 logo + \u6807\u9898/\u7B80\u4ECB\uFF0C\u7ED9\u7A7A\u8361\u7684\u5185\u5BB9\u533A\u4E00\u4E2A\u89C6\u89C9\u951A\u70B9 */
-      .mov-panel-hero { display: flex; align-items: center; gap: 14px; }
-      .mov-panel-mark { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: ${TOKENS.primaryFill}; }
-      .mov-panel-logo { width: 100%; height: 100%; object-fit: contain; }
-      /* \u5DE6\u4FA7\u680F\u90A3\u4E00\u884C\u7684 logo\uFF1A\u6309\u5BBF\u4E3B\u7ED9\u7684\u5C3A\u5BF8\u539F\u6837\u94FA\u5F00\uFF0C\u4E0D\u53C2\u4E0E\u4E3B\u9898\u53D6\u8272 */
-      .mov-rail-logo { display: block; object-fit: contain; }
-      .mov-panel-head { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-      .mov-panel-title { margin: 0; font-size: 19px; font-weight: 600; color: ${TOKENS.text}; }
-      .mov-panel-intro { margin: 0; font-size: 13px; line-height: 1.55; color: ${TOKENS.muted}; }
-      /* \u4E3B\u6309\u94AE\u5403\u6389\u591A\u4F59\u5BBD\u5EA6\uFF0C\u6B21\u8981\u6309\u94AE\u4E0E\u94FE\u63A5\u9000\u5230\u7B2C\u4E8C\u6392 */
-      .mov-panel-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-      .mov-panel-actions .mov-btn-primary { flex: 1 1 220px; width: auto; min-width: 160px; height: 38px; }
-      .mov-panel-actions .mov-btn:not(.mov-btn-primary) { min-width: 132px; }
-      .mov-panel-link { margin-left: auto; font-size: 12px; color: ${TOKENS.primaryFill}; text-decoration: none; border-bottom: 1px solid transparent; }
-      .mov-panel-link:hover { border-bottom-color: currentColor; }
-      /* \u4E24\u5757\u4EF7\u503C\u70B9\u5361\u7247\uFF1A\u56FE\u6807 + \u6807\u9898 + \u4E00\u53E5\u8BF4\u660E\uFF0C\u7A84\u5BB9\u5668\u81EA\u52A8\u843D\u6210\u4E00\u5217 */
-      .mov-panel-highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
-      .mov-panel-highlight { display: flex; align-items: flex-start; gap: 12px; padding: 13px 14px; border: 1px solid ${TOKENS.border}; border-radius: 12px; background: ${TOKENS.cardFill}; }
-      .mov-panel-highlight-icon { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; }
-      .mov-panel-highlight-body { min-width: 0; }
-      .mov-panel-highlight-title { font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
-      .mov-panel-highlight-desc { margin: 4px 0 0; font-size: 12px; line-height: 1.55; color: ${TOKENS.muted}; }
-      /* \u6D41\u7A0B\u6F14\u793A\uFF1A\u56DB\u6B65\u5361\u7247\u6A2A\u6392\uFF0C\u5361\u7247\u4E4B\u95F4\u7528\u7BAD\u5934\u8FDE\u8D77\u6765\uFF1B\u7A84\u5BB9\u5668\u843D\u6210\u4E00\u5217 */
-      .mov-panel-flow { display: flex; align-items: stretch; }
-      .mov-panel-step { position: relative; overflow: hidden; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 7px; padding: 13px 14px 14px; border: 1px solid ${TOKENS.border}; border-radius: 12px; background: ${TOKENS.cardFill}; animation: mov-flow-card 9s ease-in-out infinite; }
-      .mov-panel-step-head { display: flex; align-items: center; gap: 8px; }
-      .mov-panel-step-badge { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 600; color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; animation: mov-flow-badge 9s ease-in-out infinite; }
-      .mov-panel-step-title { min-width: 0; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
-      .mov-panel-step-desc { margin: 0; font-size: 12px; line-height: 1.55; color: ${TOKENS.muted}; }
-      /* \u53F3\u4E0A\u89D2\u7684\u6DE1\u8272\u6C34\u5370\u56FE\u6807\uFF0C\u53EA\u505A\u88C5\u9970 */
-      .mov-panel-step-icon { position: absolute; top: 10px; right: 10px; color: ${TOKENS.primaryFill}; opacity: .14; pointer-events: none; }
-      /* \u5361\u7247\u4E4B\u95F4\u7684\u7BAD\u5934\uFF1A\u6A2A\u6392\u65F6\u5411\u53F3\uFF0C\u7A84\u5BB9\u5668\u91CC\u8F6C\u6210\u5411\u4E0B */
-      .mov-panel-conn { flex: 0 0 26px; align-self: center; height: 2px; border-radius: 1px; background: ${TOKENS.border}; position: relative; }
-      .mov-panel-conn::after { content: ''; position: absolute; top: 50%; right: -1px; width: 5px; height: 5px; border-top: 2px solid ${TOKENS.border}; border-right: 2px solid ${TOKENS.border}; transform: translateY(-50%) rotate(45deg); }
-      /* \u56DB\u6B65\u4F9D\u6B21\u70B9\u4EAE\uFF0C\u5F62\u6210\u4E00\u6761\u8D70\u52A8\u7684\u6D41\u7A0B\uFF1B\u5EF6\u8FDF\u6309\u6B65\u53F7\u9519\u5F00 */
-      @keyframes mov-flow-card { 0%, 16% { border-color: ${TOKENS.primaryFill}; } 28%, 100% { border-color: ${TOKENS.border}; } }
-      @keyframes mov-flow-badge { 0%, 16% { color: #fff; background: ${TOKENS.primaryFill}; } 28%, 100% { color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; } }
-      .mov-panel-step[data-step="1"], .mov-panel-step[data-step="1"] .mov-panel-step-badge { animation-delay: 2.25s; }
-      .mov-panel-step[data-step="2"], .mov-panel-step[data-step="2"] .mov-panel-step-badge { animation-delay: 4.5s; }
-      .mov-panel-step[data-step="3"], .mov-panel-step[data-step="3"] .mov-panel-step-badge { animation-delay: 6.75s; }
-      .mov-panel { container-type: inline-size; }
-      @container (max-width: 620px) {
-        .mov-panel-flow { flex-direction: column; align-items: stretch; }
-        /* \u7AD6\u5411\u6392\u5E03\u65F6\u4E0D\u80FD\u518D\u6309\u5269\u4F59\u7A7A\u95F4\u62C9\u4F38\uFF0C\u5426\u5219\u5361\u7247\u4F1A\u88AB\u538B\u6241 */
-        .mov-panel-step { flex: 0 0 auto; }
-        .mov-panel-conn { flex: 0 0 18px; width: 2px; height: 18px; align-self: flex-start; margin-left: 24px; }
-        .mov-panel-conn::after { top: auto; right: 50%; bottom: -1px; transform: translateX(50%) rotate(135deg); }
-      }
-      @container (max-width: 560px) {
-        .mov-panel { padding: 22px 18px 34px; }
-        .mov-panel-link { margin-left: 0; }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        .mov-panel-step, .mov-panel-step-badge { animation: none; }
-      }
-    `;
-    function PanelIcon({ size = 18 }) {
-      const pixels = Number(size) || 18;
-      if (LOGO_SRC) {
-        return h("img", {
-          className: "mov-rail-logo",
-          src: LOGO_SRC,
-          alt: "",
-          width: pixels,
-          height: pixels,
-          "aria-hidden": true
-        });
-      }
-      return h("svg", {
-        width: pixels,
-        height: pixels,
-        viewBox: "0 0 24 24",
-        fill: "none",
-        stroke: "currentColor",
-        strokeWidth: 1.7,
-        strokeLinecap: "round",
-        strokeLinejoin: "round",
-        "aria-hidden": true
-      }, [
-        h("rect", { key: "frame", x: 2.5, y: 4.5, width: 13.5, height: 15, rx: 2.5 }),
-        h("path", { key: "lens", d: "M16 10.4 21.5 7.3v9.4L16 13.6z" })
-      ]);
-    }
-    function flowIcon(name, size = 22) {
-      const common = {
-        width: size,
-        height: size,
-        viewBox: "0 0 24 24",
-        fill: "none",
-        stroke: "currentColor",
-        strokeWidth: 1.6,
-        strokeLinecap: "round",
-        strokeLinejoin: "round",
-        "aria-hidden": true
-      };
-      if (name === "idea") {
-        return h("svg", common, [
-          h("path", { key: "bulb", d: "M12 3.5a5.5 5.5 0 0 0-3.2 9.9V16h6.4v-2.6A5.5 5.5 0 0 0 12 3.5Z" }),
-          h("path", { key: "base", d: "M9.5 18.5h5M10.5 21h3" })
-        ]);
-      }
-      if (name === "script") {
-        return h("svg", common, [
-          h("rect", { key: "frame", x: 3, y: 4.5, width: 18, height: 15, rx: 2.2 }),
-          h("path", { key: "split", d: "M3 12h18M11 12v7.5" })
-        ]);
-      }
-      if (name === "generate") {
-        return h("svg", common, [
-          h("rect", { key: "frame", x: 3, y: 5, width: 18, height: 14, rx: 2.2 }),
-          h("path", { key: "play", d: "M10.4 9.4 15 12l-4.6 2.6z" })
-        ]);
-      }
-      if (name === "easy") {
-        return h("svg", common, [
-          h("path", { key: "star", d: "M12 4.2l1.9 5.1 5.1 1.9-5.1 1.9L12 18.2l-1.9-5.1L5 11.2l5.1-1.9z" }),
-          h("path", { key: "spark", d: "M19 4.2v3M17.5 5.7h3" })
-        ]);
-      }
-      if (name === "cheap") {
-        return h("svg", common, [
-          h("path", { key: "tag", d: "M11.2 3.8H5.4A1.6 1.6 0 0 0 3.8 5.4v5.8l8.8 8.8a1.6 1.6 0 0 0 2.3 0l5.8-5.8a1.6 1.6 0 0 0 0-2.3z" }),
-          h("circle", { key: "hole", cx: 7.6, cy: 7.6, r: 1.2 })
-        ]);
-      }
-      return h("svg", common, [
-        h("path", { key: "down", d: "M12 3.5v10m0 0 3.6-3.6M12 13.5 8.4 9.9" }),
-        h("path", { key: "tray", d: "M4.5 16.5v2.2a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2.2" })
-      ]);
-    }
-    function highlight(key, icon, title, desc) {
-      return h("div", { key, className: "mov-panel-highlight" }, [
-        h("span", { key: "icon", className: "mov-panel-highlight-icon" }, flowIcon(icon, 20)),
-        h("div", { key: "body", className: "mov-panel-highlight-body" }, [
-          h("div", { key: "title", className: "mov-panel-highlight-title" }, title),
-          h("p", { key: "desc", className: "mov-panel-highlight-desc" }, desc)
-        ])
-      ]);
-    }
-    function VideoPanel(props) {
-      const flow = [
-        { icon: "idea", title: t("panelStep1Title"), desc: t("panelStep1Desc") },
-        { icon: "script", title: t("panelStep2Title"), desc: t("panelStep2Desc") },
-        { icon: "generate", title: t("panelStep3Title"), desc: t("panelStep3Desc") },
-        { icon: "merge", title: t("panelStep4Title"), desc: t("panelStep4Desc") }
-      ];
-      const flowChildren = flow.flatMap((step, index) => {
-        const card = h("div", {
-          key: `step-${index}`,
-          className: "mov-panel-step",
-          "data-step": String(index)
-        }, [
-          h("div", { key: "head", className: "mov-panel-step-head" }, [
-            h("span", { key: "badge", className: "mov-panel-step-badge" }, String(index + 1)),
-            h("span", { key: "title", className: "mov-panel-step-title" }, step.title)
-          ]),
-          h("p", { key: "desc", className: "mov-panel-step-desc" }, step.desc),
-          h("span", { key: "icon", className: "mov-panel-step-icon" }, flowIcon(step.icon))
-        ]);
-        return index === 0 ? [card] : [h("span", { key: `conn-${index}`, className: "mov-panel-conn", "aria-hidden": true }), card];
-      });
-      return h("div", { className: "mov-panel" }, [
-        h("style", { key: "styles" }, PAGE_CSS + PANEL_CSS),
-        h("header", { key: "hero", className: "mov-panel-hero" }, [
-          h(
-            "span",
-            { key: "mark", className: "mov-panel-mark" },
-            LOGO_SRC ? h("img", { key: "logo", className: "mov-panel-logo", src: LOGO_SRC, alt: "", "aria-hidden": true }) : PanelIcon({ size: 24 })
-          ),
-          h("div", { key: "head", className: "mov-panel-head" }, [
-            h("h1", { key: "title", className: "mov-panel-title" }, t("panelTitle")),
-            h("p", { key: "intro", className: "mov-panel-intro" }, t("panelIntro"))
-          ])
-        ]),
-        h("section", { key: "highlights", className: "mov-section" }, [
-          h("div", { key: "highlights-label", className: "mov-section-title" }, t("panelHighlights")),
-          h("div", { key: "highlights-cards", className: "mov-panel-highlights" }, [
-            highlight("easy", "easy", t("panelHighlight1Title"), t("panelHighlight1Desc")),
-            highlight("cheap", "cheap", t("panelHighlight2Title"), t("panelHighlight2Desc"))
-          ])
-        ]),
-        h("section", { key: "start", className: "mov-section" }, [
-          h("div", { key: "start-label", className: "mov-section-title" }, t("panelStart")),
-          h("div", { key: "start-actions", className: "mov-panel-actions" }, [
-            h("button", {
-              key: "new",
-              type: "button",
-              className: "mov-btn mov-btn-primary",
-              onClick: () => props?.startSession?.()
-            }, t("panelNew")),
-            h("button", {
-              key: "settings",
-              type: "button",
-              className: "mov-btn",
-              disabled: typeof props?.openSettings !== "function",
-              onClick: () => props?.openSettings?.()
-            }, t("panelSettings")),
-            h("a", {
-              key: "guide",
-              className: "mov-panel-link",
-              href: GUIDE_URL2,
-              target: "_blank",
-              rel: "noopener noreferrer"
-            }, t("panelGuide"))
-          ])
-        ]),
-        h("section", { key: "flow", className: "mov-section" }, [
-          h("div", { key: "flow-label", className: "mov-section-title" }, t("panelFlow")),
-          h("div", { key: "flow-steps", className: "mov-panel-flow" }, flowChildren)
-        ])
-      ]);
-    }
-    return { PANEL_ID: PANEL_ID2, PanelIcon, VideoPanel };
-  }
-
-  // icon.svg
-  var icon_default = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="MetaOnticVideo"><defs>\n<linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#36e8ee"/><stop offset=".5" stop-color="#1688ff"/><stop offset="1" stop-color="#1742e8"/></linearGradient>\n<linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#341ad5"/><stop offset=".5" stop-color="#7635ff"/><stop offset="1" stop-color="#176bff"/></linearGradient>\n<linearGradient id="c" x1="1" y1="0" x2="0" y2="1"><stop stop-color="#2ce7ef"/><stop offset=".5" stop-color="#087bff"/><stop offset="1" stop-color="#2026ba"/></linearGradient>\n<linearGradient id="d" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#24e5ec"/><stop offset=".45" stop-color="#1168ff"/><stop offset="1" stop-color="#2539d7"/></linearGradient>\n</defs>\n<path d="M9 25Q9 11 21 13L43 29 32 43 20 33V79Q20 85 14 85Q9 85 9 79Z" fill="url(#b)"/>\n<path d="M91 25Q91 11 79 13L43 39 57 53 80 35V78Q80 85 86 85Q91 85 91 79Z" fill="url(#c)"/>\n<path d="M10 23Q14 9 27 17L75 49Q79 52 75 56L43 77Q37 81 33 74L19 39Q15 27 10 23ZM40 40Q38 39 38 42V65Q38 68 41 66L59 54Q62 52 59 50Z" fill="url(#a)" fill-rule="evenodd"/>\n<path d="M75 49Q80 52 81 64L91 80Q89 88 82 84L62 70 43 77Q38 80 34 75Z" fill="url(#d)"/>\n<path d="M40 40Q38 39 38 42V65Q38 68 41 66L59 54Q62 52 59 50Z" fill="none"/>\n</svg>\n';
-
   // src/businesses/video/client.ts
-  var PANEL_ID = "metaontic-video";
-  var GUIDE_URL = "https://ai.mybfs.cn";
   function createVideoClient(require2) {
     const React = require2("react");
     const h = React.createElement;
@@ -2288,7 +2319,7 @@
     const { MediaPreview } = createMediaPreview({ React, h });
     const { videoExecutionSource: videoExecutionSource2, VideoTaskProgress, VideoProgressDock } = createVideoProgress({ React, h, TOKENS });
     const { ToolResultView } = createToolResultView({ h, MediaPreview, VideoTaskProgress });
-    const { PLUGIN_OWNED_KEYS, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE } = createClientConfig();
+    const { PLUGIN_OWNED_KEYS, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS: NS2, NAMESPACE: NAMESPACE2 } = createClientConfig();
     const { zh, en } = createDictionaries();
     const { useSnapshot, same, validateSettings, persistConnection, persistBatch } = createSettingsState({ React });
     const { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell } = createUpdates({ h });
@@ -2299,21 +2330,21 @@
         ctx.effect(() => ctx.uiSession.provide({
           hooks: ["videoExecutions"],
           resolve: (binding) => ({ hooks: { videoExecutions: videoExecutionSource2(binding.eventSource) } })
-        }), "metaontic-video: actual video execution");
-        const t = ctx.locale.bind(NS);
-        ctx.effect(() => ctx.locale.register(NS, { zh, en }), "metaontic-video: dictionaries");
-        ctx.effect(() => ctx.slots.inject("conversation.chat.node", () => registerAuthNotice(ctx, h, t)), "metaontic-video: friendly service authentication notice");
-        const form = ctx.configForms.get(NAMESPACE);
+        }), "metaontic-agent-forge: actual video execution");
+        const t = ctx.locale.bind(NS2);
+        ctx.effect(() => ctx.locale.register(NS2, { zh, en }), "metaontic-agent-forge: dictionaries");
+        ctx.effect(() => ctx.slots.inject("conversation.chat.node", () => registerAuthNotice(ctx, h, t)), "metaontic-agent-forge: friendly service authentication notice");
+        const form = ctx.configForms.get(NAMESPACE2);
         for (const tool of ["video_generate", "video_extend", "video_status", "video_prepare_image"]) {
           ctx.effect(
-            () => ctx.slots.inject("tool.call.toolview", () => ctx.slots.register({ name: "tool.call.toolview", key: tool, locale: NS }, ToolResultView)),
-            `metaontic-video: ${tool} progress`
+            () => ctx.slots.inject("tool.call.toolview", () => ctx.slots.register({ name: "tool.call.toolview", key: tool, locale: NS2 }, ToolResultView)),
+            `metaontic-agent-forge: ${tool} progress`
           );
         }
         ctx.effect(() => ctx.slots.inject("conversation.input.dock", () => ctx.slots.register(
-          { name: "conversation.input.dock", id: "metaontic-video-progress", order: -20 },
+          { name: "conversation.input.dock", id: "metaontic-agent-forge-progress", order: -20 },
           VideoProgressDock
-        )), "metaontic-video: visible video progress");
+        )), "metaontic-agent-forge: visible video progress");
         const pluginManager = () => {
           const tried = [];
           const shape = (value) => value === void 0 ? "undefined" : value === null ? "null" : typeof value;
@@ -2335,33 +2366,14 @@
           return { manager: null, tried };
         };
         const Page = makePage({ form, t, manager: pluginManager });
-        settings.register({ id: "video", namespace: NAMESPACE, locale: NS, Page });
-        const { PanelIcon, VideoPanel } = createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GUIDE_URL, LOGO_SVG: icon_default });
-        ctx.effect(() => ctx.slots.inject("sidebar.panellist", () => ctx.slots.register({
-          name: "sidebar.panellist",
-          id: PANEL_ID,
-          order: 30,
-          locale: NS,
-          // 左侧那一行显示的名字，比面板标题更完整，方便在图标列表里认出来。
-          label: () => t("panelSidebarLabel")
-        }, PanelIcon)), "metaontic-video: sidebar entry");
-        ctx.effect(() => ctx.slots.inject("main", () => ctx.slots.register({
-          name: "main",
-          key: PANEL_ID,
-          locale: NS,
-          // 面板要的两个动作都按需取服务：老宿主没有这些服务时按钮自然失效，不报错。
-          inject: () => ({
-            startSession: () => ctx.get("uiWorkspace")?.startSession(void 0, { agentPreset: "video-director" }),
-            openSettings: () => ctx.get("pluginNavigation")?.openBundle(NAMESPACE)
-          })
-        }, VideoPanel)), "metaontic-video: sidebar panel");
+        settings.register({ id: "video", namespace: NAMESPACE2, locale: NS2, Page });
       }
     };
   }
 
   // src/client.ts
   window.__ModuleLoader__.load({
-    id: "metaontic-video",
-    factory: (require2) => createClientRuntime(require2, [{ id: "video", create: createVideoClient }])
+    id: "metaontic-agent-forge",
+    factory: (require2) => createClientRuntime(require2, [{ id: "platform", create: createPlatformClient }, { id: "video", create: createVideoClient }])
   });
 })();

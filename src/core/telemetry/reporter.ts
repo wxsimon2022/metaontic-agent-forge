@@ -8,7 +8,7 @@ import { PLUGIN_VERSION } from '../version.js';
 import { ref } from '../settings/value.js';
 
 export const ANALYTICS_URL = 'https://video.mybfs.cn/api/v1/analytics/events';
-const STATE = Symbol.for('metaontic-video.analytics.process');
+const STATE = Symbol.for('metaontic-agent-forge.analytics.process');
 const EVENTS = new Set(['plugin_started', 'tool_started', 'tool_finished', 'video_task_created', 'video_task_finished']);
 const TOOLS = new Set(['video_generate', 'video_extend', 'video_status', 'video_project', 'video_prepare_image', 'video_estimate', 'video_config', 'video_setup', 'video_stage', 'media_submission']);
 const STATUSES = new Set(['succeeded', 'failed', 'cancelled', 'unknown', 'timeout', 'approved', 'pending', 'paused', 'prepared', 'draft', 'blocked', 'review_required', 'submission_unknown', 'ok']);
@@ -18,7 +18,7 @@ function processState() {
   return owner[STATE] ||= { identities: new Map(), started: new Set() };
 }
 export async function analyticsIdentity() {
-  const file = path.join(dshHome(), 'state', 'metaontic-video', 'analytics-id.json');
+  const file = path.join(dshHome(), 'state', 'metaontic-agent-forge', 'analytics-id.json');
   const state = processState();
   if (!state.identities.has(file)) state.identities.set(file, (async () => {
     const parse = raw => { try { const id = JSON.parse(raw).installationId; return /^[a-f0-9-]{36}$/i.test(id) ? id : null; } catch { return null; } };
@@ -40,14 +40,16 @@ export async function analyticsIdentity() {
 export function analyticsFields(input: any = {}) {
   const value: any = {};
   if (TOOLS.has(input.tool)) value.tool = input.tool;
-  if (['video-director', 'promo-video', 'standard'].includes(input.mode)) value.mode = input.mode;
+  // Existing server wire enum is independent of the new public preset IDs.
+  const wireMode = ({ 'forge-video-director': 'video-director', 'forge-promo-video': 'promo-video', standard: 'standard' } as Record<string, string>)[input.mode];
+  if (wireMode) value.mode = wireMode;
   if (STATUSES.has(input.status)) value.status = input.status;
   if (typeof input.durationMs === 'number' && Number.isFinite(input.durationMs)) value.durationMs = Math.round(Math.max(0, Math.min(86400000, input.durationMs)));
   if (typeof input.errorCode === 'string') value.errorCode = ERRORS.has(input.errorCode) ? input.errorCode : 'other';
   return value;
 }
 export function createAnalyticsReporter(config, options: any = {}) {
-  const enabled = options.enabled || (() => process.env.METAONTIC_VIDEO_ANALYTICS_DISABLED !== '1' && ref(config, 'usageStatsEnabled', true) !== false);
+  const enabled = options.enabled || (() => process.env.METAONTIC_AGENT_FORGE_ANALYTICS_DISABLED !== '1' && ref(config, 'usageStatsEnabled', true) !== false);
   const request = options.request || ((...args) => (globalThis.fetch as any)(...args));
   const identity = options.identity || analyticsIdentity;
   const device = options.device || (() => ({

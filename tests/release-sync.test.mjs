@@ -8,7 +8,7 @@ import runpy, sys, tempfile, tarfile, json, hashlib, io
 from pathlib import Path
 verify = runpy.run_path(sys.argv[1])['verify_artifacts']
 with tempfile.TemporaryDirectory() as tmp:
- p=Path(tmp); v='1.2.3'; a=p/f'metaontic-video-{v}.tgz'
+ p=Path(tmp); v='1.2.3'; a=p/f'metaontic-agent-forge-{v}.tgz'
  def setup(version='1.2.3'):
   data=json.dumps({'version':version,'releaseNotes':{'version':version,'prerelease':False}}).encode()
   with tarfile.open(a,'w:gz') as f:

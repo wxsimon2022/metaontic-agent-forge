@@ -9,13 +9,7 @@ import { createDictionaries } from './client/locale.js';
 import { createSettingsState } from './client/state.js';
 import { createUpdates } from '../../client/updates.js';
 import { createSettingsPage } from './client/settings.js';
-import { createSidebarPanel } from './client/panel.js';
-import iconMark from '../../../icon.svg';
 
-/** 左侧栏入参与面板本体共用的面板 id；也是 `main` 键位槽的 key。 */
-const PANEL_ID = 'metaontic-video';
-/** 面板里的「使用说明」链接。 */
-const GUIDE_URL = 'https://ai.mybfs.cn';
 
 export function createVideoClient(require) {
     const React = require('react');
@@ -38,19 +32,19 @@ export function createVideoClient(require) {
         ctx.effect(() => ctx.uiSession.provide({
           hooks: ['videoExecutions'],
           resolve: (binding) => ({ hooks: { videoExecutions: videoExecutionSource(binding.eventSource) } }),
-        }), 'metaontic-video: actual video execution');
+        }), 'metaontic-agent-forge: actual video execution');
         const t = ctx.locale.bind(NS);
-        ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'metaontic-video: dictionaries');
-        ctx.effect(() => ctx.slots.inject('conversation.chat.node', () => registerAuthNotice(ctx, h, t)), 'metaontic-video: friendly service authentication notice');
+        ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'metaontic-agent-forge: dictionaries');
+        ctx.effect(() => ctx.slots.inject('conversation.chat.node', () => registerAuthNotice(ctx, h, t)), 'metaontic-agent-forge: friendly service authentication notice');
         const form = ctx.configForms.get(NAMESPACE);
         for (const tool of ['video_generate', 'video_extend', 'video_status', 'video_prepare_image']) {
           ctx.effect(() => ctx.slots.inject('tool.call.toolview', () =>
             ctx.slots.register({ name: 'tool.call.toolview', key: tool, locale: NS }, ToolResultView)),
-          `metaontic-video: ${tool} progress`);
+          `metaontic-agent-forge: ${tool} progress`);
         }
         ctx.effect(() => ctx.slots.inject('conversation.input.dock', () =>
-          ctx.slots.register({ name: 'conversation.input.dock', id: 'metaontic-video-progress', order: -20 },
-            VideoProgressDock)), 'metaontic-video: visible video progress');
+          ctx.slots.register({ name: 'conversation.input.dock', id: 'metaontic-agent-forge-progress', order: -20 },
+            VideoProgressDock)), 'metaontic-agent-forge: visible video progress');
         // 在线更新要用宿主的插件管理服务。它不是一个 `remote` 上的属性，而是宿主远程层按
         // 「命名空间服务」注册的独立服务，名字就是带点的 `remote.pluginManager`（cordis 的
         // `ctx.get()` 认这种名字）；所以先按全名取，取不到再退回属性写法，两条都记下来，
@@ -78,31 +72,8 @@ export function createVideoClient(require) {
         };
         const Page = makePage({ form, t, manager: pluginManager });
         // 第三方 bundle 的配置页注册到 plugins.bundle.config，以 npm 包名为 key；
-        // 打开「已安装插件」里的 metaontic-video 详情页时显示在描述与组件行之间。
+        // 打开「已安装插件」里的 metaontic-agent-forge 详情页时显示在描述与组件行之间。
         settings.register({ id: 'video', namespace: NAMESPACE, locale: NS, Page });
-        // 面板组件要用当前配置快照与界面字典（form/t 在 apply 里才有），所以在这里构造。
-        const { PanelIcon, VideoPanel } = createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GUIDE_URL, LOGO_SVG: iconMark });
-        // 左侧栏入口与面板本体是宿主 root 作用域的两个 slot，用同一个 id 关联：
-        // sidebar.panellist 只放一行图标（收到 {size, active}），点它切到 main 里同 id 的面板。
-        // 老版本宿主没有这两个 slot 时 inject 不会触发，其余界面与工具不受影响。
-        ctx.effect(() => ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
-          name: 'sidebar.panellist',
-          id: PANEL_ID,
-          order: 30,
-          locale: NS,
-          // 左侧那一行显示的名字，比面板标题更完整，方便在图标列表里认出来。
-          label: () => t('panelSidebarLabel'),
-        }, PanelIcon)), 'metaontic-video: sidebar entry');
-        ctx.effect(() => ctx.slots.inject('main', () => ctx.slots.register({
-          name: 'main',
-          key: PANEL_ID,
-          locale: NS,
-          // 面板要的两个动作都按需取服务：老宿主没有这些服务时按钮自然失效，不报错。
-          inject: () => ({
-            startSession: () => ctx.get('uiWorkspace')?.startSession(undefined, { agentPreset: 'video-director' }),
-            openSettings: () => ctx.get('pluginNavigation')?.openBundle(NAMESPACE),
-          }),
-        }, VideoPanel)), 'metaontic-video: sidebar panel');
       },
     };
 }

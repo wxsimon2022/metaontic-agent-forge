@@ -1,3 +1,4 @@
+import './no-network-analytics.mjs';
 /** Import real source exports through esbuild; no dependency on bundle names or formatting. */
 import { build } from 'esbuild';
 import { mkdtemp, rm } from 'node:fs/promises';

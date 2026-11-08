@@ -13,8 +13,8 @@ export interface PluginLocale {
 
 export const locale: PluginLocale = {
   meta: {
-    title: 'MetaOnticVideo',
-    description: '让新手快速上手视频创作：说出想法，助手带你完善创意、写脚本并确认制作；通过分段续拍与本机合并，提供低成本长视频生成方案。',
+    title: '云智工坊 · 智能体平台',
+    description: '统一调度专业 Agent 的智能体平台。云智工坊负责委派与汇总，内置视频创作和宣传视频助手，支持独立扩展业务。',
   },
 };
 
