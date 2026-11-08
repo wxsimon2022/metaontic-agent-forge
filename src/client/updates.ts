@@ -66,7 +66,7 @@ export function createUpdates({ h, fetchSource }: any) {
     async function fetchRecentVersions() {
       const urls = [
         'https://gitee.com/api/v5/repos/hadlooop/metaontic-agent-forge/releases?per_page=100',
-        'https://api.github.com/repos/wxsimon2022/metaontic-video/releases?per_page=100',
+        'https://api.github.com/repos/wxsimon2022/metaontic-agent-forge/releases?per_page=100',
       ];
       const results = await Promise.allSettled(urls.map(async url => {
         const body = await (await (fetchSource || fetchUpdateSource)(url, 6000)).json();
@@ -235,7 +235,7 @@ async function runOnlineUpdate() {
     }
     const candidates = [
       `https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`,
-      `https://github.com/wxsimon2022/metaontic-video/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`,
+      `https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`,
     ];
     /** 这条 spec 装不上时值不值得换下一条：只有「这个 committish 解析不出来」才换。 */
     const specUnresolvable = (text) => /Could not resolve|No matching version|ERR_PNPM_NO_MATCHING_VERSION|ERR_PNPM_FETCH_40[34]|HTTP[ :]+40[34]|404 Not Found|403 Forbidden/i.test(text);

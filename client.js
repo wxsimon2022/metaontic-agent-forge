@@ -1092,7 +1092,7 @@
     async function fetchRecentVersions() {
       const urls = [
         "https://gitee.com/api/v5/repos/hadlooop/metaontic-agent-forge/releases?per_page=100",
-        "https://api.github.com/repos/wxsimon2022/metaontic-video/releases?per_page=100"
+        "https://api.github.com/repos/wxsimon2022/metaontic-agent-forge/releases?per_page=100"
       ];
       const results = await Promise.allSettled(urls.map(async (url) => {
         const body = await (await (fetchSource || fetchUpdateSource)(url, 6e3)).json();
@@ -1225,7 +1225,7 @@
       }
       const candidates = [
         `https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`,
-        `https://github.com/wxsimon2022/metaontic-video/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`
+        `https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`
       ];
       const specUnresolvable = (text) => /Could not resolve|No matching version|ERR_PNPM_NO_MATCHING_VERSION|ERR_PNPM_FETCH_40[34]|HTTP[ :]+40[34]|404 Not Found|403 Forbidden/i.test(text);
       const trySpec = async (spec) => {
@@ -1496,11 +1496,11 @@
     ],
     repository: {
       type: "git",
-      url: "git+https://github.com/wxsimon2022/metaontic-video.git"
+      url: "git+https://github.com/wxsimon2022/metaontic-agent-forge.git"
     },
-    homepage: "https://github.com/wxsimon2022/metaontic-video#readme",
+    homepage: "https://github.com/wxsimon2022/metaontic-agent-forge#readme",
     bugs: {
-      url: "https://github.com/wxsimon2022/metaontic-video/issues"
+      url: "https://github.com/wxsimon2022/metaontic-agent-forge/issues"
     },
     exports: {
       ".": "./index.js",
@@ -1935,7 +1935,7 @@
               h("span", { key: "label" }, PLUGIN_VERSION ? t("versionCurrent", { version: PLUGIN_VERSION }) : ""),
               updateBell(t, updateLatest, PLUGIN_VERSION)
             ]),
-            h("a", { key: "history", className: "mov-hint", href: "https://github.com/wxsimon2022/metaontic-video/blob/master/CHANGELOG.md", target: "_blank", rel: "noopener noreferrer" }, t("versionHistory")),
+            h("a", { key: "history", className: "mov-hint", href: "https://github.com/wxsimon2022/metaontic-agent-forge/blob/master/CHANGELOG.md", target: "_blank", rel: "noopener noreferrer" }, t("versionHistory")),
             h("button", {
               key: "check",
               "data-action": "update-check",

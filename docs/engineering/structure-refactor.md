@@ -28,6 +28,7 @@ src/
 │   ├── utils/                视频错误分类、输出目录与文件工具
 │   └── internal/             隐藏的内部视频开发能力
 └── agents/
+    ├── cloud-studio/          总控定义、白名单与结果汇总规则
     ├── index.ts              Agent 清单
     ├── video-director/        视频创作助手定义
     └── promo-video/           宣传助手定义与专题提示词
@@ -82,3 +83,5 @@ Windows/macOS 沿用相同 Node 路径 API、构建入口和 `.tgz` 包。没有
 ## 本次核对
 
 类型检查和构建通过，421 项模拟测试全部通过，实际 Harness 输出 Schema 校验覆盖无可选配置服务时的 9 个工具。macOS 临时 profile 成品安装检查通过，包含 strictDepBuilds、中文与空格路径、资源完整性、配置/任务哨兵保留及移动原包后仍可导入；升级检查使用从当前成品派生的 0.0.0 测试夹具，不是历史正式版成品升级或桌面 GUI 验收。未安装到真实本地 profile，未运行 Windows 实机或付费生成，未发版。
+
+总控助手采用 Harness 原生任务机制，见 [云智工坊委派](./delegation.md)。

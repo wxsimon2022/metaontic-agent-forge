@@ -2,7 +2,7 @@
 
 # MetaOnticVideo
 
-[简体中文](./README.md) · [Gitee](https://gitee.com/hadlooop/metaontic-agent-forge)
+[简体中文](./README.md) · [Gitee](https://gitee.com/hadlooop/metaontic-agent-forge) · [GitHub](https://github.com/wxsimon2022/metaontic-agent-forge)
 
 A DeepSeek Harness plugin for **beginner-friendly video creation and a low-cost long-video workflow**.
 
@@ -42,20 +42,23 @@ GitHub mirror:
 https://github.com/wxsimon2022/metaontic-video/releases/download/v3.20.2/metaontic-video-3.20.2.tgz
 ```
 
-Open plugin settings, choose **MetaOntic AI**, enter your API key and save. Select **视频创作助手** in a conversation to begin; **宣传视频助手** is also available for product, brand or event content. Both assistants share the production workflow. Standard mode remains general-purpose.
+Open plugin settings, choose **MetaOntic AI**, enter your API key and save. Select **视频创作助手** in a conversation to begin; **宣传视频助手** is also available for product, brand or event content. Both specialists share the production workflow. Select **云智工坊 · 智能体平台** for orchestration: it delegates to these approved specialists and summarizes results, while video reviews and cost confirmations remain required. Standard mode remains general-purpose.
 
-[Online user guide](https://ai.mybfs.cn) · [Report an issue](https://github.com/wxsimon2022/metaontic-video/issues) · [Changelog](./CHANGELOG.md) · [Development](./docs/engineering/development.md)
+[Online user guide](https://ai.mybfs.cn) · [Report an issue](https://github.com/wxsimon2022/metaontic-agent-forge/issues) · [Changelog](./CHANGELOG.md) · [Development](./docs/engineering/development.md)
 
 ## Plugin architecture
 
-Agents declare their business dependencies; the shared framework assembles them. Both existing assistants use the video module. New business modules can be added independently.
+Agents declare their business dependencies; the shared framework assembles them. Cloud Studio coordinates two specialist assistants that share the video module. New business modules can be added independently.
 
 ```mermaid
 flowchart TB
     Harness[DeepSeek Harness]
     Harness --> Host["Host entry: src/index.ts"]
     Harness --> Client["Browser entry: src/client.ts"]
-    Director[Video creation assistant] --> Agents["Agent definitions: src/agents"]
+    Studio[Cloud Studio · Agent Platform] -->|Approved targets, one level| Director[Video creation assistant]
+    Studio -->|Approved targets, one level| Promo[Promotional video assistant]
+    Studio --> Agents["Agent definitions: src/agents"]
+    Director --> Agents["Agent definitions: src/agents"]
     Promo[Promotional video assistant] --> Agents
     Agents --> Core["Shared framework: src/core<br/>Agent and tool registration · Scope · Lifecycle"]
     Host --> Core

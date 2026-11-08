@@ -61,7 +61,7 @@ npm pack --dry-run
 每次发布必须：
 
 1. 更新 `package.json` 的版本及 `releaseNotes`，其 `version` 必须与包版本一致，`items` 写用户能理解的变更；将 `CHANGELOG.md` 的未发布内容整理到对应版本，记录日期并同步完整更新说明。
-2. 同步更新本地根目录 `MetaOnticVideo使用说明书.md`（Markdown、PDF 和配图不提交源码仓库），逐项核对本次全部变更涉及的配置、操作步骤、默认行为及常见问题，删除过时说明，确保指南与当前版本一致；指南里写死的 `.tgz` 成品地址（Gitee 与 GitHub 各一条）同步改为本次版本，发布脚本会校验不一致直接失败；指南仅面向用户使用，不得加入插件版本号、适用版本、版本更新内容、更新日志、发布说明或发布核对记录；配图也遵守此约定。适用版本和本次核对结果仅记录在 `docs/engineering/release-<版本>.md`，更新内容统一放在 CHANGELOG、README 的更新区及包内 releaseNotes。未完成指南同步不得发布。
+2. 同步更新本地根目录 `MetaOnticVideo使用说明书.md`（Markdown、PDF 和配图不提交源码仓库），逐项核对本次全部变更涉及的配置、操作步骤、默认行为及常见问题，删除过时说明，确保指南与当前版本一致；指南里写死的 `.tgz` 成品地址（Gitee 与 GitHub 各一条）同步改为本次版本，发布脚本会校验不一致直接失败；指南仅面向用户使用，不得加入插件版本号、适用版本、版本更新内容、更新日志、发布说明或发布核对记录；配图也遵守此约定。适用版本和本次核对结果仅记录在 `docs/engineering/release-<版本>.md`，更新内容统一放在 CHANGELOG 及包内 releaseNotes。未完成指南同步不得发布。
 3. 同步宣传页的最新安装地址：宣传页在服务端仓库 `MetaOnticVideoService/frontend/public/promo/index.html`，用户会照它复制 `.tgz` 地址，发版脚本会在打包前用 `scripts/sync-promo-address.mjs` 把上面的 Gitee 附件地址、`.tgz` 文件名、结构化数据与页脚版本号一并改为本次版本（用 `METAONTIC_PROMO_PATH` 指定路径，`--no-promo` 才跳过），并把结果写进发布记录的「验证」；找不到宣传页时脚本给出提示，必须手动同步。
 4. 同步锁文件，构建并执行相关验证，检查打包清单，确认包含更新后的操作指南。
 5. 提交源码、构建产物与说明。
@@ -95,7 +95,7 @@ git show --no-patch "v<版本>"
 
 ### 插件包下载
 
-版本包在 [GitHub Releases](https://github.com/wxsimon2022/metaontic-video/releases) 或 [Gitee Releases](https://gitee.com/hadlooop/metaontic-agent-forge/releases) 下载，通用插件包为 `metaontic-video-<版本>.tgz`。Windows与Mac使用同一个 `.tgz`，不再发布ZIP；指南和PDF已包含在通用包中。不再向 npm 注册表发布，无需配置 `NPM_TOKEN` 或 Trusted Publishing。
+版本包在 [GitHub Releases](https://github.com/wxsimon2022/metaontic-agent-forge/releases) 或 [Gitee Releases](https://gitee.com/hadlooop/metaontic-agent-forge/releases) 下载，通用插件包为 `metaontic-video-<版本>.tgz`。Windows与Mac使用同一个 `.tgz`，不再发布ZIP；指南和PDF已包含在通用包中。不再向 npm 注册表发布，无需配置 `NPM_TOKEN` 或 Trusted Publishing。
 
 `v*` 标签触发完整构建与测试，通过双平台安装检查后，使用 GitHub 自动令牌上传通用tgz。`--both`发布脚本再下载这个同一成品，用本地 `GITEE_TOKEN` 发布Gitee；CI未通过时不上传Gitee，不将单仓成功报告为双仓成功。手动运行工作流时须选择与包版本匹配的标签。
 
@@ -218,7 +218,7 @@ npm run release -- 3.13.3
 npm run release -- 3.13.3 --resume
 ```
 
-也可指定 `--notes /你的实际路径/说明.json`、`--branch master`、`--both`、`--github https://github.com/wxsimon2022/metaontic-video.git`、`--gitee https://gitee.com/hadlooop/metaontic-agent-forge.git`。默认只发 Gitee，`--both`（或带地址的 `--github`）才同步 GitHub，默认使用当前仓库的 SSH 443 地址；Gitee 发布需要环境变量 `GITEE_TOKEN`，Gitee 目标与当前 CI 镜像配置绑定，修改项目归属前需同步 CI，不会静默发布到其他仓库。
+也可指定 `--notes /你的实际路径/说明.json`、`--branch master`、`--both`、`--github https://github.com/wxsimon2022/metaontic-agent-forge.git`、`--gitee https://gitee.com/hadlooop/metaontic-agent-forge.git`。默认只发 Gitee，`--both`（或带地址的 `--github`）才同步 GitHub，默认使用当前仓库的 SSH 443 地址；Gitee 发布需要环境变量 `GITEE_TOKEN`，Gitee 目标与当前 CI 镜像配置绑定，修改项目归属前需同步 CI，不会静默发布到其他仓库。
 
 脚本依赖事先写好的完整说明，不能自动判断业务变化或代替指南审核。推送或上传中断时会明确报告未全部完成，使用 `--resume` 重试，不要重新递增版本；默认的仅 Gitee 发布不含 GitHub 双平台安装校验，缺少 Windows 实测证据时要在发布记录里写明。
 
@@ -242,4 +242,8 @@ npm run pack:test -- 3.13.9-test.1
 
 ## Gitee 仓库迁移
 
-Git 远端与发布目标已改为 `git@gitee.com:hadlooop/metaontic-agent-forge.git`。GitHub 仓库保持不变，插件包名、预设 ID、配置与任务目录保持兼容。新仓库起始为空，未迁移历史标签或发行版附件；现有 README 与线上宣传页中的已发布版本成品链接保留旧地址，不能指向空附件。下次用户明确发版时，脚本会将 README 和宣传页下载根地址一起切换到新仓库。发行版 API、上传、更新检查、未来成品下载及清理默认目标已切换。原有历史安装来源与旧锁文件仍须兼容识别。
+Git 远端与发布目标已改为 `git@gitee.com:hadlooop/metaontic-agent-forge.git`。GitHub 远端为 `git@github.com:wxsimon2022/metaontic-agent-forge.git`，插件包名、预设 ID、配置与任务目录保持兼容。新仓库起始为空，未迁移历史标签或发行版附件；现有 README 与线上宣传页中的已发布版本成品链接保留旧地址，不能指向空附件。下次用户明确发版时，脚本会将 README 和宣传页下载根地址一起切换到新仓库。发行版 API、上传、更新检查、未来成品下载及清理默认目标已切换。原有历史安装来源与旧锁文件仍须兼容识别。
+
+总控委派配置与验收见 [云智工坊委派](./delegation.md)。
+
+README 不展示发版记录或最新更新区；发版只同步其在线安装地址，更新内容保留在 CHANGELOG、包内 releaseNotes 与正式发行版说明。

@@ -46,7 +46,7 @@ export function findPromoPage(root = REPO_ROOT, env = process.env) {
 /** 纯文本替换：返回新内容与每条规则的命中次数，方便发版时核对都改到了。 */
 export function syncPromoText(text, version) {
   const results = [];
-  let output = text.replaceAll('https://gitee.com/hackloop/metaontic-video/', 'https://gitee.com/hadlooop/metaontic-agent-forge/');
+  let output = text.replaceAll('https://gitee.com/hackloop/metaontic-video/', 'https://gitee.com/hadlooop/metaontic-agent-forge/').replaceAll('https://github.com/wxsimon2022/metaontic-video/', 'https://github.com/wxsimon2022/metaontic-agent-forge/');
   for (const rule of PROMO_RULES) {
     const count = (output.match(rule.re) || []).length;
     output = output.replace(rule.re, rule.to(version));

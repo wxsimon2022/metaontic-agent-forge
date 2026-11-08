@@ -26,11 +26,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wxsimon2022/metaontic-video.git"
+    "url": "git+https://github.com/wxsimon2022/metaontic-agent-forge.git"
   },
-  "homepage": "https://github.com/wxsimon2022/metaontic-video#readme",
+  "homepage": "https://github.com/wxsimon2022/metaontic-agent-forge#readme",
   "bugs": {
-    "url": "https://github.com/wxsimon2022/metaontic-video/issues"
+    "url": "https://github.com/wxsimon2022/metaontic-agent-forge/issues"
   },
   "exports": {
     ".": "./index.js",

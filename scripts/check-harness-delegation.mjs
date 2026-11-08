@@ -12,6 +12,8 @@ const document = parseDocument(await readFile('cordis.patch.yml', 'utf8'), { cus
 assert.equal(document.errors.length, 0);
 const rows = document.toJS()[0].insert;
 const presets = rows.filter(row => row.config?.plugins);
+assert.deepEqual(presets.map(row => row.config.id), ['cloud-studio', 'video-director', 'promo-video']);
+assert.deepEqual(presets.map(row => row.config.order), [10, 20, 30]);
 const studio = presets.find(row => row.config.id === 'cloud-studio');
 assert.equal(studio.config.name, '云智工坊 · 智能体平台');
 const native = await import(pathToFileURL(require.resolve('@deepseek-ai/dsh-tool-subagent')));

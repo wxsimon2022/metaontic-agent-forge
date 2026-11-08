@@ -2,7 +2,7 @@
 
 # MetaOnticVideo
 
-[English](./README.en.md) · [Gitee](https://gitee.com/hadlooop/metaontic-agent-forge)
+[English](./README.en.md) · [Gitee](https://gitee.com/hadlooop/metaontic-agent-forge) · [GitHub](https://github.com/wxsimon2022/metaontic-agent-forge)
 
 DeepSeek Harness 视频创作插件：**新手快速上手，低成本制作长视频。**
 
@@ -42,20 +42,23 @@ GitHub 同版备用：
 https://github.com/wxsimon2022/metaontic-video/releases/download/v3.20.2/metaontic-video-3.20.2.tgz
 ```
 
-安装后打开插件设置，选择 **MetaOntic AI**，填写 API密钥并保存；在会话中选择 **视频创作助手** 开始。制作产品、品牌或活动内容时，也可选择 **宣传视频助手**。这两个助手使用相同的制作流程，标准模式保持通用用途。
+安装后打开插件设置，选择 **MetaOntic AI**，填写 API密钥并保存；在会话中选择 **视频创作助手** 开始。制作产品、品牌或活动内容时，也可选择 **宣传视频助手**。这两个助手使用相同的制作流程。需要由总控分配任务时，选择 **云智工坊 · 智能体平台**；它只委派给上述专业助手，完成后汇总成果，视频仍按原流程审核和确认费用。标准模式保持通用用途。
 
-[在线使用说明](https://ai.mybfs.cn) · [问题反馈](https://github.com/wxsimon2022/metaontic-video/issues) · [完整更新记录](./CHANGELOG.md) · [开发说明](./docs/engineering/development.md)
+[在线使用说明](https://ai.mybfs.cn) · [问题反馈](https://github.com/wxsimon2022/metaontic-agent-forge/issues) · [完整更新记录](./CHANGELOG.md) · [开发说明](./docs/engineering/development.md)
 
 ## 插件架构
 
-Agent 声明业务依赖，公共框架负责装配；两个现有助手共用视频业务。新增业务可独立接入，不必修改视频制作流程。
+Agent 声明业务依赖，公共框架负责装配；云智工坊负责统筹，两个专业助手共用视频业务。新增业务可独立接入，不必修改视频制作流程。
 
 ```mermaid
 flowchart TB
     Harness[DeepSeek Harness]
     Harness --> Host["宿主入口 src/index.ts"]
     Harness --> Client["浏览器入口 src/client.ts"]
-    Director["视频创作助手"] --> Agents["Agent 定义 src/agents"]
+    Studio["云智工坊 · 智能体平台"] -->|白名单委派，限一层| Director["视频创作助手"]
+    Studio -->|白名单委派，限一层| Promo["宣传视频助手"]
+    Studio --> Agents["Agent 定义 src/agents"]
+    Director --> Agents["Agent 定义 src/agents"]
     Promo["宣传视频助手"] --> Agents
     Agents --> Core["公共框架 src/core<br/>Agent 与工具注册 · 作用域 · 生命周期"]
     Host --> Core
@@ -68,21 +71,5 @@ flowchart TB
 
 [目录结构与新增 Agent / 业务接入方式](./docs/engineering/structure-refactor.md)
 
-<details>
-<summary>最新更新</summary>
-
-## v3.20.2 更新内容
-
-### 优化
-
-- 常规体验优化。
-
-## v3.20.1 更新内容
-
-### 优化
-
-- 鉴权异常提供设置检查与客服入口，不再直接判定密钥无效；视频接口401/403准确提示鉴权失败。
-
-</details>
 
 许可见 [LICENSE](./LICENSE)。

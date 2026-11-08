@@ -431,7 +431,7 @@ export function parseArgs(argv) {
   const options = {
     keep: 5, keepTags: null, keepPrerelease: false, maxAgeDays: 0, patterns: ['v*'], hosts: ['github', 'gitee'],
     apply: false, pruneAssets: false, keepDrafts: false, json: false, help: false, remote: null,
-    github: 'git@github.com:wxsimon2022/metaontic-video.git', gitee: 'git@gitee.com:hadlooop/metaontic-agent-forge.git',
+    github: 'git@github.com:wxsimon2022/metaontic-agent-forge.git', gitee: 'git@gitee.com:hadlooop/metaontic-agent-forge.git',
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];

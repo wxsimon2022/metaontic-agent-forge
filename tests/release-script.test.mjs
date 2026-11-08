@@ -45,7 +45,7 @@ test('release dry run changes no files, tags or git index and starts no publicat
   // 默认只发 Gitee：不碰 GitHub，也不会打印 GitHub 的发布页与附件地址。
   assert.match(result.stdout,/仅 Gitee/);assert.doesNotMatch(result.stdout,/github\.com/);
   const both=spawnSync(process.execPath,[path.join(dir,'scripts/release.mjs'),'1.0.1','--notes',path.join(dir,'plan.json'),'--dry-run','--both'],{encoding:'utf8',timeout:10000,env});
-  assert.equal(both.status,0,both.stderr);assert.match(both.stdout,/Gitee \+ GitHub/);assert.match(both.stdout,/github\.com\/wxsimon2022\/metaontic-video\/releases\/tag\/v1\.0\.1/);
+  assert.equal(both.status,0,both.stderr);assert.match(both.stdout,/Gitee \+ GitHub/);assert.match(both.stdout,/github\.com\/wxsimon2022\/metaontic-agent-forge\/releases\/tag\/v1\.0\.1/);
   assert.equal(git('status','--porcelain'),before);assert.equal(git('tag'),tags);assert.equal(git('rev-parse','HEAD'),head);assert.equal(await readFile(path.join(dir,'package.json'),'utf8'),pkg);
  }finally{await rm(dir,{recursive:true,force:true});}
 });
