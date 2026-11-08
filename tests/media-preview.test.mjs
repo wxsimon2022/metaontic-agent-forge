@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { sourceOf } from './source.mjs';
 const c = vm.createContext({ URL });
-vm.runInContext(sourceOf('workflow/result-state', 'client/media-preview', 'workflow/media-preview'), c);
+vm.runInContext(sourceOf('businesses/video/workflow/result-state', 'businesses/video/client/media-preview', 'businesses/video/workflow/media-preview'), c);
 test('local media uses host route for macOS and Windows paths', () => {
   for (const path of ['/Users/测试/视频 1.mp4', 'C:\\项目\\视频 1.mp4']) {
     const url = new URL(c.localMediaUrl(path, 'https://host/app/'));

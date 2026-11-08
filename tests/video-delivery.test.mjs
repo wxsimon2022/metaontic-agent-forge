@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 const ctx=vm.createContext({resolve,formatSeconds:n=>n});
-vm.runInContext(sourceOf('workflow/result-state','tools/results')+'\nObject.assign(globalThis,{deliveryInstruction,renderResult,renderVideoResult});',ctx);
+vm.runInContext(sourceOf('businesses/video/workflow/result-state','businesses/video/tools/results')+'\nObject.assign(globalThis,{deliveryInstruction,renderResult,renderVideoResult});',ctx);
 const segments=[1,2].map(index=>({index,seconds:15,kind:index===1?'direct':'extend',status:'succeeded',taskId:'task-'+index,localPath:`/out/part-${index}.mp4`,videoUrl:`https://media.invalid/${index}.mp4`}));
 for(const name of ['renderResult','renderVideoResult'])test(`${name}: delivers both parts and the final merged video`,()=>{
  const text=ctx[name]({status:'succeeded',mode:'extended',segments,merged:true,videoPath:'/out/final.mp4'}).map(x=>x.text).join('\n');
@@ -48,7 +48,7 @@ for(const status of ['timeout','unknown','failed','cancelled']) test(`partial ${
 });
 test('status query and standalone image processing provide actual Markdown links',()=>{
  const tools=vm.createContext({resolve,formatSeconds:n=>n,IMAGE_MODEL:'doubao-seedream-5-0-pro-260628'});
- vm.runInContext(sourceOf('workflow/result-state','tools/results','tools/video-status','tools/video-prepare-image'),tools);
+ vm.runInContext(sourceOf('businesses/video/workflow/result-state','businesses/video/tools/results','businesses/video/tools/video-status','businesses/video/tools/video-prepare-image'),tools);
  const status=tools.taskTool({}).output.render({}, {status:'succeeded',taskId:'existing',videoUrl:'https://media.invalid/done.mp4'})[0].text;
  assert.ok(status.includes('[观看视频](<https://media.invalid/done.mp4>)'));
  const image=tools.prepareImageTool({}).output.render({}, {imageUrl:'https://media.invalid/image.png',model:'seedream'})[0].text;
@@ -77,7 +77,7 @@ for (const name of ['renderResult', 'renderVideoResult']) test(`${name}: paused 
 });
 test('status success explicitly excludes download and local merging',()=>{
  const tools=vm.createContext({resolve,formatSeconds:n=>n});
- vm.runInContext(sourceOf('workflow/result-state','tools/results','tools/video-status'),tools);
+ vm.runInContext(sourceOf('businesses/video/workflow/result-state','businesses/video/tools/results','businesses/video/tools/video-status'),tools);
  const text=tools.taskTool({}).output.render({}, {status:'succeeded',taskId:'task',videoUrl:'https://media.invalid/a.mp4'})[0].text;
  assert.match(text,/这一段生成成功/);
  assert.match(text,/不执行下载或本地合并/);

@@ -7,7 +7,7 @@ import {randomUUID} from 'node:crypto';
 import {performance} from 'node:perf_hooks';
 function harness(){
  const logs=[];const ctx=vm.createContext({randomUUID,performance,appendRequestLog:async record=>logs.push(record),requestLogContext:new AsyncLocalStorage()});
- vm.runInContext(sourceOf('utils/timing','tools/video-stage'),ctx);return {ctx,logs};
+ vm.runInContext(sourceOf('core/utils/timing','businesses/video/tools/video-stage'),ctx);return {ctx,logs};
 }
 test('automatic timing records paired spans and elapsed time without sensitive data',async()=>{
  const {ctx,logs}=harness();const result={status:'succeeded',secret:'private-output'};

@@ -2,7 +2,7 @@ import { sourceOf } from './source.mjs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-const source = sourceOf('tools/video-config');
+const source = sourceOf('businesses/video/tools/video-config');
 function harness() {
   const c = vm.createContext({
     SERVICE_MODE_AVAILABLE: true, VOLCENGINE_MODE_AVAILABLE: false,

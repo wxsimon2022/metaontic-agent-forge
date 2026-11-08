@@ -46,6 +46,28 @@ https://github.com/wxsimon2022/metaontic-video/releases/download/v3.20.2/metaont
 
 [在线使用说明](https://ai.mybfs.cn) · [问题反馈](https://github.com/wxsimon2022/metaontic-video/issues) · [完整更新记录](./CHANGELOG.md) · [开发说明](./docs/engineering/development.md)
 
+## 插件架构
+
+Agent 声明业务依赖，公共框架负责装配；两个现有助手共用视频业务。新增业务可独立接入，不必修改视频制作流程。
+
+```mermaid
+flowchart TB
+    Harness[DeepSeek Harness]
+    Harness --> Host["宿主入口 src/index.ts"]
+    Harness --> Client["浏览器入口 src/client.ts"]
+    Director["视频创作助手"] --> Agents["Agent 定义 src/agents"]
+    Promo["宣传视频助手"] --> Agents
+    Agents --> Core["公共框架 src/core<br/>Agent 与工具注册 · 作用域 · 生命周期"]
+    Host --> Core
+    Core --> Video["视频业务 src/businesses/video<br/>项目审核 · 生成续拍 · 恢复交付"]
+    Video --> Providers["图片与视频接口"]
+    Video --> Media["本机下载与 FFmpeg 合并"]
+    Client --> UI["公共界面 src/client<br/>业务装配 · 设置组合 · 更新"]
+    UI --> VideoUI["视频业务界面<br/>设置 · 进度 · 媒体预览"]
+```
+
+[目录结构与新增 Agent / 业务接入方式](./docs/engineering/structure-refactor.md)
+
 <details>
 <summary>最新更新</summary>
 

@@ -11,7 +11,7 @@ let next=0;
 function setup(label='直接文生视频'){
  let asks=0;const id='session-'+(++next);
  const c=vm.createContext({createHash,path,mkdir,readFile,writeFile,rename,rm,dshHome:()=>home,isVolcengine:config=>config.connectionMode==='volcengine',timedStage:async(_stage,op)=>op()});
- vm.runInContext(sourceOf('workflow/character-choice'),c);
+ vm.runInContext(sourceOf('businesses/video/workflow/character-choice'),c);
  const ctx={get:()=>({ask:async request=>{asks++;return {answers:[{id:request.questions[0].id,selected:label?[label]:[]}]};}})};
  const exec={name:'video_generate',callId:'call-'+id,agent:{session:{id}},arguments:{}};
  return {c,ctx,exec,get asks(){return asks;},args:{prompt:'人物介绍',duration:30,resolution:'480p',ratio:'16:9'}};

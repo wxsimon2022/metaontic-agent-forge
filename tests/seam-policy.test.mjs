@@ -2,7 +2,7 @@ import { sourceOf } from './source.mjs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-const source = sourceOf('media/merge');
+const source = sourceOf('businesses/video/media/merge');
 function harness() {
   const commands = [];
   const ctx = vm.createContext({

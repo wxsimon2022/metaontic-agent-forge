@@ -77,7 +77,7 @@ Hyperframes 属于隐藏的内部开发能力，只能放 devDependencies，不�
 
 版本选择与降级入口已移除，只允许更新到更高的最新正式版本。
 
-pnpm 11 安装前会校验整份 `pnpm-lock.yaml` 的所有 entries：只要留下一条本插件「远程 tgz 但拿不出合法 `sha512`」的记录，任何地址、任何版本的安装/更新都会以 `ERR_PNPM_MISSING_TARBALL_INTEGRITY` 失败，与插件包和操作系统无关。判定要按「本插件所有远程记录里哪些没有合法校验值」来做，不能只看被 importers 引用的那条：旧版本残留、已经没人引用的记录照样让整次安装失败，`integrity: null`／空串、只删了 `packages` 留下 `snapshots` 的半条记录同样算坏记录。宿主侧自愈见 `src/internal/update-lockfile.ts`：profile 根、下面两层与同级 `.<名字>.staging-*` 目录里的锁文件都扫，加载时检查一次、之后每 2 秒复查，只清本插件这类记录、改前留 `pnpm-lock.yaml.metaontic-backup-时间`、原子替换；客户端命中该错误先等一次清理再退避重试（最多 `UPDATE_ATTEMPTS` 次、不换镜像），仍然失败才提示手动删除。
+pnpm 11 安装前会校验整份 `pnpm-lock.yaml` 的所有 entries：只要留下一条本插件「远程 tgz 但拿不出合法 `sha512`」的记录，任何地址、任何版本的安装/更新都会以 `ERR_PNPM_MISSING_TARBALL_INTEGRITY` 失败，与插件包和操作系统无关。判定要按「本插件所有远程记录里哪些没有合法校验值」来做，不能只看被 importers 引用的那条：旧版本残留、已经没人引用的记录照样让整次安装失败，`integrity: null`／空串、只删了 `packages` 留下 `snapshots` 的半条记录同样算坏记录。宿主侧自愈见 `src/core/installation/update-lockfile.ts`：profile 根、下面两层与同级 `.<名字>.staging-*` 目录里的锁文件都扫，加载时检查一次、之后每 2 秒复查，只清本插件这类记录、改前留 `pnpm-lock.yaml.metaontic-backup-时间`、原子替换；客户端命中该错误先等一次清理再退避重试（最多 `UPDATE_ATTEMPTS` 次、不换镜像），仍然失败才提示手动删除。
 
 复现与定性（不要再靠猜，改用宿主自带运行时在临时目录直接跑 pnpm）：`~/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/node/bin/node`（v24，node 20 会因缺 `node:sqlite` 直接报错）加 `/Applications/DeepSeek Harness.app/Contents/Resources/runtime/primary-runtime/dependencies/pnpm/dist/pnpm.mjs install --registry=https://registry.npmmirror.com/`。三种造好的锁文件对应三种结论：①只有 importer 声明地址、没有 `packages` 条目 → pnpm 重新解析、安装成功；②`packages` 条目只有 `tarball:` 没有 `integrity:` → `ERR_PNPM_MISSING_TARBALL_INTEGRITY`；③旧版本残记录没人引用但缺 `integrity`（Windows 现场形态）→ 同样失败，把这条删掉后 pnpm 重新下载并写回合法 `sha512`。macOS 正常路径（全新安装、store 命中、换版本、本地 tgz 转在线地址、附件 404 下载失败）都写不出这种记录，所以只能按现场锁文件定性，不能凭 Mac 结果下结论。
 

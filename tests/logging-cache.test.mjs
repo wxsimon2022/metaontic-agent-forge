@@ -20,7 +20,7 @@ function harness({ mkdir } = {}) {
       if (state.failWrite) throw new Error('read-only');
     },
   });
-  vm.runInContext(`${sourceOf('utils/logging')}\nObject.assign(globalThis,{appendRequestLog,requestLogPath});`, context);
+  vm.runInContext(`${sourceOf('core/utils/logging')}\nObject.assign(globalThis,{appendRequestLog,requestLogPath});`, context);
   return { context, state };
 }
 

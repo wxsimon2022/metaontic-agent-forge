@@ -34,7 +34,7 @@ function harness({ segments }) {
     },
   });
   const mocks = {prepareSeamTrims:context.prepareSeamTrims, mergeClips:context.mergeClips, cleanupSegmentTemps:context.cleanupSegmentTemps};
-  vm.runInContext(sourceOf('media/merge'), context);
+  vm.runInContext(sourceOf('businesses/video/media/merge'), context);
   Object.assign(context,mocks);
   return { context, state, segments };
 }

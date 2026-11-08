@@ -7,7 +7,7 @@ const ctx=vm.createContext({
  ESTIMATE_PIXELS:{'720p':[1280,720]},FIXED_RESOLUTION:'720p',ESTIMATE_FPS:24,ESTIMATE_TOKEN_DIVISOR:1024,
  ESTIMATE_RATES:[['mini',{none:23/7.3,video:14/7.3}]],finiteNumber:x=>Number.isFinite(x)?x:null,
 });
-vm.runInContext(sourceOf('workflow/costs'),ctx);
+vm.runInContext(sourceOf('businesses/video/workflow/costs'),ctx);
 const config={model:'mini',estimateGroupRatio:1};
 test('approval includes input tokens and selects video rate only for continuations',()=>{
  const plan=[{kind:'generate',seconds:15},{kind:'extend',seconds:15},{kind:'extend',seconds:8}];

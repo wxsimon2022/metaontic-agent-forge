@@ -3,7 +3,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {api} from './module-test-api.mjs';
-const source = sourceOf('providers/connection', 'workflow/approval');
+const source = sourceOf('businesses/video/providers/connection', 'businesses/video/workflow/approval');
 function harness({ serviceAvailable = true } = {}) {
   const context = vm.createContext({ characterChoiceGate: async () => null,
     METAONTIC_BASE_URL: 'https://ai.bileego.com',

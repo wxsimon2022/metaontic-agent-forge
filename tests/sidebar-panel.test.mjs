@@ -10,7 +10,7 @@ const GUIDE_URL = 'https://video.mybfs.cn';
 /** 面板与字典都在 TS 里，按仓库既有做法在隔离上下文里跑纯函数，再用桩 h 收集渲染树。 */
 function harness({ locale = 'zh', props = {}, logo = '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/></svg>' } = {}) {
   const context = vm.createContext({});
-  vm.runInContext(sourceOf('client/panel', 'client/locale'), context);
+  vm.runInContext(sourceOf('businesses/video/client/panel', 'businesses/video/client/locale'), context);
   const dictionaries = context.createDictionaries();
   const t = (key, args = {}) => String(dictionaries[locale][key] ?? key)
     .replace(/\{(\w+)\}/g, (_, name) => args[name] ?? `{${name}}`);
@@ -173,7 +173,7 @@ test('面板文案不再出现裸露的 Key 字样，样式随组件注入', () 
 });
 
 test('入口用同一个 id 注册左侧栏图标与 main 面板', () => {
-  const source = readFileSync(new URL('../src/client.ts', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../src/businesses/video/client.ts', import.meta.url), 'utf8');
   assert.match(source, /const PANEL_ID = 'metaontic-video';/);
   assert.match(source, /name: 'sidebar\.panellist',\s*id: PANEL_ID/);
   assert.match(source, /label: \(\) => t\('panelSidebarLabel'\)/);

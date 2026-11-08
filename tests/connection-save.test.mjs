@@ -2,7 +2,7 @@ import { sourceOf } from './source.mjs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-const source = sourceOf('connection-defaults', 'client/state');
+const source = sourceOf('businesses/video/connection-defaults', 'core/settings/state', 'businesses/video/client/state');
 const context = vm.createContext({});
 vm.runInContext(source + '\nObject.assign(globalThis, createSettingsState({}));', context);
 const modes = ['metaontic', 'volcengine'];
@@ -99,7 +99,7 @@ test('saved manual connection reloads with complete addresses, models and isolat
     envValue: () => '',
     RELAY_PRESET: {baseUrl:'https://ai.bileego.com', submitPath:'/doubao/api/v3/contents/generations/tasks', queryPath:'/doubao/api/v3/contents/generations/tasks/{task_id}',model:'doubao-seedance-2-0-mini-260615'},
   });
-  vm.runInContext(sourceOf('connection-defaults', 'providers/connection'), runtime);
+  vm.runInContext(sourceOf('businesses/video/connection-defaults', 'businesses/video/providers/connection'), runtime);
   for (const mode of ['metaontic', 'volcengine']) {
     const disk = {};
     await context.persistConnection({

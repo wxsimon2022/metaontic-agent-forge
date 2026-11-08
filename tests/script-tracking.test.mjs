@@ -8,7 +8,7 @@ import {performance} from 'node:perf_hooks';
 function harness(){
  const logs=[];
  const ctx=vm.createContext({randomUUID,performance,Buffer,appendRequestLog:async record=>logs.push(record)});
- vm.runInContext(sourceOf('tools/video-stage','workflow/script-tracking'),ctx);
+ vm.runInContext(sourceOf('businesses/video/tools/video-stage','businesses/video/workflow/script-tracking'),ctx);
  return {ctx,logs};
 }
 const session={header:{cwd:'/tmp/project'}};

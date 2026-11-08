@@ -18,23 +18,20 @@ Harness 默认启用 HMR 配置重载，但不监听本地插件源码。对于�
 
 ## 开发与验证
 
-源码入口为 `src/index.ts`（宿主装配）和 `src/client.ts`（浏览器装配）；功能按职责拆分：
+源码入口为 `src/index.ts`（宿主装配）和 `src/client.ts`（浏览器装配）。业务模块与 Agent 分离，扩展步骤见 [框架与业务架构](./structure-refactor.md)。
 
 ```text
 src/
-├── config.ts       # 配置定义、默认值与公共常量
-├── tools/          # 生成、续拍、查询、环境检查、配置工具
-├── providers/      # 渠道解析、Seedance 请求、网络轮询与结果类型
-├── workflow/       # 分段规划、费用审批、暂停续做、执行信号
-├── media/          # 参考图处理、下载、FFmpeg 与合成
-├── prompts/        # 生成提示词与动态操作规则
-├── utils/          # 校验、错误转换、文件、JSON 与日志
-├── client/         # 设置、更新、进度、样式与界面字典
-└── locale/         # 插件元信息字典
+├── index.ts / client.ts  # 稳定宿主入口，只组合模块
+├── config.ts            # 公共字段与业务字段组成原命名空间
+├── core/                # Agent/工具注册、生命周期、统计、设置、更新、通用工具
+├── agents/              # Agent 的业务依赖、技能、图标、专题提示词
+├── client/              # 公共浏览器装配、主题、更新、鉴权提示
+├── businesses/video/    # 视频工具、审批、恢复、接口、媒体、业务设置与界面
+└── locale/              # 插件元信息字典
 ```
 
-根目录 `index.js`、`client.js` 和 `locale/*.json` 是构建产物，修改 TypeScript 后重新构建。宿主源码中的本地模块统一打包进 `index.js`，浏览器模块统一打包进 `client.js`，插件安装与热加载入口保持不变。
-元信息文案在 `src/locale/`，导演预设在 `cordis.patch.yml`，脚本与提示词指南在 `skills/video-director/`。
+根目录 `index.js`、`client.js` 和 `locale/*.json` 是构建产物。宿主模块打包进 `index.js`，浏览器模块打包进 `client.js`，安装与热加载入口保持不变。Agent 在 Harness 中的静态预设入口仍由 `cordis.patch.yml`、`presets/`、`locale/presets/` 声明；技能仍位于 `skills/`，公共框架不依赖视频业务模块。
 
 ```bash
 npm install

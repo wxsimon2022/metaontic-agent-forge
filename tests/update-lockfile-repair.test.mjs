@@ -10,7 +10,7 @@ import path from 'node:path';
 import { sourceOf } from './source.mjs';
 
 function load() {
-  const source = sourceOf('internal/update-lockfile');
+  const source = sourceOf('core/installation/update-lockfile');
   return vm.runInNewContext(source + '\n({ stripUnverifiableEntries, locateProfileDir, locateLockfiles, locateStagingLockfiles, updateLockfilesToWatch, repairUpdateLockfile, startUpdateLockfileRepair })', {
     path, fileURLToPath, existsSync, readdirSync, readFileSync, writeFileSync, renameSync, statSync, unlinkSync,
     setInterval, clearInterval, process,

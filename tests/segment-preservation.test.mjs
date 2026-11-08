@@ -15,7 +15,7 @@ for (const cumulative of [false, true]) for (const cuts of [false, true]) {
       const originals = ['01-generate.mp4', '02-extend.mp4'].map(name => path.join(segmentsDir, name));
       await fs.writeFile(originals[0], 'first-source');
       await fs.writeFile(originals[1], 'second-source');
-      const source = sourceOf('media/merge');
+      const source = sourceOf('businesses/video/media/merge');
       const context = vm.createContext({
         timedStage: async (_stage, operation) => operation(),
         ref: (config, key, fallback) => config[key] ?? fallback,
@@ -33,7 +33,7 @@ for (const cumulative of [false, true]) for (const cuts of [false, true]) {
         },
       });
       const mocks = {prepareSeamTrims:context.prepareSeamTrims, mergeClips:context.mergeClips, cleanupSegmentTemps:context.cleanupSegmentTemps};
-      vm.runInContext(sourceOf('media/merge'), context);
+      vm.runInContext(sourceOf('businesses/video/media/merge'), context);
       Object.assign(context,mocks);
       const result = await context.downloadSegmentsAndMerge({ mergeMode: 'reencode', keepSegments: false, seamTrimSeconds: cuts ? '0.5' : '0' }, {
         segments: [{index:1,kind:'generate',seconds:15},{index:2,kind:'extend',seconds:15}],

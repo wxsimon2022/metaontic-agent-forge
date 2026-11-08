@@ -34,7 +34,7 @@ test('Hyperframes is hidden unless the internal environment flag is explicit', (
   }
 });
 
-const section = sourceOf('internal/hyperframes').replaceAll('import.meta.url', '"file:///plugin/index.js"');
+const section = sourceOf('businesses/video/internal/hyperframes').replaceAll('import.meta.url', '"file:///plugin/index.js"');
 function load(overrides = {}) {
   return vm.runInNewContext(section + '\n({ hyperframesTool, runHyperframes })', {
     process: { versions: { node: '24.0.0' }, execPath: '/host/node', cwd: () => '/tmp', env: {} },

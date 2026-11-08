@@ -8,7 +8,7 @@ import os from 'node:os';
 const dir=await mkdtemp(path.join(os.tmpdir(),'storyboard-review-'));
 const image=path.join(dir,'storyboard v1.png');await writeFile(image,'fixture');after(()=>rm(dir,{recursive:true,force:true}));
 function setup(logged=[]){
- const ctx=vm.createContext({path,readdir,stat,process,appendRequestLog:async entry=>{logged.push(entry);}});vm.runInContext(sourceOf('workflow/storyboard-review'),ctx);
+ const ctx=vm.createContext({path,readdir,stat,process,appendRequestLog:async entry=>{logged.push(entry);}});vm.runInContext(sourceOf('businesses/video/workflow/storyboard-review'),ctx);
  const guard=ctx.createStoryboardReviewGuard({log:async entry=>{logged.push(entry);}}),session={header:{cwd:dir}};
  const observe=(type,data)=>guard.observe(session,{type,data:{turn:1,...data}});
  const exec={name:'ask_user_question',agent:{session},arguments:{questions:[{id:'script_review_v1',question:'这版脚本可以吗？'}]}};
@@ -37,7 +37,7 @@ test('改稿后只展示旧版分镜图会被拦下（同目录已有更新的�
  const later=new Date(Date.now()+5000);await utimes(newer,later,later);
  const logged=[];
  const ctx=vm.createContext({path,readdir,stat,process,appendRequestLog:async entry=>{logged.push(entry);}});
- vm.runInContext(sourceOf('workflow/storyboard-review'),ctx);
+ vm.runInContext(sourceOf('businesses/video/workflow/storyboard-review'),ctx);
  const guard=ctx.createStoryboardReviewGuard({log:async entry=>{logged.push(entry);}}),session={header:{cwd:sub}};
  const observe=(type,data)=>guard.observe(session,{type,data:{turn:1,...data}});
  observe('tool/call',{name:'video_estimate'});

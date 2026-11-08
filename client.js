@@ -1,4 +1,45 @@
 (() => {
+  // src/core/settings/client.ts
+  function createSettingsPages(h) {
+    const pages = /* @__PURE__ */ new Map();
+    return {
+      register(page) {
+        const group = pages.get(page.namespace) || [];
+        if (group.some((existing) => existing.id === page.id)) throw new Error(`\u91CD\u590D\u7684\u8BBE\u7F6E\u9875\uFF1A${page.id}`);
+        group.push(page);
+        pages.set(page.namespace, group);
+      },
+      mount(ctx) {
+        for (const [namespace, group] of pages) {
+          const Page = group.length === 1 ? group[0].Page : (props) => h("div", {}, ...group.map((page) => h(page.Page, { ...props, key: page.id })));
+          ctx.effect(() => ctx.slots.inject("plugins.bundle.config", () => ctx.slots.register({
+            name: "plugins.bundle.config",
+            key: namespace,
+            locale: group[0].locale
+          }, Page)), `${namespace}: configuration page`);
+        }
+      }
+    };
+  }
+
+  // src/client/runtime.ts
+  function createClientRuntime(require2, modules) {
+    const ids = /* @__PURE__ */ new Set();
+    const plugins = modules.map((module) => {
+      if (!module.id || ids.has(module.id)) throw new Error(`\u91CD\u590D\u6216\u65E0\u6548\u7684\u754C\u9762\u6A21\u5757\uFF1A${module.id}`);
+      ids.add(module.id);
+      return module.create(require2);
+    });
+    return {
+      inject: [...new Set(plugins.flatMap((plugin) => plugin.inject || []))],
+      apply(ctx) {
+        const settings = createSettingsPages(require2("react").createElement);
+        for (const plugin of plugins) plugin.apply(ctx, { settings });
+        settings.mount(ctx);
+      }
+    };
+  }
+
   // src/client/auth-notice.ts
   function createAuthNotice({ h, Original, hostT, t }) {
     return function AuthNotice(props) {
@@ -21,7 +62,7 @@
     return ctx.slots.register({ name: "conversation.chat.node", key: "turn-error", priority: (original.options.priority || 0) + 1, locale: "chat" }, Notice);
   }
 
-  // src/client/tool-result.ts
+  // src/businesses/video/client/tool-result.ts
   function createToolResultView({ h, MediaPreview, VideoTaskProgress }) {
     function ToolResultView(props) {
       if (props.block && "kind" in props.block) return h(MediaPreview, props);
@@ -31,7 +72,7 @@
     return { ToolResultView };
   }
 
-  // src/client/media-preview.ts
+  // src/businesses/video/client/media-preview.ts
   function localMediaUrl(file, base) {
     if (typeof file !== "string" || /[\u0000-\u001f\u007f]/.test(file) || !/^(?:\/(?!\/)|[a-z]:[/\\])/i.test(file)) return "";
     if (typeof base !== "string" || !/^https?:/i.test(base) && !base.startsWith("dsh-app://app/")) return "";
@@ -297,7 +338,7 @@
     return { TOKENS, inputStyle, PAGE_CSS };
   }
 
-  // src/client/progress.ts
+  // src/businesses/video/client/progress.ts
   function estimatedVideoWait(duration) {
     const seconds = Number(duration);
     return Number.isFinite(seconds) && seconds > 0 ? 105 + seconds * 3 : 180;
@@ -443,7 +484,7 @@
     return { videoExecutionSource, VideoTaskProgress, VideoProgressDock };
   }
 
-  // src/connection-defaults.ts
+  // src/businesses/video/connection-defaults.ts
   var METAONTIC_BASE_URL = "https://ai.bileego.com";
   var VOLCENGINE_MODE_AVAILABLE = false;
   var IMAGE_MODEL = "doubao-seedream-5-0-pro-260628";
@@ -466,7 +507,7 @@
     };
   }
 
-  // src/client/config.ts
+  // src/businesses/video/client/config.ts
   function createClientConfig() {
     const NAMESPACE = "metaontic-video";
     const NS = "settings.metaonticVideo";
@@ -569,7 +610,7 @@
     return { PLUGIN_OWNED_KEYS, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE };
   }
 
-  // src/client/locale.ts
+  // src/businesses/video/client/locale.ts
   function createDictionaries() {
     const zh = {
       summaryEmpty: "\u8BF7\u9009\u62E9\u63A5\u5165\u65B9\u5F0F\uFF0C\u586B\u5199 API\u5BC6\u94A5\u540E\u4FDD\u5B58\u3002",
@@ -868,8 +909,8 @@
     return { zh, en };
   }
 
-  // src/client/state.ts
-  function createSettingsState({ React }) {
+  // src/core/settings/state.ts
+  function createFormState({ React }) {
     function useSnapshot(form) {
       const subscribe = React.useCallback((listener) => form.subscribe(listener), [form]);
       const getSnapshot = React.useCallback(() => form.getSnapshot(), [form]);
@@ -940,6 +981,12 @@
       }
       fail("atomicRejected", before, after);
     }
+    return { useSnapshot, same, persistBatch };
+  }
+
+  // src/businesses/video/client/state.ts
+  function createSettingsState({ React }) {
+    const { useSnapshot, same, persistBatch } = createFormState({ React });
     function validateSettings(values) {
       const interval = Number(values.pollIntervalMs ?? 5e3);
       const wait = Number(values.maxWaitMs ?? 6e5);
@@ -1280,7 +1327,7 @@
     return new Date(date.getTime() + 8 * 60 * 60 * 1e3).toISOString().slice(0, 16).replace("T", " ");
   }
 
-  // src/client/settings-actions.ts
+  // src/businesses/video/client/settings-actions.ts
   var HIDDEN_CONNECTION_MODES = [
     ...VOLCENGINE_MODE_AVAILABLE ? [] : ["volcengine"]
   ];
@@ -1538,7 +1585,7 @@
     }
   };
 
-  // src/client/settings.ts
+  // src/businesses/video/client/settings.ts
   function createSettingsPage(deps) {
     const {
       useSnapshot,
@@ -2005,7 +2052,7 @@
     return { makePage };
   }
 
-  // src/client/panel.ts
+  // src/businesses/video/client/panel.ts
   function createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID: PANEL_ID2, GUIDE_URL: GUIDE_URL2, LOGO_SVG }) {
     const LOGO_SRC = LOGO_SVG ? `data:image/svg+xml,${encodeURIComponent(LOGO_SVG)}` : "";
     const PANEL_CSS = `
@@ -2228,91 +2275,90 @@
   // icon.svg
   var icon_default = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="MetaOnticVideo"><defs>\n<linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#36e8ee"/><stop offset=".5" stop-color="#1688ff"/><stop offset="1" stop-color="#1742e8"/></linearGradient>\n<linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#341ad5"/><stop offset=".5" stop-color="#7635ff"/><stop offset="1" stop-color="#176bff"/></linearGradient>\n<linearGradient id="c" x1="1" y1="0" x2="0" y2="1"><stop stop-color="#2ce7ef"/><stop offset=".5" stop-color="#087bff"/><stop offset="1" stop-color="#2026ba"/></linearGradient>\n<linearGradient id="d" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#24e5ec"/><stop offset=".45" stop-color="#1168ff"/><stop offset="1" stop-color="#2539d7"/></linearGradient>\n</defs>\n<path d="M9 25Q9 11 21 13L43 29 32 43 20 33V79Q20 85 14 85Q9 85 9 79Z" fill="url(#b)"/>\n<path d="M91 25Q91 11 79 13L43 39 57 53 80 35V78Q80 85 86 85Q91 85 91 79Z" fill="url(#c)"/>\n<path d="M10 23Q14 9 27 17L75 49Q79 52 75 56L43 77Q37 81 33 74L19 39Q15 27 10 23ZM40 40Q38 39 38 42V65Q38 68 41 66L59 54Q62 52 59 50Z" fill="url(#a)" fill-rule="evenodd"/>\n<path d="M75 49Q80 52 81 64L91 80Q89 88 82 84L62 70 43 77Q38 80 34 75Z" fill="url(#d)"/>\n<path d="M40 40Q38 39 38 42V65Q38 68 41 66L59 54Q62 52 59 50Z" fill="none"/>\n</svg>\n';
 
-  // src/client.ts
+  // src/businesses/video/client.ts
   var PANEL_ID = "metaontic-video";
   var GUIDE_URL = "https://ai.mybfs.cn";
+  function createVideoClient(require2) {
+    const React = require2("react");
+    const h = React.createElement;
+    const { TOKENS, inputStyle, PAGE_CSS } = createTheme();
+    const { MediaPreview } = createMediaPreview({ React, h });
+    const { videoExecutionSource: videoExecutionSource2, VideoTaskProgress, VideoProgressDock } = createVideoProgress({ React, h, TOKENS });
+    const { ToolResultView } = createToolResultView({ h, MediaPreview, VideoTaskProgress });
+    const { PLUGIN_OWNED_KEYS, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE } = createClientConfig();
+    const { zh, en } = createDictionaries();
+    const { useSnapshot, same, validateSettings, persistConnection, persistBatch } = createSettingsState({ React });
+    const { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell } = createUpdates({ h });
+    const { makePage } = createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS });
+    return {
+      inject: ["slots", "locale", "configForms", "uiSession"],
+      apply(ctx, { settings }) {
+        ctx.effect(() => ctx.uiSession.provide({
+          hooks: ["videoExecutions"],
+          resolve: (binding) => ({ hooks: { videoExecutions: videoExecutionSource2(binding.eventSource) } })
+        }), "metaontic-video: actual video execution");
+        const t = ctx.locale.bind(NS);
+        ctx.effect(() => ctx.locale.register(NS, { zh, en }), "metaontic-video: dictionaries");
+        ctx.effect(() => ctx.slots.inject("conversation.chat.node", () => registerAuthNotice(ctx, h, t)), "metaontic-video: friendly service authentication notice");
+        const form = ctx.configForms.get(NAMESPACE);
+        for (const tool of ["video_generate", "video_extend", "video_status", "video_prepare_image"]) {
+          ctx.effect(
+            () => ctx.slots.inject("tool.call.toolview", () => ctx.slots.register({ name: "tool.call.toolview", key: tool, locale: NS }, ToolResultView)),
+            `metaontic-video: ${tool} progress`
+          );
+        }
+        ctx.effect(() => ctx.slots.inject("conversation.input.dock", () => ctx.slots.register(
+          { name: "conversation.input.dock", id: "metaontic-video-progress", order: -20 },
+          VideoProgressDock
+        )), "metaontic-video: visible video progress");
+        const pluginManager = () => {
+          const tried = [];
+          const shape = (value) => value === void 0 ? "undefined" : value === null ? "null" : typeof value;
+          try {
+            const direct = typeof ctx.get === "function" ? ctx.get("remote.pluginManager") : void 0;
+            if (direct && typeof direct.installBundle === "function") return { manager: direct, tried };
+            tried.push(`remote.pluginManager=${shape(direct)}`);
+          } catch (error) {
+            tried.push(`remote.pluginManager \u629B\u9519\uFF1A${error && error.message ? error.message : String(error)}`);
+          }
+          try {
+            const remote = typeof ctx.get === "function" ? ctx.get("remote") : void 0;
+            const nested = remote && remote.pluginManager;
+            if (nested && typeof nested.installBundle === "function") return { manager: nested, tried };
+            tried.push(`remote=${shape(remote)}`);
+          } catch (error) {
+            tried.push(`remote \u629B\u9519\uFF1A${error && error.message ? error.message : String(error)}`);
+          }
+          return { manager: null, tried };
+        };
+        const Page = makePage({ form, t, manager: pluginManager });
+        settings.register({ id: "video", namespace: NAMESPACE, locale: NS, Page });
+        const { PanelIcon, VideoPanel } = createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GUIDE_URL, LOGO_SVG: icon_default });
+        ctx.effect(() => ctx.slots.inject("sidebar.panellist", () => ctx.slots.register({
+          name: "sidebar.panellist",
+          id: PANEL_ID,
+          order: 30,
+          locale: NS,
+          // 左侧那一行显示的名字，比面板标题更完整，方便在图标列表里认出来。
+          label: () => t("panelSidebarLabel")
+        }, PanelIcon)), "metaontic-video: sidebar entry");
+        ctx.effect(() => ctx.slots.inject("main", () => ctx.slots.register({
+          name: "main",
+          key: PANEL_ID,
+          locale: NS,
+          // 面板要的两个动作都按需取服务：老宿主没有这些服务时按钮自然失效，不报错。
+          inject: () => ({
+            startSession: () => ctx.get("uiWorkspace")?.startSession(void 0, { agentPreset: "video-director" }),
+            openSettings: () => ctx.get("pluginNavigation")?.openBundle(NAMESPACE)
+          })
+        }, VideoPanel)), "metaontic-video: sidebar panel");
+      }
+    };
+  }
+
+  // src/client.ts
   window.__ModuleLoader__.load({
     id: "metaontic-video",
-    factory(require2) {
-      const React = require2("react");
-      const h = React.createElement;
-      const { TOKENS, inputStyle, PAGE_CSS } = createTheme();
-      const { MediaPreview } = createMediaPreview({ React, h });
-      const { videoExecutionSource: videoExecutionSource2, VideoTaskProgress, VideoProgressDock } = createVideoProgress({ React, h, TOKENS });
-      const { ToolResultView } = createToolResultView({ h, MediaPreview, VideoTaskProgress });
-      const { PLUGIN_OWNED_KEYS, SELECTS, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, NS, NAMESPACE } = createClientConfig();
-      const { zh, en } = createDictionaries();
-      const { useSnapshot, same, validateSettings, persistConnection, persistBatch } = createSettingsState({ React });
-      const { PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell } = createUpdates({ h });
-      const { makePage } = createSettingsPage({ useSnapshot, React, h, TOKENS, same, validateSettings, persistConnection, PLUGIN_OWNED_KEYS, persistBatch, PLUGIN_VERSION, UPDATE_CACHE_KEY, UPDATE_MAX_AGE_MS, fetchLatestVersion, SELECTS, inputStyle, optionLabel, FIELD_BY_KEY, SECTIONS, formatMoney, PLUGIN_PACKAGE, UPDATE_SPEC, UPDATE_ATTEMPTS, isNewerVersion, updateBell, PAGE_CSS });
-      return {
-        inject: ["slots", "locale", "configForms", "uiSession"],
-        apply(ctx) {
-          ctx.effect(() => ctx.uiSession.provide({
-            hooks: ["videoExecutions"],
-            resolve: (binding) => ({ hooks: { videoExecutions: videoExecutionSource2(binding.eventSource) } })
-          }), "metaontic-video: actual video execution");
-          const t = ctx.locale.bind(NS);
-          ctx.effect(() => ctx.locale.register(NS, { zh, en }), "metaontic-video: dictionaries");
-          ctx.effect(() => ctx.slots.inject("conversation.chat.node", () => registerAuthNotice(ctx, h, t)), "metaontic-video: friendly service authentication notice");
-          const form = ctx.configForms.get(NAMESPACE);
-          for (const tool of ["video_generate", "video_extend", "video_status", "video_prepare_image"]) {
-            ctx.effect(
-              () => ctx.slots.inject("tool.call.toolview", () => ctx.slots.register({ name: "tool.call.toolview", key: tool, locale: NS }, ToolResultView)),
-              `metaontic-video: ${tool} progress`
-            );
-          }
-          ctx.effect(() => ctx.slots.inject("conversation.input.dock", () => ctx.slots.register(
-            { name: "conversation.input.dock", id: "metaontic-video-progress", order: -20 },
-            VideoProgressDock
-          )), "metaontic-video: visible video progress");
-          const pluginManager = () => {
-            const tried = [];
-            const shape = (value) => value === void 0 ? "undefined" : value === null ? "null" : typeof value;
-            try {
-              const direct = typeof ctx.get === "function" ? ctx.get("remote.pluginManager") : void 0;
-              if (direct && typeof direct.installBundle === "function") return { manager: direct, tried };
-              tried.push(`remote.pluginManager=${shape(direct)}`);
-            } catch (error) {
-              tried.push(`remote.pluginManager \u629B\u9519\uFF1A${error && error.message ? error.message : String(error)}`);
-            }
-            try {
-              const remote = typeof ctx.get === "function" ? ctx.get("remote") : void 0;
-              const nested = remote && remote.pluginManager;
-              if (nested && typeof nested.installBundle === "function") return { manager: nested, tried };
-              tried.push(`remote=${shape(remote)}`);
-            } catch (error) {
-              tried.push(`remote \u629B\u9519\uFF1A${error && error.message ? error.message : String(error)}`);
-            }
-            return { manager: null, tried };
-          };
-          const Page = makePage({ form, t, manager: pluginManager });
-          ctx.effect(() => ctx.slots.inject("plugins.bundle.config", () => ctx.slots.register({
-            name: "plugins.bundle.config",
-            key: NAMESPACE,
-            locale: NS
-          }, Page)), "metaontic-video: configuration page");
-          const { PanelIcon, VideoPanel } = createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GUIDE_URL, LOGO_SVG: icon_default });
-          ctx.effect(() => ctx.slots.inject("sidebar.panellist", () => ctx.slots.register({
-            name: "sidebar.panellist",
-            id: PANEL_ID,
-            order: 30,
-            locale: NS,
-            // 左侧那一行显示的名字，比面板标题更完整，方便在图标列表里认出来。
-            label: () => t("panelSidebarLabel")
-          }, PanelIcon)), "metaontic-video: sidebar entry");
-          ctx.effect(() => ctx.slots.inject("main", () => ctx.slots.register({
-            name: "main",
-            key: PANEL_ID,
-            locale: NS,
-            // 面板要的两个动作都按需取服务：老宿主没有这些服务时按钮自然失效，不报错。
-            inject: () => ({
-              startSession: () => ctx.get("uiWorkspace")?.startSession(void 0, { agentPreset: "video-director" }),
-              openSettings: () => ctx.get("pluginNavigation")?.openBundle(NAMESPACE)
-            })
-          }, VideoPanel)), "metaontic-video: sidebar panel");
-        }
-      };
-    }
+    factory: (require2) => createClientRuntime(require2, [{ id: "video", create: createVideoClient }])
   });
 })();

@@ -10,7 +10,7 @@ import {apply} from '../index.js';
 import {workflowApi} from './workflow-test-api.mjs';
 const dir=await mkdtemp(path.join(os.tmpdir(),'流程回归 '));
 after(()=>rm(dir,{recursive:true,force:true}));
-await build({stdin:{contents:"export {mergeClips} from './src/media/merge.ts'; export {estimatePlan} from './src/workflow/costs.ts';",resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',outfile:path.join(dir,'api.mjs'),plugins:[{name:'offline-ffmpeg',setup(b){b.onLoad({filter:/media\/ffmpeg\.ts$/},()=>({loader:'js',contents:`
+await build({stdin:{contents:"export {mergeClips} from './src/businesses/video/media/merge.ts'; export {estimatePlan} from './src/businesses/video/workflow/costs.ts';",resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',outfile:path.join(dir,'api.mjs'),plugins:[{name:'offline-ffmpeg',setup(b){b.onLoad({filter:/media\/ffmpeg\.ts$/},()=>({loader:'js',contents:`
 import {writeFile} from 'node:fs/promises';
 export const resolveBinary=()=> 'offline-ffmpeg';
 export const probeMedia=async()=>({width:1280,height:720,fps:24,hasAudio:false});

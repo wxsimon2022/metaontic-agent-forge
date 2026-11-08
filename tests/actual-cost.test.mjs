@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 const temp=await mkdtemp(path.join(tmpdir(),'mv-cost-'));
-await build({stdin:{contents:"export * from './src/workflow/actual-cost.ts'",resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',outfile:path.join(temp,'cost.mjs')});
+await build({stdin:{contents:"export * from './src/businesses/video/workflow/actual-cost.ts'",resolveDir:process.cwd()},bundle:true,platform:'node',format:'esm',outfile:path.join(temp,'cost.mjs')});
 const api=await import(pathToFileURL(path.join(temp,'cost.mjs')));after(()=>rm(temp,{recursive:true,force:true}));
 const row=(id,actual,extra={})=>({id,type:2,created_at:id,quota:123,other:JSON.stringify({task_id:'task-a',...(actual===undefined?{}:{actual_quota:actual}),pre_consumed_quota:110552}),...extra});
 const config={connectionMode:'metaontic',metaonticApiKey:'video-b',imageApiKey:'image',apiKey:'video-a',baseUrl:'https://relay.example/v1'};

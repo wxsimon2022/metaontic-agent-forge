@@ -46,4 +46,26 @@ Open plugin settings, choose **MetaOntic AI**, enter your API key and save. Sele
 
 [Online user guide](https://ai.mybfs.cn) · [Report an issue](https://github.com/wxsimon2022/metaontic-video/issues) · [Changelog](./CHANGELOG.md) · [Development](./docs/engineering/development.md)
 
+## Plugin architecture
+
+Agents declare their business dependencies; the shared framework assembles them. Both existing assistants use the video module. New business modules can be added independently.
+
+```mermaid
+flowchart TB
+    Harness[DeepSeek Harness]
+    Harness --> Host["Host entry: src/index.ts"]
+    Harness --> Client["Browser entry: src/client.ts"]
+    Director[Video creation assistant] --> Agents["Agent definitions: src/agents"]
+    Promo[Promotional video assistant] --> Agents
+    Agents --> Core["Shared framework: src/core<br/>Agent and tool registration · Scope · Lifecycle"]
+    Host --> Core
+    Core --> Video["Video module: src/businesses/video<br/>Review · Generation · Continuation · Recovery · Delivery"]
+    Video --> Providers[Image and video providers]
+    Video --> Media[Local download and FFmpeg merging]
+    Client --> UI["Shared UI: src/client<br/>Module assembly · Settings composition · Updates"]
+    UI --> VideoUI["Video UI<br/>Settings · Progress · Media preview"]
+```
+
+[Module structure and adding agents or businesses](./docs/engineering/structure-refactor.md)
+
 See [LICENSE](./LICENSE).

@@ -23,7 +23,7 @@ function harness() {
   context.resolveResolution = api.resolveResolution;
   context.isOmniExtendModel = api.isOmniExtendModel;
   const mocks = {validateImageRoles: api.validateImageRoles, canvasSize: context.canvasSize, resolveImageInput: context.resolveImageInput};
-  vm.runInContext(sourceOf('media/references','providers/seedance'), context);
+  vm.runInContext(sourceOf('businesses/video/media/references','businesses/video/providers/seedance'), context);
   Object.assign(context,mocks);
   return { context, resolved };
 }
@@ -83,7 +83,7 @@ test('relay rejects an oversized inline-image body before sending any request', 
     resolveBaseUrl: () => 'https://example.com',
     fetch: async () => { fetchCalls++; throw new Error('unexpected network call'); },
   });
-  vm.runInContext(sourceOf('providers/transport'), context);
+  vm.runInContext(sourceOf('businesses/video/providers/transport'), context);
   const oversized = { content: [{ type: 'image_url', image_url: { url: 'x'.repeat(64 * 1024 * 1024) } }] };
   await assert.rejects(context.relayRequestCore({ connectionMode: 'service' }, '/doubao/api/v3/contents/generations/tasks', {
     method: 'POST', body: oversized,

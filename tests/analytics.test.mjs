@@ -47,3 +47,7 @@ test('hot reload startup dedupes within one process and task IDs are hashed, sta
  await tick();await r.flush();const events=bodies[0].events.filter(x=>x.name==='video_task_created');assert.equal(events.length,2);assert.equal(events[0].eventId,events[1].eventId);assert.match(events[0].eventId,/^[a-f0-9]{64}$/);assert.doesNotMatch(JSON.stringify(bodies),/private-task-id/);
  }finally{r.dispose();next.dispose();}
 });
+test('unsupported business tools cannot poison an otherwise valid analytics batch',async()=>{
+ let body;const r=fixture(async(_u,o)=>{body=JSON.parse(o.body);return{ok:true};});
+ try{r.record('tool_started',{tool:'writing_outline',mode:'writer'});r.record('tool_started',{tool:'video_generate',mode:'video-director'});await r.flush();assert.equal(body.events.length,1);assert.equal(body.events[0].tool,'video_generate');}finally{r.dispose();}
+});
