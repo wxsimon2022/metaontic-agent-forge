@@ -15,7 +15,7 @@ DeepSeek Harness 的 AI 视频创作插件。支持 Seedance 文生视频、图�
 在线安装链接：
 
 ```text
-https://gitee.com/hackloop/metaontic-video/releases/download/v3.20.0/metaontic-video-3.20.0.tgz
+https://gitee.com/hackloop/metaontic-video/releases/download/v3.20.1/metaontic-video-3.20.1.tgz
 ```
 
 预设 **宣传视频助手**：在会话模式中选择，用于产品、品牌和活动宣传；与视频创作助手共用审核、费用确认和逐段预览流程。
@@ -42,6 +42,12 @@ https://gitee.com/hackloop/metaontic-video/releases/download/v3.20.0/metaontic-v
 ## 开发与发布
 
 [开发、热加载、验证和发布规范](./docs/engineering/development.md) · [维护经验](./docs/engineering/SKILL.md) · [双平台兼容规范](./docs/engineering/platform-compatibility.md)
+
+## v3.20.1 更新内容
+
+### 优化
+
+- 鉴权异常提供设置检查与客服入口，不再直接判定密钥无效；视频接口401/403准确提示鉴权失败。
 
 ## v3.20.0 更新内容
 

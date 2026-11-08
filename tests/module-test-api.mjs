@@ -8,6 +8,8 @@ import { after } from 'node:test';
 const dir = await mkdtemp(path.join(tmpdir(), 'metaontic-module-test-'));
 await build({ stdin: { contents: `
 export * from './src/client/progress.ts';
+export * from './src/client/auth-notice.ts';
+export {classifyError} from './src/utils/errors.ts';
 export * from './src/client/tool-result.ts';
 export * from './src/client/settings-actions.ts';
 export * from './src/client/state.ts';

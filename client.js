@@ -1,4 +1,26 @@
 (() => {
+  // src/client/auth-notice.ts
+  function createAuthNotice({ h, Original, hostT, t }) {
+    return function AuthNotice(props) {
+      if (props.node?.data?.code !== "AUTH") return h(Original, { ...props, t: hostT });
+      return h("div", { role: "status", "data-field": "auth-notice", style: { display: "flex", gap: 10, padding: "10px 0", alignItems: "flex-start" } }, [
+        h("span", { key: "dot", "aria-hidden": true, style: { flex: "0 0 auto", width: 7, height: 7, marginTop: 6, borderRadius: "50%", background: "var(--dsw-alias-state-error-primary,#d9534f)" } }),
+        h("div", { key: "copy", style: { minWidth: 0, fontSize: 13, lineHeight: 1.65, color: "var(--dsw-alias-label-primary,inherit)" } }, [
+          h("strong", { key: "title", style: { fontWeight: 500 } }, t("authNoticeTitle")),
+          h("div", { key: "hint", style: { color: "var(--dsw-alias-label-secondary,inherit)" } }, t("authNoticeHint")),
+          h("a", { key: "support", href: "https://work.weixin.qq.com/kfid/kfcd6fc4ca793eeac18", target: "_blank", rel: "noopener noreferrer", referrerPolicy: "no-referrer" }, t("supportContact"))
+        ])
+      ]);
+    };
+  }
+  function registerAuthNotice(ctx, h, t) {
+    if (typeof ctx.slots.entriesOfSlot !== "function") return;
+    const original = ctx.slots.entriesOfSlot("conversation.chat.node").filter((entry) => entry.options?.key === "turn-error").sort((a, b) => (b.options.priority || 0) - (a.options.priority || 0))[0];
+    if (!original?.component) return;
+    const Notice = createAuthNotice({ h, Original: original.component, hostT: ctx.locale.bind(original.locale || "chat"), t });
+    return ctx.slots.register({ name: "conversation.chat.node", key: "turn-error", priority: (original.options.priority || 0) + 1, locale: "chat" }, Notice);
+  }
+
   // src/client/tool-result.ts
   function createToolResultView({ h, MediaPreview, VideoTaskProgress }) {
     function ToolResultView(props) {
@@ -616,6 +638,8 @@
       ffmpegAfter: "\u4E0D\u60F3\u81EA\u5DF1\u6572\u547D\u4EE4\u7684\u8BDD\uFF0C\u76F4\u63A5\u5728\u5BF9\u8BDD\u91CC\u8BF4\u300C\u5E2E\u6211\u88C5 ffmpeg\u300D\u2014\u2014\u63D2\u4EF6\u4F1A\u6267\u884C\u5B89\u88C5\uFF08\u547D\u4EE4\u4F1A\u5148\u8BA9\u4F60\u786E\u8BA4\uFF09\uFF1B\u88C5\u597D\u540E\u7528\u539F\u6682\u505C\u8FDB\u5EA6\u91CD\u8BD5\u4E0B\u8F7D\u6216\u5408\u5E76\uFF0C\u4E0D\u91CD\u65B0\u63D0\u4EA4\u89C6\u9891\u751F\u6210\u3002ffmpeg \u88C5\u5728\u975E\u9ED8\u8BA4\u4F4D\u7F6E\u7684\u8BDD\uFF0C\u628A\u7EDD\u5BF9\u8DEF\u5F84\u586B\u5230\u4E0A\u9762\u7684\u300Cffmpeg \u8DEF\u5F84\u300D\u4E5F\u4E00\u6837\u7BA1\u7528\u3002\u5B89\u88C5\u5305\u81EA\u5E26 ffprobe\uFF0C\u5206\u6BB5\u65F6\u957F\u63A2\u6D4B\u4F1A\u4E00\u8D77\u89E3\u51B3\u3002",
       ffmpegManual: "\u60F3\u81EA\u5DF1\u88C5\uFF1AmacOS \u7528 Homebrew\uFF0CWindows \u7528 winget\uFF0CLinux \u7528\u7CFB\u7EDF\u5305\u7BA1\u7406\u5668\uFF1B\u88C5\u5B8C\u786E\u8BA4\u547D\u4EE4\u884C\u91CC\u80FD\u8DD1 ffmpeg -version \u5C31\u884C\u3002",
       supportContact: "\u5BA2\u670D",
+      authNoticeTitle: "\u670D\u52A1\u8FDE\u63A5\u9A8C\u8BC1\u672A\u901A\u8FC7",
+      authNoticeHint: "\u8BF7\u5230 Harness \u7684\u6A21\u578B\u8BBE\u7F6E\u68C0\u67E5\u5F53\u524D API\u5BC6\u94A5\u548C\u4E2D\u8F6C\u5730\u5740\uFF1B\u5982\u679C\u914D\u7F6E\u65E0\u8BEF\uFF0C\u8BF7\u8054\u7CFB\u5BA2\u670D\u6838\u67E5\u3002",
       supportClose: "\u5173\u95ED",
       supportScan: "\u8BF7\u6309\u9875\u9762\u63D0\u793A\u4F7F\u7528\u5FAE\u4FE1\u8054\u7CFB\u5BA2\u670D\uFF0C\u54A8\u8BE2\u4F7F\u7528\u6216\u63A5\u5165\u95EE\u9898\u3002\u9875\u9762\u672A\u52A0\u8F7D\u65F6\u53EF\u70B9\u51FB\u4E0B\u65B9\u94FE\u63A5\u3002",
       supportOpenPage: "\u6253\u5F00\u5BA2\u670D\u9875\u9762",
@@ -758,6 +782,8 @@
       ffmpegAfter: 'Rather not touch a terminal? Just say "\u5E2E\u6211\u88C5 ffmpeg" in the chat and the plugin runs the install after you confirm the command. Resume the original saved progress to retry downloading or merging without submitting new generation tasks. Installed somewhere unusual? Put the absolute path in the "ffmpeg path" field above. The package ships ffprobe too, so segment probing is fixed at the same time.',
       ffmpegManual: "Installing by hand: Homebrew on macOS, winget on Windows, your distro package manager on Linux \u2014 you are set once `ffmpeg -version` works in a terminal.",
       supportContact: "Support",
+      authNoticeTitle: "Service authentication could not be verified",
+      authNoticeHint: "Check the API key and relay URL in Harness model settings. If they are correct, contact support.",
       supportClose: "Close",
       supportScan: "Follow the page instructions to contact support with WeChat for usage or connection questions. If it does not load, use the link below.",
       supportOpenPage: "Open support page",
@@ -960,7 +986,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.20.0".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.20.1".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1389,7 +1415,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.20.0",
+    version: "3.20.1",
     description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, image-to-video, text-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects with your own MetaOntic AI key.",
     license: "SEE LICENSE IN LICENSE",
     type: "module",
@@ -1495,12 +1521,11 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.20.0",
+      version: "3.20.1",
       prerelease: false,
-      publishedAt: "2026-11-07T14:12:00.784Z",
+      publishedAt: "2026-11-08T02:07:36.429Z",
       items: [
-        "\u65B0\u589E\uFF1A\u5BA3\u4F20\u89C6\u9891\u52A9\u624B\u9884\u8BBE\uFF0C\u652F\u6301\u4EA7\u54C1\u3001\u54C1\u724C\u548C\u6D3B\u52A8\u5BA3\u4F20\uFF1B\u8BBE\u7F6E\u9875\u589E\u52A0\u4F01\u4E1A\u5FAE\u4FE1\u5BA2\u670D\u5165\u53E3\u3002",
-        "\u4F18\u5316\uFF1A\u4E24\u4E2A\u52A9\u624B\u663E\u793A\u4E2D\u6587\u7EC4\u4EF6\u540D\u79F0\u4E0E\u72EC\u7ACB\u56FE\u6807\uFF0C\u4FBF\u4E8E\u8BC6\u522B\u548C\u9009\u62E9\u3002"
+        "\u4F18\u5316\uFF1A\u9274\u6743\u5F02\u5E38\u63D0\u4F9B\u8BBE\u7F6E\u68C0\u67E5\u4E0E\u5BA2\u670D\u5165\u53E3\uFF0C\u4E0D\u518D\u76F4\u63A5\u5224\u5B9A\u5BC6\u94A5\u65E0\u6548\uFF1B\u89C6\u9891\u63A5\u53E3401/403\u51C6\u786E\u63D0\u793A\u9274\u6743\u5931\u8D25\u3002"
       ]
     }
   };
@@ -2220,6 +2245,7 @@
           }), "metaontic-video: actual video execution");
           const t = ctx.locale.bind(NS);
           ctx.effect(() => ctx.locale.register(NS, { zh, en }), "metaontic-video: dictionaries");
+          ctx.effect(() => ctx.slots.inject("conversation.chat.node", () => registerAuthNotice(ctx, h, t)), "metaontic-video: friendly service authentication notice");
           const form = ctx.configForms.get(NAMESPACE);
           for (const tool of ["video_generate", "video_extend", "video_status", "video_prepare_image"]) {
             ctx.effect(

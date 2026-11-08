@@ -73,6 +73,8 @@ const zh = {
       ffmpegManual: '想自己装：macOS 用 Homebrew，Windows 用 winget，Linux 用系统包管理器；'
         + '装完确认命令行里能跑 ffmpeg -version 就行。',
       supportContact: '客服',
+      authNoticeTitle: '服务连接验证未通过',
+      authNoticeHint: '请到 Harness 的模型设置检查当前 API密钥和中转地址；如果配置无误，请联系客服核查。',
       supportClose: '关闭',
       supportScan: '请按页面提示使用微信联系客服，咨询使用或接入问题。页面未加载时可点击下方链接。',
       supportOpenPage: '打开客服页面',
@@ -221,6 +223,8 @@ const zh = {
       ffmpegManual: 'Installing by hand: Homebrew on macOS, winget on Windows, your distro package '
         + 'manager on Linux — you are set once `ffmpeg -version` works in a terminal.',
       supportContact: 'Support',
+      authNoticeTitle: 'Service authentication could not be verified',
+      authNoticeHint: 'Check the API key and relay URL in Harness model settings. If they are correct, contact support.',
       supportClose: 'Close',
       supportScan: 'Follow the page instructions to contact support with WeChat for usage or connection questions. If it does not load, use the link below.',
       supportOpenPage: 'Open support page',

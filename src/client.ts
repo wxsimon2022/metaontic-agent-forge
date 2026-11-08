@@ -1,3 +1,4 @@
+import { registerAuthNotice } from './client/auth-notice.js';
 import { createToolResultView } from './client/tool-result.js';
 import { createMediaPreview } from './client/media-preview.js';
 /** Harness 浏览器入口：装配设置页、进度视图和宿主服务。 */
@@ -42,6 +43,7 @@ window.__ModuleLoader__.load({
         }), 'metaontic-video: actual video execution');
         const t = ctx.locale.bind(NS);
         ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'metaontic-video: dictionaries');
+        ctx.effect(() => ctx.slots.inject('conversation.chat.node', () => registerAuthNotice(ctx, h, t)), 'metaontic-video: friendly service authentication notice');
         const form = ctx.configForms.get(NAMESPACE);
         for (const tool of ['video_generate', 'video_extend', 'video_status', 'video_prepare_image']) {
           ctx.effect(() => ctx.slots.inject('tool.call.toolview', () =>

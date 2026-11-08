@@ -177,3 +177,5 @@ Windows解压目录安装在更新时出现空目录/locale缺失：先核对成
 组件中文名称：宿主包含组件列表按row.moduleName读取<完整模块名>/locale/en.json及同目录语言文件，不读预设config.name。两个预设用metaontic-video/presets/<id>独立入口转导出宿主dsh-agent-preset，并导出对应locale；不修改宿主文件，不改预设id。打包核对wrapper与locale均纳入，宿主解析名称而非仅模式列表名称。
 
 Agent组件图标使用<完整预设模块>/icon导出，SVG在presets/icons，场记板蓝紫/扩音器橙红区分两个预设；需核对宿主readPluginMeta返回各自图标、成品入包和24/40px明暗背景显示，不修改插件总Logo。
+
+鉴权提示分层：聊天“本轮运行失败/API密钥无效”来自宿主AUTH turn-error，与视频接口工具错误不同。客户端通过conversation.chat.node官方keyed扩展包装原renderer，仅AUTH使用友好提示并引导Harness模型设置，其他code委托原组件；不得覆盖宿主词典或写宿主安装文件。视频HTTP401/403在classifyError中保留provider_auth与状态码，提示插件设置及客服，不直断密钥无效、不回显原始鉴权报错，不改轮询重试与防重。

@@ -39,6 +39,9 @@ function isRealPersonRejection(value) {
 export function classifyError(statusCode, data) {
   const raw = upstreamMessage(data);
   const lowered = raw.toLowerCase();
+  if (statusCode === 401 || statusCode === 403) {
+    return { code: 'provider_auth', message: `服务鉴权未通过（${statusCode}）。请打开插件设置，检查当前接入的 API密钥是否填写正确并已保存；若配置无误，请联系客服核查。` };
+  }
   if (
     statusCode === 402
     || QUOTA_HINTS.some((hint) => lowered.includes(hint))
@@ -48,9 +51,6 @@ export function classifyError(statusCode, data) {
       code: 'provider_quota_exceeded',
       message: `中转站额度不足${quotaDetail(raw)}，请充值后再试：${raw}`,
     };
-  }
-  if (statusCode === 401 || statusCode === 403) {
-    return { code: 'provider_auth', message: `中转站鉴权失败（${statusCode}）：${raw}` };
   }
   if (statusCode === 429) {
     return { code: 'provider_rate_limited', message: `中转站限流（429）：${raw}` };

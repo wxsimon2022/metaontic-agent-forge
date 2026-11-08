@@ -43,10 +43,10 @@ Windows 与 Mac 使用同一个 `.tgz` 成品，无需专用 ZIP，也无需解�
 **也可以不下载到本地，直接粘贴成品地址：** 复制下面这条 Gitee 成品地址，粘贴到 DeepSeek Harness「插件 → 添加插件」即可安装，效果与填写本地文件路径相同，无需安装 Git。国内网络优先使用 Gitee。在线安装只认以 `.tgz` 结尾的附件地址；ZIP、`package` 文件夹和发布页网址只能用于本地安装，不能粘贴到在线安装框。
 
 ```text
-https://gitee.com/hackloop/metaontic-video/releases/download/v3.20.0/metaontic-video-3.20.0.tgz
+https://gitee.com/hackloop/metaontic-video/releases/download/v3.20.1/metaontic-video-3.20.1.tgz
 ```
 
-GitHub 同名地址为 `https://github.com/wxsimon2022/metaontic-video/releases/download/v3.20.0/metaontic-video-3.20.0.tgz`。正式版以 Gitee 发布页为主，GitHub 的同步可能晚一些；GitHub 上还没有该版本时用上面的 Gitee 地址。发布新版本后，把地址中的两处版本号换成发布页上的实际版本；也可以打开发布页，在附件中右键复制 `.tgz` 的下载链接。
+GitHub 同名地址为 `https://github.com/wxsimon2022/metaontic-video/releases/download/v3.20.1/metaontic-video-3.20.1.tgz`。正式版以 Gitee 发布页为主，GitHub 的同步可能晚一些；GitHub 上还没有该版本时用上面的 Gitee 地址。发布新版本后，把地址中的两处版本号换成发布页上的实际版本；也可以打开发布页，在附件中右键复制 `.tgz` 的下载链接。
 
 - GitHub 正式版下载页：`https://github.com/wxsimon2022/metaontic-video/releases/latest`
 - Gitee 发布页：`https://gitee.com/hackloop/metaontic-video/releases`
@@ -343,3 +343,7 @@ its lockfile entry has no "integrity" field, so pnpm cannot verify the downloade
 ### 联系客服
 
 在插件设置页顶部点击“客服”，打开企业微信客服页面，按页面提示咨询使用或接入问题。页面无法加载时，点击弹窗内“打开客服页面”在浏览器中打开；关闭弹窗不会修改插件配置。
+
+### 服务连接验证未通过怎么办？
+
+聊天出现“服务连接验证未通过”时，先到 Harness 的模型设置检查当前模型的 API密钥和中转地址；这是对话模型的连接配置，不要因此重置视频插件配置。视频工具返回401/403时，到插件设置检查当前接入的 API密钥是否填写正确并已保存。配置无误时可点击客服咨询渠道权限；鉴权失败不一定能证明密钥本身无效。已有视频任务的查询异常不代表生成失败，应保留任务ID，恢复原渠道鉴权后查询，不重新生成。
