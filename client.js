@@ -1,4 +1,76 @@
 (() => {
+  // src/client/agent-picker.ts
+  var INTERNAL_AGENTS = /* @__PURE__ */ new Set([
+    "metaontic-agent-forge-video-director",
+    "metaontic-agent-forge-promo-video"
+  ]);
+  function createAgentPickerView(h, Original, hook, field) {
+    const cache = /* @__PURE__ */ new WeakMap();
+    const project = (state) => {
+      if (!state || !Array.isArray(state[field])) return state;
+      if (cache.has(state)) return cache.get(state);
+      const rows = state[field].filter((row) => !INTERNAL_AGENTS.has(row.id));
+      const result = rows.length === state[field].length ? state : { ...state, [field]: rows };
+      cache.set(state, result);
+      return result;
+    };
+    return function AgentPickerView(props) {
+      const source = props[hook];
+      if (typeof source !== "function") return h(Original, props);
+      return h(Original, { ...props, [hook]: (select) => source((state) => select(project(state))) });
+    };
+  }
+  function registerAgentPicker(ctx, h) {
+    if (typeof ctx.slots.entriesOfSlot !== "function" || typeof ctx.slots.subscribe !== "function") return;
+    const wrappers = /* @__PURE__ */ new WeakSet();
+    for (const spec of [
+      { name: "conversation.hero.agentPreset", hook: "useAgentPresetSeat", field: "options" },
+      { name: "settings.section", id: "agent-presets", hook: "useAgentPresetSection", field: "rows" }
+    ]) {
+      ctx.effect(() => ctx.slots.inject(spec.name, () => {
+        let original, dispose, syncing = false;
+        const sync = () => {
+          if (syncing) return;
+          syncing = true;
+          try {
+            const next = ctx.slots.entriesOfSlot(spec.name).filter((entry) => entry.component && !wrappers.has(entry.component) && (!spec.id || entry.options?.id === spec.id)).sort((a, b) => (a.options?.priority || 0) - (b.options?.priority || 0))[0];
+            if (next === original) return;
+            dispose?.();
+            dispose = void 0;
+            original = next;
+            if (!next) return;
+            const Component = createAgentPickerView(h, next.component, spec.hook, spec.field);
+            wrappers.add(Component);
+            dispose = ctx.slots.register({
+              ...next.options,
+              name: spec.name,
+              priority: (next.options?.priority || 0) - 1,
+              locale: next.locale,
+              inject: next.inject,
+              select: next.select,
+              store: next.store,
+              children: next.children
+            }, Component);
+          } finally {
+            syncing = false;
+          }
+        };
+        const unsubscribe = ctx.slots.subscribe(spec.name, sync);
+        try {
+          sync();
+        } catch (error) {
+          unsubscribe();
+          dispose?.();
+          throw error;
+        }
+        return () => {
+          unsubscribe();
+          dispose?.();
+        };
+      }), `metaontic-agent-forge: ${spec.name} selector`);
+    }
+  }
+
   // src/client/theme.ts
   function createTheme() {
     const TOKENS = {
@@ -148,8 +220,141 @@
     return { TOKENS, inputStyle, PAGE_CSS };
   }
 
+  // src/client/task-canvas.ts
+  var AGENTS = /* @__PURE__ */ new Set(["metaontic-agent-forge-studio", "metaontic-agent-forge-video-director", "metaontic-agent-forge-promo-video"]);
+  function taskGraph(snapshot = {}, statuses = /* @__PURE__ */ new Map()) {
+    const summaries = snapshot.byId || {};
+    const projections = snapshot.projectionsBySession || {};
+    const values = (id) => ({ ...summaries[id]?.projectionValues, ...projections[id]?.values });
+    const nodes = /* @__PURE__ */ new Map(), edges = [];
+    const insert = (id, entry, parent) => {
+      const summary = summaries[id];
+      const value = values(id), live = statuses?.get?.(id);
+      const pending = live?.pendingInteraction;
+      const state = pending ? "waiting" : (live?.running ?? summary?.running) === true ? "running" : value.subagentTiming?.lastTurnCompleted === true ? "turn-ended" : "idle";
+      nodes.set(id, {
+        id,
+        title: summary?.title || entry?.label || id,
+        preset: value.agentPreset,
+        state,
+        pending: pending?.kind || pending?.type,
+        parent,
+        address: parent ? { parentSessionId: parent, childSessionId: id, mode: entry?.mode || "unknown" } : id,
+        external: entry?.mode === "external",
+        projectionState: projections[id]?.state
+      });
+    };
+    for (const [id] of Object.entries(summaries)) if (AGENTS.has(values(id).agentPreset)) insert(id);
+    const visited = /* @__PURE__ */ new Set();
+    const visit = (id) => {
+      if (visited.has(id)) return;
+      visited.add(id);
+      for (const entry of values(id).subagentCatalog || []) {
+        if (!entry?.id || entry.id === id || visited.has(entry.id)) continue;
+        insert(entry.id, entry, id);
+        edges.push({ from: id, to: entry.id });
+        visit(entry.id);
+      }
+    };
+    for (const id of [...nodes.keys()]) visit(id);
+    const children = new Set(edges.map((edge) => edge.to));
+    return { nodes: [...nodes.values()], edges, roots: [...nodes.keys()].filter((id) => !children.has(id)) };
+  }
+  function createTaskCanvas({ React, h, t }) {
+    return function TaskCanvas({ useSessions, useSessionStatus, openTask, refreshTask }) {
+      const snapshot = useSessions((state) => state);
+      const statuses = useSessionStatus((state) => state);
+      const graph = React.useMemo(() => taskGraph(snapshot, statuses), [snapshot, statuses]);
+      const [chosenRoot, chooseRoot] = React.useState("");
+      const [chosenNode, chooseNode] = React.useState("");
+      const [zoom, setZoom] = React.useState(1);
+      const root = graph.roots.includes(chosenRoot) ? chosenRoot : graph.roots[0];
+      const shown = /* @__PURE__ */ new Set();
+      const walk = (id) => {
+        if (shown.has(id)) return;
+        shown.add(id);
+        for (const edge of graph.edges) if (edge.from === id) walk(edge.to);
+      };
+      if (root) walk(root);
+      const nodes = graph.nodes.filter((node) => shown.has(node.id));
+      const selected = nodes.find((node) => node.id === chosenNode) || nodes[0];
+      React.useEffect(() => {
+        if (root) refreshTask?.(root);
+      }, [root, refreshTask]);
+      if (!graph.roots.length) return h("section", { className: "metaontic-agent-forge-section", "aria-label": t("canvasTitle") }, [
+        h("h2", { key: "title" }, t("canvasTitle")),
+        h("p", { key: "empty", role: "status" }, snapshot.state === "error" ? t("canvasLoadError") : t("canvasEmpty"))
+      ]);
+      const positions = /* @__PURE__ */ new Map();
+      const depth = (node, seen = /* @__PURE__ */ new Set()) => {
+        if (!node.parent || seen.has(node.id)) return 0;
+        seen.add(node.id);
+        const parent = nodes.find((item) => item.id === node.parent);
+        return parent ? depth(parent, seen) + 1 : 0;
+      };
+      const rows = /* @__PURE__ */ new Map();
+      for (const node of nodes) {
+        const level = depth(node), row = rows.get(level) || 0;
+        rows.set(level, row + 1);
+        positions.set(node.id, { x: 24 + level * 260, y: 24 + row * 118 });
+      }
+      const width = Math.max(520, ...[...positions.values()].map((p) => p.x + 246));
+      const height = Math.max(200, ...[...positions.values()].map((p) => p.y + 110));
+      const stateLabel = (node) => t(`canvasState_${node.state}`);
+      const controls = h("div", { key: "controls", style: { display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" } }, [
+        h("select", { key: "tasks", "aria-label": t("canvasChoose"), value: root, onChange: (event) => {
+          chooseRoot(event.target.value);
+          chooseNode("");
+        }, style: { maxWidth: "100%" } }, graph.roots.map((id) => h("option", { key: id, value: id }, graph.nodes.find((node) => node.id === id)?.title))),
+        h("button", { key: "refresh", type: "button", onClick: () => {
+          for (const node of nodes) refreshTask?.(node.id);
+        } }, t("canvasRefresh")),
+        h("button", { key: "out", type: "button", "aria-label": t("canvasZoomOut"), disabled: zoom <= 0.5, onClick: () => setZoom((value) => Math.max(0.5, value - 0.25)) }, "\u2212"),
+        h("button", { key: "reset", type: "button", onClick: () => setZoom(1) }, `${Math.round(zoom * 100)}%`),
+        h("button", { key: "in", type: "button", "aria-label": t("canvasZoomIn"), disabled: zoom >= 1.5, onClick: () => setZoom((value) => Math.min(1.5, value + 0.25)) }, "+")
+      ]);
+      return h("section", { className: "metaontic-agent-forge-section", "aria-label": t("canvasTitle") }, [
+        h("h2", { key: "title", style: { margin: "0 0 8px", fontSize: 15 } }, t("canvasTitle")),
+        h("p", { key: "hint", style: { fontSize: 12, opacity: 0.75 } }, t("canvasHint")),
+        controls,
+        h(
+          "div",
+          { key: "viewport", tabIndex: 0, "aria-label": t("canvasTitle"), style: { overflow: "auto", maxHeight: 480, marginTop: 12, border: "1px solid currentColor", borderRadius: 12 } },
+          h(
+            "div",
+            { style: { width: width * zoom, height: height * zoom } },
+            h("div", { style: { position: "relative", width, height, transform: `scale(${zoom})`, transformOrigin: "top left" } }, [
+              h("svg", { key: "edges", width, height, "aria-hidden": true, style: { position: "absolute", inset: 0, pointerEvents: "none" } }, graph.edges.filter((edge) => shown.has(edge.from) && shown.has(edge.to)).map((edge) => {
+                const a = positions.get(edge.from), b = positions.get(edge.to);
+                return h("path", { key: `${edge.from}:${edge.to}`, d: `M${a.x + 220},${a.y + 40} C${a.x + 240},${a.y + 40} ${b.x - 20},${b.y + 40} ${b.x},${b.y + 40}`, fill: "none", stroke: "currentColor", strokeWidth: 2, opacity: 0.35 });
+              })),
+              ...nodes.map((node) => {
+                const p = positions.get(node.id);
+                return h("button", {
+                  key: node.id,
+                  type: "button",
+                  "aria-pressed": node.id === selected?.id,
+                  onClick: () => chooseNode(node.id),
+                  style: { position: "absolute", left: p.x, top: p.y, width: 220, minHeight: 82, padding: 12, textAlign: "left", borderRadius: 10, border: `2px solid ${node.id === selected?.id ? "#5584eb" : "#8492a640"}`, background: "var(--dsw-alias-background-primary,Canvas)", color: "inherit", cursor: "pointer" }
+                }, [h("strong", { key: "title", style: { display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, node.title), h("span", { key: "state", role: "status", style: { display: "block", marginTop: 8, fontSize: 12 } }, stateLabel(node))]);
+              })
+            ])
+          )
+        ),
+        selected && h("div", { key: "detail", style: { marginTop: 12, overflowWrap: "anywhere" } }, [
+          h("strong", { key: "name" }, selected.title),
+          h("p", { key: "state", role: "status" }, stateLabel(selected)),
+          h("p", { key: "id", style: { fontSize: 12, opacity: 0.65 } }, selected.id),
+          selected.projectionState === "error" && h("p", { key: "error", role: "status" }, t("canvasLoadError")),
+          h("button", { key: "open", type: "button", disabled: selected.external || typeof openTask !== "function", onClick: () => openTask?.(selected.address) }, t(selected.state === "waiting" ? "canvasReview" : "canvasOpen"))
+        ])
+      ]);
+    };
+  }
+
   // src/client/panel.ts
   function createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID: PANEL_ID2, GUIDE_URL: GUIDE_URL2, LOGO_SVG }) {
+    const TaskCanvas = createTaskCanvas({ React, h, t });
     const LOGO_SRC = LOGO_SVG ? `data:image/svg+xml,${encodeURIComponent(LOGO_SVG)}` : "";
     const PANEL_CSS = `
       .metaontic-agent-forge-panel { width: 100%; max-width: 880px; margin: 0 auto; padding: 30px 32px 44px; display: flex; flex-direction: column; gap: 18px; }
@@ -359,6 +564,7 @@
             }, t("panelGuide"))
           ])
         ]),
+        typeof props.useSessions === "function" && typeof props.useSessionStatus === "function" ? h(TaskCanvas, { key: "task-canvas", ...props }) : null,
         h("section", { key: "flow", className: "metaontic-agent-forge-section" }, [
           h("div", { key: "flow-label", className: "metaontic-agent-forge-section-title" }, t("panelFlow")),
           h("div", { key: "flow-steps", className: "metaontic-agent-forge-panel-flow" }, flowChildren)
@@ -371,6 +577,20 @@
   // src/client/locale.ts
   function createPlatformDictionaries() {
     const zh = {
+      "canvasTitle": "\u4EFB\u52A1\u6D41\u7A0B\u753B\u5E03",
+      "canvasChoose": "\u9009\u62E9\u4EFB\u52A1",
+      "canvasRefresh": "\u5237\u65B0\u72B6\u6001",
+      "canvasZoomOut": "\u7F29\u5C0F\u753B\u5E03",
+      "canvasZoomIn": "\u653E\u5927\u753B\u5E03",
+      "canvasHint": "\u8282\u70B9\u6765\u81EA\u771F\u5B9E\u4F1A\u8BDD\u4E0E\u59D4\u6D3E\u8BB0\u5F55\u3002\u7B49\u5F85\u786E\u8BA4\u65F6\u8FDB\u5165\u539F\u4EFB\u52A1\u5BA1\u6838\uFF1B\u672C\u8F6E\u7ED3\u675F\u4E0D\u4EE3\u8868\u89C6\u9891\u5DF2\u4EA4\u4ED8\u3002",
+      "canvasEmpty": "\u6682\u65E0\u53EF\u5C55\u793A\u7684\u5E73\u53F0\u4EFB\u52A1\u3002\u901A\u8FC7\u4E91\u667A\u5DE5\u574A\u5F00\u59CB\u534F\u4F5C\u540E\uFF0C\u4EFB\u52A1\u4E0E\u4E13\u4E1A\u52A9\u624B\u5C06\u5728\u8FD9\u91CC\u663E\u793A\u3002",
+      "canvasLoadError": "\u90E8\u5206\u4EFB\u52A1\u8BB0\u5F55\u6682\u65F6\u65E0\u6CD5\u8BFB\u53D6\uFF0C\u8BF7\u5237\u65B0\u6216\u6253\u5F00\u539F\u4EFB\u52A1\u67E5\u770B\u3002",
+      "canvasState_waiting": "\u7B49\u5F85\u786E\u8BA4",
+      "canvasState_running": "\u6B63\u5728\u8FD0\u884C",
+      "canvasState_turn-ended": "\u672C\u8F6E\u7ED3\u675F",
+      "canvasState_idle": "\u5F53\u524D\u672A\u8FD0\u884C",
+      "canvasOpen": "\u6253\u5F00\u4EFB\u52A1\u5BF9\u8BDD",
+      "canvasReview": "\u524D\u5F80\u786E\u8BA4",
       panelTitle: "\u4E91\u667A\u5DE5\u574A \xB7 \u667A\u80FD\u4F53\u5E73\u53F0",
       panelSidebarLabel: "\u4E91\u667A\u5DE5\u574A",
       panelIntro: "\u7531\u603B\u63A7\u62C6\u89E3\u9700\u6C42\u3001\u59D4\u6D3E\u4E13\u4E1A Agent \u5E76\u6C47\u603B\u6210\u679C\uFF0C\u5F53\u524D\u5DF2\u63A5\u5165\u89C6\u9891\u521B\u4F5C\u4E0E\u5BA3\u4F20\u89C6\u9891\u4E1A\u52A1\u3002",
@@ -394,6 +614,20 @@
       panelStep4Desc: "\u5B8C\u6210\u901A\u77E5\u56DE\u5230\u603B\u63A7\uFF0C\u6C47\u603B\u6210\u679C\u94FE\u63A5\u548C\u5F85\u529E\uFF0C\u4E0D\u5C06\u542F\u52A8\u5F53\u4F5C\u5B8C\u6210\u3002"
     };
     const en = {
+      "canvasTitle": "Task canvas",
+      "canvasChoose": "Choose a task",
+      "canvasRefresh": "Refresh status",
+      "canvasZoomOut": "Zoom out",
+      "canvasZoomIn": "Zoom in",
+      "canvasHint": "Nodes reflect recorded sessions and delegation. Review requests in the original task. An ended turn does not mean a delivered video.",
+      "canvasEmpty": "No platform tasks available. Start with Cloud Studio to see the coordinator and its specialists here.",
+      "canvasLoadError": "Some task records are unavailable. Refresh or open the original task.",
+      "canvasState_waiting": "Awaiting confirmation",
+      "canvasState_running": "Running",
+      "canvasState_turn-ended": "Turn ended",
+      "canvasState_idle": "Not running",
+      "canvasOpen": "Open task conversation",
+      "canvasReview": "Review request",
       panelTitle: "MetaOntic Agent Forge",
       panelSidebarLabel: "Agent Forge",
       panelIntro: "Coordinate specialist agents and review their results. Video creation and promotional video are currently available.",
@@ -433,6 +667,7 @@
     return {
       inject: ["slots", "locale"],
       apply(ctx) {
+        registerAgentPicker(ctx, h);
         ctx.effect(() => ctx.locale.register(NS, createPlatformDictionaries()), "forge: platform dictionaries");
         const t = ctx.locale.bind(NS);
         const { PanelIcon, ForgePanel } = createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GUIDE_URL, LOGO_SVG: icon_default });
@@ -448,6 +683,8 @@
           key: PANEL_ID,
           locale: NS,
           inject: () => ({
+            openTask: (address) => ctx.get("uiWorkspace")?.openSession(address),
+            refreshTask: (id) => ctx.get("sessions")?.refreshProjections(id),
             startSession: () => ctx.get("uiWorkspace")?.startSession(void 0, { agentPreset: "metaontic-agent-forge-studio" }),
             openSettings: () => ctx.get("pluginNavigation")?.openBundle(NAMESPACE)
           })
@@ -707,9 +944,9 @@
     };
   }
   function createVideoProgress({ React, h, TOKENS }) {
-    function VideoTaskProgress({ block = {}, toolName = "metaontic_agent_forge_video_generate", callId, useVideoExecutions, startedAt }) {
+    function VideoTaskProgress({ block = {}, toolName = "metaontic_agent_forge_video_generate", callId, useMetaonticAgentForgeVideoExecutions, startedAt }) {
       const done = "kind" in block;
-      const executions = useVideoExecutions?.((snapshot) => snapshot);
+      const executions = useMetaonticAgentForgeVideoExecutions?.((snapshot) => snapshot);
       const beganAt = startedAt ?? executions?.get(callId);
       const [elapsed, setElapsed] = React.useState(0);
       React.useEffect(() => {
@@ -770,9 +1007,9 @@
         ])
       ]);
     }
-    function VideoProgressDock({ useChat, useVideoExecutions }) {
+    function VideoProgressDock({ useChat, useMetaonticAgentForgeVideoExecutions }) {
       const chat = useChat((snapshot) => snapshot);
-      const executions = useVideoExecutions?.((snapshot) => snapshot);
+      const executions = useMetaonticAgentForgeVideoExecutions?.((snapshot) => snapshot);
       const calls = activeVideoCalls(chat).filter((call) => call.block.phase === "start" && executions?.has(call.callId));
       if (!calls.length)
         return null;
@@ -864,12 +1101,7 @@
       "metaonticApiKey",
       "volcengineApiKey",
       "apiKey",
-      "keyOrigin",
       "baseUrl",
-      "registerEmail",
-      "deviceId",
-      "deviceSecret",
-      "loginKey",
       "model",
       "imageModel",
       "imageUseVideoKey",
@@ -1266,19 +1498,7 @@
     }
     async function persistConnection(form, pending, nextMode) {
       if (!["metaontic", "volcengine"].includes(nextMode)) throw new Error("unknownConnection");
-      const inactiveKeys = nextMode === "volcengine" ? [
-        "metaonticApiKey",
-        "apiKey",
-        "keyOrigin",
-        "baseUrl",
-        "submitPath",
-        "queryPath",
-        "registerEmail",
-        "deviceId",
-        "deviceSecret",
-        "registerApi",
-        "registerToken"
-      ] : nextMode === "metaontic" ? ["volcengineApiKey", "apiKey", "keyOrigin", "registerEmail", "deviceId", "deviceSecret", "registerApi", "registerToken"] : ["volcengineApiKey", "metaonticApiKey"];
+      const inactiveKeys = nextMode === "volcengine" ? ["metaonticApiKey", "apiKey", "baseUrl", "submitPath", "queryPath"] : ["volcengineApiKey", "apiKey"];
       const ops = pending.filter(([key]) => key !== "connectionMode" && !inactiveKeys.includes(key)).map(([key, next]) => ({ op: "set", path: [key], value: next }));
       for (const key of inactiveKeys) ops.push({ op: "set", path: [key], value: "" });
       const saved = form.getSnapshot?.()?.value || {};
@@ -1812,7 +2032,8 @@
           "@deepseek-ai/dsh-client-ui-tool",
           "@deepseek-ai/dsh-client-ui-session",
           "@deepseek-ai/dsh-client-ui-plugin-manager",
-          "@deepseek-ai/dsh-api-remotes"
+          "@deepseek-ai/dsh-api-remotes",
+          "@deepseek-ai/dsh-client-ui-agent-preset"
         ]
       }
     },
@@ -1840,9 +2061,10 @@
     releaseNotes: {
       version: "1.0.0",
       prerelease: false,
-      publishedAt: "2026-11-08T08:47:42.042Z",
+      publishedAt: "2026-11-08T09:36:31.706Z",
       items: [
-        "\u4F18\u5316\uFF1A\u5E38\u89C4\u4F53\u9A8C\u4F18\u5316\u3002"
+        "\u65B0\u589E\uFF1A\u4EFB\u52A1\u6D41\u7A0B\u753B\u5E03\u3002",
+        "\u4F18\u5316\uFF1A\u5E73\u53F0\u5165\u53E3\u3001\u6A21\u5F0F\u9009\u62E9\u4E0E\u914D\u7F6E\u4F53\u9A8C\u3002"
       ]
     }
   };
@@ -2331,8 +2553,8 @@
       inject: ["slots", "locale", "configForms", "uiSession"],
       apply(ctx, { settings }) {
         ctx.effect(() => ctx.uiSession.provide({
-          hooks: ["videoExecutions"],
-          resolve: (binding) => ({ hooks: { videoExecutions: videoExecutionSource2(binding.eventSource) } })
+          hooks: ["metaonticAgentForgeVideoExecutions"],
+          resolve: (binding) => ({ hooks: { metaonticAgentForgeVideoExecutions: videoExecutionSource2(binding.eventSource) } })
         }), "metaontic-agent-forge: actual video execution");
         const t = ctx.locale.bind(NS2);
         ctx.effect(() => ctx.locale.register(NS2, { zh, en }), "metaontic-agent-forge: dictionaries");

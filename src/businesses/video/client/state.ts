@@ -20,11 +20,8 @@ export function createSettingsState({ React }: any) {
     async function persistConnection(form, pending, nextMode) {
       if (!['metaontic', 'volcengine'].includes(nextMode)) throw new Error('unknownConnection');
       const inactiveKeys = nextMode === 'volcengine'
-        ? ['metaonticApiKey', 'apiKey', 'keyOrigin', 'baseUrl', 'submitPath', 'queryPath',
-          'registerEmail', 'deviceId', 'deviceSecret', 'registerApi', 'registerToken']
-        : nextMode === 'metaontic'
-          ? ['volcengineApiKey', 'apiKey', 'keyOrigin', 'registerEmail', 'deviceId', 'deviceSecret', 'registerApi', 'registerToken']
-          : ['volcengineApiKey', 'metaonticApiKey'];
+        ? ['metaonticApiKey', 'apiKey', 'baseUrl', 'submitPath', 'queryPath']
+        : ['volcengineApiKey', 'apiKey'];
       const ops = pending.filter(([key]) => key !== 'connectionMode' && !inactiveKeys.includes(key))
         .map(([key, next]) => ({ op: 'set', path: [key], value: next }));
       for (const key of inactiveKeys) ops.push({ op: 'set', path: [key], value: '' });

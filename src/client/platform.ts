@@ -1,3 +1,4 @@
+import { registerAgentPicker } from './agent-picker.js';
 import { createTheme } from './theme.js';
 import { createSidebarPanel } from './panel.js';
 import { createPlatformDictionaries } from './locale.js';
@@ -12,6 +13,7 @@ export function createPlatformClient(require: any) {
   return {
     inject: ['slots', 'locale'],
     apply(ctx: any) {
+      registerAgentPicker(ctx, h);
       ctx.effect(() => ctx.locale.register(NS, createPlatformDictionaries()), 'forge: platform dictionaries');
       const t = ctx.locale.bind(NS);
       const { PanelIcon, ForgePanel } = createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GUIDE_URL, LOGO_SVG: iconMark });
@@ -22,6 +24,8 @@ export function createPlatformClient(require: any) {
       ctx.effect(() => ctx.slots.inject('main', () => ctx.slots.register({
         name: 'main', key: PANEL_ID, locale: NS,
         inject: () => ({
+          openTask: (address: any) => ctx.get('uiWorkspace')?.openSession(address),
+          refreshTask: (id: string) => ctx.get('sessions')?.refreshProjections(id),
           startSession: () => ctx.get('uiWorkspace')?.startSession(undefined, { agentPreset: 'metaontic-agent-forge-studio' }),
           openSettings: () => ctx.get('pluginNavigation')?.openBundle(NAMESPACE),
         }),

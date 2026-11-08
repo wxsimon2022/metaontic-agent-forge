@@ -198,7 +198,7 @@ test('service: bundled host serves the server method again instead of refusing i
   globalThis.fetch = async () => { requests++; return Response.json({}); };
   try {
     const config = {
-      connectionMode: 'service', apiKey: 'test-key', keyOrigin: 'register', deviceId: 'd', deviceSecret: 's', registerEmail: 'a@b.c',
+      connectionMode: 'service', apiKey: 'test-key', keyOrigin: 'register', deviceId: 'd', deviceSecret: 's',
       deviceFingerprint: 'f', model: 'doubao-seedance-2-0-mini-260615', outputDir: directory,
       ffmpegBinary: '/missing/ffmpeg', ffprobeBinary: '/missing/ffprobe',
     };

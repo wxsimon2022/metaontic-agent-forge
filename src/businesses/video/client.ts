@@ -30,8 +30,8 @@ export function createVideoClient(require) {
       inject: ['slots', 'locale', 'configForms', 'uiSession'],
       apply(ctx, { settings }) {
         ctx.effect(() => ctx.uiSession.provide({
-          hooks: ['videoExecutions'],
-          resolve: (binding) => ({ hooks: { videoExecutions: videoExecutionSource(binding.eventSource) } }),
+          hooks: ['metaonticAgentForgeVideoExecutions'],
+          resolve: (binding) => ({ hooks: { metaonticAgentForgeVideoExecutions: videoExecutionSource(binding.eventSource) } }),
         }), 'metaontic-agent-forge: actual video execution');
         const t = ctx.locale.bind(NS);
         ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'metaontic-agent-forge: dictionaries');

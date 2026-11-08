@@ -62,7 +62,7 @@ export function createClientConfig() {
 
     /** 插件自己会写进配置的项：重置时兜底一起清，免得宿主没把它们列进 user。 */
     const PLUGIN_OWNED_KEYS = [
-      'usageStatsEnabled', 'connectionMode', 'metaonticApiKey', 'volcengineApiKey', 'apiKey', 'keyOrigin', 'baseUrl', 'registerEmail', 'deviceId', 'deviceSecret', 'loginKey', 'model', 'imageModel', 'imageUseVideoKey', 'imageApiKey',
+      'usageStatsEnabled', 'connectionMode', 'metaonticApiKey', 'volcengineApiKey', 'apiKey', 'baseUrl', 'model', 'imageModel', 'imageUseVideoKey', 'imageApiKey',
     ];
 
     /** 这台机器的系统（浏览器半侧只能这么看）：用来挑默认展示的 ffmpeg 安装命令。 */

@@ -67,15 +67,15 @@ export function videoExecutionSource(eventSource) {
 /** 浏览器端 progress：由入口注入宿主 React 与共享依赖。 */
 export function createVideoProgress({ React, h, TOKENS }: any) {
     /** 宿主工具卡片：仅消费实际运行状态，等待动画不代表百分比进度。 */
-    function VideoTaskProgress({ block = {}, toolName = 'metaontic_agent_forge_video_generate', callId, useVideoExecutions, startedAt }: {
+    function VideoTaskProgress({ block = {}, toolName = 'metaontic_agent_forge_video_generate', callId, useMetaonticAgentForgeVideoExecutions, startedAt }: {
         block?: any;
         toolName?: string;
         callId?: string;
-        useVideoExecutions?: any;
+        useMetaonticAgentForgeVideoExecutions?: any;
         startedAt?: number;
     }) {
         const done = 'kind' in block;
-        const executions = useVideoExecutions?.((snapshot) => snapshot);
+        const executions = useMetaonticAgentForgeVideoExecutions?.((snapshot) => snapshot);
         const beganAt = startedAt ?? executions?.get(callId);
         const [elapsed, setElapsed] = React.useState(0);
         React.useEffect(() => {
@@ -136,9 +136,9 @@ export function createVideoProgress({ React, h, TOKENS }: any) {
             ]),
         ]);
     }
-    function VideoProgressDock({ useChat, useVideoExecutions }) {
+    function VideoProgressDock({ useChat, useMetaonticAgentForgeVideoExecutions }) {
         const chat = useChat((snapshot) => snapshot);
-        const executions = useVideoExecutions?.((snapshot) => snapshot);
+        const executions = useMetaonticAgentForgeVideoExecutions?.((snapshot) => snapshot);
         const calls = activeVideoCalls(chat).filter((call) => call.block.phase === 'start' && executions?.has(call.callId));
         if (!calls.length)
             return null;

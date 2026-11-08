@@ -33,7 +33,7 @@ Gitee: https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/v1.0.0
 GitHub: https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/v1.0.0/metaontic-agent-forge-1.0.0.tgz
 <!-- forge:installation:end -->
 
-Git SSH remote addresses are for source control and should not be entered in the plugin installation field. Open Cloud Studio from the sidebar, or select a specialist directly in the conversation mode menu.
+Git SSH remote addresses are for source control and should not be entered in the plugin installation field. Open Cloud Studio from the sidebar, or select the platform coordinator in the conversation mode menu. Specialists remain available for internal delegation and are not listed as selectable modes.
 
 ## Architecture
 

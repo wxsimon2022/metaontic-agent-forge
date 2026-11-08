@@ -1,5 +1,20 @@
 export function createPlatformDictionaries() {
 const zh = {
+      "canvasTitle": "任务流程画布",
+      "canvasChoose": "选择任务",
+      "canvasRefresh": "刷新状态",
+      "canvasZoomOut": "缩小画布",
+      "canvasZoomIn": "放大画布",
+      "canvasHint": "节点来自真实会话与委派记录。等待确认时进入原任务审核；本轮结束不代表视频已交付。",
+      "canvasEmpty": "暂无可展示的平台任务。通过云智工坊开始协作后，任务与专业助手将在这里显示。",
+      "canvasLoadError": "部分任务记录暂时无法读取，请刷新或打开原任务查看。",
+      "canvasState_waiting": "等待确认",
+      "canvasState_running": "正在运行",
+      "canvasState_turn-ended": "本轮结束",
+      "canvasState_idle": "当前未运行",
+      "canvasOpen": "打开任务对话",
+      "canvasReview": "前往确认",
+
       panelTitle: '云智工坊 · 智能体平台',
       panelSidebarLabel: '云智工坊',
       panelIntro: '由总控拆解需求、委派专业 Agent 并汇总成果，当前已接入视频创作与宣传视频业务。',
@@ -23,6 +38,21 @@ const zh = {
       panelStep4Desc: '完成通知回到总控，汇总成果链接和待办，不将启动当作完成。',
 };
 const en = {
+      "canvasTitle": "Task canvas",
+      "canvasChoose": "Choose a task",
+      "canvasRefresh": "Refresh status",
+      "canvasZoomOut": "Zoom out",
+      "canvasZoomIn": "Zoom in",
+      "canvasHint": "Nodes reflect recorded sessions and delegation. Review requests in the original task. An ended turn does not mean a delivered video.",
+      "canvasEmpty": "No platform tasks available. Start with Cloud Studio to see the coordinator and its specialists here.",
+      "canvasLoadError": "Some task records are unavailable. Refresh or open the original task.",
+      "canvasState_waiting": "Awaiting confirmation",
+      "canvasState_running": "Running",
+      "canvasState_turn-ended": "Turn ended",
+      "canvasState_idle": "Not running",
+      "canvasOpen": "Open task conversation",
+      "canvasReview": "Review request",
+
       panelTitle: 'MetaOntic Agent Forge',
       panelSidebarLabel: 'Agent Forge',
       panelIntro: 'Coordinate specialist agents and review their results. Video creation and promotional video are currently available.',

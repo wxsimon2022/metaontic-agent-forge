@@ -10,7 +10,7 @@ const GUIDE_URL = 'https://video.mybfs.cn';
 /** 面板与字典都在 TS 里，按仓库既有做法在隔离上下文里跑纯函数，再用桩 h 收集渲染树。 */
 function harness({ locale = 'zh', props = {}, logo = '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/></svg>' } = {}) {
   const context = vm.createContext({});
-  vm.runInContext(sourceOf('client/panel', 'client/locale'), context);
+  vm.runInContext(sourceOf('client/task-canvas', 'client/panel', 'client/locale'), context);
   const dictionaries = context.createPlatformDictionaries();
   const t = (key, args = {}) => String(dictionaries[locale][key] ?? key)
     .replace(/\{(\w+)\}/g, (_, name) => args[name] ?? `{${name}}`);

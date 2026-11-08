@@ -33,7 +33,9 @@ Gitee: https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/v1.0.0
 GitHub: https://github.com/wxsimon2022/metaontic-agent-forge/releases/download/v1.0.0/metaontic-agent-forge-1.0.0.tgz
 <!-- forge:installation:end -->
 
-Git 仓库 SSH 地址用于代码拉取和推送，不能直接填入 Harness 插件安装框。配置完成后，可从左侧“云智工坊”进入总控，也可在会话模式中直接选择专业助手。
+Git 仓库 SSH 地址用于代码拉取和推送，不能直接填入 Harness 插件安装框。配置完成后，可从左侧“云智工坊”进入总控，也可在会话模式中选择“云智工坊 · 智能体平台”；专业助手由总控内部调用，不单独列入模式选择。
+
+左侧任务流程画布可查看真实会话与委派关系，支持任务切换、缩放及跳转原任务审核。
 
 ## 插件架构
 

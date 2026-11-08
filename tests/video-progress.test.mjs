@@ -139,7 +139,7 @@ test('outside progress dock is visible only while the current session has active
   Object.assign(context, api.createVideoProgress({ ...context, React: {}, TOKENS: {} }));
   const running = { phase: 'start', callId: 'video-2', name: 'metaontic_agent_forge_video_extend', subCalls: [] };
   const chat = { order: ['tool'], nodes: new Map([['tool', { kind: 'tool-call', data: { root: running } }]]) };
-  const hooks = { useChat: selector => selector(chat), useVideoExecutions: selector => selector(new Map([['video-2', 1234]])) };
+  const hooks = { useChat: selector => selector(chat), useMetaonticAgentForgeVideoExecutions: selector => selector(new Map([['video-2', 1234]])) };
   const dock = context.VideoProgressDock(hooks);
   assert.equal(dock.props['data-field'], 'video-progress-dock');
   assert.equal(dock.props.style.maxWidth, 'var(--dsh-composer-card-max-width, 100%)');
@@ -147,7 +147,7 @@ test('outside progress dock is visible only while the current session has active
   assert.equal(dock.props.style.margin, '0 auto');
   assert.equal(dock.children[0][0].props.callId, 'video-2');
   assert.equal(dock.children[0][0].props.startedAt, 1234);
-  assert.equal(context.VideoProgressDock({ ...hooks, useVideoExecutions: selector => selector(new Map()) }), null, 'call/start before approval does not show progress');
+  assert.equal(context.VideoProgressDock({ ...hooks, useMetaonticAgentForgeVideoExecutions: selector => selector(new Map()) }), null, 'call/start before approval does not show progress');
   running.phase = 'preparing';
   assert.equal(context.VideoProgressDock(hooks), null, 'streamed arguments never show progress');
   assert.equal(context.VideoProgressDock({ useChat: selector => selector(undefined) }), null);

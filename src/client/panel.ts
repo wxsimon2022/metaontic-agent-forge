@@ -1,7 +1,9 @@
+import { createTaskCanvas } from './task-canvas.js';
 /** 浏览器端左侧栏面板：由入口注入宿主 React 与共享依赖。 */
 export function createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GUIDE_URL, LOGO_SVG }: any) {
     // 插件图标（icon.svg）由打包器当文本内联进来，转成 data URI 后用 <img> 渲染：
     // 不依赖宿主能否按路径取到插件资源，也不会和页面里其他 svg 的渐变 id 撞名。
+    const TaskCanvas = createTaskCanvas({ React, h, t });
     const LOGO_SRC = LOGO_SVG ? `data:image/svg+xml,${encodeURIComponent(LOGO_SVG)}` : '';
 
     /**
@@ -202,6 +204,8 @@ export function createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GU
             }, t('panelGuide')),
           ]),
         ]),
+        typeof props.useSessions === 'function' && typeof props.useSessionStatus === 'function'
+          ? h(TaskCanvas, { key: 'task-canvas', ...props }) : null,
         h('section', { key: 'flow', className: 'metaontic-agent-forge-section' }, [
           h('div', { key: 'flow-label', className: 'metaontic-agent-forge-section-title' }, t('panelFlow')),
           h('div', { key: 'flow-steps', className: 'metaontic-agent-forge-panel-flow' }, flowChildren),

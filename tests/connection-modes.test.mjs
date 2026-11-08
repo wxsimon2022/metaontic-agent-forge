@@ -69,7 +69,7 @@ for (const connectionMode of ['metaontic', 'volcengine']) test(`${connectionMode
 
 const serviceConfig = () => ({
   connectionMode: 'service', apiKey: 'sk-service',
-  deviceId: 'd', deviceSecret: 's', registerEmail: 'a@b.c',
+  deviceId: 'd', deviceSecret: 's',
 });
 const okQuota = over => async () => ({
   status: 'ok',
