@@ -750,10 +750,11 @@
   }
   function registerAuthNotice(ctx, h, t) {
     if (typeof ctx.slots.entriesOfSlot !== "function") return;
-    const original = ctx.slots.entriesOfSlot("conversation.chat.node").filter((entry) => entry.options?.key === "turn-error").sort((a, b) => (b.options.priority || 0) - (a.options.priority || 0))[0];
+    const entries = (typeof ctx.slots.entries === "function" ? ctx.slots.entries("conversation.chat.node") : ctx.slots.entriesOfSlot("conversation.chat.node")).filter((entry) => entry.options?.key === "turn-error");
+    const original = ctx.slots.entriesOfSlot("conversation.chat.node").filter((entry) => entry.options?.key === "turn-error").sort((a, b) => (a.options.priority || 0) - (b.options.priority || 0))[0];
     if (!original?.component) return;
     const Notice = createAuthNotice({ h, Original: original.component, hostT: ctx.locale.bind(original.locale || "chat"), t });
-    return ctx.slots.register({ name: "conversation.chat.node", key: "turn-error", priority: (original.options.priority || 0) + 1, locale: "chat" }, Notice);
+    return ctx.slots.register({ name: "conversation.chat.node", key: "turn-error", priority: Math.min(...entries.map((entry) => entry.options.priority || 0)) - 2, locale: "chat" }, Notice);
   }
 
   // src/businesses/video/client/tool-result.ts
@@ -2061,9 +2062,9 @@
     releaseNotes: {
       version: "1.0.0",
       prerelease: false,
-      publishedAt: "2026-11-08T09:46:39.374Z",
+      publishedAt: "2026-11-08T09:53:01.958Z",
       items: [
-        "\u4F18\u5316\uFF1A\u6062\u590D\u63D2\u4EF6\u8BBE\u7F6E\u9875\u548C\u5DE6\u4FA7\u5165\u53E3\u3002"
+        "\u4F18\u5316\uFF1A\u652F\u6301\u65B0\u65E7\u63D2\u4EF6\u5171\u5B58\uFF0C\u6062\u590D\u8BBE\u7F6E\u9875\u548C\u5DE6\u4FA7\u5165\u53E3\u3002"
       ]
     }
   };

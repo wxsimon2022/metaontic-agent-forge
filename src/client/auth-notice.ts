@@ -15,10 +15,13 @@ export function createAuthNotice({ h, Original, hostT, t }) {
 /** 在宿主声明的keyed slot中提供高优先级展示；卸载时由effect自动恢复原组件。 */
 export function registerAuthNotice(ctx, h, t) {
   if (typeof ctx.slots.entriesOfSlot !== 'function') return;
+  const entries = (typeof ctx.slots.entries === 'function' ? ctx.slots.entries('conversation.chat.node') : ctx.slots.entriesOfSlot('conversation.chat.node'))
+    .filter(entry => entry.options?.key === 'turn-error');
   const original = ctx.slots.entriesOfSlot('conversation.chat.node')
     .filter(entry => entry.options?.key === 'turn-error')
-    .sort((a, b) => (b.options.priority || 0) - (a.options.priority || 0))[0];
+    .sort((a, b) => (a.options.priority || 0) - (b.options.priority || 0))[0];
   if (!original?.component) return;
   const Notice = createAuthNotice({ h, Original: original.component, hostT: ctx.locale.bind(original.locale || 'chat'), t });
-  return ctx.slots.register({ name: 'conversation.chat.node', key: 'turn-error', priority: (original.options.priority || 0) + 1, locale: 'chat' }, Notice);
+  // 宿主最低优先值生效；留一个空位兼容旧插件按当前优胜项 +1 注册，保证任意加载顺序均不重名。
+  return ctx.slots.register({ name: 'conversation.chat.node', key: 'turn-error', priority: Math.min(...entries.map(entry => entry.options.priority || 0)) - 2, locale: 'chat' }, Notice);
 }
