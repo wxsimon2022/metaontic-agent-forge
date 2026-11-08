@@ -21,7 +21,7 @@ export function createAgentPickerView(h: any, Original: any, hook: string, field
 }
 /** 使用宿主槽位扩展，不修改预设注册表或远程接口；卸载即恢复。 */
 export function registerAgentPicker(ctx: any, h: any) {
-  if (typeof ctx.slots.entriesOfSlot !== 'function' || typeof ctx.slots.subscribe !== 'function') return;
+  if (typeof ctx.slots.entries !== 'function' || typeof ctx.slots.subscribe !== 'function') return;
   const wrappers = new WeakSet<object>();
   for (const spec of [
     { name: 'conversation.hero.agentPreset', hook: 'useAgentPresetSeat', field: 'options' },
@@ -33,7 +33,8 @@ export function registerAgentPicker(ctx: any, h: any) {
         if (syncing) return;
         syncing = true;
         try {
-          const next = ctx.slots.entriesOfSlot(spec.name)
+          // entriesOfSlot 只返回优胜项；用完整注册表避免包装器遮住原组件后反复重装。
+          const next = ctx.slots.entries(spec.name)
             .filter((entry: any) => entry.component && !wrappers.has(entry.component) && (!spec.id || entry.options?.id === spec.id))
             .sort((a: any, b: any) => (a.options?.priority || 0) - (b.options?.priority || 0))[0];
           if (next === original) return;

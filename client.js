@@ -21,7 +21,7 @@
     };
   }
   function registerAgentPicker(ctx, h) {
-    if (typeof ctx.slots.entriesOfSlot !== "function" || typeof ctx.slots.subscribe !== "function") return;
+    if (typeof ctx.slots.entries !== "function" || typeof ctx.slots.subscribe !== "function") return;
     const wrappers = /* @__PURE__ */ new WeakSet();
     for (const spec of [
       { name: "conversation.hero.agentPreset", hook: "useAgentPresetSeat", field: "options" },
@@ -33,7 +33,7 @@
           if (syncing) return;
           syncing = true;
           try {
-            const next = ctx.slots.entriesOfSlot(spec.name).filter((entry) => entry.component && !wrappers.has(entry.component) && (!spec.id || entry.options?.id === spec.id)).sort((a, b) => (a.options?.priority || 0) - (b.options?.priority || 0))[0];
+            const next = ctx.slots.entries(spec.name).filter((entry) => entry.component && !wrappers.has(entry.component) && (!spec.id || entry.options?.id === spec.id)).sort((a, b) => (a.options?.priority || 0) - (b.options?.priority || 0))[0];
             if (next === original) return;
             dispose?.();
             dispose = void 0;
@@ -2061,10 +2061,9 @@
     releaseNotes: {
       version: "1.0.0",
       prerelease: false,
-      publishedAt: "2026-11-08T09:36:31.706Z",
+      publishedAt: "2026-11-08T09:46:39.374Z",
       items: [
-        "\u65B0\u589E\uFF1A\u4EFB\u52A1\u6D41\u7A0B\u753B\u5E03\u3002",
-        "\u4F18\u5316\uFF1A\u5E73\u53F0\u5165\u53E3\u3001\u6A21\u5F0F\u9009\u62E9\u4E0E\u914D\u7F6E\u4F53\u9A8C\u3002"
+        "\u4F18\u5316\uFF1A\u6062\u590D\u63D2\u4EF6\u8BBE\u7F6E\u9875\u548C\u5DE6\u4FA7\u5165\u53E3\u3002"
       ]
     }
   };

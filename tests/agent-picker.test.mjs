@@ -21,13 +21,13 @@ test('picker filters only platform specialists, preserves current state and nati
 test('slot adapter handles late native registration and restores originals on unload',()=>{
  const entries=new Map(),listeners=new Map(),cleanups=[];
  const emit=name=>{for(const fn of listeners.get(name)||[])fn();};
- const slots={entriesOfSlot:name=>entries.get(name)||[],subscribe(name,fn){const list=listeners.get(name)||new Set();list.add(fn);listeners.set(name,list);return()=>list.delete(fn);},inject:(name,fn)=>fn(),register(spec,component){const entry={options:spec,component,inject:spec.inject,locale:spec.locale};entries.set(spec.name,[...(entries.get(spec.name)||[]),entry]);emit(spec.name);return()=>{entries.set(spec.name,entries.get(spec.name).filter(e=>e!==entry));emit(spec.name);};}};
+ const slots={entries:name=>entries.get(name)||[],entriesOfSlot:name=>(entries.get(name)||[]).slice().sort((a,b)=>(a.options.priority||0)-(b.options.priority||0)).slice(0,1),subscribe(name,fn){const list=listeners.get(name)||new Set();list.add(fn);listeners.set(name,list);return()=>list.delete(fn);},inject:(name,fn)=>fn(),register(spec,component){const entry={options:spec,component,inject:spec.inject,locale:spec.locale};entries.set(spec.name,[...(entries.get(spec.name)||[]),entry]);emit(spec.name);return()=>{entries.set(spec.name,entries.get(spec.name).filter(e=>e!==entry));emit(spec.name);};}};
  registerAgentPicker({slots,effect(fn){const cleanup=fn();if(cleanup)cleanups.push(cleanup);}},h);
  const injected=()=>({});const Original=()=>{};
  const remove=slots.register({name:'conversation.hero.agentPreset',inject:injected,locale:'native'},Original);
- let list=slots.entriesOfSlot('conversation.hero.agentPreset');assert.equal(list.length,2);
- const wrapper=list.find(e=>e.component!==Original);assert.equal(wrapper.inject,injected);assert.equal(wrapper.locale,'native');assert.equal(wrapper.options.priority,-1);
- remove();assert.equal(slots.entriesOfSlot('conversation.hero.agentPreset').length,0);
+ let list=slots.entries('conversation.hero.agentPreset');assert.equal(list.length,2);
+ const wrapper=list.find(e=>e.component!==Original);emit('conversation.hero.agentPreset');emit('conversation.hero.agentPreset');assert.equal(slots.entries('conversation.hero.agentPreset').length,2);assert.equal(wrapper.inject,injected);assert.equal(wrapper.locale,'native');assert.equal(wrapper.options.priority,-1);
+ remove();assert.equal(slots.entries('conversation.hero.agentPreset').length,0);
  slots.register({name:'conversation.hero.agentPreset',inject:injected},Original);
  for(const cleanup of cleanups)cleanup();
  assert.equal(slots.entriesOfSlot('conversation.hero.agentPreset').length,1);
