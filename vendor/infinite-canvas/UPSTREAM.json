@@ -1,0 +1,12 @@
+{
+  "repository": "https://github.com/Haitang-Hub/dsh-infinite-canvas",
+  "commit": "0a8a8dccc8e8d4fcaa0d792750a8d45be8e5def8",
+  "version": "0.2.9",
+  "license": "MIT",
+  "modifications": "Platform-only editing, disk persistence, project targeting, native workflow for generation. See scripts/adapt-infinite-canvas.mjs and canvas/.",
+  "sha256": {
+    "bridge/index.js": "f6dc6a6cb520ab7414cf61284a4e17802f18f89e41bddd27ff29300377135982",
+    "site/assets/index-9lHthJ7Q.js": "716c4c3fe3bb243f58d7a3494d3e374a5c3e60adb9dc1891f830fb8f7e910527",
+    "site/forge-ui.js": "8994e8c1ea1557ed614daf63a9d344129bce3a4d1199c29e1c4dd8d28cbeef63"
+  }
+}
