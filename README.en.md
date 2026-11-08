@@ -16,6 +16,8 @@ An extensible agent platform for DeepSeek Harness. The coordinator delegates tas
 
 Delegation is limited to approved specialists and one level. Task creation is not completion. Users still review scripts, costs and each generated video segment.
 
+Specialists report progress and results through the host messaging channel. Answer review requests in the specialist task, then continue that same task.
+
 ## Available business: video creation
 
 - **Beginner-friendly creation**: guided ideas, scripts and previews. Reuse specifications already provided by the user.

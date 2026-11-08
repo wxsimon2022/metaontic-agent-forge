@@ -40,6 +40,7 @@
     "./presets/metaontic-agent-forge-studio/locale/*.json": "./locale/presets/metaontic-agent-forge-studio/*.json",
     "./presets/metaontic-agent-forge-studio/icon": "./presets/icons/metaontic-agent-forge-studio.svg",
     "./presets/metaontic-agent-forge-controls": "./presets/metaontic-agent-forge-controls.js",
+    "./presets/metaontic-agent-forge-report": "./presets/metaontic-agent-forge-report.js",
     "./presets/metaontic-agent-forge-controls/locale/*.json": "./locale/presets/controls/*.json",
     "./presets/metaontic-agent-forge-controls/icon": "./icon.svg"
   },
@@ -105,9 +106,10 @@
   "releaseNotes": {
     "version": "1.0.0",
     "prerelease": false,
-    "publishedAt": "2026-11-08T10:37:17.687Z",
+    "publishedAt": "2026-11-08T11:47:48.629Z",
     "items": [
-      "优化：修复设置保存失败，兼容宿主差异并恢复总控模式入口。"
+      "新增：总控调度专业助手，支持任务关系查看与成果汇总。",
+      "优化：修复设置保存与总控入口兼容问题，补齐专业助手消息回传。"
     ]
   }
 }

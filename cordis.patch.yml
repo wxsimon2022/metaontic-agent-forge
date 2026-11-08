@@ -54,6 +54,8 @@
         description: 帮你完善创意、编写脚本，审核确认后制作视频，支持参考图、续拍、逐段预览与断点续做。
         order: 20
         plugins: &metaontic-agent-forge-video-plugins
+          - id: metaontic-agent-forge-report
+            name: 'metaontic-agent-forge/presets/metaontic-agent-forge-report'
           - id: metaontic-agent-forge-persona
             name: '@deepseek-ai/dsh-persona'
             config:

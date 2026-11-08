@@ -1996,6 +1996,7 @@
       "./presets/metaontic-agent-forge-studio/locale/*.json": "./locale/presets/metaontic-agent-forge-studio/*.json",
       "./presets/metaontic-agent-forge-studio/icon": "./presets/icons/metaontic-agent-forge-studio.svg",
       "./presets/metaontic-agent-forge-controls": "./presets/metaontic-agent-forge-controls.js",
+      "./presets/metaontic-agent-forge-report": "./presets/metaontic-agent-forge-report.js",
       "./presets/metaontic-agent-forge-controls/locale/*.json": "./locale/presets/controls/*.json",
       "./presets/metaontic-agent-forge-controls/icon": "./icon.svg"
     },
@@ -2061,9 +2062,10 @@
     releaseNotes: {
       version: "1.0.0",
       prerelease: false,
-      publishedAt: "2026-11-08T10:37:17.687Z",
+      publishedAt: "2026-11-08T11:47:48.629Z",
       items: [
-        "\u4F18\u5316\uFF1A\u4FEE\u590D\u8BBE\u7F6E\u4FDD\u5B58\u5931\u8D25\uFF0C\u517C\u5BB9\u5BBF\u4E3B\u5DEE\u5F02\u5E76\u6062\u590D\u603B\u63A7\u6A21\u5F0F\u5165\u53E3\u3002"
+        "\u65B0\u589E\uFF1A\u603B\u63A7\u8C03\u5EA6\u4E13\u4E1A\u52A9\u624B\uFF0C\u652F\u6301\u4EFB\u52A1\u5173\u7CFB\u67E5\u770B\u4E0E\u6210\u679C\u6C47\u603B\u3002",
+        "\u4F18\u5316\uFF1A\u4FEE\u590D\u8BBE\u7F6E\u4FDD\u5B58\u4E0E\u603B\u63A7\u5165\u53E3\u517C\u5BB9\u95EE\u9898\uFF0C\u8865\u9F50\u4E13\u4E1A\u52A9\u624B\u6D88\u606F\u56DE\u4F20\u3002"
       ]
     }
   };
