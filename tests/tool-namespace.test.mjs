@@ -12,7 +12,7 @@ test('platform loads alongside legacy video tools without overwriting their regi
   };
   const dispose = apply(ctx,{});
   const added = [...registry.keys()].filter(name => !originals.has(name));
-  assert.equal(added.length,10);
+  assert.equal(added.length,11);
   for (const name of added) {assert.ok(name.startsWith('metaontic_agent_forge_'));assert.ok(name.length<=64);}
   for (const [name,original] of originals) assert.equal(registry.get(name),original);
   dispose();

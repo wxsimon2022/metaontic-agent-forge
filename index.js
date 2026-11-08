@@ -291,17 +291,17 @@ function getInner(value) {
 function extractKeys(data) {
   return filterKeys(data ?? {}, (key) => !key.startsWith("$"));
 }
-function validateVolatileSchema(schema, path20 = [], blocked2 = false, seen = /* @__PURE__ */ new Map()) {
+function validateVolatileSchema(schema, path21 = [], blocked2 = false, seen = /* @__PURE__ */ new Map()) {
   const states = seen.get(schema) ?? /* @__PURE__ */ new Set();
   if (states.has(blocked2)) return;
   states.add(blocked2);
   seen.set(schema, states);
-  if (schema.meta?.volatile && blocked2) throw new ValidationError("volatile fields require a fixed object path without an enclosing volatile field", { path: path20 });
+  if (schema.meta?.volatile && blocked2) throw new ValidationError("volatile fields require a fixed object path without an enclosing volatile field", { path: path21 });
   const nested = blocked2 || !!schema.meta?.volatile;
-  if (schema.dict) for (const [key, child] of Object.entries(schema.dict)) validateVolatileSchema(child, [...path20, key], nested, seen);
-  if (schema.sKey) validateVolatileSchema(schema.sKey, [...path20, "<key>"], true, seen);
-  if (schema.inner && (schema.type !== "lazy" || schema.inner[kSchema])) validateVolatileSchema(schema.inner, [...path20, "*"], true, seen);
-  if (schema.list) for (let index = 0; index < schema.list.length; index++) validateVolatileSchema(schema.list[index], [...path20, String(index)], true, seen);
+  if (schema.dict) for (const [key, child] of Object.entries(schema.dict)) validateVolatileSchema(child, [...path21, key], nested, seen);
+  if (schema.sKey) validateVolatileSchema(schema.sKey, [...path21, "<key>"], true, seen);
+  if (schema.inner && (schema.type !== "lazy" || schema.inner[kSchema])) validateVolatileSchema(schema.inner, [...path21, "*"], true, seen);
+  if (schema.list) for (let index = 0; index < schema.list.length; index++) validateVolatileSchema(schema.list[index], [...path21, String(index)], true, seen);
 }
 function checkWithinRange(data, meta, description, options, skipMin = false) {
   const { max = Infinity, min = -Infinity } = meta;
@@ -1090,8 +1090,8 @@ function resolveSubmitPath(config) {
 }
 function resolveQueryPath(config, taskId) {
   if (isVolcengine(config)) return `/api/v3/contents/generations/tasks/${encodeURIComponent(taskId)}`;
-  const path20 = String(ref(config, "queryPath", "")).trim() || relayPreset().queryPath;
-  return path20.replace("{task_id}", encodeURIComponent(taskId));
+  const path21 = String(ref(config, "queryPath", "")).trim() || relayPreset().queryPath;
+  return path21.replace("{task_id}", encodeURIComponent(taskId));
 }
 function resolveModel(config) {
   const preset = relayPreset();
@@ -1822,7 +1822,7 @@ function cloudStudioGuidance() {
 var cloudStudio = {
   id: "metaontic-agent-forge-studio",
   name: "\u4E91\u667A\u5DE5\u574A \xB7 \u667A\u80FD\u4F53\u5E73\u53F0",
-  businesses: [],
+  businesses: ["canvas"],
   skills: [],
   icon: "presets/icons/metaontic-agent-forge-studio.svg",
   prompt: cloudStudioGuidance,
@@ -1833,7 +1833,7 @@ var cloudStudio = {
 var videoDirector = {
   id: "metaontic-agent-forge-video-director",
   name: "\u89C6\u9891\u521B\u4F5C\u52A9\u624B",
-  businesses: ["video"],
+  businesses: ["video", "canvas"],
   skills: ["metaontic-agent-forge-video-director"],
   icon: "presets/icons/metaontic-agent-forge-video-director.svg"
 };
@@ -1854,7 +1854,7 @@ function promoVideoGuidance() {
 var promoVideo = {
   id: "metaontic-agent-forge-promo-video",
   name: "\u5BA3\u4F20\u89C6\u9891\u52A9\u624B",
-  businesses: ["video"],
+  businesses: ["video", "canvas"],
   skills: ["metaontic-agent-forge-video-director", "metaontic-agent-forge-promo-video"],
   icon: "presets/icons/metaontic-agent-forge-promo-video.svg",
   prompt: promoVideoGuidance
@@ -2644,16 +2644,16 @@ async function findInstalledFfmpeg(signal) {
 }
 function ffmpegInstallHint(config) {
   const binary = resolveBinary(config, "ffmpegBinary", "ffmpeg");
-  const { os: os5, installs } = ffmpegInstallOptions();
+  const { os: os6, installs } = ffmpegInstallOptions();
   const lines = [
     `\u672C\u673A\u6CA1\u6709\u627E\u5230\u53EF\u7528\u7684 ffmpeg\uFF08${binary}\uFF09\uFF0C\u6240\u4EE5\u300C\u628A\u591A\u6BB5\u5408\u5E76\u6210\u4E00\u6761\u300D\u8FD9\u6B65\u6682\u65F6\u6CA1\u505A\uFF0C\u5DF2\u751F\u6210\u7ED3\u679C\u4EE5\u8FD4\u56DE\u7684\u5206\u6BB5\u5217\u8868\u4E3A\u51C6\uFF1B\u672C\u5730\u6587\u4EF6\u662F\u5426\u9F50\u5168\u8BF7\u6838\u5BF9\u5404\u6BB5\u8DEF\u5F84\u3002`,
-    `\u88C5\u4E00\u4E0B ffmpeg \u5C31\u80FD\u5408\u5E76\uFF08\u4F60\u5F53\u524D\u662F ${os5}\uFF09\uFF1A`,
+    `\u88C5\u4E00\u4E0B ffmpeg \u5C31\u80FD\u5408\u5E76\uFF08\u4F60\u5F53\u524D\u662F ${os6}\uFF09\uFF1A`,
     ...installs.map((item) => `  \xB7 ${item.label}\uFF1A${item.command}`),
     "\u88C5\u597D\u540E\u4F7F\u7528\u539Fresume\u6062\u590D\u5DF2\u6709\u4EFB\u52A1\u7684\u4E0B\u8F7D\u6216\u5408\u5E76\uFF0C\u4E0D\u91CD\u65B0\u63D0\u4EA4\u751F\u6210\u4EFB\u52A1\uFF1B\u5982\u679C ffmpeg \u5DF2\u7ECF\u88C5\u4E86\u4F46\u4E0D\u5728\u9ED8\u8BA4\u4F4D\u7F6E\uFF0C\u628A\u5B83\u7684\u7EDD\u5BF9\u8DEF\u5F84\u586B\u5230\u63D2\u4EF6\u8BBE\u7F6E\u91CC\u7684\u300Cffmpeg \u8DEF\u5F84\u300D\u4E5F\u4E00\u6837\u7BA1\u7528\u3002",
     "ffmpeg \u7684\u5B89\u88C5\u5305\u91CC\u81EA\u5E26 ffprobe\uFF0C\u88C5\u5B8C\u5206\u6BB5\u63A2\u6D4B\u4E5F\u4E00\u8D77\u597D\u4E86\u3002",
     "\u60F3\u8BA9\u6211\u6765\u88C5\u5C31\u8BF4\u4E00\u58F0 \u2014\u2014 \u6211\u4F1A\u7528 metaontic_agent_forge_video_setup \u6267\u884C\u5B89\u88C5\uFF08\u6267\u884C\u524D\u5BBF\u4E3B\u4F1A\u5148\u8BA9\u4F60\u786E\u8BA4\u547D\u4EE4\uFF09\u3002"
   ];
-  return { binary, os: os5, installs, hint: lines.join("\n") };
+  return { binary, os: os6, installs, hint: lines.join("\n") };
 }
 async function probeMedia(file, config, signal) {
   try {
@@ -3472,20 +3472,20 @@ function approvalPolicy(ctx, exec) {
 function setupGate(ctx, exec) {
   const args = exec.arguments && typeof exec.arguments === "object" ? exec.arguments : {};
   if (args?.install !== true) return { kind: "allow" };
-  const { os: os5, installs, bootstrap } = ffmpegInstallOptions();
+  const { os: os6, installs, bootstrap } = ffmpegInstallOptions();
   const command = String(args?.target || "ffmpeg") === "package-manager" && bootstrap ? bootstrap.command : installs[0].command;
   if (approvalPolicy(ctx, exec) === "never") {
     return {
       kind: "deny",
-      reason: `\u5F53\u524D\u6743\u9650\u6A21\u5F0F\u5173\u95ED\u4E86\u5BA1\u6279\u63D0\u793A\uFF08\u5B8C\u5168\u8BBF\u95EE\uFF09\uFF0C\u88C5\u73AF\u5883\u8FD9\u79CD\u4F1A\u5728\u672C\u673A\u8DD1\u547D\u4EE4\u7684\u64CD\u4F5C\u6CA1\u6CD5\u786E\u8BA4\uFF0C\u5DF2\u505C\u6B62\u3002\u628A\u6743\u9650\u5207\u5230\u300C\u5DE5\u4F5C\u533A\u5199\u5165\u300D\u6216\u300C\u53EA\u8BFB\u300D\u540E\u518D\u8BA9\u6211\u88C5\uFF1B\u4E5F\u53EF\u4EE5\u7167\u7740\u8FD9\u6761\u547D\u4EE4\u81EA\u5DF1\u5728\u7EC8\u7AEF\u6267\u884C\uFF1A${command}\uFF08${os5}\uFF09\u3002`
+      reason: `\u5F53\u524D\u6743\u9650\u6A21\u5F0F\u5173\u95ED\u4E86\u5BA1\u6279\u63D0\u793A\uFF08\u5B8C\u5168\u8BBF\u95EE\uFF09\uFF0C\u88C5\u73AF\u5883\u8FD9\u79CD\u4F1A\u5728\u672C\u673A\u8DD1\u547D\u4EE4\u7684\u64CD\u4F5C\u6CA1\u6CD5\u786E\u8BA4\uFF0C\u5DF2\u505C\u6B62\u3002\u628A\u6743\u9650\u5207\u5230\u300C\u5DE5\u4F5C\u533A\u5199\u5165\u300D\u6216\u300C\u53EA\u8BFB\u300D\u540E\u518D\u8BA9\u6211\u88C5\uFF1B\u4E5F\u53EF\u4EE5\u7167\u7740\u8FD9\u6761\u547D\u4EE4\u81EA\u5DF1\u5728\u7EC8\u7AEF\u6267\u884C\uFF1A${command}\uFF08${os6}\uFF09\u3002`
     };
   }
   return {
     kind: "ask",
-    reason: `\u4EBA\u5DE5\u786E\u8BA4\uFF1A\u5728 ${os5} \u4E0A\u6267\u884C\u5B89\u88C5\u547D\u4EE4\u300C${command}\u300D\u3002`,
+    reason: `\u4EBA\u5DE5\u786E\u8BA4\uFF1A\u5728 ${os6} \u4E0A\u6267\u884C\u5B89\u88C5\u547D\u4EE4\u300C${command}\u300D\u3002`,
     displayReason: {
-      zh: `\u51C6\u5907\u5728\u8FD9\u53F0\u7535\u8111\u4E0A\u88C5 ffmpeg\uFF1A${command}\uFF08${os5}\uFF09\u3002\u70B9\u4E86\u300C\u5141\u8BB8\u300D\u624D\u4F1A\u6267\u884C\uFF0C\u5B89\u88C5\u5B8C\u6210\u53EA\u9A8C\u8BC1\u5DE5\u5177\uFF1B\u65B0\u751F\u6210\u4ECD\u9700\u5355\u72EC\u786E\u8BA4\u8D39\u7528\uFF0C\u5DF2\u6709\u4EFB\u52A1\u6309\u539F\u8FDB\u5EA6\u6062\u590D\u3002`,
-      en: `About to install ffmpeg on this machine: ${command} (${os5}). It runs only after you allow it; installation only verifies the tool; new video generation requires separate cost confirmation, while existing tasks should resume their saved progress.`
+      zh: `\u51C6\u5907\u5728\u8FD9\u53F0\u7535\u8111\u4E0A\u88C5 ffmpeg\uFF1A${command}\uFF08${os6}\uFF09\u3002\u70B9\u4E86\u300C\u5141\u8BB8\u300D\u624D\u4F1A\u6267\u884C\uFF0C\u5B89\u88C5\u5B8C\u6210\u53EA\u9A8C\u8BC1\u5DE5\u5177\uFF1B\u65B0\u751F\u6210\u4ECD\u9700\u5355\u72EC\u786E\u8BA4\u8D39\u7528\uFF0C\u5DF2\u6709\u4EFB\u52A1\u6309\u539F\u8FDB\u5EA6\u6062\u590D\u3002`,
+      en: `About to install ffmpeg on this machine: ${command} (${os6}). It runs only after you allow it; installation only verifies the tool; new video generation requires separate cost confirmation, while existing tasks should resume their saved progress.`
     }
   };
 }
@@ -3509,14 +3509,14 @@ async function ffmpegConsentGate(config, exec, args) {
   const allSteps = [...doneSteps, ...plan || []];
   if (!plan || allSteps.length < 2) return null;
   if (await hasFfmpeg(config, exec.signal)) return null;
-  const { os: os5, installs } = ffmpegInstallOptions();
+  const { os: os6, installs } = ffmpegInstallOptions();
   const command = installs[0].command;
   const sizes = allSteps.map((step) => `${step.seconds}s`).join(" + ");
   const binary = resolveBinary(config, "ffmpegBinary", "ffmpeg");
   const lines = [
     `\u672C\u673A\u6CA1\u6709 ${binary}\uFF0C\u672C\u6B21\u8BA1\u5212\u603B\u65F6\u957F\u662F ${allSteps.reduce((sum, step) => sum + step.seconds, 0)} \u79D2\uFF08\u4F1A\u62C6\u6210 ${allSteps.length} \u6BB5\uFF1A${sizes}\uFF09\uFF0C\u6CA1\u6709 ffmpeg \u5C31\u6CA1\u6CD5\u5408\u5E76\u6210\u4E00\u6761\uFF0C\u6240\u4EE5\u5148\u505C\u4E0B\u6765\u4E86\uFF0C\u8FD8\u6CA1\u6709\u8C03\u7528\u6A21\u578B\u3001\u6CA1\u6709\u4EA7\u751F\u8D39\u7528\u3002`,
     "\u8BF7\u5728\u5BF9\u8BDD\u6846\u91CC\u5148\u548C\u7528\u6237\u786E\u8BA4\uFF0C\u4E0D\u8981\u81EA\u5DF1\u7ED5\u8FC7\u8FD9\u4E00\u6B65\uFF1A",
-    `1) \u95EE\u7528\u6237\u8981\u4E0D\u8981\u73B0\u5728\u88C5 ffmpeg \u2014\u2014 \u8BF4\u6E05\u4ED6\u7684\u7CFB\u7EDF\uFF08${os5}\uFF09\u548C\u547D\u4EE4\uFF1A${command}`,
+    `1) \u95EE\u7528\u6237\u8981\u4E0D\u8981\u73B0\u5728\u88C5 ffmpeg \u2014\u2014 \u8BF4\u6E05\u4ED6\u7684\u7CFB\u7EDF\uFF08${os6}\uFF09\u548C\u547D\u4EE4\uFF1A${command}`,
     "   \uFF08\u88C5\u597D\u540E\uFF0C\u5DF2\u6709\u4EFB\u52A1\u7528\u539Fresume\u91CD\u8BD5\u4E0B\u8F7D\u6216\u5408\u5E76\uFF1B\u5C1A\u672A\u63D0\u4EA4\u7684\u65B0\u4EFB\u52A1\u518D\u786E\u8BA4\u751F\u6210\u8D39\u7528\uFF09\u3002",
     '2) \u7528\u6237\u540C\u610F\u5B89\u88C5\uFF1A\u8C03\u7528 metaontic_agent_forge_video_setup\uFF08install:true\uFF09\u2014\u2014\u63D2\u4EF6\u4F1A\u6267\u884C\u4E0A\u9762\u7684\u547D\u4EE4\uFF0C\u5BBF\u4E3B\u4F1A\u5148\u628A\u8FD9\u6761\u547D\u4EE4\u62FF\u7ED9\u7528\u6237\u786E\u8BA4\uFF1B\u88C5\u5B8C\u5B83\u4F1A\u81EA\u5DF1\u9A8C\u8BC1\uFF0C\u6210\u529F\u540E\u4F60\u6309\u539F duration \u91CD\u65B0\u8C03\u7528 metaontic_agent_forge_video_generate \u7EE7\u7EED\u751F\u6210\u5373\u53EF\uFF08\u4E00\u822C\u662F\u5148\u88C5\u5305\u7BA1\u7406\u5668\uFF1A\u672C\u673A\u8FDE brew \u90FD\u6CA1\u6709\u65F6\uFF0Cmetaontic_agent_forge_video_setup \u4F1A\u8FD4\u56DE nextStep\uFF0C\u7528 target:"package-manager" \u518D\u88C5\u4E00\u6B21\uFF09\u3002',
     "3) \u7528\u6237\u4E0D\u60F3\u88C5\u3001\u6216\u8005\u88C5\u4E0D\u4E86\uFF1A\u5E26 `merge:false` \u91CD\u65B0\u8C03\u7528 metaontic_agent_forge_video_generate\uFF0C\u63D2\u4EF6\u5C31\u53EA\u751F\u6210\u5E76\u8FD4\u56DE\u5206\u6BB5\u5217\u8868\uFF08\u6BCF\u6BB5\u4E0A\u6E38\u94FE\u63A5\uFF0C\u4E0D\u4E0B\u8F7D\u672C\u5730\u6587\u4EF6\uFF09\uFF0C\u8FD9\u6B21\u4E0D\u4F1A\u518D\u62E6\u3002",
@@ -3525,7 +3525,7 @@ async function ffmpegConsentGate(config, exec, args) {
   return {
     kind: "deny",
     reason: lines.join("\n"),
-    info: { ffmpegMissing: true, os: os5, command, segments: allSteps.length }
+    info: { ffmpegMissing: true, os: os6, command, segments: allSteps.length }
   };
 }
 async function estimateArgsFor(config, toolName, args) {
@@ -4174,8 +4174,8 @@ async function fetchActualCost(config, taskIds, signal) {
   const base = resolveBaseUrl(config).replace(/\/v1\/?$/, "");
   if (!key || !base) return pending("\u8D39\u7528\u5F85\u67E5\u8BE2\uFF1A\u539F\u8C03\u7528\u8FDE\u63A5\u4E0D\u53EF\u7528\u3002");
   const requestSignal = signal ? AbortSignal.any([signal, AbortSignal.timeout(8e3)]) : AbortSignal.timeout(8e3);
-  async function get(path20, authenticated) {
-    const response = await fetch(`${base}${path20}`, {
+  async function get(path21, authenticated) {
+    const response = await fetch(`${base}${path21}`, {
       method: "GET",
       redirect: "error",
       signal: requestSignal,
@@ -4384,14 +4384,14 @@ function findKey(payload, keys, depth = Infinity) {
   }
   return void 0;
 }
-function collectUrls(payload, path20 = [], found = []) {
+function collectUrls(payload, path21 = [], found = []) {
   if (typeof payload === "string") {
-    if (/^https?:\/\//i.test(payload)) found.push([path20, payload]);
+    if (/^https?:\/\//i.test(payload)) found.push([path21, payload]);
   } else if (Array.isArray(payload)) {
-    for (const item of payload) collectUrls(item, path20, found);
+    for (const item of payload) collectUrls(item, path21, found);
   } else if (payload && typeof payload === "object") {
     for (const [key, value] of Object.entries(payload)) {
-      collectUrls(value, [...path20, key], found);
+      collectUrls(value, [...path21, key], found);
     }
   }
   return found;
@@ -4409,22 +4409,22 @@ function extractTaskId(payload) {
 }
 function extractVideoUrl(payload) {
   const candidates = collectUrls(payload).filter(
-    ([path20, url]) => !looksLikeImageUrl(url) && !path20.some(isImageKey)
+    ([path21, url]) => !looksLikeImageUrl(url) && !path21.some(isImageKey)
   );
   if (!candidates.length) return void 0;
   for (const wanted of VIDEO_URL_KEYS) {
-    for (const [path20, url] of candidates) {
-      if (path20.length && String(path20.at(-1)).toLowerCase() === wanted) return url;
+    for (const [path21, url] of candidates) {
+      if (path21.length && String(path21.at(-1)).toLowerCase() === wanted) return url;
     }
   }
-  for (const [path20, url] of candidates) {
-    if (path20.length && GENERIC_URL_KEYS.has(String(path20.at(-1)).toLowerCase())) return url;
+  for (const [path21, url] of candidates) {
+    if (path21.length && GENERIC_URL_KEYS.has(String(path21.at(-1)).toLowerCase())) return url;
   }
   return candidates[0][1];
 }
 function extractImageUrl(payload) {
   const found = collectUrls(payload).find(
-    ([path20, url]) => looksLikeImageUrl(url) || path20.some(isImageKey)
+    ([path21, url]) => looksLikeImageUrl(url) || path21.some(isImageKey)
   );
   return found?.[1];
 }
@@ -4481,8 +4481,8 @@ async function relayRequest(config, requestPath, options = {}) {
     throw error;
   }
 }
-async function relayRequestCore(config, path20, { method = "GET", body, signal } = {}, trace = {}) {
-  const url = `${resolveBaseUrl(config)}${path20}`;
+async function relayRequestCore(config, path21, { method = "GET", body, signal } = {}, trace = {}) {
+  const url = `${resolveBaseUrl(config)}${path21}`;
   const timeout = AbortSignal.timeout(RELAY_TIMEOUT_MS);
   const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
   const serialized = body === void 0 ? void 0 : JSON.stringify(body);
@@ -6927,7 +6927,7 @@ function setupTool(config) {
       render(_args, value) {
         const {
           status,
-          os: os5,
+          os: os6,
           ffmpegVersion,
           ffmpegPath,
           ffprobeVersion,
@@ -6942,7 +6942,7 @@ function setupTool(config) {
           lines.push("ffmpeg \u88C5\u597D\u4E86\uFF0C\u957F\u89C6\u9891\u73B0\u5728\u53EF\u4EE5\u5408\u5E76\u6210\u4E00\u6761\u3002");
         } else if (status === "missing") {
           lines.push("\u672C\u673A\u8FD8\u6CA1\u6709 ffmpeg\uFF1A\u751F\u6210\u8D85\u8FC7\u6A21\u578B\u5355\u6B21\u4E0A\u9650\u7684\u89C6\u9891\u65F6\u53EA\u80FD\u7ED9\u5206\u6BB5\uFF0C\u6CA1\u6CD5\u5408\u5E76\u6210\u4E00\u6761\u3002");
-          lines.push(`\u88C5\u4E00\u4E0B\u5C31\u597D\uFF08${os5 || "\u5F53\u524D\u7CFB\u7EDF"}\uFF09\uFF1A${installCommand || ""}`);
+          lines.push(`\u88C5\u4E00\u4E0B\u5C31\u597D\uFF08${os6 || "\u5F53\u524D\u7CFB\u7EDF"}\uFF09\uFF1A${installCommand || ""}`);
           lines.push("\u7528\u6237\u540C\u610F\u7684\u8BDD\uFF0C\u6211\u53EF\u4EE5\u7528 metaontic_agent_forge_video_setup\uFF08install=true\uFF09\u76F4\u63A5\u5E2E\u4ED6\u88C5\u3002");
         } else if (status === "failed") {
           lines.push("ffmpeg \u6CA1\u88C5\u6210\u529F\uFF0C\u5F97\u624B\u52A8\u88C5\u4E00\u4E0B\u3002");
@@ -6970,14 +6970,14 @@ function setupTool(config) {
       const signal = exec?.signal;
       const binary = resolveBinary(config, "ffmpegBinary", "ffmpeg");
       const probeBinary = resolveBinary(config, "ffprobeBinary", "ffprobe");
-      const { os: os5, installs, bootstrap } = ffmpegInstallOptions();
+      const { os: os6, installs, bootstrap } = ffmpegInstallOptions();
       const wantsInstall = args?.install === true;
       const target = String(args?.target || "ffmpeg");
       const manualSteps = installs.map((item) => `${item.label}\uFF1A${item.command}`);
       const installCommand = target === "package-manager" && bootstrap ? bootstrap.command : installs[0].command;
       const ffmpegVersion = await probeBinaryVersion(binary, signal);
       const ffprobeVersion = await probeBinaryVersion(probeBinary, signal);
-      const base = { os: os5, installCommand, manualSteps, ffmpegVersion, ffprobeVersion };
+      const base = { os: os6, installCommand, manualSteps, ffmpegVersion, ffprobeVersion };
       if (ffmpegVersion) {
         const note = ffprobeVersion ? "ffmpeg \u4E0E ffprobe \u90FD\u53EF\u7528\uFF0C\u957F\u89C6\u9891\u4F1A\u6B63\u5E38\u5408\u5E76\u6210\u4E00\u6761\u3002" : "ffmpeg \u53EF\u7528\uFF1B\u6CA1\u6709 ffprobe\uFF0C\u5206\u6BB5\u65F6\u957F\u63A2\u6D4B\u4F1A\u88AB\u8DF3\u8FC7\uFF08\u4E0D\u5F71\u54CD\u5408\u5E76\uFF09\u3002";
         return { status: "ready", ...base, ffmpegPath: binary, note };
@@ -6996,7 +6996,7 @@ function setupTool(config) {
           return {
             status: "failed",
             ...base,
-            note: `${os5} \u4E0D\u9700\u8981\u53E6\u5916\u88C5\u5305\u7BA1\u7406\u5668\uFF0C\u76F4\u63A5\u7528\u7CFB\u7EDF\u81EA\u5E26\u7684\u5305\u7BA1\u7406\u5668\u88C5 ffmpeg \u5C31\u884C\u3002`
+            note: `${os6} \u4E0D\u9700\u8981\u53E6\u5916\u88C5\u5305\u7BA1\u7406\u5668\uFF0C\u76F4\u63A5\u7528\u7CFB\u7EDF\u81EA\u5E26\u7684\u5305\u7BA1\u7406\u5668\u88C5 ffmpeg \u5C31\u884C\u3002`
           };
         }
         const result = await runProcess(shellCommand, [], {
@@ -7037,7 +7037,7 @@ function setupTool(config) {
         installCommand: needsBootstrap ? bootstrap.command : installs[0].command,
         manualSteps: needsBootstrap ? [`\u5148\u88C5\u5305\u7BA1\u7406\u5668\uFF1A${bootstrap.command}`, ...manualSteps] : manualSteps,
         output,
-        note: needsBootstrap ? `\u672C\u673A\u6CA1\u6709 ${os5} \u7684\u5305\u7BA1\u7406\u5668\uFF0C\u5F97\u5148\u88C5\u5B83\uFF1A${bootstrap.command}\uFF1B\u88C5\u597D\u4E4B\u540E\u518D\u88C5 ffmpeg\u3002\u8FD9\u4E24\u6B65\u90FD\u53EF\u4EE5\u8BA9\u6211\u6765\u505A \u2014\u2014 \u8BF4\u4E00\u58F0\u5C31\u884C\u3002` : "\u5B89\u88C5\u547D\u4EE4\u6CA1\u6210\u529F\uFF08\u53EF\u80FD\u662F\u6CA1\u6743\u9650\u3001\u6CA1\u8054\u7F51\u6216\u88AB\u5B89\u5168\u7B56\u7565\u62E6\u4E0B\uFF09\u3002\u4E0A\u9762\u662F\u624B\u52A8\u6B65\u9AA4\uFF0C\u7167\u7740\u5728\u7EC8\u7AEF\u91CC\u8DD1\u4E00\u904D\u5373\u53EF\u3002"
+        note: needsBootstrap ? `\u672C\u673A\u6CA1\u6709 ${os6} \u7684\u5305\u7BA1\u7406\u5668\uFF0C\u5F97\u5148\u88C5\u5B83\uFF1A${bootstrap.command}\uFF1B\u88C5\u597D\u4E4B\u540E\u518D\u88C5 ffmpeg\u3002\u8FD9\u4E24\u6B65\u90FD\u53EF\u4EE5\u8BA9\u6211\u6765\u505A \u2014\u2014 \u8BF4\u4E00\u58F0\u5C31\u884C\u3002` : "\u5B89\u88C5\u547D\u4EE4\u6CA1\u6210\u529F\uFF08\u53EF\u80FD\u662F\u6CA1\u6743\u9650\u3001\u6CA1\u8054\u7F51\u6216\u88AB\u5B89\u5168\u7B56\u7565\u62E6\u4E0B\uFF09\u3002\u4E0A\u9762\u662F\u624B\u52A8\u6B65\u9AA4\uFF0C\u7167\u7740\u5728\u7EC8\u7AEF\u91CC\u8DD1\u4E00\u904D\u5373\u53EF\u3002"
       };
     }
   };
@@ -7518,6 +7518,184 @@ function applyVideoBusiness(runtime) {
 }
 var videoBusiness = { id: "video", apply: applyVideoBusiness, prompt: buildPromptGuidance };
 
+// src/canvas/index.ts
+import { createHash as createHash6 } from "node:crypto";
+
+// src/canvas/service.ts
+import { spawn as spawn3 } from "node:child_process";
+import { mkdir as mkdir12 } from "node:fs/promises";
+import path20 from "node:path";
+import os5 from "node:os";
+import { fileURLToPath as fileURLToPath3 } from "node:url";
+function createCanvasService(options = {}) {
+  const root = options.root || path20.join(process.env.DSH_HOME || path20.join(os5.homedir(), ".dsh"), "metaontic-agent-forge", "canvas");
+  const port = options.port || Number(process.env.METAONTIC_AGENT_FORGE_CANVAS_PORT || 17379);
+  if (!Number.isSafeInteger(port) || port < 1024 || port > 65535) throw new Error("\u753B\u5E03\u7AEF\u53E3\u65E0\u6548\u3002");
+  const origin = `http://127.0.0.1:${port}`;
+  const vendor = options.vendor || fileURLToPath3(new URL("./vendor/infinite-canvas/", import.meta.url));
+  let child, ready = false, starting, disposed = false, token = "", error = "";
+  let requested = null;
+  let requestSequence = 0;
+  const shutdown = new AbortController();
+  async function request(route, body, signal) {
+    const response = await fetch(origin + route, {
+      method: body === void 0 ? "GET" : "POST",
+      headers: { "content-type": "application/json", "x-canvas-agent-token": token },
+      ...body === void 0 ? {} : { body: JSON.stringify(body) },
+      signal: AbortSignal.any([shutdown.signal, AbortSignal.timeout(35e3), ...signal ? [signal] : []])
+    });
+    const value = await response.json();
+    if (!response.ok || value.ok === false) throw new Error(value.error || "\u753B\u5E03\u8BF7\u6C42\u5931\u8D25\u3002");
+    return value;
+  }
+  async function ensure() {
+    if (disposed) throw new Error("\u753B\u5E03\u5DF2\u505C\u7528\u3002");
+    if (ready && child && child.exitCode === null) return;
+    if (starting) return starting;
+    starting = (async () => {
+      error = "";
+      try {
+        await fetch(origin + "/health", { signal: AbortSignal.timeout(600) });
+        throw new Error("\u753B\u5E03\u7AEF\u53E3\u5DF2\u88AB\u5176\u4ED6\u670D\u52A1\u5360\u7528\uFF0C\u8BF7\u5173\u95ED\u51B2\u7A81\u670D\u52A1\u6216\u914D\u7F6E\u5176\u4ED6\u753B\u5E03\u7AEF\u53E3\u3002");
+      } catch (failure) {
+        if (!String(failure?.cause?.code || failure?.name).match(/ECONNREFUSED|TimeoutError|TypeError/)) throw failure;
+      }
+      await mkdir12(root, { recursive: true, mode: 448 });
+      if (disposed) throw new Error("\u753B\u5E03\u5DF2\u505C\u7528\u3002");
+      const env = { ...process.env };
+      for (const key of Object.keys(env)) if (/KEY|PASSWORD|SECRET|TOKEN/i.test(key) || key.startsWith("DSH_")) delete env[key];
+      Object.assign(env, { CANVAS_AGENT_HOME: root, CANVAS_SITE_DIR: path20.join(vendor, "site"), PORT: String(port) });
+      if (process.versions.electron) env.ELECTRON_RUN_AS_NODE = "1";
+      child = (options.spawn || spawn3)(process.execPath, [path20.join(vendor, "bridge", "index.js")], {
+        env,
+        stdio: "ignore",
+        windowsHide: true,
+        shell: false
+      });
+      let failed = false;
+      child.once("error", () => {
+        failed = true;
+        ready = false;
+        error = "\u753B\u5E03\u8FDB\u7A0B\u542F\u52A8\u5931\u8D25\u3002";
+      });
+      child.once("exit", () => {
+        failed = true;
+        ready = false;
+        if (!disposed) error = "\u753B\u5E03\u8FDB\u7A0B\u5DF2\u9000\u51FA\uFF0C\u53EF\u91CD\u65B0\u6253\u5F00\u753B\u5E03\u6062\u590D\u3002";
+      });
+      const deadline = Date.now() + 15e3;
+      while (Date.now() < deadline && !disposed && !failed) {
+        try {
+          const health = await request("/health");
+          if (health.plugin === "metaontic-infinite-canvas") {
+            const bootstrap = await request("/bootstrap");
+            token = bootstrap.token;
+            ready = true;
+            return;
+          }
+        } catch {
+        }
+        await new Promise((resolve3) => setTimeout(resolve3, 150));
+      }
+      child?.kill();
+      throw new Error("\u753B\u5E03\u542F\u52A8\u672A\u5B8C\u6210\uFF0C\u8BF7\u91CD\u65B0\u6253\u5F00\u753B\u5E03\uFF1B\u9879\u76EE\u6570\u636E\u5DF2\u4FDD\u7559\u3002");
+    })().catch((failure) => {
+      error = failure.message;
+      throw failure;
+    }).finally(() => {
+      starting = void 0;
+    });
+    return starting;
+  }
+  return {
+    ensure,
+    snapshot: () => ({ ready, origin: ready ? origin : "", requested, error }),
+    async open(id, title) {
+      await ensure();
+      requested = { id, title, sequence: ++requestSequence };
+      return { canvasId: id, opening: true, nextAction: "\u53F3\u4FA7\u753B\u5E03\u8FDE\u63A5\u540E\u518D\u8BFB\u53D6state\u6216\u7F16\u8F91\u3002" };
+    },
+    async call(name, input, signal) {
+      await ensure();
+      return (await request("/api/tools", { name, input }, signal)).result;
+    },
+    async media(localPath, signal) {
+      await ensure();
+      return request("/forge/media", { localPath }, signal);
+    },
+    dispose() {
+      disposed = true;
+      ready = false;
+      shutdown.abort();
+      child?.kill();
+    }
+  };
+}
+
+// src/canvas/index.ts
+function canvasIdentity(sessionId, projectId = "workspace") {
+  if (!sessionId) throw new Error("\u753B\u5E03\u9700\u8981\u5173\u8054\u5F53\u524D\u4EFB\u52A1\u4F1A\u8BDD\u3002");
+  return "forge-" + createHash6("sha256").update(sessionId + "\0" + projectId).digest("hex").slice(0, 24);
+}
+function canvasTool(service) {
+  return {
+    name: "metaontic_agent_forge_canvas",
+    description: "\u6253\u5F00\u771F\u5B9E\u7684 Haitang-Hub \u65E0\u9650\u753B\u5E03\uFF1B\u8BFB\u53D6/\u7F16\u8F91\u8282\u70B9\u4E0E\u8FDE\u7EBF\u3001\u5BFC\u5165\u5DF2\u6709\u672C\u5730\u56FE\u7247\u6216\u89C6\u9891\u3002open \u8FD4\u56DE canvasId\uFF0C\u59D4\u6D3E\u4E13\u4E1A\u52A9\u624B\u65F6\u4F20\u9012\u6B64 ID\uFF1B\u5176\u4ED6\u52A8\u4F5C\u5FC5\u987B\u5E26\u539F canvasId\u3002\u753B\u5E03\u9700\u8981\u5728\u53F3\u4FA7\u680F\u4FDD\u6301\u6253\u5F00\u3002\u53EA\u7F16\u8F91\u548C\u5C55\u793A\uFF0C\u4E0D\u751F\u6210\u5A92\u4F53\u3001\u4E0D\u4EE3\u66FF\u811A\u672C\u6216\u8D39\u7528\u5BA1\u6838\u3002",
+    parameters: { type: "object", properties: {
+      action: { type: "string", enum: ["open", "state", "selection", "apply", "import_media"], description: "open \u6253\u5F00\u9879\u76EE\uFF1Bapply \u6279\u91CF\u7F16\u8F91\uFF1Bimport_media \u5BFC\u5165\u5DF2\u6709\u7D20\u6750\u3002" },
+      canvasId: { type: "string", description: "\u6CBF\u7528 open \u8FD4\u56DE\u7684\u753B\u5E03 ID\uFF0C\u4F20\u7ED9\u4E13\u4E1A\u52A9\u624B\u5171\u7528\u3002" },
+      projectId: { type: "string", description: "open \u65F6\u53EF\u5173\u8054\u672C\u4EFB\u52A1\u89C6\u9891\u9879\u76EE\uFF1B\u65B0\u9879\u76EE\u4F7F\u7528\u65B0\u7684 projectId\u3002" },
+      title: { type: "string" },
+      ops: { type: "array", items: { type: "object", additionalProperties: true }, description: "\u4E0A\u6E38 add_node/update_node/connect_nodes/delete_node/delete_connections/set_viewport/select_nodes \u64CD\u4F5C\uFF1B\u7981\u6B62 run_generation\u3002\u6587\u672C\u653E metadata.content\uFF0C\u5A92\u4F53\u4F7F\u7528 import_media\u3002" },
+      localPath: { type: "string", description: "\u5DF2\u5B58\u5728\u7684\u56FE\u7247\u6216\u89C6\u9891\u7EDD\u5BF9\u8DEF\u5F84\u3002" },
+      x: { type: "number" },
+      y: { type: "number" }
+    }, required: ["action"] },
+    output: { schema: { type: "object", additionalProperties: true }, render: (_args, value) => [{ type: "text", text: JSON.stringify(value) }] },
+    async execute(args, exec) {
+      const id = args.canvasId || (args.action === "open" ? canvasIdentity(exec?.agent?.session?.id, args.projectId) : "");
+      if (!/^forge-[a-f0-9]{24}$/.test(id)) throw new Error("\u8BF7\u5148 open \u5E76\u6CBF\u7528\u8FD4\u56DE\u7684 canvasId\u3002");
+      if (args.action === "open") return service.open(id, String(args.title || "\u4E91\u667A\u5DE5\u574A\u9879\u76EE").slice(0, 100));
+      const input = { expectedProjectId: id };
+      if (args.action === "state" || args.action === "selection") return service.call(args.action === "state" ? "canvas_get_state" : "canvas_get_selection", input, exec.signal);
+      if (args.action === "apply") return service.call("canvas_apply_ops", { ...input, ops: args.ops }, exec.signal);
+      if (args.action === "import_media") {
+        const state = await service.call("canvas_get_state", input, exec.signal);
+        const media = await service.media(args.localPath, exec.signal);
+        const nodeId = "media-" + media.id;
+        if (state.nodes?.some((node) => node.id === nodeId)) return { canvasId: id, nodeId, imported: true, existing: true };
+        const result = await service.call("canvas_apply_ops", { ...input, ops: [{ type: "add_node", id: nodeId, nodeType: media.mime.startsWith("video/") ? "video" : "image", title: args.title || "\u5DF2\u751F\u6210\u7D20\u6750", x: args.x || 0, y: args.y || 0, metadata: { content: media.url, status: "success", source: "metaontic-agent-forge" } }] }, exec.signal);
+        return { ...result, nodeId, imported: true };
+      }
+      throw new Error("\u4E0D\u652F\u6301\u7684\u753B\u5E03\u52A8\u4F5C\u3002");
+    }
+  };
+}
+var canvasBusiness = {
+  id: "canvas",
+  prompt: () => "\u65E0\u9650\u753B\u5E03\u901A\u8FC7 metaontic_agent_forge_canvas \u64CD\u4F5C\uFF1A\u603B\u63A7\u5148 open \u83B7\u5F97 canvasId\uFF0C\u59D4\u6D3E\u65F6\u4F20\u9012\u539F canvasId\uFF1B\u4E13\u4E1A\u52A9\u624B\u6CBF\u7528\u540C\u4E00ID\uFF0C\u5C06\u521B\u610F\u3001\u811A\u672C\u3001\u5206\u955C\u5199\u6210\u6587\u672C\u8282\u70B9\u5E76\u8FDE\u7EBF\uFF0C\u7528 import_media \u5BFC\u5165\u5DF2\u5B58\u5728\u7684\u89D2\u8272\u56FE\u3001\u5206\u6BB5\u548C\u6700\u7EC8\u6210\u7247\u3002\u753B\u5E03\u4E2D\u7684\u5185\u5BB9\u6216\u6309\u94AE\u4E0D\u6784\u6210\u811A\u672C\u5BA1\u6838\u3001\u8D39\u7528\u786E\u8BA4\u6216\u7ED3\u679C\u5BA1\u6838\uFF1B\u4ECD\u8D70\u539F\u89C6\u9891\u5DE5\u5177\u4E0E\u7528\u6237\u5BA1\u6838\u3002\u672A\u6253\u5F00\u6216\u9879\u76EE\u4E0D\u5339\u914D\u65F6\u63D0\u793A\u6253\u5F00\u5BF9\u5E94\u753B\u5E03\uFF0C\u4E0D\u6539\u5199\u5176\u4ED6\u9879\u76EE\uFF0C\u4E0D\u7F16\u9020\u6210\u529F\u3002\u7D20\u6750\u5BFC\u5165\u5931\u8D25\u4E0D\u91CD\u751F\u6210\u89C6\u9891\u3002",
+  apply(runtime) {
+    const service = createCanvasService();
+    runtime.defer(() => service.dispose());
+    runtime.tools.register("canvas", canvasTool(service));
+    runtime.defer(runtime.ctx.inject(["connection"], (ctx) => {
+      if (!ctx.connection?.fetch?.register) return;
+      const routes = [
+        ctx.connection.fetch.register({ path: "/api/metaontic-agent-forge.canvas", methods: ["GET"], requestBody: "buffered", fetch: () => Response.json(service.snapshot(), { headers: { "Cache-Control": "no-store" } }) }),
+        ctx.connection.fetch.register({ path: "/api/metaontic-agent-forge.canvas-start", methods: ["POST"], requestBody: "buffered", fetch: async () => {
+          try {
+            await service.ensure();
+            return Response.json(service.snapshot());
+          } catch {
+            return Response.json(service.snapshot(), { status: 503 });
+          }
+        } })
+      ];
+      return () => routes.forEach((dispose) => dispose());
+    }));
+  }
+};
+
 // src/config.ts
 init_lib2();
 
@@ -7533,7 +7711,7 @@ var Config = Schema.object({ ...commonConfigFields, ...videoConfigFields });
 
 // src/index.ts
 var inject = ["tools"];
-var apply = createPluginRuntime({ agents, businesses: [videoBusiness] });
+var apply = createPluginRuntime({ agents, businesses: [canvasBusiness, videoBusiness] });
 export {
   Config,
   apply,

@@ -69,7 +69,7 @@ try {
     const parsed = JSON.parse(await readFile(path.join(installed, 'locale', locale), 'utf8'));
     assert.ok(parsed.meta?.title, `Missing ${locale} metadata title`);
   }
-  for (const file of ['index.js', 'client.js', 'cordis.patch.yml', 'MetaOnticAgentForge使用说明书.md', 'MetaOnticAgentForge使用说明书.pdf']) {
+  for (const file of ['index.js', 'client.js', 'cordis.patch.yml', 'MetaOnticAgentForge使用说明书.md', 'MetaOnticAgentForge使用说明书.pdf', 'canvas/bridge-mode.mjs', 'vendor/infinite-canvas/bridge/index.js', 'vendor/infinite-canvas/site/index.html', 'vendor/infinite-canvas/site/forge-ui.js', 'vendor/infinite-canvas/LICENSE', 'vendor/infinite-canvas/UPSTREAM.json']) {
     assert.ok((await readFile(path.join(installed, file))).length, `Missing ${file}`);
   }
   assert.ok((await readdir(path.join(installed, 'skills'))).length);

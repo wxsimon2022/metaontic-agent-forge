@@ -1,6 +1,6 @@
 export function createPlatformDictionaries() {
 const zh = {
-      "canvasTitle": "任务流程画布",
+      "canvasTitle": "任务关系",
       "canvasChoose": "选择任务",
       "canvasRefresh": "刷新状态",
       "canvasZoomOut": "缩小画布",
@@ -20,6 +20,7 @@ const zh = {
       panelIntro: '由总控拆解需求、委派专业 Agent 并汇总成果，当前已接入视频创作与宣传视频业务。',
       panelStart: '开始协作',
       panelNew: '打开云智工坊',
+      panelCanvas: '打开创作画布',
       panelSettings: '打开插件设置',
       panelGuide: '使用说明',
       panelHighlights: '为什么用它',
@@ -58,6 +59,7 @@ const en = {
       panelIntro: 'Coordinate specialist agents and review their results. Video creation and promotional video are currently available.',
       panelStart: 'Start collaborating',
       panelNew: 'Open Cloud Studio',
+      panelCanvas: 'Open creative canvas',
       panelSettings: 'Open plugin settings',
       panelGuide: 'User guide',
       panelHighlights: 'Why it works',

@@ -12,6 +12,7 @@ export * from './src/businesses/video/client/progress.ts';
 export * from './src/client/auth-notice.ts';
 export * from './src/core/telemetry/reporter.ts';
 export * from './src/core/delegation.ts';
+export {canvasIdentity,canvasTool} from './src/canvas/index.ts';
 export {createAgentRegistry} from './src/core/agent-registry.ts';
 export {agents} from './src/agents/index.ts';
 export {classifyError} from './src/businesses/video/utils/errors.ts';

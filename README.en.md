@@ -18,6 +18,12 @@ Delegation is limited to approved specialists and one level. Task creation is no
 
 Specialists report progress and results through the host messaging channel. Answer review requests in the specialist task, then continue that same task.
 
+### Creative canvas
+
+Choose **Open creative canvas** in Cloud Studio to edit text, storyboard and existing image/video nodes beside the conversation. Projects, connections and viewport changes are saved. The integrated [Haitang-Hub/dsh-infinite-canvas](https://github.com/Haitang-Hub/dsh-infinite-canvas) ships with this plugin; no additional canvas installation or model credentials are required.
+
+The coordinator and specialists share the canvas using `metaontic_agent_forge_canvas`. Generation, costs and result review continue through the specialist conversation. The task relationship graph remains available for session status.
+
 ## Available business: video creation
 
 - **Beginner-friendly creation**: guided ideas, scripts and previews. Reuse specifications already provided by the user.

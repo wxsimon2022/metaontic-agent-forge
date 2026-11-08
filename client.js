@@ -71,6 +71,73 @@
     }
   }
 
+  // src/client/infinite-canvas.ts
+  var FORGE_CANVAS_KIND = "metaontic-infinite-canvas";
+  function registerInfiniteCanvas(ctx, React) {
+    if (typeof ctx.inject !== "function") return;
+    const h = React.createElement;
+    const statusUrl = "/api/metaontic-agent-forge.canvas";
+    const start = () => fetch("/api/metaontic-agent-forge.canvas-start", { method: "POST" }).then((response) => response.json());
+    const get = () => fetch(statusUrl).then((response) => {
+      if (!response.ok) throw new Error("\u753B\u5E03\u8FDE\u63A5\u6682\u65F6\u4E0D\u53EF\u7528\u3002");
+      return response.json();
+    });
+    function CanvasFrame() {
+      const [info, setInfo] = React.useState(null), [error, setError] = React.useState("");
+      React.useEffect(() => {
+        let active = true;
+        const update = () => get().then((value) => {
+          if (active) setInfo(value);
+        }).catch(() => {
+          if (active) setError("\u753B\u5E03\u8FDE\u63A5\u6682\u65F6\u4E0D\u53EF\u7528\uFF0C\u8BF7\u91CD\u8BD5\u3002");
+        });
+        start().then(update).catch(() => {
+          if (active) setError("\u753B\u5E03\u542F\u52A8\u5931\u8D25\uFF0C\u8BF7\u91CD\u8BD5\u3002");
+        });
+        const timer = setInterval(update, 1500);
+        return () => {
+          active = false;
+          clearInterval(timer);
+        };
+      }, []);
+      const requested = info?.requested;
+      const src = info?.ready ? info.origin + (requested ? "/canvas/" + requested.id + "?title=" + encodeURIComponent(requested.title) : "/") : "";
+      return h("div", { style: { display: "flex", flexDirection: "column", height: "100%", minHeight: 0 } }, [
+        h("div", { key: "bar", style: { display: "flex", gap: 8, alignItems: "center", padding: 8, fontSize: 12 } }, [
+          h("strong", { key: "title" }, "\u521B\u4F5C\u753B\u5E03"),
+          h("span", { key: "state" }, info?.ready ? "\u5DF2\u8FDE\u63A5 \xB7 Haitang-Hub" : "\u6B63\u5728\u8FDE\u63A5"),
+          h("button", { key: "retry", type: "button", onClick: () => {
+            setError("");
+            start().then(setInfo).catch(() => setError("\u753B\u5E03\u542F\u52A8\u5931\u8D25\uFF0C\u8BF7\u91CD\u8BD5\u3002"));
+          } }, "\u91CD\u65B0\u8FDE\u63A5")
+        ]),
+        src ? h("iframe", { key: src, src, title: "\u4E91\u667A\u5DE5\u574A\u65E0\u9650\u753B\u5E03", sandbox: "allow-scripts allow-same-origin allow-downloads", style: { flex: 1, width: "100%", border: 0, minHeight: 0 }, "data-dsh-no-drag": "" }) : h("p", { key: "empty", role: "status", style: { padding: 16 } }, info?.error || error || "\u6B63\u5728\u542F\u52A8\u672C\u5730\u753B\u5E03\u670D\u52A1\uFF0C\u9879\u76EE\u6570\u636E\u4F1A\u4FDD\u7559\u3002")
+      ]);
+    }
+    ctx.effect(() => ctx.inject(["sidebarRightTabs", "sidebarRight"], (right) => {
+      const disposers = [
+        right.sidebarRightTabs.register({ id: FORGE_CANVAS_KIND, kind: FORGE_CANVAS_KIND, title: () => "\u521B\u4F5C\u753B\u5E03", guide: [{ order: 31, title: () => "\u4E91\u667A\u5DE5\u574A\u753B\u5E03", description: () => "\u7F16\u6392\u521B\u610F\u3001\u5206\u955C\u548C\u5DF2\u6709\u7D20\u6750\uFF0C\u4E0E\u4EFB\u52A1\u5BF9\u8BDD\u5E76\u6392\u4F7F\u7528\u3002" }] }),
+        right.slots.inject("sidebar.right.pane.tab", () => right.slots.register({ name: "sidebar.right.pane.tab", key: FORGE_CANVAS_KIND }, CanvasFrame))
+      ];
+      let disposed = false, last = "";
+      const timer = setInterval(() => {
+        get().then((value) => {
+          if (disposed || !value.ready || !value.requested || last === value.requested.id + ":" + value.requested.sequence) return;
+          right.sidebarRight.openTab(FORGE_CANVAS_KIND);
+          last = value.requested.id + ":" + value.requested.sequence;
+        }).catch(() => {
+        });
+      }, 1500);
+      return () => {
+        disposed = true;
+        clearInterval(timer);
+        disposers.forEach((dispose) => {
+          if (typeof dispose === "function") dispose();
+        });
+      };
+    }), "forge: infinite canvas");
+  }
+
   // src/client/theme.ts
   function createTheme() {
     const TOKENS = {
@@ -549,6 +616,13 @@
               onClick: () => props?.startSession?.()
             }, t("panelNew")),
             h("button", {
+              key: "canvas",
+              type: "button",
+              className: "metaontic-agent-forge-btn",
+              disabled: typeof props?.openCanvas !== "function",
+              onClick: () => props?.openCanvas?.()
+            }, t("panelCanvas")),
+            h("button", {
               key: "settings",
               type: "button",
               className: "metaontic-agent-forge-btn",
@@ -577,7 +651,7 @@
   // src/client/locale.ts
   function createPlatformDictionaries() {
     const zh = {
-      "canvasTitle": "\u4EFB\u52A1\u6D41\u7A0B\u753B\u5E03",
+      "canvasTitle": "\u4EFB\u52A1\u5173\u7CFB",
       "canvasChoose": "\u9009\u62E9\u4EFB\u52A1",
       "canvasRefresh": "\u5237\u65B0\u72B6\u6001",
       "canvasZoomOut": "\u7F29\u5C0F\u753B\u5E03",
@@ -596,6 +670,7 @@
       panelIntro: "\u7531\u603B\u63A7\u62C6\u89E3\u9700\u6C42\u3001\u59D4\u6D3E\u4E13\u4E1A Agent \u5E76\u6C47\u603B\u6210\u679C\uFF0C\u5F53\u524D\u5DF2\u63A5\u5165\u89C6\u9891\u521B\u4F5C\u4E0E\u5BA3\u4F20\u89C6\u9891\u4E1A\u52A1\u3002",
       panelStart: "\u5F00\u59CB\u534F\u4F5C",
       panelNew: "\u6253\u5F00\u4E91\u667A\u5DE5\u574A",
+      panelCanvas: "\u6253\u5F00\u521B\u4F5C\u753B\u5E03",
       panelSettings: "\u6253\u5F00\u63D2\u4EF6\u8BBE\u7F6E",
       panelGuide: "\u4F7F\u7528\u8BF4\u660E",
       panelHighlights: "\u4E3A\u4EC0\u4E48\u7528\u5B83",
@@ -633,6 +708,7 @@
       panelIntro: "Coordinate specialist agents and review their results. Video creation and promotional video are currently available.",
       panelStart: "Start collaborating",
       panelNew: "Open Cloud Studio",
+      panelCanvas: "Open creative canvas",
       panelSettings: "Open plugin settings",
       panelGuide: "User guide",
       panelHighlights: "Why it works",
@@ -668,6 +744,7 @@
       inject: ["slots", "locale"],
       apply(ctx) {
         registerAgentPicker(ctx, h);
+        registerInfiniteCanvas(ctx, React);
         ctx.effect(() => ctx.locale.register(NS, createPlatformDictionaries()), "forge: platform dictionaries");
         const t = ctx.locale.bind(NS);
         const { PanelIcon, ForgePanel } = createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GUIDE_URL, LOGO_SVG: icon_default });
@@ -686,7 +763,8 @@
             openTask: (address) => ctx.get("uiWorkspace")?.openSession(address),
             refreshTask: (id) => ctx.get("sessions")?.refreshProjections(id),
             startSession: () => ctx.get("uiWorkspace")?.startSession(void 0, { agentPreset: "metaontic-agent-forge-studio" }),
-            openSettings: () => ctx.get("pluginNavigation")?.openBundle(NAMESPACE)
+            openSettings: () => ctx.get("pluginNavigation")?.openBundle(NAMESPACE),
+            openCanvas: () => ctx.get("sidebarRight")?.openTab(FORGE_CANVAS_KIND)
           })
         }, ForgePanel)), "forge: platform dashboard");
       }
@@ -2001,6 +2079,8 @@
       "./presets/metaontic-agent-forge-controls/icon": "./icon.svg"
     },
     files: [
+      "canvas",
+      "vendor/infinite-canvas",
       "index.js",
       "client.js",
       "cordis.patch.yml",
@@ -2034,7 +2114,8 @@
           "@deepseek-ai/dsh-client-ui-session",
           "@deepseek-ai/dsh-client-ui-plugin-manager",
           "@deepseek-ai/dsh-api-remotes",
-          "@deepseek-ai/dsh-client-ui-agent-preset"
+          "@deepseek-ai/dsh-client-ui-agent-preset",
+          "@deepseek-ai/dsh-client-ui-sidebar-right"
         ]
       }
     },

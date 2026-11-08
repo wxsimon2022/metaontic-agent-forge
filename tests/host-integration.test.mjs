@@ -41,7 +41,7 @@ test('published host preserves schema, tool registration, live configuration and
   assert.ok(plugin.Config);
   const config = { connectionMode: 'metaontic', metaonticApiKey: 'test', model: 'seedance-2-0' };
   const host = harness(config, '/tmp');
-  assert.deepEqual([...host.tools.keys()].sort(), ['metaontic_agent_forge_media_submission', 'metaontic_agent_forge_video_config', 'metaontic_agent_forge_video_estimate', 'metaontic_agent_forge_video_extend', 'metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_prepare_image', 'metaontic_agent_forge_video_project', 'metaontic_agent_forge_video_setup', 'metaontic_agent_forge_video_stage', 'metaontic_agent_forge_video_status']);
+  assert.deepEqual([...host.tools.keys()].sort(), ['metaontic_agent_forge_canvas', 'metaontic_agent_forge_media_submission', 'metaontic_agent_forge_video_config', 'metaontic_agent_forge_video_estimate', 'metaontic_agent_forge_video_extend', 'metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_prepare_image', 'metaontic_agent_forge_video_project', 'metaontic_agent_forge_video_setup', 'metaontic_agent_forge_video_stage', 'metaontic_agent_forge_video_status']);
   assert.match(host.prompt(), /直出上限 15 秒/);
   config.model = 'seedance-2-5';
   assert.match(host.prompt(), /直出上限 30 秒/);
@@ -49,7 +49,7 @@ test('published host preserves schema, tool registration, live configuration and
   assert.equal(decision.kind, 'deny');
   assert.match(decision.reason, /projectId/);
   host.dispose();
-  assert.equal(host.disposed(), 10);
+  assert.equal(host.disposed(), 11);
 });
 
 test('conversation stays inside video creation and configuration is read-only in chat', async () => {

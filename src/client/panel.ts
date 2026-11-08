@@ -196,6 +196,10 @@ export function createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GU
               onClick: () => props?.startSession?.(),
             }, t('panelNew')),
             h('button', {
+              key: 'canvas', type: 'button', className: 'metaontic-agent-forge-btn', disabled: typeof props?.openCanvas !== 'function',
+              onClick: () => props?.openCanvas?.(),
+            }, t('panelCanvas')),
+            h('button', {
               key: 'settings', type: 'button', className: 'metaontic-agent-forge-btn', disabled: typeof props?.openSettings !== 'function',
               onClick: () => props?.openSettings?.(),
             }, t('panelSettings')),

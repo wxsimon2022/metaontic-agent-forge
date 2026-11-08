@@ -45,6 +45,8 @@
     "./presets/metaontic-agent-forge-controls/icon": "./icon.svg"
   },
   "files": [
+    "canvas",
+    "vendor/infinite-canvas",
     "index.js",
     "client.js",
     "cordis.patch.yml",
@@ -78,7 +80,8 @@
         "@deepseek-ai/dsh-client-ui-session",
         "@deepseek-ai/dsh-client-ui-plugin-manager",
         "@deepseek-ai/dsh-api-remotes",
-        "@deepseek-ai/dsh-client-ui-agent-preset"
+        "@deepseek-ai/dsh-client-ui-agent-preset",
+        "@deepseek-ai/dsh-client-ui-sidebar-right"
       ]
     }
   },

@@ -1,5 +1,11 @@
 # Third-party notices
 
+## Haitang-Hub/dsh-infinite-canvas
+
+The creative canvas includes adapted runtime and site assets from Haitang-Hub/dsh-infinite-canvas 0.2.9, commit `0a8a8dccc8e8d4fcaa0d792750a8d45be8e5def8`, licensed under MIT (Copyright 2026 Haitang-Hub).
+Source: https://github.com/Haitang-Hub/dsh-infinite-canvas
+The complete license is retained in `vendor/infinite-canvas/LICENSE`; the pinned identity and adapted file hashes are in `vendor/infinite-canvas/UPSTREAM.json`. Platform integration changes are documented in `docs/engineering/infinite-canvas-integration.md`. The unrelated NINKCH package is not included.
+
 The plugin host bundle includes the following MIT-licensed packages:
 
 ## @deepseek-ai/schemastery
