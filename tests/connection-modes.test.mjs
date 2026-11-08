@@ -58,7 +58,7 @@ for (const connectionMode of ['metaontic', 'volcengine']) test(`${connectionMode
   assert.equal((await h.remainingCostText(config, {}, [])).remain, '');
   // 手填 API密钥的接入方式不判断额度：预检任何一步都不该去查这把 API密钥的额度。
   h.fetchDeviceQuota = async () => { throw new Error('metaontic/volcengine must not query service quota'); };
-  for (const name of ['video_generate', 'video_extend']) {
+  for (const name of ['metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_extend']) {
     const gate = await h.preflightGate({}, config, { name, arguments: { resume: '/tmp/progress' } });
     assert.equal(gate.kind, 'ask');
     assert.match(gate.displayReason.zh, /按当前 API密钥在渠道的实际用量计费/);
@@ -80,7 +80,7 @@ const estimateOf = usd => () => ({
   tokens: 1000, seconds: 15, segments: [{ seconds: 15, usd, tokens: 1000 }],
 });
 
-const imageCall = { name: 'video_prepare_image', arguments: { operation: 'create_character', prompt: '角色', style: '二维动画' } };
+const imageCall = { name: 'metaontic_agent_forge_video_prepare_image', arguments: { operation: 'create_character', prompt: '角色', style: '二维动画' } };
 
 test('MetaOntic AI 图片调用不查额度、确认框不带余额', async () => {
   const h = harness(), config = { connectionMode: 'metaontic', metaonticApiKey: 'm' };

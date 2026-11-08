@@ -31,7 +31,7 @@ async function fixture(run) {
  let asks=0;
  const ctx={get:()=>({request:async()=>{asks++;return flags.allow;}}),tools:{register(t){tools.set(t.name,t);return ()=>{};}},inject(){},on(){return ()=>{};}};
  api.apply(ctx,config);
- for(const name of ['video_generate','video_extend'])tools.set(name,workflowApi.lowLevelVideo(name,config,ctx));
+ for(const name of ['metaontic_agent_forge_video_generate','metaontic_agent_forge_video_extend'])tools.set(name,workflowApi.lowLevelVideo(name,config,ctx));
  globalThis.fetch=async(url,options={})=>{
   const body=options.body?JSON.parse(options.body):undefined;calls.push({url,body,key:options.headers?.Authorization});
   if(url.endsWith('/tasks/doubao'))return Response.json({task_id:'image-'+(++imageCount)});
@@ -91,7 +91,7 @@ test('video retry pending task resumes by query and never repeats conversion',()
  await api.runTask(h.config,h.body,undefined,p);assert.equal(h.videos,2);assert.equal(h.images,1);
 }));
 test('full tool resume persists reference inputs and reviewed conversion state',()=>fixture(async h=>{
- const tool=h.tools.get('video_generate');
+ const tool=h.tools.get('metaontic_agent_forge_video_generate');
  const png=path.join(h.dir,'original.png');await writeFile(png,Buffer.from('89504e470d0a1a0a0000000000000000','hex'));
  const first=await tool.execute({prompt:'story',duration:5,firstFrameUrl:png,merge:false,resolution:'480p'},h.exec);
  assert.equal(first.status,'review_required');assert.equal(first.convertedReferences.length,1);
@@ -106,7 +106,7 @@ test('full tool resume persists reference inputs and reviewed conversion state',
 test('ordinary failed first segment resumes with original resolved references',()=>fixture(async h=>{
  h.flags.videoReject=false;const base=globalThis.fetch;
  globalThis.fetch=async(url,options)=>url.endsWith('/video-1')?Response.json({status:'failed',error:{message:'temporary generation failure'}}):base(url,options);
- const tool=h.tools.get('video_generate');
+ const tool=h.tools.get('metaontic_agent_forge_video_generate');
  const first=await tool.execute({prompt:'story',duration:5,referenceImages:['https://example.com/reference.png'],merge:false},h.exec);assert.equal(first.status,'failed');
  const second=await tool.execute({resume:first.resumeDir},h.exec);assert.equal(second.status,'succeeded');
  const last=h.calls.filter(c=>c.body?.model==='video').at(-1).body;assert.equal(last.content[1].image_url.url,'https://example.com/reference.png');
@@ -123,7 +123,7 @@ test('uncertain image submission blocks duplicate POST and can link original tas
 }));
 test('uncertain video POST is persisted and blocks a second charged submission',()=>fixture(async h=>{
  let posts=0;globalThis.fetch=async()=>{posts++;throw new Error('response lost');};
- const tool=h.tools.get('video_generate');
+ const tool=h.tools.get('metaontic_agent_forge_video_generate');
  const first=await tool.execute({prompt:'story',duration:5,merge:false},h.exec);assert.equal(first.status,'submission_unknown');assert.ok(first.submissionId);assert.ok(first.resumeDir);
  const second=await tool.execute({resume:first.resumeDir},h.exec);assert.equal(second.status,'submission_unknown');assert.equal(posts,1);
 }));
@@ -138,9 +138,9 @@ test('480P/720P requests, estimates, defaults and validation agree',()=>fixture(
   const g=await api.buildGenerationBody(h.config,{prompt:'test',resolution},5);
   const e=api.buildRequestBody(h.config,{prompt:'test',duration:5,resolution},'https://example.com/source.mp4');
   assert.equal(g.body.resolution,resolution);assert.equal(e.body.resolution,resolution);
-  assert.equal(api.estimateUsage(h.config,'video_generate',{duration:5,resolution}).resolution,resolution);
+  assert.equal(api.estimateUsage(h.config,'metaontic_agent_forge_video_generate',{duration:5,resolution}).resolution,resolution);
  }
- assert.ok(api.estimateUsage(h.config,'video_generate',{duration:5,resolution:'480p'}).tokens<api.estimateUsage(h.config,'video_generate',{duration:5,resolution:'720p'}).tokens);
+ assert.ok(api.estimateUsage(h.config,'metaontic_agent_forge_video_generate',{duration:5,resolution:'480p'}).tokens<api.estimateUsage(h.config,'metaontic_agent_forge_video_generate',{duration:5,resolution:'720p'}).tokens);
  h.config.resolution='480p';assert.equal((await api.buildGenerationBody(h.config,{prompt:'test'},5)).body.resolution,'720p');
  await assert.rejects(()=>api.buildGenerationBody(h.config,{prompt:'test',resolution:'1080p'},5),/480P/);
 }));
@@ -167,7 +167,7 @@ test('B recovery uses image key only for image traffic and video key for origina
  const progress={state:{},saveState:async()=>{},ctx:h.ctx,exec:h.exec};
  assert.equal((await api.runTask(h.config,h.body,undefined,progress)).status,'review_required');
  assert.equal((await api.runTask(h.config,h.body,undefined,{...progress,referenceImagesReviewed:true})).status,'succeeded');
- await h.tools.get('video_status').execute({taskId:'video-2'},h.exec);
+ await h.tools.get('metaontic_agent_forge_video_status').execute({taskId:'video-2'},h.exec);
  for(const c of h.calls) assert.equal(c.key,c.url.includes('/v1/tasks/')?'Bearer image-secret':'Bearer b');
 }));
 test('independent image task query and uncertain submission reconciliation retain image key',()=>fixture(async h=>{
@@ -176,18 +176,18 @@ test('independent image task query and uncertain submission reconciliation retai
  globalThis.fetch=async(url,opts)=>{if(opts.method==='POST')throw new Error('response lost');return original(url,opts);};
  let id;
  await assert.rejects(()=>api.prepareImageTool(h.config).execute({image:'https://example.com/ref.png',style:'动画'},{}),e=>{id=e.submissionId;return !!id;});
- await h.tools.get('media_submission').execute({action:'get',submissionId:id});
+ await h.tools.get('metaontic_agent_forge_media_submission').execute({action:'get',submissionId:id});
  h.config.imageApiKey='wrong';
- await assert.rejects(()=>h.tools.get('media_submission').execute({action:'reconcile',submissionId:id,taskId:'image-9'}),/原接入|原连接/);
+ await assert.rejects(()=>h.tools.get('metaontic_agent_forge_media_submission').execute({action:'reconcile',submissionId:id,taskId:'image-9'}),/原接入|原连接/);
  h.config.imageApiKey='image-secret';
- await h.tools.get('media_submission').execute({action:'reconcile',submissionId:id,taskId:'image-9'});
+ await h.tools.get('metaontic_agent_forge_media_submission').execute({action:'reconcile',submissionId:id,taskId:'image-9'});
  await api.prepareImageTool(h.config).execute({taskId:'image-9'},{});
  assert.ok(h.calls.length>=3);assert.ok(h.calls.every(c=>c.key==='Bearer image-secret'));
 }));
 test('C video submission, polling and status use only Volcano key',()=>fixture(async h=>{
  h.config.connectionMode='volcengine';h.config.volcengineApiKey='volcano-only';h.config.imageApiKey='wrong-image';h.config.imageUseVideoKey=false;h.flags.videoReject=false;
  assert.equal((await api.runTask(h.config,h.body,undefined,{})).status,'succeeded');
- await h.tools.get('video_status').execute({taskId:'video-1'},h.exec);
+ await h.tools.get('metaontic_agent_forge_video_status').execute({taskId:'video-1'},h.exec);
  assert.ok(h.calls.every(c=>c.key==='Bearer volcano-only'&&c.url.startsWith('https://ark.cn-beijing.volces.com/')));
  await assert.rejects(()=>api.prepareImageTool(h.config).execute({taskId:'image-1'},{}),/火山直连暂不提供/);
 }));
@@ -200,15 +200,15 @@ test('B independent image key snapshot survives settings edits during submission
 for(const mode of ['metaontic','volcengine']) test(`${mode}: missing video key never falls back to another model key`,()=>fixture(async h=>{
  h.config.connectionMode=mode;h.config.imageApiKey='not-video';
  h.config[mode==='service'?'apiKey':mode==='metaontic'?'metaonticApiKey':'volcengineApiKey']='';
- await assert.rejects(()=>h.tools.get('video_generate').execute({prompt:'test',duration:5,merge:false},h.exec),/API密钥/);
+ await assert.rejects(()=>h.tools.get('metaontic_agent_forge_video_generate').execute({prompt:'test',duration:5,merge:false},h.exec),/API密钥/);
  assert.equal(h.calls.length,0);
 }));
 
-for (const toolName of ['video_generate', 'video_extend']) test(`${toolName}: 30s resume approval, estimate and both requests retain 480p`,()=>fixture(async h=>{
+for (const toolName of ['metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_extend']) test(`${toolName}: 30s resume approval, estimate and both requests retain 480p`,()=>fixture(async h=>{
  h.flags.videoReject=false;
  const tool=h.tools.get(toolName);
  const initial={prompt:'story',segmentPrompts:['first scene','second scene'],merge:false,resolution:'480p'};
- const first=await tool.execute(toolName==='video_generate'?{...initial,duration:30}:{...initial,videoUrl:'https://example.com/source.mp4',duration:15,segments:2},h.exec);
+ const first=await tool.execute(toolName==='metaontic_agent_forge_video_generate'?{...initial,duration:30}:{...initial,videoUrl:'https://example.com/source.mp4',duration:15,segments:2},h.exec);
  assert.equal(first.paused,true);
  assert.equal(h.videos,1);
  const args={resume:first.resumeDir};
@@ -253,11 +253,11 @@ for(const connectionMode of ['metaontic','volcengine']) test(`${connectionMode}:
  assert.equal(body.content.find(c=>c.type==='video_url').role,'reference_video');
 }));
 
-for(const toolName of ['video_generate','video_extend']) test(`${toolName}: approved transition survives pause and resume without another submission`,()=>fixture(async h=>{
+for(const toolName of ['metaontic_agent_forge_video_generate','metaontic_agent_forge_video_extend']) test(`${toolName}: approved transition survives pause and resume without another submission`,()=>fixture(async h=>{
  h.flags.videoReject=false;
  const transition='承接视频1末尾的点头动作，切到女子中景，原配乐连续。';
  const initial={prompt:'镜头1：人物缓慢抬头回应。',segmentPrompts:['镜头1：男子放下茶杯。','镜头1：女子抬头回应。'],transitionDescription:transition,merge:false,resolution:'480p'};
- const first=await h.tools.get(toolName).execute(toolName==='video_generate'?{...initial,duration:30}:{...initial,videoUrl:'https://example.com/source.mp4',duration:15,segments:2},h.exec);
+ const first=await h.tools.get(toolName).execute(toolName==='metaontic_agent_forge_video_generate'?{...initial,duration:30}:{...initial,videoUrl:'https://example.com/source.mp4',duration:15,segments:2},h.exec);
  assert.equal(first.paused,true);
  const record=JSON.parse(await readFile(path.join(first.resumeDir,'paused-plan.json'),'utf8'));
  assert.equal(record.options.transitionDescription,transition);
@@ -265,9 +265,9 @@ for(const toolName of ['video_generate','video_extend']) test(`${toolName}: appr
  assert.equal(result.status,'succeeded');assert.equal(h.videos,2);
  const bodies=h.calls.filter(c=>c.body?.model==='video').map(c=>c.body);
  assert.ok(bodies[1].content.find(c=>c.type==='text').text.includes(transition));
- if(toolName==='video_generate') assert.ok(!bodies[0].content[0].text.includes(transition));
+ if(toolName==='metaontic_agent_forge_video_generate') assert.ok(!bodies[0].content[0].text.includes(transition));
 }));
-for(const toolName of ['video_generate','video_extend']) test(`${toolName}: invalid transition is rejected before any paid submission`,()=>fixture(async h=>{
+for(const toolName of ['metaontic_agent_forge_video_generate','metaontic_agent_forge_video_extend']) test(`${toolName}: invalid transition is rejected before any paid submission`,()=>fixture(async h=>{
  h.flags.videoReject=false;
  await assert.rejects(h.tools.get(toolName).execute({prompt:'story',duration:30,segmentPrompts:['first','second'],videoUrl:'https://example.com/source.mp4',transitionDescription:{invalid:true},merge:false},h.exec),/过渡描述必须是文字/);
  assert.equal(h.videos,0);assert.equal(h.calls.length,0);
@@ -280,7 +280,7 @@ test('legacy global continuation mode does not override new script requests',()=
  const scripted=api.buildRequestBody(h.config,{prompt:'人物继续说话',duration:15,mode:'closeup'},'https://example.com/source.mp4').body.content[0].text;
  assert.match(scripted,/下一位说话人的近景/);
 }));
-test('video_config is read-only: no global continuation mode, no conversation-side writes',()=>fixture(async h=>{
+test('metaontic_agent_forge_video_config is read-only: no global continuation mode, no conversation-side writes',()=>fixture(async h=>{
  let writes=0;
  const tool=api.configTool(h.config,{mutate(){writes++;}});
  assert.equal(tool.parameters.properties.mode,undefined);
@@ -289,10 +289,10 @@ test('video_config is read-only: no global continuation mode, no conversation-si
  await assert.rejects(tool.execute({action:'set',model:'doubao-seedance-2-5'}),/插件配置不能在对话里改/);
  assert.equal(writes,0);
 }));
-for(const toolName of ['video_generate','video_extend']) test(`${toolName}: resume retains script continuation mode after global config changes`,()=>fixture(async h=>{
+for(const toolName of ['metaontic_agent_forge_video_generate','metaontic_agent_forge_video_extend']) test(`${toolName}: resume retains script continuation mode after global config changes`,()=>fixture(async h=>{
  h.flags.videoReject=false;h.config.mode='continuous';
  const initial={prompt:'人物继续说话',segmentPrompts:['第一段新动作','第二段新对白'],mode:'closeup',merge:false};
- const first=await h.tools.get(toolName).execute(toolName==='video_generate'?{...initial,duration:30}:{...initial,videoUrl:'https://example.com/source.mp4',duration:15,segments:2},h.exec);
+ const first=await h.tools.get(toolName).execute(toolName==='metaontic_agent_forge_video_generate'?{...initial,duration:30}:{...initial,videoUrl:'https://example.com/source.mp4',duration:15,segments:2},h.exec);
  const record=JSON.parse(await readFile(path.join(first.resumeDir,'paused-plan.json'),'utf8'));assert.equal(record.options.mode,'closeup');
  h.config.mode='continuous';
  await h.tools.get(toolName).execute({resume:first.resumeDir},h.exec);
@@ -302,8 +302,8 @@ for(const toolName of ['video_generate','video_extend']) test(`${toolName}: resu
 
 for(const resolution of ['480p','720p']) test(`script and approval continuation estimates agree at ${resolution}`,()=>fixture(async h=>{
  h.config.model='doubao-seedance-2-0-mini-260615';h.config.estimateGroupRatio=1;
- const script=await h.tools.get('video_estimate').execute({duration:30,resolution,ratio:'16:9',groupRatio:1});
- const gate=api.estimateUsage(h.config,'video_generate',{duration:30,resolution});
+ const script=await h.tools.get('metaontic_agent_forge_video_estimate').execute({duration:30,resolution,ratio:'16:9',groupRatio:1});
+ const gate=api.estimateUsage(h.config,'metaontic_agent_forge_video_generate',{duration:30,resolution});
  assert.deepEqual(gate.segments.map(s=>s.inputSeconds),[0,15]);
  assert.deepEqual(gate.segments.map(s=>s.tokens),script.plugin.segments.map(s=>s.tokens));
  assert.ok(Math.abs(gate.usd*7.3-script.plugin.cny)<0.0001);
@@ -311,7 +311,7 @@ for(const resolution of ['480p','720p']) test(`script and approval continuation 
 
 for(const mode of ['metaontic','volcengine']) test(`${mode}: initial character images persist through all four 60s segments and resume`,()=>fixture(async h=>{
  h.flags.videoReject=false;h.config.connectionMode=mode;h.config.volcengineApiKey='c';
- const tool=h.tools.get('video_generate');
+ const tool=h.tools.get('metaontic_agent_forge_video_generate');
  const images=['https://example.com/face.png','https://example.com/body.png'];
  let result=await tool.execute({prompt:'同一主角',duration:60,resolution:'480p',referenceImages:images,segmentPrompts:['one','two','three','four'],merge:false},h.exec);
  for(let i=0;i<3;i++){
@@ -333,9 +333,9 @@ for(const mode of ['metaontic','volcengine']) test(`${mode}: initial character i
  assert.equal(h.images,0);
 }));
 
-test('video_extend carries explicitly selected character images through resume',()=>fixture(async h=>{
+test('metaontic_agent_forge_video_extend carries explicitly selected character images through resume',()=>fixture(async h=>{
  h.flags.videoReject=false;
- const tool=h.tools.get('video_extend');
+ const tool=h.tools.get('metaontic_agent_forge_video_extend');
  const images=['https://example.com/face.png'];
  let result=await tool.execute({prompt:'角色继续说话',videoUrl:'https://example.com/input.mp4',duration:5,segments:2,characterReferenceImages:images,merge:false},h.exec);
  assert.equal(result.paused,true);result=await tool.execute({resume:result.resumeDir},h.exec);
@@ -346,7 +346,7 @@ test('video_extend carries explicitly selected character images through resume',
 
 test('first-frame source becomes reference_image in continuation, without first_frame/video mixing',()=>fixture(async h=>{
  h.flags.videoReject=false;
- const tool=h.tools.get('video_generate');
+ const tool=h.tools.get('metaontic_agent_forge_video_generate');
  const first=await tool.execute({prompt:'主角',duration:20,segmentPrompts:['one','two'],firstFrameUrl:'https://example.com/face.png',merge:false},h.exec);
  await tool.execute({resume:first.resumeDir},h.exec);
  const posts=h.calls.filter(c=>c.body?.content);
@@ -355,7 +355,7 @@ test('first-frame source becomes reference_image in continuation, without first_
 }));
 
 test('approved converted character image is reused by subsequent segments without another image call',()=>fixture(async h=>{
- const tool=h.tools.get('video_generate');
+ const tool=h.tools.get('metaontic_agent_forge_video_generate');
  const initial=await tool.execute({prompt:'角色',duration:20,segmentPrompts:['one','two'],referenceImages:['https://example.com/real.png'],merge:false},h.exec);
  assert.equal(initial.status,'review_required');assert.equal(h.images,1);
  const reviewed=await tool.execute({resume:initial.resumeDir,referenceImagesReviewed:true},h.exec);
@@ -370,7 +370,7 @@ test('approved converted character image is reused by subsequent segments withou
 
 for(const shared of [true,false]) test(`text character image creates no video and uses correct image key (shared=${shared})`,()=>fixture(async h=>{
  h.config.imageUseVideoKey=shared;h.config.imageApiKey='image-only';
- const before=await api.preflightGate(h.ctx,h.config,{...h.exec,name:'video_prepare_image',arguments:{operation:'create_character',prompt:'青年角色',style:'二维动画'}});
+ const before=await api.preflightGate(h.ctx,h.config,{...h.exec,name:'metaontic_agent_forge_video_prepare_image',arguments:{operation:'create_character',prompt:'青年角色',style:'二维动画'}});
  assert.equal(before.kind,'ask');assert.match(before.displayReason.zh,/单独计费/);
  const image=await api.prepareImageTool(h.config).execute({operation:'create_character',prompt:'短发青年，蓝色衬衫',style:'二维动画'},h.exec);
  assert.equal(image.reviewRequired,true);assert.equal(h.videos,0);
@@ -381,14 +381,14 @@ for(const shared of [true,false]) test(`text character image creates no video an
 
 test('role image approval rejection and non-interactive mode do not auto-generate',()=>fixture(async h=>{
  h.ctx.get=()=>({config:{policy:'never'}});
- const decision=await api.preflightGate(h.ctx,h.config,{...h.exec,name:'video_prepare_image',arguments:{operation:'create_character',prompt:'人物',style:'动画'}});
+ const decision=await api.preflightGate(h.ctx,h.config,{...h.exec,name:'metaontic_agent_forge_video_prepare_image',arguments:{operation:'create_character',prompt:'人物',style:'动画'}});
  assert.equal(decision.kind,'deny');assert.equal(h.images,0);assert.equal(h.videos,0);
 }));
 
 test('created and reviewed role image is used for initial video and continuation',()=>fixture(async h=>{
  h.flags.videoReject=false;
  const image=await api.prepareImageTool(h.config).execute({operation:'create_character',prompt:'青年角色',style:'动画'},h.exec);
- const tool=h.tools.get('video_generate');const references=[image.imageUrl];
+ const tool=h.tools.get('metaontic_agent_forge_video_generate');const references=[image.imageUrl];
  const first=await tool.execute({prompt:'角色自我介绍',duration:20,segmentPrompts:['one','two'],referenceImages:references,characterReferenceImages:references,merge:false},h.exec);
  await tool.execute({resume:first.resumeDir},h.exec);
  assert.equal(h.images,1);assert.equal(h.videos,2);
@@ -398,13 +398,13 @@ test('created and reviewed role image is used for initial video and continuation
 test('actual video preflight asks the character choice before payment and never submits when image creation is chosen',()=>fixture(async h=>{
  let asked=0;const prior=h.ctx.get;
  h.ctx.get=name=>name==='userQuestions'?{ask:async req=>{asked++;return {answers:[{id:req.questions[0].id,selected:['先生成角色图（单独计费）']}]};}}:prior(name);
- const decision=await api.preflightGate(h.ctx,h.config,{...h.exec,agent:{session:{id:'real-gate-test'}},name:'video_generate',arguments:{prompt:'新角色',duration:15,merge:false,resolution:'480p'}});
- assert.equal(decision.kind,'deny');assert.match(decision.reason,/video_prepare_image/);assert.equal(asked,1);assert.equal(h.videos,0);assert.equal(h.images,0);
+ const decision=await api.preflightGate(h.ctx,h.config,{...h.exec,agent:{session:{id:'real-gate-test'}},name:'metaontic_agent_forge_video_generate',arguments:{prompt:'新角色',duration:15,merge:false,resolution:'480p'}});
+ assert.equal(decision.kind,'deny');assert.match(decision.reason,/metaontic_agent_forge_video_prepare_image/);assert.equal(asked,1);assert.equal(h.videos,0);assert.equal(h.images,0);
 }));
 
 test('realistic character image uses photography prompt and truthful paid approval',()=>fixture(async h=>{
  const args={operation:'create_character',prompt:'短发青年，蓝色衬衫',style:'真人写实',characterType:'realistic'};
- const gate=await api.preflightGate(h.ctx,h.config,{...h.exec,name:'video_prepare_image',arguments:args});
+ const gate=await api.preflightGate(h.ctx,h.config,{...h.exec,name:'metaontic_agent_forge_video_prepare_image',arguments:args});
  assert.equal(gate.kind,'ask');assert.match(gate.displayReason.zh,/真人写实/);assert.match(gate.displayReason.zh,/单独计费/);
  const result=await api.prepareImageTool(h.config).execute(args,h.exec);
  const post=h.calls.find(x=>x.url.endsWith('/tasks/doubao'));
@@ -420,7 +420,7 @@ test('default character remains stylized and realistic option is listed first',(
 }));
 test('realistic type cannot bypass non-realistic reference conversion',()=>fixture(async h=>{
  const args={operation:'convert_reference',image:'https://example.com/ref.png',style:'真人写实',characterType:'realistic'};
- const gate=await api.preflightGate(h.ctx,h.config,{...h.exec,name:'video_prepare_image',arguments:args});
+ const gate=await api.preflightGate(h.ctx,h.config,{...h.exec,name:'metaontic_agent_forge_video_prepare_image',arguments:args});
  assert.equal(gate.kind,'deny');
  await assert.rejects(()=>api.prepareImageTool(h.config).execute(args,h.exec),/必须使用非真人/);
  assert.equal(h.images,0);assert.equal(h.videos,0);

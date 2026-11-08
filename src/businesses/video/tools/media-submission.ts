@@ -3,7 +3,7 @@ import { readSubmission, reconcileSubmission, submissionIdentity } from '../prov
 import { snapshotConfig, imageConfig } from '../providers/connection.js';
 export function submissionTool(liveConfig) {
   return {
-    name: 'media_submission',
+    name: 'metaontic_agent_forge_media_submission',
     description: '核对图片/视频提交结果不明的防重记录。get 读取；reconcile 关联用户从渠道记录找到的原 taskId，或用户确认渠道未创建后用 confirmedNotCreated:true 解锁。不得猜任务 ID 或未经用户核对就解锁；本工具不创建付费任务。',
     parameters: { type: 'object', properties: {
       action: { type: 'string', enum: ['get', 'reconcile'] },

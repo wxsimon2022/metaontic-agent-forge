@@ -12,7 +12,7 @@ function setup(logged=[]){
  const guard=ctx.createStoryboardReviewGuard({log:async entry=>{logged.push(entry);}}),session={header:{cwd:dir}};
  const observe=(type,data)=>guard.observe(session,{type,data:{turn:1,...data}});
  const exec={name:'ask_user_question',agent:{session},arguments:{questions:[{id:'script_review_v1',question:'这版脚本可以吗？'}]}};
- observe('tool/call',{name:'video_estimate'});
+ observe('tool/call',{name:'metaontic_agent_forge_video_estimate'});
  const present=()=>observe('deliverables/presented',{files:[{path:image}]});
  const body=(text,type='text')=>observe('assistant/message',{message:{content:[{type,text}]}});
  return {guard,session,exec,observe,present,body,logged};
@@ -40,7 +40,7 @@ test('改稿后只展示旧版分镜图会被拦下（同目录已有更新的�
  vm.runInContext(sourceOf('businesses/video/workflow/storyboard-review'),ctx);
  const guard=ctx.createStoryboardReviewGuard({log:async entry=>{logged.push(entry);}}),session={header:{cwd:sub}};
  const observe=(type,data)=>guard.observe(session,{type,data:{turn:1,...data}});
- observe('tool/call',{name:'video_estimate'});
+ observe('tool/call',{name:'metaontic_agent_forge_video_estimate'});
  observe('assistant/message',{message:{content:[{type:'text',text:`![分镜](<${old}>)`}]}});
  const exec={name:'ask_user_question',agent:{session},arguments:{questions:[{id:'script_review_v1',question:'这版脚本可以吗？'}]}};
  const decision=await guard.gate(exec);
@@ -51,13 +51,13 @@ test('改稿后只展示旧版分镜图会被拦下（同目录已有更新的�
 });
 test('old turns and other sessions cannot satisfy the current review',async()=>{
  const h=setup();h.present();h.body(`![图](<${image}>)`);
- h.observe('tool/call',{turn:2,name:'video_estimate'});assert.equal((await h.guard.gate(h.exec)).kind,'deny');
+ h.observe('tool/call',{turn:2,name:'metaontic_agent_forge_video_estimate'});assert.equal((await h.guard.gate(h.exec)).kind,'deny');
  const another={...h.exec,agent:{session:{}}};assert.equal(await h.guard.gate(another),null);
 });
 test('ordinary questions and video production confirmation remain unaffected',async()=>{
  const h=setup();h.present();
  assert.equal(await h.guard.gate({...h.exec,arguments:{questions:[{question:'选择480P还是720P？'}]}}),null);
- assert.equal(await h.guard.gate({...h.exec,name:'video_generate'}),null);
+ assert.equal(await h.guard.gate({...h.exec,name:'metaontic_agent_forge_video_generate'}),null);
 });
 
 test('turn ending right after the script body is logged as a missing review ask',async()=>{
@@ -73,6 +73,6 @@ test('review asked in the same turn is not reported missing',async()=>{
 });
 test('next turn without review ask is reported missing too',async()=>{
  const h=setup();h.body(`![分镜](<${image}>)`);
- h.observe('tool/call',{turn:2,name:'video_estimate'});
+ h.observe('tool/call',{turn:2,name:'metaontic_agent_forge_video_estimate'});
  assert.deepEqual(h.logged.map(entry=>entry.event),['storyboard_review_missing']);
 });

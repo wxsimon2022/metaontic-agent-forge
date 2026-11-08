@@ -33,7 +33,7 @@ function harness(config, directory) {
     on(event, listener) { if (event === 'session/event') observers.push(listener); else gate = listener; return () => {}; },
   };
   const dispose = plugin.apply(ctx, config);
-  return { tools, observe: (session, event) => Promise.all(observers.map(f => f(session, event))), prompt: () => prompt.text({agent:{session:{header:{agentPreset:'forge-video-director'}}}}), gate: (...args) => gate(...args), dispose, disposed: () => disposed };
+  return { tools, observe: (session, event) => Promise.all(observers.map(f => f(session, event))), prompt: () => prompt.text({agent:{session:{header:{agentPreset:'metaontic-agent-forge-video-director'}}}}), gate: (...args) => gate(...args), dispose, disposed: () => disposed };
 }
 
 test('published host preserves schema, tool registration, live configuration and cleanup', async () => {
@@ -41,11 +41,11 @@ test('published host preserves schema, tool registration, live configuration and
   assert.ok(plugin.Config);
   const config = { connectionMode: 'metaontic', metaonticApiKey: 'test', model: 'seedance-2-0' };
   const host = harness(config, '/tmp');
-  assert.deepEqual([...host.tools.keys()].sort(), ['media_submission', 'video_config', 'video_estimate', 'video_extend', 'video_generate', 'video_prepare_image', 'video_project', 'video_setup', 'video_stage', 'video_status']);
+  assert.deepEqual([...host.tools.keys()].sort(), ['metaontic_agent_forge_media_submission', 'metaontic_agent_forge_video_config', 'metaontic_agent_forge_video_estimate', 'metaontic_agent_forge_video_extend', 'metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_prepare_image', 'metaontic_agent_forge_video_project', 'metaontic_agent_forge_video_setup', 'metaontic_agent_forge_video_stage', 'metaontic_agent_forge_video_status']);
   assert.match(host.prompt(), /直出上限 15 秒/);
   config.model = 'seedance-2-5';
   assert.match(host.prompt(), /直出上限 30 秒/);
-  const decision = await host.gate({ name: 'video_generate', arguments: { duration: 5, referenceImages: ['https://media.invalid/approved.png'] } });
+  const decision = await host.gate({ name: 'metaontic_agent_forge_video_generate', arguments: { duration: 5, referenceImages: ['https://media.invalid/approved.png'] } });
   assert.equal(decision.kind, 'deny');
   assert.match(decision.reason, /projectId/);
   host.dispose();
@@ -58,7 +58,7 @@ test('conversation stays inside video creation and configuration is read-only in
   assert.match(prompt, /本对话只做视频创作/);
   assert.match(prompt, /与视频创作无关的话题/);
   assert.match(prompt, /只能在插件设置页里改/);
-  const tool = host.tools.get('video_config');
+  const tool = host.tools.get('metaontic_agent_forge_video_config');
   assert.equal(Array.from(tool.parameters.properties.action.enum).join(','), 'get');
   const view = await tool.execute({ action: 'get' });
   assert.equal(view.action, 'get');
@@ -75,8 +75,8 @@ test('style guidance asks only when the idea has no style, then refines along th
   for (const needle of ['style-library.md', '没有指定画面风格', '已经说清风格', '不重复推荐', '写入 script.md 的规格']) {
     assert.ok(prompt.includes(needle), needle);
   }
-  const skill = await readFile(new URL('../skills/forge-video-director/SKILL.md', import.meta.url), 'utf8');
-  const library = await readFile(new URL('../skills/forge-video-director/references/style-library.md', import.meta.url), 'utf8');
+  const skill = await readFile(new URL('../skills/metaontic-agent-forge-video-director/SKILL.md', import.meta.url), 'utf8');
+  const library = await readFile(new URL('../skills/metaontic-agent-forge-video-director/references/style-library.md', import.meta.url), 'utf8');
   assert.match(skill, /\[画面风格库\]\(references\/style-library\.md\)/);
   assert.match(skill, /已经说清风格/);
   assert.match(library, /没有指定画面风格/);
@@ -113,26 +113,26 @@ for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools sub
     const exec = { callId: 'test-call', agent: {session:{id:'integration',header:{cwd:directory}}} };
     async function reviewed(name, supplied) {
       const spec = {ratio:'9:16',resolution:'720p',...supplied};
-      const project = await host.tools.get('video_project').execute({action:'prepare',subjectType:'scenery',duration:spec.duration*(name==='video_extend'?(spec.segments||1):1)},exec);
+      const project = await host.tools.get('metaontic_agent_forge_video_project').execute({action:'prepare',subjectType:'scenery',duration:spec.duration*(name==='metaontic_agent_forge_video_extend'?(spec.segments||1):1)},exec);
       const scriptPath=path.join(directory,project.projectId+'.md'), image=path.join(directory,'storyboard.svg');
       await writeFile(scriptPath,'Script '+spec.prompt); await writeFile(image,'<svg/>');
-      await host.observe(exec.agent.session,{type:'tool/call',data:{turn:1,name:'video_project'}});
+      await host.observe(exec.agent.session,{type:'tool/call',data:{turn:1,name:'metaontic_agent_forge_video_project'}});
       await host.observe(exec.agent.session,{type:'assistant/message',data:{turn:1,message:{content:[{type:'text',text:`Script ${spec.prompt}\n![分镜](<${image}>)`}]}}});
-      const review=await host.tools.get('video_project').execute({action:'review',projectId:project.projectId,scriptPath,specification:spec,toolName:name},exec);
+      const review=await host.tools.get('metaontic_agent_forge_video_project').execute({action:'review',projectId:project.projectId,scriptPath,specification:spec,toolName:name},exec);
       assert.equal(review.status,'approved');
       return host.tools.get(name).execute({...spec,projectId:project.projectId},exec);
     }
-    const generated = await reviewed('video_generate', { prompt: 'A title', duration: 5 });
+    const generated = await reviewed('metaontic_agent_forge_video_generate', { prompt: 'A title', duration: 5 });
     assert.equal(generated.status, 'succeeded');
     assert.equal(submissions.length, 1);
     assert.equal(submissions[0].duration, 5);
     assert.equal(submissions[0].resolution, '720p');
     assert.ok((await stat(generated.videoPath)).size);
-    const queried = await host.tools.get('video_status').execute({ taskId: 'task-1' }, exec);
+    const queried = await host.tools.get('metaontic_agent_forge_video_status').execute({ taskId: 'task-1' }, exec);
     assert.equal(queried.status, 'succeeded');
     assert.equal(submissions.length, 1);
 
-    const first = await reviewed('video_generate', {
+    const first = await reviewed('metaontic_agent_forge_video_generate', {
       prompt: 'Continuous story', duration: 20, segmentPrompts: ['First part', 'Second part'], merge: false,
     });
     assert.equal(first.paused, true);
@@ -141,15 +141,15 @@ for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools sub
     assert.equal(record.done, 1);
     // 每段确认接在 resume 入口：点「继续」后、提交下一段前，由代码弹一次说得清的确认，
     // 而不是只靠提示词让模型自己问。
-    const unreviewed = await host.gate({ ...exec, name: 'video_generate', arguments: {resume:first.resumeDir,merge:false} });
+    const unreviewed = await host.gate({ ...exec, name: 'metaontic_agent_forge_video_generate', arguments: {resume:first.resumeDir,merge:false} });
     assert.equal(unreviewed.kind,'deny');assert.match(unreviewed.reason,/结果审核/);
-    await assert.rejects(host.tools.get('video_generate').execute({resume:first.resumeDir,merge:false},exec),/结果审核/);
+    await assert.rejects(host.tools.get('metaontic_agent_forge_video_generate').execute({resume:first.resumeDir,merge:false},exec),/结果审核/);
     assert.equal(submissions.length,2);
     await host.observe(exec.agent.session,{type:'assistant/message',data:{turn:2,message:{content:[{type:'text',text:`[观看第一段](<${first.segments[0].videoUrl}>)`}]}}});
-    const segmentReview=await host.tools.get('video_project').execute({action:'review_segment',resume:first.resumeDir},exec);
+    const segmentReview=await host.tools.get('metaontic_agent_forge_video_project').execute({action:'review_segment',resume:first.resumeDir},exec);
     assert.equal(segmentReview.status,'approved');
     const resumeGate = await host.gate({
-      name: 'video_generate',
+      name: 'metaontic_agent_forge_video_generate',
       agent: exec.agent, arguments: { resume: first.resumeDir, merge: false },
     });
     assert.equal(resumeGate.kind, 'ask');
@@ -159,12 +159,12 @@ for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools sub
     assert.match(resumeGate.displayReason.zh, /拒绝/);
     // 不是续做的调用不该出现续做说明
     const freshGate = await host.gate({
-      name: 'video_generate',
+      name: 'metaontic_agent_forge_video_generate',
       arguments: { duration: 5, referenceImages: ['https://media.invalid/approved.png'] },
     });
     assert.equal(freshGate.kind, 'deny');
     assert.match(freshGate.reason, /projectId/);
-    const continued = await host.tools.get('video_generate').execute({ resume: first.resumeDir, merge: false }, exec);
+    const continued = await host.tools.get('metaontic_agent_forge_video_generate').execute({ resume: first.resumeDir, merge: false }, exec);
     assert.equal(continued.status, 'succeeded');
     assert.equal(continued.paused, undefined);
     assert.equal(submissions.length, 3);
@@ -172,7 +172,7 @@ for (const mode of ['metaontic', 'volcengine']) test(`${mode}: bundled tools sub
     assert.equal(submissions[2].content.find(part => part.type === 'video_url').video_url.url, 'https://media.invalid/task-2.mp4');
     await assert.rejects(stat(path.join(first.resumeDir, 'resume.lock')), { code: 'ENOENT' });
 
-    const extended = await reviewed('video_extend', {
+    const extended = await reviewed('metaontic_agent_forge_video_extend', {
       videoUrl: 'https://media.invalid/task-1.mp4', prompt: 'Continue walking', duration: 5, merge: false,
     });
     assert.equal(extended.status, 'succeeded');
@@ -203,11 +203,11 @@ test('service: bundled host serves the server method again instead of refusing i
       ffmpegBinary: '/missing/ffmpeg', ffprobeBinary: '/missing/ffprobe',
     };
     const host = harness(config, directory);
-    const decision = await host.gate({ name: 'video_generate', arguments: { duration: 5 } });
+    const decision = await host.gate({ name: 'metaontic_agent_forge_video_generate', arguments: { duration: 5 } });
     assert.doesNotMatch(String(decision.reason || ''), /暂时不可用/);
     assert.equal(decision.kind, 'deny');
     assert.match(decision.reason, /projectId/);
-    assert.ok(host.tools.has('video_config'));
+    assert.ok(host.tools.has('metaontic_agent_forge_video_config'));
     assert.equal(requests, 0);
     host.dispose();
   } finally {

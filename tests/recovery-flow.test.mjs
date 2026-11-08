@@ -23,7 +23,7 @@ async function fixture(run) {
       if (names.includes('workingDirectory')) return install({ workingDirectory: { ensure: async () => directory } });
     }, on(_name, listener) { gate = listener; return () => {}; } };
   const dispose = plugin.apply(ctx, config);
-  for (const name of ['video_generate','video_extend']) tools.set(name,workflowApi.lowLevelVideo(name,config,ctx));
+  for (const name of ['metaontic_agent_forge_video_generate','metaontic_agent_forge_video_extend']) tools.set(name,workflowApi.lowLevelVideo(name,config,ctx));
   const state = { creates: 0, downloads: 0, failDownload: false, stopController: null, queryFailure: false };
   globalThis.fetch = async (input, options = {}) => {
     const url = String(input);
@@ -46,8 +46,8 @@ async function fixture(run) {
   }
 }
 
-for (const name of ['video_generate', 'video_extend']) {
-  const initial = name === 'video_generate'
+for (const name of ['metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_extend']) {
+  const initial = name === 'metaontic_agent_forge_video_generate'
     ? { prompt: 'story', duration: 20, segmentPrompts: ['start', 'end'] }
     : { prompt: 'continue', duration: 5, segments: 2, videoUrl: 'https://media.invalid/source.mp4' };
 
@@ -127,20 +127,20 @@ test('resume estimates use actual remaining steps and inherited merge option for
     resumePlanFrom: data => ({ plan: data.plan.slice(data.done) }),
   });
   vm.runInContext(sourceOf('businesses/video/workflow/approval'), estimator);
-  for (const name of ['video_generate', 'video_extend']) {
-    const args = name === 'video_generate'
+  for (const name of ['metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_extend']) {
+    const args = name === 'metaontic_agent_forge_video_generate'
       ? { prompt: 'story', duration: 20, segmentPrompts: ['first', 'second'] }
       : { prompt: 'continue', duration: 7, segments: 3, videoUrl: 'https://media.invalid/source.mp4' };
     const first = await h.execute(name, { ...args, merge: false });
     const prepared = await estimator.estimateArgsFor(h.config, name, { resume: first.resumeDir });
     assert.equal(prepared.merge, false);
-    assert.deepEqual(Array.from(prepared.remainingPlan, step => step.seconds), name === 'video_generate' ? [5] : [7, 7]);
+    assert.deepEqual(Array.from(prepared.remainingPlan, step => step.seconds), name === 'metaontic_agent_forge_video_generate' ? [5] : [7, 7]);
     assert.ok(prepared.remainingPlan.every(step => step.kind === 'extend'));
   }
 }));
 
-for (const name of ['video_generate', 'video_extend']) test(`${name}: final-segment delivery failure updates the old cursor before returning`, () => fixture(async h => {
-  const initial = name === 'video_generate'
+for (const name of ['metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_extend']) test(`${name}: final-segment delivery failure updates the old cursor before returning`, () => fixture(async h => {
+  const initial = name === 'metaontic_agent_forge_video_generate'
     ? { prompt: 'story', duration: 20, segmentPrompts: ['start', 'end'], merge: false }
     : { prompt: 'continue', duration: 5, segments: 2, videoUrl: 'https://media.invalid/source.mp4', merge: false };
   const first = await h.execute(name, initial);
@@ -159,14 +159,14 @@ for (const name of ['video_generate', 'video_extend']) test(`${name}: final-segm
 }));
 
 test('paused runs download only new clips; cumulative preview never creates the next segment',()=>fixture(async h=>{
-  const first=await h.execute('video_generate',{prompt:'three parts',duration:45,segmentPrompts:['one','two','three']});
+  const first=await h.execute('metaontic_agent_forge_video_generate',{prompt:'three parts',duration:45,segmentPrompts:['one','two','three']});
   assert.equal(first.previewOnly,true);assert.equal(first.merged,false);assert.ok(first.previewPath);assert.equal(first.videoPath,undefined);
   assert.equal(h.state.creates,1);assert.equal(h.state.downloads,1);
-  const second=await h.execute('video_generate',{resume:first.resumeDir});
+  const second=await h.execute('metaontic_agent_forge_video_generate',{resume:first.resumeDir});
   assert.equal(second.previewOnly,true);assert.equal(h.state.creates,2);assert.equal(h.state.downloads,2);assert.equal(second.remainingSeconds,15);
-  const preview=await h.execute('video_generate',{resume:first.resumeDir,cumulativePreview:true});
+  const preview=await h.execute('metaontic_agent_forge_video_generate',{resume:first.resumeDir,cumulativePreview:true});
   assert.equal(h.state.creates,2);assert.equal(preview.paused,true);assert.equal(preview.remainingSeconds,15);
   assert.equal((await h.record(first.resumeDir)).done,2);
-  const final=await h.execute('video_generate',{resume:first.resumeDir,merge:false});
+  const final=await h.execute('metaontic_agent_forge_video_generate',{resume:first.resumeDir,merge:false});
   assert.equal(h.state.creates,3);assert.equal(final.paused,undefined);assert.equal(final.segments.length,3);
 }));

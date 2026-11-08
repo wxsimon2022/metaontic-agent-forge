@@ -2,7 +2,7 @@
 
 新产品中文名为“云智工坊 · 智能体平台”，英文名 MetaOntic Agent Forge，包名与插件命名空间为 `metaontic-agent-forge`。
 
-总控、视频创作、宣传视频 Agent 的 ID 分别为 `forge-studio`、`forge-video-director`、`forge-promo-video`。预设、组件导出、语言资源、技能、委派白名单均使用相同新标识。平台侧栏由公共 client 模块管理，默认进入总控，不放在视频业务装配中。
+总控、视频创作、宣传视频 Agent 的 ID 分别为 `metaontic-agent-forge-studio`、`metaontic-agent-forge-video-director`、`metaontic-agent-forge-promo-video`。预设、组件导出、语言资源、技能、委派白名单均使用相同新标识。平台侧栏由公共 client 模块管理，默认进入总控，不放在视频业务装配中。
 
 按用户要求作为全新产品，不做旧 ID、配置或内部任务数据的兼容迁移。新状态、项目、日志、缓存和输出目录均使用新命名空间；旧插件安装与内部数据只在确认没有活动任务后清理，不删除用户自行保存的视频、素材或会话历史。
 
@@ -11,3 +11,9 @@
 版本号未因身份调整自动变化，仍处于本地开发状态；没有为新产品创建发行版或声称旧包是新产品正式版。README 中的安装占位区仅在用户明确发版时由发布脚本写入新包名、新仓库的成品地址。
 
 Windows/macOS 共享 Node 路径 API、统一 `.tgz` 和资源导出，不引入运行时依赖。需重新验证新包安装、Schema、原生子 Agent 配置和媒体工作流；macOS 临时 profile 检查不代表 Windows 桌面实测。
+
+## 固定技术前缀
+
+所有本平台公开工具强制使用 `metaontic_agent_forge_`，例如 `metaontic_agent_forge_video_stage`。工具注册器拒绝没有前缀或超过64字符的工具名；提示词、审批、恢复、进度与预览使用同一组新名称。预设、技能、组件与界面标识使用 `metaontic-agent-forge-`，避免短前缀或通用名称占用其他插件空间。
+
+委派入口与消息、列表、中断均提供平台前缀版本。控制工具通过作用域适配器调用 Harness 原生实现，保留原生消息标记和调用者身份，不修改宿主工具注册表。现有宿主的 video_stage/send_message 等工具不会被覆盖。服务端不修改；统计事件仅在网络传输时映射到现有服务端字段枚举，不作为宿主工具名称注册。

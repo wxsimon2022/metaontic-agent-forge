@@ -15,14 +15,14 @@ test('an existing prompt registration reads current configuration on each reques
   dispose=plugin.apply({tools:{register:()=>()=>{}},on:()=>()=>{},inject(names,install){
    if(names.includes('systemPrompt'))return install({systemPrompt:{section(value){section=value;return()=>{};}}});
   }},config);
-  const director={agent:{session:{header:{agentPreset:'forge-video-director'}}}};
+  const director={agent:{session:{header:{agentPreset:'metaontic-agent-forge-video-director'}}}};
   assert.equal(typeof section.text,'function');
   assert.match(section.text(director),/总时长 ≤ 15 秒/);
   const prompt=section.text(director);
   assert.match(prompt,/完善创意的同一轮用ask_user_question合并询问所有缺失信息/);
-  assert.match(prompt,/等用户回答后才调用video_project/);
+  assert.match(prompt,/等用户回答后才调用metaontic_agent_forge_video_project/);
   assert.match(prompt,/15秒、30秒、45秒、60秒和“自定义时长”/);
-  assert.doesNotMatch(prompt,/需求阶段先调用video_project|用video_project\(action:prepare\)省略duration/);
+  assert.doesNotMatch(prompt,/需求阶段先调用metaontic_agent_forge_video_project|用metaontic_agent_forge_video_project\(action:prepare\)省略duration/);
   assert.match(prompt,/禁止省略已确认值导致工具重复提问/);
   assert.match(prompt,/无论创意是否完整/);
   assert.match(prompt,/用户创意原文已写明时长、横竖屏或分辨率时，直接记录对应值/);
@@ -37,17 +37,17 @@ test('an existing prompt registration reads current configuration on each reques
 });
 
 test('promotional mode adds its brief while standard and general video modes remain scoped', async()=>{
- let section;let selected='forge-promo-video';
+ let section;let selected='metaontic-agent-forge-promo-video';
  const ctx={tools:{register:()=>()=>{}},on:()=>()=>{},get(name){return name==='agentPresets'?{presetForSession:()=>selected}:undefined;},inject(names,install){if(names.includes('systemPrompt'))return install({systemPrompt:{section(v){section=v;return()=>{};}}});}};
  const dispose=plugin.apply(ctx,{connectionMode:'metaontic'});
- const request={agent:{session:{header:{agentPreset:'forge-video-director'}}}};
+ const request={agent:{session:{header:{agentPreset:'metaontic-agent-forge-video-director'}}}};
  try{
   const promo=section.text(request);
   assert.match(promo,/当前模式：宣传视频助手/);
   assert.match(promo,/不得编造价格、优惠、销量/);
   assert.match(promo,/用户原话或本轮答复已确认时/);
-  assert.match(promo,/video_project/);
-  selected='forge-video-director';assert.doesNotMatch(section.text(request),/当前模式：宣传视频助手/);
+  assert.match(promo,/metaontic_agent_forge_video_project/);
+  selected='metaontic-agent-forge-video-director';assert.doesNotMatch(section.text(request),/当前模式：宣传视频助手/);
   selected=null;assert.equal(section.text(request),'');
   selected='unknown';assert.equal(section.text(request),'');
  }finally{dispose();}

@@ -23,7 +23,7 @@ export async function closePendingStage(stage, source) {
 
 export function stageTool() {
   return {
-    name: 'video_stage',
+    name: 'metaontic_agent_forge_video_stage',
     description: '仅记录阶段计时，不调用生成接口、不产生模型费用、不改配置。脚本设计/示意图/展示/等待审核等阶段开始时action=start，结束时action=finish并传原spanId。脚本设计一段在脚本保存到script.md后由插件自动结束，此时不必再调finish；脚本不是用写文件工具保存时再补finish。耗时是标记边界间墙钟时间（包含工具调度），不是模型纯推理耗时；等待用户单独记阶段。缺失开始或热重载丢失标记时返回unavailable，不猜耗时。',
     parameters: {type:'object',properties:{action:{type:'string',enum:['start','finish']},stage:{type:'string',enum:STAGES},spanId:{type:'string'},outcome:{type:'string',enum:['success','cancelled','error']}},required:['action','stage']},
     output: {schema:{type:'object',properties:{status:{type:'string'},spanId:{type:'string'},elapsedMs:{type:'number'}}},render(_args,value){return [{type:'text',text:JSON.stringify(value)}];}},

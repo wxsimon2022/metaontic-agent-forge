@@ -13,7 +13,7 @@ function setup(label='直接文生视频'){
  const c=vm.createContext({createHash,path,mkdir,readFile,writeFile,rename,rm,dshHome:()=>home,isVolcengine:config=>config.connectionMode==='volcengine',timedStage:async(_stage,op)=>op()});
  vm.runInContext(sourceOf('businesses/video/workflow/character-choice'),c);
  const ctx={get:()=>({ask:async request=>{asks++;return {answers:[{id:request.questions[0].id,selected:label?[label]:[]}]};}})};
- const exec={name:'video_generate',callId:'call-'+id,agent:{session:{id}},arguments:{}};
+ const exec={name:'metaontic_agent_forge_video_generate',callId:'call-'+id,agent:{session:{id}},arguments:{}};
  return {c,ctx,exec,get asks(){return asks;},args:{prompt:'人物介绍',duration:30,resolution:'480p',ratio:'16:9'}};
 }
 test('new text-only video must ask, explicit text choice permits the normal payment gate',async()=>{
@@ -21,7 +21,7 @@ test('new text-only video must ask, explicit text choice permits the normal paym
 });
 test('choose character image prevents video submit and returns a durable image preparation instruction',async()=>{
  const h=setup('先生成角色图（单独计费）');
- const result=await h.c.characterChoiceGate(h.ctx,{},h.exec,h.args);assert.equal(result.kind,'deny');assert.match(result.reason,/video_prepare_image/);
+ const result=await h.c.characterChoiceGate(h.ctx,{},h.exec,h.args);assert.equal(result.kind,'deny');assert.match(result.reason,/metaontic_agent_forge_video_prepare_image/);
  const again=await h.c.characterChoiceGate(h.ctx,{},h.exec,h.args);assert.equal(again.kind,'deny');assert.equal(h.asks,1);
 });
 test('text-only decision persists across guard reload but never carries over to another project',async()=>{
@@ -33,7 +33,7 @@ test('text-only decision persists across guard reload but never carries over to 
 test('existing images, continuation and already submitted resume never ask or restart tasks',async()=>{
  const h=setup();
  for(const args of [{resume:'/existing'},{referenceImages:['https://image.invalid/one.png']},{firstFrameUrl:'https://image.invalid/one.png'},{characterReferenceImages:['https://image.invalid/one.png']}])assert.equal(await h.c.characterChoiceGate(h.ctx,{},h.exec,args),null);
- assert.equal(await h.c.characterChoiceGate(h.ctx,{}, {...h.exec,name:'video_extend'},h.args),null);assert.equal(h.asks,0);
+ assert.equal(await h.c.characterChoiceGate(h.ctx,{}, {...h.exec,name:'metaontic_agent_forge_video_extend'},h.args),null);assert.equal(h.asks,0);
 });
 for(const mode of ['empty','custom','unavailable','aborted'])test(`unresolved ${mode} response stops before video submission`,async()=>{
  const h=setup(mode==='custom'?'随便':'');

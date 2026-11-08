@@ -10,9 +10,9 @@
 
 | Agent | ID | 职责 |
 |---|---|---|
-| 云智工坊 · 智能体平台 | `forge-studio` | 总控调度、任务跟进、成果汇总 |
-| 视频创作助手 | `forge-video-director` | 创意、脚本分镜、视频生成与续拍 |
-| 宣传视频助手 | `forge-promo-video` | 产品、品牌、活动的宣传视频 |
+| 云智工坊 · 智能体平台 | `metaontic-agent-forge-studio` | 总控调度、任务跟进、成果汇总 |
+| 视频创作助手 | `metaontic-agent-forge-video-director` | 创意、脚本分镜、视频生成与续拍 |
+| 宣传视频助手 | `metaontic-agent-forge-promo-video` | 产品、品牌、活动的宣传视频 |
 
 总控只调用白名单中的专业助手，最多一层委派。启动任务不等于生成完成；脚本、费用与每段视频结果仍由用户审核确认。
 
@@ -42,8 +42,8 @@ flowchart TB
     Harness[DeepSeek Harness] --> Entry["平台入口 metaontic-agent-forge"]
     Entry --> Core["公共框架 src/core<br/>注册 · 作用域 · 生命周期 · 设置"]
     Entry --> UI["公共界面 src/client<br/>平台面板 · 业务界面装配"]
-    Studio["总控 forge-studio"] -->|白名单，限一层| Director["forge-video-director"]
-    Studio -->|白名单，限一层| Promo["forge-promo-video"]
+    Studio["总控 metaontic-agent-forge-studio"] -->|白名单，限一层| Director["metaontic-agent-forge-video-director"]
+    Studio -->|白名单，限一层| Promo["metaontic-agent-forge-promo-video"]
     Studio --> Agents["Agent 定义 src/agents"]
     Director --> Agents
     Promo --> Agents

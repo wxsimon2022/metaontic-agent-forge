@@ -15,13 +15,13 @@ test('standalone preview host mounts the real client and registers settings and 
   const host = createPreviewHost({ form: {}, components, dictionaries, getLocale: () => 'zh', onUpdate() {} });
   for (const service of plugin.inject) assert.ok(host[service], service);
   assert.doesNotThrow(() => plugin.apply(host));
-  for (const key of ['metaontic-agent-forge', 'video_generate', 'video_extend', 'video_status', 'metaontic-agent-forge-progress']) {
+  for (const key of ['metaontic-agent-forge', 'metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_extend', 'metaontic_agent_forge_video_status', 'metaontic-agent-forge-progress']) {
     assert.equal(typeof components[key], 'function', key);
   }
   assert.equal(host.locale.bind('settings.metaonticAgentForge')('save'), '保存');
   assert.equal(host.locale.bind('platform.metaonticAgentForge')('panelTitle'), '云智工坊 · 智能体平台');
   assert.equal(typeof components['plugins.bundle.config:metaontic-agent-forge'], 'function', '设置页');
-  assert.equal(typeof components['tool.call.toolview:video_generate'], 'function', '工具卡片');
+  assert.equal(typeof components['tool.call.toolview:metaontic_agent_forge_video_generate'], 'function', '工具卡片');
   assert.equal(typeof components['conversation.input.dock:metaontic-agent-forge-progress'], 'function', '输入框进度');
   assert.equal(typeof components['sidebar.panellist:metaontic-agent-forge'], 'function', '左侧栏图标');
   assert.equal(typeof components['main:metaontic-agent-forge'], 'function', '左侧栏面板本体');
@@ -30,7 +30,7 @@ test('standalone preview host mounts the real client and registers settings and 
   const started = host.calls.at(-1);
   assert.equal(started.action, 'startSession');
   assert.equal(started.workspaceId, undefined);
-  assert.equal(started.options.agentPreset, 'forge-studio');
+  assert.equal(started.options.agentPreset, 'metaontic-agent-forge-studio');
   panel.openSettings();
   const opened = host.calls.at(-1);
   assert.equal(opened.action, 'openBundle');

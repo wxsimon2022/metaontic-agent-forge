@@ -14,7 +14,7 @@ export async function ensureProjectDuration(ctx, exec, project, requested, save)
   const pending = (reason: string): DurationChoiceResult => ({ status: 'pending', reason });
   if (exec.signal?.aborted) return pending('已取消时长确认，未继续制作。');
   const approvedSpec = project.approved?.specification;
-  const approvedDuration = approvedSpec ? parseVideoDuration(Number(approvedSpec.duration) * (project.approved.name === 'video_extend' ? Number(approvedSpec.segments || 1) : 1)) : null;
+  const approvedDuration = approvedSpec ? parseVideoDuration(Number(approvedSpec.duration) * (project.approved.name === 'metaontic_agent_forge_video_extend' ? Number(approvedSpec.segments || 1) : 1)) : null;
   const persist = async (duration: number): Promise<DurationChoiceResult> => {
     const next = { ...project, duration, approved: (project.duration ?? approvedDuration) !== duration ? null : project.approved };
     delete next.durationCustom;

@@ -182,7 +182,7 @@ npm run clean:releases -- --apply
 
 插件宿主入口已打包所需Schema库及运行依赖，成品包无需额外安装运行时npm依赖。曾配置本地开发HMR时，须将加载目标恢复到当前已安装插件目录；安装新包不会自动删除用户自行配置的本地加载覆盖。第三方许可见[THIRD_PARTY_NOTICES.md](../../THIRD_PARTY_NOTICES.md)。
 
-角色图选择在需求阶段由video_project记录到项目；同项目改提示词、时长或清晰度不重复问，新项目重新选择。空镜跳过，已有图片直接审核素材。视频提交前只核验既有选择和本版脚本审核；取消或未答不默认同意。
+角色图选择在需求阶段由metaontic_agent_forge_video_project记录到项目；同项目改提示词、时长或清晰度不重复问，新项目重新选择。空镜跳过，已有图片直接审核素材。视频提交前只核验既有选择和本版脚本审核；取消或未答不默认同意。
 
 角色参考图风格建议依次为真人写实、二维动画、卡通、插画；文生角色图可显式设置characterType=realistic生成真人写实。默认沿用非真人类型，真人限制转换仍只用非真人风格；所有出图均需费用同意及结果审核，上游拒绝不自动重画。
 
@@ -242,7 +242,7 @@ npm run pack:test -- 3.13.9-test.1
 
 ## 产品标识与仓库
 
-平台名为“云智工坊 · 智能体平台”，包名、安装更新目标、内部数据命名空间统一为 metaontic-agent-forge。GitHub/Gitee 两端仓库均使用 metaontic-agent-forge。三个预设 ID 为 forge-studio、forge-video-director、forge-promo-video。按用户要求作为独立新产品，不迁移旧插件数据。
+平台名为“云智工坊 · 智能体平台”，包名、安装更新目标、内部数据命名空间统一为 metaontic-agent-forge。GitHub/Gitee 两端仓库均使用 metaontic-agent-forge。三个预设 ID 为 metaontic-agent-forge-studio、metaontic-agent-forge-video-director、metaontic-agent-forge-promo-video。按用户要求作为独立新产品，不迁移旧插件数据。
 
 ## Git 远端与安装来源
 

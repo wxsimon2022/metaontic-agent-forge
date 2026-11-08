@@ -37,7 +37,7 @@ declare const __PLUGIN_VERSION__: string;
 
 /** 一次工具调用的执行上下文。 */
 interface DshToolExec {
-  /** 工具名，例如 video_generate。 */
+  /** 工具名，例如 metaontic_agent_forge_video_generate。 */
   name: string;
   callId: string;
   /** 模型给的原参数。 */

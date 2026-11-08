@@ -227,7 +227,7 @@ export function resumePlanFrom(data, { askedTotal, segmentSeconds }) {
 export function pickResumeOptions(args) {
   const keys = ['projectId',
     'mode', 'ratio', 'generateAudio', 'watermark', 'segmentPrompts', 'transitionDescription', 'merge',
-    // 这几个是 video_extend 的口径（延长方向、提示词写法、整片时间轴位置）
+    // 这几个是 metaontic_agent_forge_video_extend 的口径（延长方向、提示词写法、整片时间轴位置）
     'direction', 'wording', 'startAt', 'inputVideoSeconds',
     'firstFrameUrl', 'lastFrameUrl', 'referenceImages', 'characterReferenceImages', 'resolution', 'seed', 'user', 'returnLastFrame',
   ];
@@ -263,7 +263,7 @@ function pauseRecordAt({ stamp, prompt, fullPlan, done, cursor, lastVideoUrl, op
 }
 
 /** 暂停后怎么接着做：这段说明会交到模型手里，正是「循环迭代」的续做入口。 */
-export function resumeHint(dir, remainingSeconds, toolName = 'video_generate') {
+export function resumeHint(dir, remainingSeconds, toolName = 'metaontic_agent_forge_video_generate') {
   return `要接着做就把 resume="${dir}" 再调一次 ${toolName}（prompt 可以省略，其余参数照旧）：`
     + `插件会接着已经生成的分段继续，已完成分段不重新生成；剩余 ${remainingSeconds} 秒仍需确认费用并计费。`;
 }

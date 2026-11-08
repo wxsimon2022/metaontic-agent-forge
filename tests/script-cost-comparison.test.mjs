@@ -5,7 +5,7 @@ import { apply } from '../index.js';
 function setup(config) {
  const tools = new Map(); let prompt;
  apply({tools:{register(t){tools.set(t.name,t);return ()=>{};}},inject(names,fn){if(names.includes('systemPrompt'))return fn({systemPrompt:{section(v){prompt=v;return ()=>{};}}});},on(){return ()=>{};}},config);
- return {tool:tools.get('video_estimate'),prompt:()=>prompt.text({agent:{session:{header:{agentPreset:'forge-video-director'}}}})};
+ return {tool:tools.get('metaontic_agent_forge_video_estimate'),prompt:()=>prompt.text({agent:{session:{header:{agentPreset:'metaontic-agent-forge-video-director'}}}})};
 }
 const base={connectionMode:'metaontic',model:'doubao-seedance-2-0-fast-260128'};
 const args={duration:30,resolution:'720p',ratio:'16:9'};
@@ -62,7 +62,7 @@ test('unknown models, unsupported ratios and unresolved resolution fail rather t
 });
 test('all connection modes instruct the assistant to estimate while writing the script',()=>{
  for(const connectionMode of ['service','metaontic','volcengine']) {
-  const h=setup({...base,connectionMode});assert.ok(h.tool);assert.match(h.prompt(),/写脚本时就一并调用只读video_estimate/);
+  const h=setup({...base,connectionMode});assert.ok(h.tool);assert.match(h.prompt(),/写脚本时就一并调用只读metaontic_agent_forge_video_estimate/);
   assert.match(h.prompt(),/最低用量补足未计入/);
   // 画幅不再默认 9:16：没写明时必须问用户，和清晰度一起确认
   assert.match(h.prompt(),/画幅和清晰度都必须由用户明确选择或确认/);

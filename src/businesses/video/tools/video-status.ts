@@ -8,11 +8,11 @@ import { classifyError, isContentRejection } from '../utils/errors.js';
 
 export function taskTool(liveConfig) {
   return {
-    name: 'video_status',
+    name: 'metaontic_agent_forge_video_status',
     description:
       '按任务 ID 查询 Seedance 视频生成或延长任务（不查询本地下载与合并进度）的状态；'
       + '任务完成（status 为 succeeded）时返回视频下载链接（有效期以上游为准）。'
-      + 'video_generate / video_extend 返回 timeout 或某段 unknown（查询失败、任务已提交）时，'
+      + 'metaontic_agent_forge_video_generate / metaontic_agent_forge_video_extend 返回 timeout 或某段 unknown（查询失败、任务已提交）时，'
       + '用它们给出的 taskId 在这里继续等——unknown 只表示「没查到」，任务的实际状态尚未确认，'
       + '不要因此重新提交同一段任务。A/B接入在任务成功后还会查询中转站最终结算；待结算或费用查询失败可用同一taskId补查，不重新生成。',
     parameters: {
@@ -20,7 +20,7 @@ export function taskTool(liveConfig) {
       properties: {
         taskId: {
           type: 'string',
-          description: '由 video_generate / video_extend 返回的任务 ID。',
+          description: '由 metaontic_agent_forge_video_generate / metaontic_agent_forge_video_extend 返回的任务 ID。',
         },
       },
       required: ['taskId'],

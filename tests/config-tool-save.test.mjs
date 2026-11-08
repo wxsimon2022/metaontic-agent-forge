@@ -18,7 +18,7 @@ function harness() {
   c.configView = view;
   return c;
 }
-test('video_config reports the current configuration read-only', async () => {
+test('metaontic_agent_forge_video_config reports the current configuration read-only', async () => {
   const c = harness();
   const tool = c.configTool({ connectionMode: 'service' }, { documentPath: '/tmp/cordis.patch.yml' });
   const result = await tool.execute({ action: 'get' });
@@ -26,7 +26,7 @@ test('video_config reports the current configuration read-only', async () => {
   assert.equal(result.patchPath, '/tmp/cordis.patch.yml');
   assert.equal(result.effective.connectionMode, 'service');
 });
-test('video_config refuses every conversation-side write and points at the settings page', async () => {
+test('metaontic_agent_forge_video_config refuses every conversation-side write and points at the settings page', async () => {
   const c = harness();
   const tool = c.configTool({ connectionMode: 'service' }, {});
   assert.equal(Array.from(tool.parameters.properties.action.enum).join(','), 'get');

@@ -32,7 +32,7 @@ export function createStoryboardReviewGuard({ log = appendRequestLog } = {}) {
       if (state.awaitingReview) void reportMissing(state);
       return;
     }
-    if (event.type === 'tool/call' && ['video_estimate', 'video_stage', 'video_project'].includes(data.name)) state.active = true;
+    if (event.type === 'tool/call' && ['metaontic_agent_forge_video_estimate', 'metaontic_agent_forge_video_stage', 'metaontic_agent_forge_video_project'].includes(data.name)) state.active = true;
     if (event.type === 'deliverables/presented') {
       // present 只登记最终成片，分镜图不走卡片；这里仅把登记过的分镜图留作提示用。
       const files = (data.files || []).filter(file => typeof file.path === 'string'

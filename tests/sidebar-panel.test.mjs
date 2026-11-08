@@ -18,7 +18,7 @@ function harness({ locale = 'zh', props = {}, logo = '<svg viewBox="0 0 100 100"
   const panel = context.createSidebarPanel({
     React: { createElement: () => {} },
     h: (type, elementProps, children) => ({ type, props: elementProps || {}, children: Array.isArray(children) ? children : children === undefined ? [] : [children] }),
-    TOKENS, PAGE_CSS: '.forge-btn{}', t,
+    TOKENS, PAGE_CSS: '.metaontic-agent-forge-btn{}', t,
     PANEL_ID: 'metaontic-agent-forge', GUIDE_URL, LOGO_SVG: logo,
   });
   const tree = panel.ForgePanel({
@@ -51,7 +51,7 @@ test('面板给出新会话入口，并显示插件 logo', () => {
     assert.ok(labels.includes(expected), expected);
   }
   const button = find(tree, (node) => node.type === 'button' && node.children.includes('打开云智工坊'));
-  assert.equal(button.props.className, 'forge-btn forge-btn-primary');
+  assert.equal(button.props.className, 'metaontic-agent-forge-btn metaontic-agent-forge-btn-primary');
   button.props.onClick();
   assert.deepEqual(calls, [{ action: 'startSession' }]);
   assert.equal(typeof panel.PanelIcon, 'function');
@@ -64,14 +64,14 @@ test('面板给出新会话入口，并显示插件 logo', () => {
 test('面板说明平台统筹与业务扩展', () => {
   const { tree, t } = harness({});
   const cards = [];
-  walk(tree, (node) => { if (node.props?.className === 'forge-panel-highlight') cards.push(node); });
+  walk(tree, (node) => { if (node.props?.className === 'metaontic-agent-forge-panel-highlight') cards.push(node); });
   assert.equal(cards.length, 2, '应有两条价值点');
   const titles = [];
-  walk(tree, (node) => { if (node.props?.className === 'forge-panel-highlight-title') titles.push(node.children[0]); });
+  walk(tree, (node) => { if (node.props?.className === 'metaontic-agent-forge-panel-highlight-title') titles.push(node.children[0]); });
   assert.deepEqual(titles, [t('panelHighlight1Title'), t('panelHighlight2Title')]);
   assert.ok(texts(tree).includes(t('panelHighlights')), '价值点要有分组标题');
   const descs = [];
-  walk(tree, (node) => { if (node.props?.className === 'forge-panel-highlight-desc') descs.push(node.children[0]); });
+  walk(tree, (node) => { if (node.props?.className === 'metaontic-agent-forge-panel-highlight-desc') descs.push(node.children[0]); });
   assert.match(descs[0], /白名单|总控/, '第一条讲总控协作');
   assert.match(descs[1], /续拍|合并/, '第二条讲长视频方案');
   for (const node of cards) {
@@ -84,18 +84,18 @@ test('面板说明平台统筹与业务扩展', () => {
 test('面板用四步流程演示使用过程', () => {
   const { tree, t } = harness({});
   const steps = [];
-  walk(tree, (node) => { if (node.props?.className === 'forge-panel-step') steps.push(node); });
+  walk(tree, (node) => { if (node.props?.className === 'metaontic-agent-forge-panel-step') steps.push(node); });
   assert.equal(steps.length, 4, '应为四步');
   assert.deepEqual(steps.map((node) => node.props['data-step']), ['0', '1', '2', '3'], '步号按顺序错开动画延迟');
   const titles = [];
-  walk(tree, (node) => { if (node.props?.className === 'forge-panel-step-title') titles.push(node.children[0]); });
+  walk(tree, (node) => { if (node.props?.className === 'metaontic-agent-forge-panel-step-title') titles.push(node.children[0]); });
   assert.deepEqual(titles, [t('panelStep1Title'), t('panelStep2Title'), t('panelStep3Title'), t('panelStep4Title')]);
   for (const node of steps) assert.ok(texts(node).some((text) => text.length > 8), '每步都要有说明');
   const conns = [];
-  walk(tree, (node) => { if (node.props?.className === 'forge-panel-conn') conns.push(node); });
+  walk(tree, (node) => { if (node.props?.className === 'metaontic-agent-forge-panel-conn') conns.push(node); });
   assert.equal(conns.length, 3, '四步之间三个箭头');
   const css = find(tree, (node) => node.type === 'style').children.join('');
-  assert.match(css, /@keyframes forge-flow-card/, '流程要有点亮动效');
+  assert.match(css, /@keyframes metaontic-agent-forge-flow-card/, '流程要有点亮动效');
   assert.match(css, /prefers-reduced-motion/, '要尊重系统的减弱动效设置');
 });
 
@@ -169,7 +169,7 @@ test('面板文案不再出现裸露的 Key 字样，样式随组件注入', () 
     }
   }
   const style = find(tree, (node) => node.type === 'style');
-  assert.match(style.children.join(''), /\.forge-panel \{/);
+  assert.match(style.children.join(''), /\.metaontic-agent-forge-panel \{/);
 });
 
 test('入口用同一个 id 注册左侧栏图标与 main 面板', () => {
@@ -178,6 +178,6 @@ test('入口用同一个 id 注册左侧栏图标与 main 面板', () => {
   assert.match(source, /name: 'sidebar\.panellist',\s*id: PANEL_ID/);
   assert.match(source, /label: \(\) => t\('panelSidebarLabel'\)/);
   assert.match(source, /name: 'main',\s*key: PANEL_ID/);
-  assert.match(source, /agentPreset: 'forge-studio'/);
+  assert.match(source, /agentPreset: 'metaontic-agent-forge-studio'/);
   assert.match(source, /openBundle\(NAMESPACE\)/);
 });

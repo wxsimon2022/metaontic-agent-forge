@@ -56,7 +56,7 @@ export function runHyperframes(cli: string, args: string[], cwd: string, config:
 
 export function hyperframesTool(config: any, deps: Record<string, any>) {
   return {
-    name: 'video_hyperframes',
+    name: 'metaontic_agent_forge_video_hyperframes',
     description: '用 Hyperframes 将本地 HTML/CSS 动画、字幕和素材渲染成 MP4。action=check 检查环境；lint 校验项目；render 出片。项目目录须包含 index.html；先保存并展示完整脚本、通过脚本审核与制作确认，再 render。动画须可按时间定位，不能用实时时钟驱动。复用宿主 Node 运行时，无需客户运行 npm/npx。首次渲染可能下载 Chromium，需要网络。它不代替 Seedance 的实拍画面生成，不调用付费视频 API。',
     parameters: {
       type: 'object',

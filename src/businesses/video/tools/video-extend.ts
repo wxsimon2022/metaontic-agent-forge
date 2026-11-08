@@ -15,9 +15,9 @@ import { formatSeconds, resolveOutputDir, fileStamp, allocateStamp } from '../ut
 import { describeIncompleteRun, runSegmentDelivery, skipMergeDelivery, } from '../workflow/segment-run.js';
 export function extendTool(liveConfig, deps, ctx) {
   const config = liveConfig;
-  const TOOL_NAME = 'video_extend';
+  const TOOL_NAME = 'metaontic_agent_forge_video_extend';
   return {
-    name: 'video_extend',
+    name: 'metaontic_agent_forge_video_extend',
     description:
       '把一段已有的视频向前或向后延长：以公网视频 URL 作为输入素材，调用 Seedance 生成衔接片段，'
       + '保持人物、服装、场景光线和声音连续；可一次连续延长多段，每段都用上一段的结果继续延长。'
@@ -28,17 +28,17 @@ export function extendTool(liveConfig, deps, ctx) {
       + '每段 4 至模型上限（2.0 为 15、2.5 为 30） 秒，默认按所选模型上限拆、段数最少；上游对卡满 15 秒敏感时再调小。'
       + '返回每段的任务 ID 和最终视频下载链接（有效期以上游为准）；生成通常需要几分钟，'
       + '单次调用返回 timeout、或某段返回 unknown（查询失败、任务其实已提交）时，'
-      + '都用返回的任务 ID 走 video_status 继续等，不要重复提交同一段。'
+      + '都用返回的任务 ID 走 metaontic_agent_forge_video_status 继续等，不要重复提交同一段。'
       + '每段延长完先返回成果供展示，用户预览并确认继续后再用resume续做；未确认时停在当前成果，'
       + '结果里带 paused=true、resumeDir、remainingSeconds；之后用户说「继续」时把 resumeDir '
-      + '原样传给 video_extend 的 resume 参数接着做（前面几段不重新生成；新增剩余分段仍需确认费用并计费）。'
+      + '原样传给 metaontic_agent_forge_video_extend 的 resume 参数接着做（前面几段不重新生成；新增剩余分段仍需确认费用并计费）。'
       + '多段默认会下载分段并在本机合并成一条成片（需要 ffmpeg）：没有 ffmpeg 时会先拦下来问用户，'
       + '结果里也会带 ffmpegMissing 与安装引导。'
       + '中途被停止 / 等超时同理：已经延长好的段先交付，剩下的用 resume 接着做。',
     parameters: {
       type: 'object',
       properties: {
-        projectId: { type: 'string', description: 'video_project返回的项目ID。新建生成/延长前须prepare并review通过；续做默认沿用。' },
+        projectId: { type: 'string', description: 'metaontic_agent_forge_video_project返回的项目ID。新建生成/延长前须prepare并review通过；续做默认沿用。' },
         cumulativePreview: { type: 'boolean', description: '默认暂停只下载展示新段，最终再合并；明确需要累计预览时传true，不新增生成费用。' },
         characterReferenceImages: { type: 'array', items: { type: 'string' }, description: '已审核的最初角色参考图，按固定顺序用于每段续拍；未提供时沿用首段参考图或首帧。支持URL、本地图片或data URI。断点固定此套图，不自动重画或替换。真人转换仍需单独同意及结果审核。' },
         prompt: {
@@ -53,7 +53,7 @@ export function extendTool(liveConfig, deps, ctx) {
         taskId: {
           type: 'string',
           description:
-            '已有的 video_generate / video_extend 任务 ID，用该上游任务返回的视频作为输入素材（不是本地合并成片）。与 videoUrl 二选一。',
+            '已有的 metaontic_agent_forge_video_generate / metaontic_agent_forge_video_extend 任务 ID，用该上游任务返回的视频作为输入素材（不是本地合并成片）。与 videoUrl 二选一。',
         },
         duration: {
           type: 'integer',
@@ -84,7 +84,7 @@ export function extendTool(liveConfig, deps, ctx) {
         },
         transitionDescription: {
           type: 'string',
-          description: '已审核的续拍过渡描述：视频1接缝状态→本段动作/镜头衔接→声音延续，直接使用“视频1”，不写“参考视频1”。多段共用时作为通用描述；video_generate 可在各条 segmentPrompts 内用单行【过渡画面】指定该段过渡并优先采用。仅作用于续拍，首次直出不引用视频1。',
+          description: '已审核的续拍过渡描述：视频1接缝状态→本段动作/镜头衔接→声音延续，直接使用“视频1”，不写“参考视频1”。多段共用时作为通用描述；metaontic_agent_forge_video_generate 可在各条 segmentPrompts 内用单行【过渡画面】指定该段过渡并优先采用。仅作用于续拍，首次直出不引用视频1。',
         },
         mode: {
           type: 'string',
@@ -320,7 +320,7 @@ export function extendTool(liveConfig, deps, ctx) {
       result.segmentsDir = segmentsDir;
       if (pendingTask) {
         result.pendingTaskId = pendingTask.taskId;
-        result.note = '任务已提交，请用 resume 查询并接回原进度，或用 video_status 查询；不要重复提交。';
+        result.note = '任务已提交，请用 resume 查询并接回原进度，或用 metaontic_agent_forge_video_status 查询；不要重复提交。';
       }
       if (!completed.length && status === 'succeeded') {
         // 没有可交付的分段（例如只是重试交付）：直接返回，不触发合并。

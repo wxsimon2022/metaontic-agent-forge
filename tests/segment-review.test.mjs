@@ -6,7 +6,7 @@ import os from 'node:os';
 import {workflowApi as api} from './workflow-test-api.mjs';
 async function fixture(run){
  const dir=await mkdtemp(path.join(os.tmpdir(),'分段 review '));
- const saved={plugin:'metaontic-agent-forge',toolName:'video_generate',plan:[{kind:'generate',seconds:15},{kind:'extend',seconds:15},{kind:'extend',seconds:15}],done:1,cursor:15,options:{},steps:[{index:1,kind:'generate',seconds:15,taskId:'task-1',videoUrl:'https://mock.invalid/1.mp4'}]};
+ const saved={plugin:'metaontic-agent-forge',toolName:'metaontic_agent_forge_video_generate',plan:[{kind:'generate',seconds:15},{kind:'extend',seconds:15},{kind:'extend',seconds:15}],done:1,cursor:15,options:{},steps:[{index:1,kind:'generate',seconds:15,taskId:'task-1',videoUrl:'https://mock.invalid/1.mp4'}]};
  const record=path.join(dir,'paused-plan.json');const save=()=>writeFile(record,JSON.stringify(saved));await save();
  const exec={callId:'review',agent:{session:{id:'test-session',header:{cwd:dir}}}};
  let asks=0,choice='效果可以，继续下一段',during=null;
@@ -30,7 +30,7 @@ for(const choice of [null,'先暂停，暂不继续'])test(`结果审核${choice
 test('下一段不能复用上一段审核；旧进度和generate/extend均受保护',()=>fixture(async h=>{
  h.show();await h.review.review({resume:h.dir},h.exec);
  h.saved.done=2;h.saved.cursor=30;h.saved.steps.push({index:2,kind:'extend',seconds:15,taskId:'task-2',videoUrl:'https://mock.invalid/2.mp4'});await h.save();
- for(const name of ['video_generate','video_extend'])await assert.rejects(api.assertSegmentReviewed({...h.exec,name},{resume:h.dir}),/结果审核/);
+ for(const name of ['metaontic_agent_forge_video_generate','metaontic_agent_forge_video_extend'])await assert.rejects(api.assertSegmentReviewed({...h.exec,name},{resume:h.dir}),/结果审核/);
  assert.equal((await h.review.review({resume:h.dir},h.exec)).status,'blocked');
  h.show('https://mock.invalid/2.mp4');assert.equal((await h.review.review({resume:h.dir},h.exec)).status,'approved');assert.equal(h.asks,2);
 }));

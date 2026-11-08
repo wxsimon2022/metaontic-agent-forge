@@ -23,7 +23,7 @@ test('video views register immediately when the host declares the tool slot and 
     },
   });
   const disposers = waiting.filter(([name]) => name === 'tool.call.toolview').map(([, install]) => install());
-  assert.deepEqual([...registrations.keys()], ['video_generate', 'video_extend', 'video_status', 'video_prepare_image']);
+  assert.deepEqual([...registrations.keys()], ['metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_extend', 'metaontic_agent_forge_video_status', 'metaontic_agent_forge_video_prepare_image']);
   for (const dispose of disposers.reverse()) dispose();
   assert.equal(registrations.size, 0);
   const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
@@ -35,25 +35,25 @@ test('progress renders only for active video generation and disappears on comple
     h: (tag, props, ...children) => ({ tag, props, children }), TOKENS: {}, MediaPreview: null,
   });
   Object.assign(context, api.createVideoProgress(context));
-  const running = context.VideoTaskProgress({ block: { phase: 'start', name: 'video_generate', args: { duration: 15 } }, callId: 'a', startedAt: 1 });
+  const running = context.VideoTaskProgress({ block: { phase: 'start', name: 'metaontic_agent_forge_video_generate', args: { duration: 15 } }, callId: 'a', startedAt: 1 });
   assert.match(JSON.stringify(running), /progressbar/);
-  assert.match(JSON.stringify(running), /forge-task-active/);
+  assert.match(JSON.stringify(running), /metaontic-agent-forge-task-active/);
   assert.doesNotMatch(JSON.stringify(running), /max-width:420px/);
-  assert.equal(context.VideoTaskProgress({ block: { phase: 'preparing', name: 'video_generate' }, callId: 'a' }), null);
-  assert.equal(context.VideoTaskProgress({ block: { phase: 'start', name: 'video_generate' }, callId: 'a' }), null, 'native start is recorded before approval');
+  assert.equal(context.VideoTaskProgress({ block: { phase: 'preparing', name: 'metaontic_agent_forge_video_generate' }, callId: 'a' }), null);
+  assert.equal(context.VideoTaskProgress({ block: { phase: 'start', name: 'metaontic_agent_forge_video_generate' }, callId: 'a' }), null, 'native start is recorded before approval');
   assert.match(JSON.stringify(running), /🐢/, '执行中进度条上有跟着进度走的小乌龟');
-  assert.match(JSON.stringify(running), /forge-task-turtle/);
+  assert.match(JSON.stringify(running), /metaontic-agent-forge-task-turtle/);
   const runningJson = JSON.stringify(running);
   const percent = /"aria-valuenow":(\d+)/.exec(runningJson)[1];
   assert.match(runningJson, new RegExp(`"left":"${percent}%"`), '小乌龟位置跟着当前进度百分比');
-  assert.doesNotMatch(runningJson, /forge-task-bee/);
-  assert.match(runningJson, /\.forge-task-turtle \{[^}]*scaleX\(-1\)/, '乌龟要镜像成头朝右');
-  assert.match(runningJson, /"className":"forge-task forge-task-running"/, '执行中给卡片加上呼吸灯类');
-  assert.match(runningJson, /@keyframes forge-task-breath/, '外边框呼吸灯动画');
+  assert.doesNotMatch(runningJson, /metaontic-agent-forge-task-bee/);
+  assert.match(runningJson, /\.metaontic-agent-forge-task-turtle \{[^}]*scaleX\(-1\)/, '乌龟要镜像成头朝右');
+  assert.match(runningJson, /"className":"metaontic-agent-forge-task metaontic-agent-forge-task-running"/, '执行中给卡片加上呼吸灯类');
+  assert.match(runningJson, /@keyframes metaontic-agent-forge-task-breath/, '外边框呼吸灯动画');
   const finished = context.VideoTaskProgress({ block: { kind: 'result', content: [{ type: 'text', text: 'succeeded' }] } });
   assert.equal(finished, null, 'completed results must not display generation progress');
-  for (const toolName of ['video_status', 'video_prepare_image', 'video_project']) assert.equal(context.VideoTaskProgress({ toolName, block: { phase: 'start' }, startedAt: 1 }), null);
-  assert.match(JSON.stringify(context.VideoTaskProgress({ block: { phase: 'start', name: 'video_generate', args: { duration: 15 } }, callId: 'a', startedAt: 1 })), /forge-task-rail/);
+  for (const toolName of ['metaontic_agent_forge_video_status', 'metaontic_agent_forge_video_prepare_image', 'metaontic_agent_forge_video_project']) assert.equal(context.VideoTaskProgress({ toolName, block: { phase: 'start' }, startedAt: 1 }), null);
+  assert.match(JSON.stringify(context.VideoTaskProgress({ block: { phase: 'start', name: 'metaontic_agent_forge_video_generate', args: { duration: 15 } }, callId: 'a', startedAt: 1 })), /metaontic-agent-forge-task-rail/);
 });
 
 test('execution source waits for real execution and clears on settlement or interrupted turns', () => {
@@ -117,7 +117,7 @@ test('estimated progress follows video duration and waits for actual success', (
 test('outside progress tracks active nested calls without relying on expanded tool cards', () => {
   const context = vm.createContext({ Set });
   Object.assign(context, { activeVideoCalls: api.activeVideoCalls });
-  const running = { callId: 'video-1', name: 'video_generate', args: { duration: 15 }, subCalls: [] };
+  const running = { callId: 'video-1', name: 'metaontic_agent_forge_video_generate', args: { duration: 15 }, subCalls: [] };
   const root = { callId: 'dispatch', name: 'parallel', subCalls: [running] };
   const chat = { order: ['tool'], nodes: new Map([['tool', { kind: 'tool-call', data: { root } }]]) };
   assert.equal(context.activeVideoCalls(chat)[0].callId, 'video-1');
@@ -137,7 +137,7 @@ test('outside progress dock is visible only while the current session has active
     VideoTaskProgress() {},
   });
   Object.assign(context, api.createVideoProgress({ ...context, React: {}, TOKENS: {} }));
-  const running = { phase: 'start', callId: 'video-2', name: 'video_extend', subCalls: [] };
+  const running = { phase: 'start', callId: 'video-2', name: 'metaontic_agent_forge_video_extend', subCalls: [] };
   const chat = { order: ['tool'], nodes: new Map([['tool', { kind: 'tool-call', data: { root: running } }]]) };
   const hooks = { useChat: selector => selector(chat), useVideoExecutions: selector => selector(new Map([['video-2', 1234]])) };
   const dock = context.VideoProgressDock(hooks);
@@ -168,11 +168,11 @@ test('tool results route to media while progress is restricted to unfinished vid
  const h=(tag,props)=>({tag,props});
  const MediaPreview=()=>{};const VideoTaskProgress=()=>{};
  const {ToolResultView}=api.createToolResultView({h,MediaPreview,VideoTaskProgress});
- for(const toolName of ['video_generate','video_extend','video_status','video_prepare_image']) {
+ for(const toolName of ['metaontic_agent_forge_video_generate','metaontic_agent_forge_video_extend','metaontic_agent_forge_video_status','metaontic_agent_forge_video_prepare_image']) {
   const result=ToolResultView({toolName,block:{kind:'result'}});
   assert.equal(result.tag,MediaPreview);
   const running=ToolResultView({toolName,block:{phase:'start'}});
-  if(['video_generate','video_extend'].includes(toolName))assert.equal(running.tag,VideoTaskProgress);
+  if(['metaontic_agent_forge_video_generate','metaontic_agent_forge_video_extend'].includes(toolName))assert.equal(running.tag,VideoTaskProgress);
   else assert.equal(running,null);
  }
 });

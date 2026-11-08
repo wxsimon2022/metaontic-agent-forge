@@ -153,15 +153,15 @@ async function runTaskOnce(config, body, signal, progress: { taskId?: string; on
       }, taskId);
       return { ...final, taskId };
     } catch (failure) {
-      if (failure?.code === 'ABORTED') return { taskId, status: 'unknown', errorCode: 'waiting_stopped', error: `已停止等待，任务 ${taskId} 已提交，可能仍在生成。用 resume 或 video_status 查询已有任务，不要重新提交。` };
+      if (failure?.code === 'ABORTED') return { taskId, status: 'unknown', errorCode: 'waiting_stopped', error: `已停止等待，任务 ${taskId} 已提交，可能仍在生成。用 resume 或 metaontic_agent_forge_video_status 查询已有任务，不要重新提交。` };
       // 任务已经建好，这里只说明「查询没拿到结果」，不能说成「这一段没生成」：
-      // 标成 unknown 并保留 taskId，让结果能引导用 video_status 事后补拉。
+      // 标成 unknown 并保留 taskId，让结果能引导用 metaontic_agent_forge_video_status 事后补拉。
       return {
         taskId,
         status: 'unknown',
         errorCode: failure?.code || 'provider_poll_error',
         error: `任务已提交（${taskId}），但查询状态失败：${failure?.message || String(failure)}。`
-          + '任务可能仍在生成，可用 video_status 按这个 ID 再查，不要重复提交。',
+          + '任务可能仍在生成，可用 metaontic_agent_forge_video_status 按这个 ID 再查，不要重复提交。',
       };
     }
   });

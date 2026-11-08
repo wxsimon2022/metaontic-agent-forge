@@ -39,9 +39,10 @@ export async function analyticsIdentity() {
 /** 上报数据只允许固定枚举和有界数值，禁止透传执行参数/异常/提示词。 */
 export function analyticsFields(input: any = {}) {
   const value: any = {};
-  if (TOOLS.has(input.tool)) value.tool = input.tool;
+  const wireTool = typeof input.tool === 'string' ? input.tool.replace(/^metaontic_agent_forge_/, '') : '';
+  if (TOOLS.has(wireTool)) value.tool = wireTool;
   // Existing server wire enum is independent of the new public preset IDs.
-  const wireMode = ({ 'forge-video-director': 'video-director', 'forge-promo-video': 'promo-video', standard: 'standard' } as Record<string, string>)[input.mode];
+  const wireMode = ({ 'metaontic-agent-forge-video-director': 'video-director', 'metaontic-agent-forge-promo-video': 'promo-video', standard: 'standard' } as Record<string, string>)[input.mode];
   if (wireMode) value.mode = wireMode;
   if (STATUSES.has(input.status)) value.status = input.status;
   if (typeof input.durationMs === 'number' && Number.isFinite(input.durationMs)) value.durationMs = Math.round(Math.max(0, Math.min(86400000, input.durationMs)));

@@ -1,11 +1,11 @@
 ---
-name: forge-promo-video
-description: 用于宣传视频助手模式或明确的产品、品牌、服务、活动宣传视频需求，整理卖点、宣传脚本与分镜；复用forge-video-director的项目审核、费用确认、生成和恢复流程。
+name: metaontic-agent-forge-promo-video
+description: 用于宣传视频助手模式或明确的产品、品牌、服务、活动宣传视频需求，整理卖点、宣传脚本与分镜；复用metaontic-agent-forge-video-director的项目审核、费用确认、生成和恢复流程。
 ---
 
 # 宣传视频制作
 
-先读取forge-video-director技能，按其工具和审批流程执行。本技能补充宣传内容要求，不增加制作授权，不替代脚本审核。
+先读取metaontic-agent-forge-video-director技能，按其工具和审批流程执行。本技能补充宣传内容要求，不增加制作授权，不替代脚本审核。
 
 ## 承接原创意
 
@@ -28,6 +28,6 @@ description: 用于宣传视频助手模式或明确的产品、品牌、服务�
 
 ## 审核与交付
 
-准备完整逐段提示词，正文展示脚本与分镜后调用video_project(action:review)。通过后调用对应视频工具，由其付费审批确认制作，不额外重复问开始制作。
+准备完整逐段提示词，正文展示脚本与分镜后调用metaontic_agent_forge_video_project(action:review)。通过后调用对应视频工具，由其付费审批确认制作，不额外重复问开始制作。
 
 生成每段后先展示视频，再review_segment确认效果，随后进入下一段费用审批。未知或超时任务按原taskId/resume查询；已完成段不重做，新段仍计费。最终成片在前、原始分段在后，正文给出真实可点击链接，交付卡片只登记最终成片。没有实际生成或合并成功时，不声称已经完成。

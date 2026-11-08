@@ -10,61 +10,61 @@ export function createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GU
      * 左侧栏切过来的整块区域没有宿主容器，全宽内容要自己收边。
      */
     const PANEL_CSS = `
-      .forge-panel { width: 100%; max-width: 880px; margin: 0 auto; padding: 30px 32px 44px; display: flex; flex-direction: column; gap: 18px; }
+      .metaontic-agent-forge-panel { width: 100%; max-width: 880px; margin: 0 auto; padding: 30px 32px 44px; display: flex; flex-direction: column; gap: 18px; }
       /* 品牌头图：插件 logo + 标题/简介，给空荡的内容区一个视觉锚点 */
-      .forge-panel-hero { display: flex; align-items: center; gap: 14px; }
-      .forge-panel-mark { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: ${TOKENS.primaryFill}; }
-      .forge-panel-logo { width: 100%; height: 100%; object-fit: contain; }
+      .metaontic-agent-forge-panel-hero { display: flex; align-items: center; gap: 14px; }
+      .metaontic-agent-forge-panel-mark { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: ${TOKENS.primaryFill}; }
+      .metaontic-agent-forge-panel-logo { width: 100%; height: 100%; object-fit: contain; }
       /* 左侧栏那一行的 logo：按宿主给的尺寸原样铺开，不参与主题取色 */
-      .forge-rail-logo { display: block; object-fit: contain; }
-      .forge-panel-head { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-      .forge-panel-title { margin: 0; font-size: 19px; font-weight: 600; color: ${TOKENS.text}; }
-      .forge-panel-intro { margin: 0; font-size: 13px; line-height: 1.55; color: ${TOKENS.muted}; }
+      .metaontic-agent-forge-rail-logo { display: block; object-fit: contain; }
+      .metaontic-agent-forge-panel-head { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+      .metaontic-agent-forge-panel-title { margin: 0; font-size: 19px; font-weight: 600; color: ${TOKENS.text}; }
+      .metaontic-agent-forge-panel-intro { margin: 0; font-size: 13px; line-height: 1.55; color: ${TOKENS.muted}; }
       /* 主按钮吃掉多余宽度，次要按钮与链接退到第二排 */
-      .forge-panel-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-      .forge-panel-actions .forge-btn-primary { flex: 1 1 220px; width: auto; min-width: 160px; height: 38px; }
-      .forge-panel-actions .forge-btn:not(.forge-btn-primary) { min-width: 132px; }
-      .forge-panel-link { margin-left: auto; font-size: 12px; color: ${TOKENS.primaryFill}; text-decoration: none; border-bottom: 1px solid transparent; }
-      .forge-panel-link:hover { border-bottom-color: currentColor; }
+      .metaontic-agent-forge-panel-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+      .metaontic-agent-forge-panel-actions .metaontic-agent-forge-btn-primary { flex: 1 1 220px; width: auto; min-width: 160px; height: 38px; }
+      .metaontic-agent-forge-panel-actions .metaontic-agent-forge-btn:not(.metaontic-agent-forge-btn-primary) { min-width: 132px; }
+      .metaontic-agent-forge-panel-link { margin-left: auto; font-size: 12px; color: ${TOKENS.primaryFill}; text-decoration: none; border-bottom: 1px solid transparent; }
+      .metaontic-agent-forge-panel-link:hover { border-bottom-color: currentColor; }
       /* 两块价值点卡片：图标 + 标题 + 一句说明，窄容器自动落成一列 */
-      .forge-panel-highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
-      .forge-panel-highlight { display: flex; align-items: flex-start; gap: 12px; padding: 13px 14px; border: 1px solid ${TOKENS.border}; border-radius: 12px; background: ${TOKENS.cardFill}; }
-      .forge-panel-highlight-icon { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; }
-      .forge-panel-highlight-body { min-width: 0; }
-      .forge-panel-highlight-title { font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
-      .forge-panel-highlight-desc { margin: 4px 0 0; font-size: 12px; line-height: 1.55; color: ${TOKENS.muted}; }
+      .metaontic-agent-forge-panel-highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+      .metaontic-agent-forge-panel-highlight { display: flex; align-items: flex-start; gap: 12px; padding: 13px 14px; border: 1px solid ${TOKENS.border}; border-radius: 12px; background: ${TOKENS.cardFill}; }
+      .metaontic-agent-forge-panel-highlight-icon { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; }
+      .metaontic-agent-forge-panel-highlight-body { min-width: 0; }
+      .metaontic-agent-forge-panel-highlight-title { font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
+      .metaontic-agent-forge-panel-highlight-desc { margin: 4px 0 0; font-size: 12px; line-height: 1.55; color: ${TOKENS.muted}; }
       /* 流程演示：四步卡片横排，卡片之间用箭头连起来；窄容器落成一列 */
-      .forge-panel-flow { display: flex; align-items: stretch; }
-      .forge-panel-step { position: relative; overflow: hidden; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 7px; padding: 13px 14px 14px; border: 1px solid ${TOKENS.border}; border-radius: 12px; background: ${TOKENS.cardFill}; animation: forge-flow-card 9s ease-in-out infinite; }
-      .forge-panel-step-head { display: flex; align-items: center; gap: 8px; }
-      .forge-panel-step-badge { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 600; color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; animation: forge-flow-badge 9s ease-in-out infinite; }
-      .forge-panel-step-title { min-width: 0; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
-      .forge-panel-step-desc { margin: 0; font-size: 12px; line-height: 1.55; color: ${TOKENS.muted}; }
+      .metaontic-agent-forge-panel-flow { display: flex; align-items: stretch; }
+      .metaontic-agent-forge-panel-step { position: relative; overflow: hidden; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 7px; padding: 13px 14px 14px; border: 1px solid ${TOKENS.border}; border-radius: 12px; background: ${TOKENS.cardFill}; animation: metaontic-agent-forge-flow-card 9s ease-in-out infinite; }
+      .metaontic-agent-forge-panel-step-head { display: flex; align-items: center; gap: 8px; }
+      .metaontic-agent-forge-panel-step-badge { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 600; color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; animation: metaontic-agent-forge-flow-badge 9s ease-in-out infinite; }
+      .metaontic-agent-forge-panel-step-title { min-width: 0; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
+      .metaontic-agent-forge-panel-step-desc { margin: 0; font-size: 12px; line-height: 1.55; color: ${TOKENS.muted}; }
       /* 右上角的淡色水印图标，只做装饰 */
-      .forge-panel-step-icon { position: absolute; top: 10px; right: 10px; color: ${TOKENS.primaryFill}; opacity: .14; pointer-events: none; }
+      .metaontic-agent-forge-panel-step-icon { position: absolute; top: 10px; right: 10px; color: ${TOKENS.primaryFill}; opacity: .14; pointer-events: none; }
       /* 卡片之间的箭头：横排时向右，窄容器里转成向下 */
-      .forge-panel-conn { flex: 0 0 26px; align-self: center; height: 2px; border-radius: 1px; background: ${TOKENS.border}; position: relative; }
-      .forge-panel-conn::after { content: ''; position: absolute; top: 50%; right: -1px; width: 5px; height: 5px; border-top: 2px solid ${TOKENS.border}; border-right: 2px solid ${TOKENS.border}; transform: translateY(-50%) rotate(45deg); }
+      .metaontic-agent-forge-panel-conn { flex: 0 0 26px; align-self: center; height: 2px; border-radius: 1px; background: ${TOKENS.border}; position: relative; }
+      .metaontic-agent-forge-panel-conn::after { content: ''; position: absolute; top: 50%; right: -1px; width: 5px; height: 5px; border-top: 2px solid ${TOKENS.border}; border-right: 2px solid ${TOKENS.border}; transform: translateY(-50%) rotate(45deg); }
       /* 四步依次点亮，形成一条走动的流程；延迟按步号错开 */
-      @keyframes forge-flow-card { 0%, 16% { border-color: ${TOKENS.primaryFill}; } 28%, 100% { border-color: ${TOKENS.border}; } }
-      @keyframes forge-flow-badge { 0%, 16% { color: #fff; background: ${TOKENS.primaryFill}; } 28%, 100% { color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; } }
-      .forge-panel-step[data-step="1"], .forge-panel-step[data-step="1"] .forge-panel-step-badge { animation-delay: 2.25s; }
-      .forge-panel-step[data-step="2"], .forge-panel-step[data-step="2"] .forge-panel-step-badge { animation-delay: 4.5s; }
-      .forge-panel-step[data-step="3"], .forge-panel-step[data-step="3"] .forge-panel-step-badge { animation-delay: 6.75s; }
-      .forge-panel { container-type: inline-size; }
+      @keyframes metaontic-agent-forge-flow-card { 0%, 16% { border-color: ${TOKENS.primaryFill}; } 28%, 100% { border-color: ${TOKENS.border}; } }
+      @keyframes metaontic-agent-forge-flow-badge { 0%, 16% { color: #fff; background: ${TOKENS.primaryFill}; } 28%, 100% { color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; } }
+      .metaontic-agent-forge-panel-step[data-step="1"], .metaontic-agent-forge-panel-step[data-step="1"] .metaontic-agent-forge-panel-step-badge { animation-delay: 2.25s; }
+      .metaontic-agent-forge-panel-step[data-step="2"], .metaontic-agent-forge-panel-step[data-step="2"] .metaontic-agent-forge-panel-step-badge { animation-delay: 4.5s; }
+      .metaontic-agent-forge-panel-step[data-step="3"], .metaontic-agent-forge-panel-step[data-step="3"] .metaontic-agent-forge-panel-step-badge { animation-delay: 6.75s; }
+      .metaontic-agent-forge-panel { container-type: inline-size; }
       @container (max-width: 620px) {
-        .forge-panel-flow { flex-direction: column; align-items: stretch; }
+        .metaontic-agent-forge-panel-flow { flex-direction: column; align-items: stretch; }
         /* 竖向排布时不能再按剩余空间拉伸，否则卡片会被压扁 */
-        .forge-panel-step { flex: 0 0 auto; }
-        .forge-panel-conn { flex: 0 0 18px; width: 2px; height: 18px; align-self: flex-start; margin-left: 24px; }
-        .forge-panel-conn::after { top: auto; right: 50%; bottom: -1px; transform: translateX(50%) rotate(135deg); }
+        .metaontic-agent-forge-panel-step { flex: 0 0 auto; }
+        .metaontic-agent-forge-panel-conn { flex: 0 0 18px; width: 2px; height: 18px; align-self: flex-start; margin-left: 24px; }
+        .metaontic-agent-forge-panel-conn::after { top: auto; right: 50%; bottom: -1px; transform: translateX(50%) rotate(135deg); }
       }
       @container (max-width: 560px) {
-        .forge-panel { padding: 22px 18px 34px; }
-        .forge-panel-link { margin-left: 0; }
+        .metaontic-agent-forge-panel { padding: 22px 18px 34px; }
+        .metaontic-agent-forge-panel-link { margin-left: 0; }
       }
       @media (prefers-reduced-motion: reduce) {
-        .forge-panel-step, .forge-panel-step-badge { animation: none; }
+        .metaontic-agent-forge-panel-step, .metaontic-agent-forge-panel-step-badge { animation: none; }
       }
     `;
 
@@ -76,7 +76,7 @@ export function createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GU
       const pixels = Number(size) || 18;
       if (LOGO_SRC) {
         return h('img', {
-          className: 'forge-rail-logo', src: LOGO_SRC, alt: '', width: pixels, height: pixels, 'aria-hidden': true,
+          className: 'metaontic-agent-forge-rail-logo', src: LOGO_SRC, alt: '', width: pixels, height: pixels, 'aria-hidden': true,
         });
       }
       return h('svg', {
@@ -133,11 +133,11 @@ export function createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GU
 
     /** 一块价值点卡片：图标 + 标题 + 一句说明。 */
     function highlight(key, icon, title, desc) {
-      return h('div', { key, className: 'forge-panel-highlight' }, [
-        h('span', { key: 'icon', className: 'forge-panel-highlight-icon' }, flowIcon(icon, 20)),
-        h('div', { key: 'body', className: 'forge-panel-highlight-body' }, [
-          h('div', { key: 'title', className: 'forge-panel-highlight-title' }, title),
-          h('p', { key: 'desc', className: 'forge-panel-highlight-desc' }, desc),
+      return h('div', { key, className: 'metaontic-agent-forge-panel-highlight' }, [
+        h('span', { key: 'icon', className: 'metaontic-agent-forge-panel-highlight-icon' }, flowIcon(icon, 20)),
+        h('div', { key: 'body', className: 'metaontic-agent-forge-panel-highlight-body' }, [
+          h('div', { key: 'title', className: 'metaontic-agent-forge-panel-highlight-title' }, title),
+          h('p', { key: 'desc', className: 'metaontic-agent-forge-panel-highlight-desc' }, desc),
         ]),
       ]);
     }
@@ -156,55 +156,55 @@ export function createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID, GU
       // 步骤与箭头交替排布：第 2 步起前面各插一个箭头。
       const flowChildren = flow.flatMap((step, index) => {
         const card = h('div', {
-          key: `step-${index}`, className: 'forge-panel-step', 'data-step': String(index),
+          key: `step-${index}`, className: 'metaontic-agent-forge-panel-step', 'data-step': String(index),
         }, [
-          h('div', { key: 'head', className: 'forge-panel-step-head' }, [
-            h('span', { key: 'badge', className: 'forge-panel-step-badge' }, String(index + 1)),
-            h('span', { key: 'title', className: 'forge-panel-step-title' }, step.title),
+          h('div', { key: 'head', className: 'metaontic-agent-forge-panel-step-head' }, [
+            h('span', { key: 'badge', className: 'metaontic-agent-forge-panel-step-badge' }, String(index + 1)),
+            h('span', { key: 'title', className: 'metaontic-agent-forge-panel-step-title' }, step.title),
           ]),
-          h('p', { key: 'desc', className: 'forge-panel-step-desc' }, step.desc),
-          h('span', { key: 'icon', className: 'forge-panel-step-icon' }, flowIcon(step.icon)),
+          h('p', { key: 'desc', className: 'metaontic-agent-forge-panel-step-desc' }, step.desc),
+          h('span', { key: 'icon', className: 'metaontic-agent-forge-panel-step-icon' }, flowIcon(step.icon)),
         ]);
-        return index === 0 ? [card] : [h('span', { key: `conn-${index}`, className: 'forge-panel-conn', 'aria-hidden': true }), card];
+        return index === 0 ? [card] : [h('span', { key: `conn-${index}`, className: 'metaontic-agent-forge-panel-conn', 'aria-hidden': true }), card];
       });
-      return h('div', { className: 'forge-panel' }, [
+      return h('div', { className: 'metaontic-agent-forge-panel' }, [
         h('style', { key: 'styles' }, PAGE_CSS + PANEL_CSS),
-        h('header', { key: 'hero', className: 'forge-panel-hero' }, [
-          h('span', { key: 'mark', className: 'forge-panel-mark' },
+        h('header', { key: 'hero', className: 'metaontic-agent-forge-panel-hero' }, [
+          h('span', { key: 'mark', className: 'metaontic-agent-forge-panel-mark' },
             LOGO_SRC
-              ? h('img', { key: 'logo', className: 'forge-panel-logo', src: LOGO_SRC, alt: '', 'aria-hidden': true })
+              ? h('img', { key: 'logo', className: 'metaontic-agent-forge-panel-logo', src: LOGO_SRC, alt: '', 'aria-hidden': true })
               : PanelIcon({ size: 24 })),
-          h('div', { key: 'head', className: 'forge-panel-head' }, [
-            h('h1', { key: 'title', className: 'forge-panel-title' }, t('panelTitle')),
-            h('p', { key: 'intro', className: 'forge-panel-intro' }, t('panelIntro')),
+          h('div', { key: 'head', className: 'metaontic-agent-forge-panel-head' }, [
+            h('h1', { key: 'title', className: 'metaontic-agent-forge-panel-title' }, t('panelTitle')),
+            h('p', { key: 'intro', className: 'metaontic-agent-forge-panel-intro' }, t('panelIntro')),
           ]),
         ]),
-        h('section', { key: 'highlights', className: 'forge-section' }, [
-          h('div', { key: 'highlights-label', className: 'forge-section-title' }, t('panelHighlights')),
-          h('div', { key: 'highlights-cards', className: 'forge-panel-highlights' }, [
+        h('section', { key: 'highlights', className: 'metaontic-agent-forge-section' }, [
+          h('div', { key: 'highlights-label', className: 'metaontic-agent-forge-section-title' }, t('panelHighlights')),
+          h('div', { key: 'highlights-cards', className: 'metaontic-agent-forge-panel-highlights' }, [
             highlight('easy', 'easy', t('panelHighlight1Title'), t('panelHighlight1Desc')),
             highlight('cheap', 'cheap', t('panelHighlight2Title'), t('panelHighlight2Desc')),
           ]),
         ]),
-        h('section', { key: 'start', className: 'forge-section' }, [
-          h('div', { key: 'start-label', className: 'forge-section-title' }, t('panelStart')),
-          h('div', { key: 'start-actions', className: 'forge-panel-actions' }, [
+        h('section', { key: 'start', className: 'metaontic-agent-forge-section' }, [
+          h('div', { key: 'start-label', className: 'metaontic-agent-forge-section-title' }, t('panelStart')),
+          h('div', { key: 'start-actions', className: 'metaontic-agent-forge-panel-actions' }, [
             h('button', {
-              key: 'new', type: 'button', className: 'forge-btn forge-btn-primary',
+              key: 'new', type: 'button', className: 'metaontic-agent-forge-btn metaontic-agent-forge-btn-primary',
               onClick: () => props?.startSession?.(),
             }, t('panelNew')),
             h('button', {
-              key: 'settings', type: 'button', className: 'forge-btn', disabled: typeof props?.openSettings !== 'function',
+              key: 'settings', type: 'button', className: 'metaontic-agent-forge-btn', disabled: typeof props?.openSettings !== 'function',
               onClick: () => props?.openSettings?.(),
             }, t('panelSettings')),
             h('a', {
-              key: 'guide', className: 'forge-panel-link', href: GUIDE_URL, target: '_blank', rel: 'noopener noreferrer',
+              key: 'guide', className: 'metaontic-agent-forge-panel-link', href: GUIDE_URL, target: '_blank', rel: 'noopener noreferrer',
             }, t('panelGuide')),
           ]),
         ]),
-        h('section', { key: 'flow', className: 'forge-section' }, [
-          h('div', { key: 'flow-label', className: 'forge-section-title' }, t('panelFlow')),
-          h('div', { key: 'flow-steps', className: 'forge-panel-flow' }, flowChildren),
+        h('section', { key: 'flow', className: 'metaontic-agent-forge-section' }, [
+          h('div', { key: 'flow-label', className: 'metaontic-agent-forge-section-title' }, t('panelFlow')),
+          h('div', { key: 'flow-steps', className: 'metaontic-agent-forge-panel-flow' }, flowChildren),
         ]),
       ]);
     }

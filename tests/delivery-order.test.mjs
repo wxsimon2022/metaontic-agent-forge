@@ -63,7 +63,7 @@ test('只展示成片或与视频无关的文件都不受影响',async()=>{
  const h=await setup();
  assert.equal(await h.guard.gate(h.present(merged)),null);
  assert.equal(await h.guard.gate(h.present('/w/storyboard-v1.png','/w/script.md')),null);
- assert.equal(await h.guard.gate({name:'video_generate',agent:{session:h.session},arguments:{}}),null);
+ assert.equal(await h.guard.gate({name:'metaontic_agent_forge_video_generate',agent:{session:h.session},arguments:{}}),null);
 });
 
 test('相对路径按会话工作目录解析，同样能识别顺序',async()=>{
@@ -161,7 +161,7 @@ test('withVideoExecution 把真实工具结果交给顺序守卫，记录失败�
  const result={status:'succeeded',merged:true,videoPath:merged,segmentsDir:runDir,segments:[
   {index:1,status:'succeeded',localPath:segments[0]},{index:2,status:'succeeded',localPath:segments[1]}]};
  const exec={callId:'c1',agent:{session}};
- const tool={name:'video_generate',execute:async()=>result};
+ const tool={name:'metaontic_agent_forge_video_generate',execute:async()=>result};
  const wrapped=wiring.withVideoExecution(tool,guard.remember);
  assert.equal(await wrapped.execute({},exec),result);
  assert.equal((await guard.gate({name:'present',agent:{session},arguments:{files:[{path:segments[0]},{path:merged}]}})).kind,'deny');

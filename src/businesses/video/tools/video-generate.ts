@@ -13,9 +13,9 @@ import { describeIncompleteRun, runSegmentDelivery, skipMergeDelivery, } from '.
 export function videoTool(liveConfig, deps, ctx) {
   const config = liveConfig;
   // 结果里的「接着做要调哪个工具」和确认框里的工具名都用它
-  const TOOL_NAME = 'video_generate';
+  const TOOL_NAME = 'metaontic_agent_forge_video_generate';
   return {
-    name: 'video_generate',
+    name: 'metaontic_agent_forge_video_generate',
     description:
       '生成一段完整视频（视频生成的首选工具），duration 是目标总秒数：'
       + '不超过模型单段上限（2.0 为 15 秒、2.5 为 30 秒）时一次直出；'
@@ -29,18 +29,18 @@ export function videoTool(liveConfig, deps, ctx) {
       + '直接传 duration=20 即可（20 秒 → 15+5，25 秒 → 15+10）。'
       + '**每段生成完先返回视频供预览**：先展示成果，再询问是否继续；未确认就停下，'
       + '先把已经生成的部分交付，结果里带 paused=true、resumeDir 和 remainingSeconds；'
-      + '之后通过分段结果审核并确认下一段费用时，把 resumeDir 原样传给 video_generate 的 resume 参数接着做'
-      + '（前面几段不重新生成；新增剩余分段仍需确认费用并计费），不要从头再生成一遍、也不要改用 video_extend 拼。'
+      + '之后通过分段结果审核并确认下一段费用时，把 resumeDir 原样传给 metaontic_agent_forge_video_generate 的 resume 参数接着做'
+      + '（前面几段不重新生成；新增剩余分段仍需确认费用并计费），不要从头再生成一遍、也不要改用 metaontic_agent_forge_video_extend 拼。'
       + '每次调用最多完成当前一段；后续必须使用resume，不重新创建首段任务。'
       + '返回每段任务 ID、上游链接和成片路径。生成通常需要几分钟（每段单独生成），'
       + '单次调用返回 timeout、或某段返回 unknown（查询失败、任务其实已提交）时，'
-      + '都用返回的任务 ID 走 video_status 继续等，不要重复提交新任务——'
+      + '都用返回的任务 ID 走 metaontic_agent_forge_video_status 继续等，不要重复提交新任务——'
       + '重复提交会重复扣费，查询失败不代表没有生成。'
       + '**调用前必须先完整展示当前版脚本、再让用户审核通过，并确认开始制作**（两道确认缺一不可），不要跳过脚本直接生成。'
       + '合并需要本机有 ffmpeg。本机没装 ffmpeg 时，插件会**先把这次调用拦回来（不会调用模型、'
       + '不产生费用）**，返回的说明里带着按系统给的安装命令 ——这时要在对话框里和用户确认：'
       + '问他要不要现在装 ffmpeg（给出他系统的命令，说明装好后首次生成可按原参数提交；已有进度则用原resume重试下载或合并），'
-      + '同意就调用 video_setup（install:true），宿主确认后安装并自动验证，然后首次生成按原参数提交；已有进度则使用原resume；'
+      + '同意就调用 metaontic_agent_forge_video_setup（install:true），宿主确认后安装并自动验证，然后首次生成按原参数提交；已有进度则使用原resume；'
       + '用户不想装就带 merge:false 重发，插件只返回分段列表（每段上游链接，不下载本地文件）。'
       + '拿到 ffmpegMissing=true 的结果时也要照 installHint 引导安装，别只丢一句「已跳过合并」。'
       + '**人物形象 / 参考图**：公网图片 URL、base64（data URI 或纯 base64）、本机图片路径，'
@@ -54,7 +54,7 @@ export function videoTool(liveConfig, deps, ctx) {
     parameters: {
       type: 'object',
       properties: {
-        projectId: { type: 'string', description: 'video_project返回的项目ID。新建生成/延长前须prepare并review通过；续做默认沿用。' },
+        projectId: { type: 'string', description: 'metaontic_agent_forge_video_project返回的项目ID。新建生成/延长前须prepare并review通过；续做默认沿用。' },
         cumulativePreview: { type: 'boolean', description: '默认暂停只下载展示新段，最终再合并；明确需要累计预览时传true，不新增生成费用。' },
         resetCharacterChoice: { type: 'boolean', description: '仅在用户明确改变已确认的角色图方案时设true，重新弹出选择；不会直接改为纯文生，也不能绕过确认。' },
         characterReferenceImages: { type: 'array', items: { type: 'string' }, description: '已审核的最初角色参考图，按固定顺序用于每段续拍；未提供时沿用首段参考图或首帧。支持URL、本地图片或data URI。断点固定此套图，不自动重画或替换。真人转换仍需单独同意及结果审核。' },
@@ -105,7 +105,7 @@ export function videoTool(liveConfig, deps, ctx) {
         },
         transitionDescription: {
           type: 'string',
-          description: '已审核的续拍过渡描述：视频1接缝状态→本段动作/镜头衔接→声音延续，直接使用“视频1”，不写“参考视频1”。多段共用时作为通用描述；video_generate 可在各条 segmentPrompts 内用单行【过渡画面】指定该段过渡并优先采用。仅作用于续拍，首次直出不引用视频1。',
+          description: '已审核的续拍过渡描述：视频1接缝状态→本段动作/镜头衔接→声音延续，直接使用“视频1”，不写“参考视频1”。多段共用时作为通用描述；metaontic_agent_forge_video_generate 可在各条 segmentPrompts 内用单行【过渡画面】指定该段过渡并优先采用。仅作用于续拍，首次直出不引用视频1。',
         },
         mode: {
           type: 'string',
@@ -356,7 +356,7 @@ export function videoTool(liveConfig, deps, ctx) {
       result.segmentsDir = segmentsDir;
       if (pendingTask) {
         result.pendingTaskId = pendingTask.taskId;
-        result.note = '任务已提交，请用 resume 查询并接回原进度，或用 video_status 查询；不要重复提交。';
+        result.note = '任务已提交，请用 resume 查询并接回原进度，或用 metaontic_agent_forge_video_status 查询；不要重复提交。';
       }
       if (resultImages.length) {
         // 只回「用了哪些图、来自哪里」，不回 base64 正文（太长）
@@ -371,7 +371,7 @@ export function videoTool(liveConfig, deps, ctx) {
           recentUploads: item.recentUploads,
         }));
       }
-      // 没成功的那一段：区分「确实失败」和「只是没查到」，后者任务已提交、要用 video_status 补拉。
+      // 没成功的那一段：区分「确实失败」和「只是没查到」，后者任务已提交、要用 metaontic_agent_forge_video_status 补拉。
       if (describeIncompleteRun({ result, status, segments, notes, completed, deliveredSeconds })) {
         result.note = notes.join('\n');
         return result;

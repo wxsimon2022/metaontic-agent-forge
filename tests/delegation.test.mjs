@@ -7,37 +7,37 @@ function check(id, name, args = {}, header = {}, options = {}) {
   return api.delegationDecision(registry, {}, exec);
 }
 test('cloud studio can delegate only to explicitly approved specialist presets', () => {
-  for (const target of ['forge-video-director', 'forge-promo-video']) assert.equal(check('forge-studio', 'delegate_agent', { agent_preset: target }), null);
-  assert.equal(check('forge-studio', 'delegate_agent'), null);
-  for (const target of ['forge-studio', 'unknown', 'standard', '', null, 5]) {
-    assert.equal(check('forge-studio', 'delegate_agent', { agent_preset: target }).kind, 'deny');
+  for (const target of ['metaontic-agent-forge-video-director', 'metaontic-agent-forge-promo-video']) assert.equal(check('metaontic-agent-forge-studio', 'metaontic_agent_forge_delegate_agent', { agent_preset: target }), null);
+  assert.equal(check('metaontic-agent-forge-studio', 'metaontic_agent_forge_delegate_agent'), null);
+  for (const target of ['metaontic-agent-forge-studio', 'unknown', 'standard', '', null, 5]) {
+    assert.equal(check('metaontic-agent-forge-studio', 'metaontic_agent_forge_delegate_agent', { agent_preset: target }).kind, 'deny');
   }
-  assert.equal(check('forge-studio', 'delegate_agent', '{invalid').kind, 'deny');
+  assert.equal(check('metaontic-agent-forge-studio', 'metaontic_agent_forge_delegate_agent', '{invalid').kind, 'deny');
 });
 test('general host delegation entries cannot bypass the studio whitelist or specialist restrictions', () => {
-  for (const id of ['forge-studio', 'forge-video-director', 'forge-promo-video']) {
+  for (const id of ['metaontic-agent-forge-studio', 'metaontic-agent-forge-video-director', 'metaontic-agent-forge-promo-video']) {
     for (const name of ['subagent', 'subagent_fork', 'subagent_codex']) assert.equal(check(id, name).kind, 'deny');
   }
-  for (const id of ['forge-video-director', 'forge-promo-video']) assert.equal(check(id, 'delegate_agent').kind, 'deny');
+  for (const id of ['metaontic-agent-forge-video-director', 'metaontic-agent-forge-promo-video']) assert.equal(check(id, 'metaontic_agent_forge_delegate_agent').kind, 'deny');
   assert.equal(check(null, 'subagent'), null); assert.equal(check('unknown', 'subagent'), null);
-  assert.equal(check('forge-video-director', 'video_generate'), null);
-  assert.equal(check('forge-studio', 'send_message'), null);
+  assert.equal(check('metaontic-agent-forge-video-director', 'metaontic_agent_forge_video_generate'), null);
+  assert.equal(check('metaontic-agent-forge-studio', 'metaontic_agent_forge_send_message'), null);
 });
 test('persisted and runtime delegation depths cannot reset a nested studio to top-level', () => {
-  assert.equal(check('forge-studio', 'delegate_agent', {}, { delegationDepth: 1 }).kind, 'deny');
-  assert.equal(check('forge-studio', 'delegate_agent', {}, {}, { subagentDepth: 1 }).kind, 'deny');
-  assert.equal(check('forge-studio', 'delegate_agent', {}, { delegationDepth: 1 }, { subagentDepth: 0 }).kind, 'deny');
-  for (const value of [-1, -0, 0.5, NaN, '0']) assert.equal(check('forge-studio', 'delegate_agent', {}, { delegationDepth: value }).kind, 'deny');
+  assert.equal(check('metaontic-agent-forge-studio', 'metaontic_agent_forge_delegate_agent', {}, { delegationDepth: 1 }).kind, 'deny');
+  assert.equal(check('metaontic-agent-forge-studio', 'metaontic_agent_forge_delegate_agent', {}, {}, { subagentDepth: 1 }).kind, 'deny');
+  assert.equal(check('metaontic-agent-forge-studio', 'metaontic_agent_forge_delegate_agent', {}, { delegationDepth: 1 }, { subagentDepth: 0 }).kind, 'deny');
+  for (const value of [-1, -0, 0.5, NaN, '0']) assert.equal(check('metaontic-agent-forge-studio', 'metaontic_agent_forge_delegate_agent', {}, { delegationDepth: value }).kind, 'deny');
 });
 test('invalid delegation topology, self calls and delegate-capable targets fail during registry construction', () => {
   const definitions = () => api.agents.map(agent => ({ ...agent, delegation: agent.delegation && { ...agent.delegation } }));
   for (const change of [
-    p => { p.allowedAgents = ['forge-studio']; p.defaultAgent = 'forge-studio'; },
+    p => { p.allowedAgents = ['metaontic-agent-forge-studio']; p.defaultAgent = 'metaontic-agent-forge-studio'; },
     p => { p.allowedAgents = ['missing']; p.defaultAgent = 'missing'; },
     p => { p.defaultAgent = 'missing'; },
     p => { p.maxDepth = 2; },
   ]) {
-    const values = definitions(); change(values.find(agent => agent.id === 'forge-studio').delegation);
+    const values = definitions(); change(values.find(agent => agent.id === 'metaontic-agent-forge-studio').delegation);
     assert.throws(() => api.createAgentRegistry(values), /委派/);
   }
 });

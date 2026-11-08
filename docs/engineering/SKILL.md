@@ -21,11 +21,11 @@ description: 用于本仓库视频与图片接入、断点恢复、费用确认�
 - 每次调用固定配置快照，后续轮询不得混用新地址或 API密钥。密钥不写断点/日志，私有状态文件限制权限。
 - 分段续做的审批文案必须先合并暂停记录 options，再解析清晰度；不得用仅含 resume 的原始参数回退到 720P。覆盖30秒480P两段流程，断言确认文案、估价与两次实际请求一致。
 - 清晰度不在插件设置中配置；工具参数、实际请求、估价和恢复保持一致：480p/720p，脚本阶段须由用户明确选择480P/720P（本次需求已指定不重复问），记录到脚本、制作确认并显式传入工具。恢复已提交任务使用原请求参数。
-- 对话边界：对话只做视频创作，无关话题不承接（一句话说明后请用户回到视频需求，不展开、不代办）；插件配置（接入方式、API密钥、模型、地址等）只能在设置页修改，`video_config` 只读、`action=set` 直接拒绝并引导设置页，不索取/展示 API密钥。提示词、forge-video-director 技能、README（中英）与使用说明书同步维护；回归用例在 `tests/host-integration.test.mjs`、`tests/config-tool-save.test.mjs`、`tests/image-tasks.test.mjs`。
+- 对话边界：对话只做视频创作，无关话题不承接（一句话说明后请用户回到视频需求，不展开、不代办）；插件配置（接入方式、API密钥、模型、地址等）只能在设置页修改，`metaontic_agent_forge_video_config` 只读、`action=set` 直接拒绝并引导设置页，不索取/展示 API密钥。提示词、metaontic-agent-forge-video-director 技能、README（中英）与使用说明书同步维护；回归用例在 `tests/host-integration.test.mjs`、`tests/config-tool-save.test.mjs`、`tests/image-tasks.test.mjs`。
 
 ## 对白准确性
 
-脚本审核前使用 forge-video-director/references/pronunciation.md：正确原文与发音文本分离，仅对读音明确的易错词用同音常用字，不猜专名、不全局替换。生成和前后延长都保留对白执行约束，不覆盖无对白或关闭音频的选择。预算按实际发声时间，完整句不跨段；验收必须试听，不能把任务成功等同读音正确。误读重做仍需费用同意，不承诺自动配音/口型修复。
+脚本审核前使用 metaontic-agent-forge-video-director/references/pronunciation.md：正确原文与发音文本分离，仅对读音明确的易错词用同音常用字，不猜专名、不全局替换。生成和前后延长都保留对白执行约束，不覆盖无对白或关闭音频的选择。预算按实际发声时间，完整句不跨段；验收必须试听，不能把任务成功等同读音正确。误读重做仍需费用同意，不承诺自动配音/口型修复。
 
 ## 验证与构建
 
@@ -49,19 +49,19 @@ API密钥共用规则：MetaOntic AI 可选择共用或独立图片 API密钥，
 
 ## 脚本审核费用对比
 
-所有接入在写脚本时一并调用只读video_estimate试算，将官方/插件两项基础估价写入script.md最后的“费用预估”一节并随脚本交付（不是脚本之前的前置步骤）；会话中展示脚本也在末尾展示本节，再弹审核窗，按实际分段计入上一段视频输入；手填 API密钥未核实分组按1，火山直连不套中转折扣。未知价目/画幅不猜价，最低用量补足未计入须注明。制作审批与账户额度预检保持独立，不能把本次一段价格当整条预算。用户另行生成的价格参考文档和宣传素材仍仅留本地，不纳入仓库或发布包。
+所有接入在写脚本时一并调用只读metaontic_agent_forge_video_estimate试算，将官方/插件两项基础估价写入script.md最后的“费用预估”一节并随脚本交付（不是脚本之前的前置步骤）；会话中展示脚本也在末尾展示本节，再弹审核窗，按实际分段计入上一段视频输入；手填 API密钥未核实分组按1，火山直连不套中转折扣。未知价目/画幅不猜价，最低用量补足未计入须注明。制作审批与账户额度预检保持独立，不能把本次一段价格当整条预算。用户另行生成的价格参考文档和宣传素材仍仅留本地，不纳入仓库或发布包。
 
 - 版本卡片更新时间读取当前包releaseNotes.publishedAt（ISO时间，转换为UTC+8显示日期与时间，不附加时区字样），不得用检查时间、构建时间或远端其他版本时间代替；发版时同步真实发布时间，缺失则不显示。
 
 ## 实际费用（仅A/B）
 
-完成后使用视频调用的连接快照和视频 API密钥查询/api/log/token，严格按other.task_id匹配type=2的最终other.actual_quota，每个任务只计一次；不得将其与预扣或补扣再相加。/api/status提供quota_per_unit与usd_exchange_rate后才换算金额，缺失只报额度。查询有界超时，费用失败不改变视频成功/交付/恢复状态，不触发重生成。video_status可补查；C直接跳过，图片 API密钥不参与。partial为已结算小计，paused为已生成部分，pending不显示0元；只有预扣或最近日志窗口缺失都算待结算/待查询。
+完成后使用视频调用的连接快照和视频 API密钥查询/api/log/token，严格按other.task_id匹配type=2的最终other.actual_quota，每个任务只计一次；不得将其与预扣或补扣再相加。/api/status提供quota_per_unit与usd_exchange_rate后才换算金额，缺失只报额度。查询有界超时，费用失败不改变视频成功/交付/恢复状态，不触发重生成。metaontic_agent_forge_video_status可补查；C直接跳过，图片 API密钥不参与。partial为已结算小计，paused为已生成部分，pending不显示0元；只有预扣或最近日志窗口缺失都算待结算/待查询。
 
 ## 保存并发与诊断
 
 批量写入和唯一一次安全重试均绑定检查时的 expectedRevision；第二次冲突停止，不覆盖其他编辑。保存成功后只清理本次已提交且未再修改的草稿。失败按配置冲突、页面不可用、只读、通信结果不明分类；诊断只记录固定错误分类及修订号，禁止记录 API密钥、ops、字段值和宿主原始错误。通信异常不自动重试，不把结果不明当未保存后重复提交。
 
-重置后继续会话先用 video_config 读取当前接入与密钥状态，不沿用原配置。缺 API密钥只引导登录/填写并保存，不建议重装、重新启用或重启；工具不可见先核对发现与安装状态。保留脚本审核事实与任务进度，仅补缺失确认，参数变更仍重审。
+重置后继续会话先用 metaontic_agent_forge_video_config 读取当前接入与密钥状态，不沿用原配置。缺 API密钥只引导登录/填写并保存，不建议重装、重新启用或重启；工具不可见先核对发现与安装状态。保留脚本审核事实与任务进度，仅补缺失确认，参数变更仍重审。
 
 ## 正式版更新
 
@@ -87,7 +87,7 @@ pnpm 11 安装前会校验整份 `pnpm-lock.yaml` 的所有 entries：只要留�
 
 脚本按主体、动作、场景、光影、镜头、风格、画质、约束组织；定义稳定主体标签，分镜按事件顺序而非付费任务数，动作写部位与幅速力度、惯性及可见情绪，景别/视角/运镜分开。每段续拍先审核具体过渡。单行【过渡画面】优先于通用transitionDescription，续做持久化两者；只进入本地拼接的text，不增加上游参数。自动文案不得使用参考视频1；reference_video协议字段不改。明确过渡安排切镜时取消相同机位/景别/焦段硬约束，未明确时沿用连续默认；不承诺无接缝，不擅自换场景或增加生成调用。
 
-续拍方式由已审核脚本决定，设置页和 video_config 移除 mode。旧 Config.mode 仅兼容读取，不再控制新请求；本次调用按 args.mode 或默认 continuous，写入断点；已记录的 resume.mode 与原请求优先，过渡描述仍覆盖默认衔接限制。
+续拍方式由已审核脚本决定，设置页和 metaontic_agent_forge_video_config 移除 mode。旧 Config.mode 仅兼容读取，不再控制新请求；本次调用按 args.mode 或默认 continuous，写入断点；已记录的 resume.mode 与原请求优先，过渡描述仍覆盖默认衔接限制。
 
 ## 分段确认与续做入口
 
@@ -97,7 +97,7 @@ pnpm 11 安装前会校验整份 `pnpm-lock.yaml` 的所有 entries：只要留�
 
 present仅登记文件交付，卡片可能在轮次结束后出现；脚本审核前需先检查图文件存在、present成功，再在正文输出Markdown内嵌SVG/PNG与打开原图链接，然后才问审核。read_image供模型查看，不证明用户看到。优先PNG/SVG，HTML作附加；格式不支持时用已有工具渲染，不擅自付费或安装。用户反馈未见图，先找对应项目文件补展示，不空口重复已画好。
 
-MetaOntic AI 使用手填 API密钥。界面保存及video_config写入须原子补齐非敏感连接默认值（baseUrl、提交/查询路径、视频/图片模型）；不从脱敏快照复制 API密钥。运行端同样提供中转默认地址兜底。火山切回中转不可沿用火山路径。诊断检查effective而非仅看stored；没有HTTP响应不能证明请求未到达上游，不解锁提交不明任务。
+MetaOntic AI 使用手填 API密钥。界面保存及metaontic_agent_forge_video_config写入须原子补齐非敏感连接默认值（baseUrl、提交/查询路径、视频/图片模型）；不从脱敏快照复制 API密钥。运行端同样提供中转默认地址兜底。火山切回中转不可沿用火山路径。诊断检查effective而非仅看stored；没有HTTP响应不能证明请求未到达上游，不解锁提交不明任务。
 
 视频交付正文必须逐项附Markdown可点击链接，例如[观看第一段](<绝对文件路径>)，路径含空格也用尖括号包裹；有present仍须给正文链接，普通文本或反引号路径不算链接，未经验证不得说上方卡片可直接播放。缺文件先查原任务和交付路径，不重新生成。
 
@@ -105,11 +105,11 @@ MetaOntic AI 使用手填 API密钥。界面保存及video_config写入须原子
 
 交付卡片只登记「最终成片 + 各分段」（成片第一，其后按段号），脚本、分镜示意图、参考图、转换图片、单段预览、暂停时的部分合并都只在正文内联/链接交付。原因是宿主交付卡片按本轮首次出现路径顺序排列、按路径去重、第5项起折叠（@deepseek-ai/dsh-client-ui-deliverables 的 COLLAPSED_PRESENTED_COUNT=4，注释写明 in first-seen path order），中途登记过的过程材料会把成片挤到后面，事后补发 present 也挪不回来——2026-11-04 事故：同一轮先 present 脚本+分镜、再 present 15s 部分合并+第一段、最后才 present 30s 成片+两段，卡片渲染出来仍是脚本、分镜、第一段、15s 预览，30s 成片排第 5 被折叠隐藏，而原始 present 参数顺序本身是对的。该约束由 workflow/delivery-order 卡口强制：视频工具返回时按 segmentsDir 分组记录真实分段与合并成片，present 提交前依次校验四件事——这次是否最终交付（status=succeeded 且 merged=true 且无 paused/partial/pendingTaskId，否则 deny run_not_finished）、是否带了中间版本成片（deny intermediate_merge_listed）、成片是否排在所有分段之前（deny merged_not_first）、本轮是否漏掉成片（deny merged_missing；成片本轮已登记过则放行追加的分段）。认领交付文件必须逐级降级：绝对路径 → 同名 → 文件字节数；助手交付时经常把成片改名成 final/<项目>-60s.mp4、把分段换成交付目录里的 15s 副本，只比路径会整批漏判、卡口静默失效（曾因此线上一直报「成片没排第一」却没有任何 delivery_order_blocked 记录）。定位这类问题先查插件日志里有没有 delivery_order_blocked，没有就是没认领上，不要先改提示词。暂停时已有累计合并视频标为“已完成部分合并视频”，不标成完整成片；合并失败或未合并时只按段号交付真实文件。
 
-阶段计时：编写脚本前用video_stage(stage:script_design,action:start)，完整脚本保存后finish原spanId；示意图绘制用storyboard_design，展示脚本用script_present。审核/制作/参考图/分段预览等待分别用script_review_wait、production_confirm_wait、reference_review_wait、segment_review_wait，展示成果用result_present。用户回复后结束对应等待标记；不得把等待混入脚本设计时间，不为计时重复生成内容。标记仅记录边界墙钟耗时，不等于模型纯推理时间；标记不可用仍正常推进，不猜耗时。
+阶段计时：编写脚本前用metaontic_agent_forge_video_stage(stage:script_design,action:start)，完整脚本保存后finish原spanId；示意图绘制用storyboard_design，展示脚本用script_present。审核/制作/参考图/分段预览等待分别用script_review_wait、production_confirm_wait、reference_review_wait、segment_review_wait，展示成果用result_present。用户回复后结束对应等待标记；不得把等待混入脚本设计时间，不为计时重复生成内容。标记仅记录边界墙钟耗时，不等于模型纯推理时间；标记不可用仍正常推进，不猜耗时。
 
 估价按真实输入区分档位：首段生成无视频输入（参考图/首尾帧仍为无视频输入），每个续拍段有视频输入，用上一段完整视频时长加本段输出时长计token，切换到含视频输入单价；不把累计成片时长当上一段输入。脚本费用预估逐段列档位、输入/输出时长、单价与金额再合计；制作确认和恢复预检同口径，外部视频时长不明就明确无法可靠估价，不按纯生成费用兜底，不调用付费任务试算。
 
-脚本审核展示防漏：监听session/event，必须有assistant/message正文text内嵌本版分镜图（绝对路径解析后文件仍存在），才放行脚本审核ask_user_question。present 不再参与分镜展示——交付卡片只登记最终成片，present 登记的分镜图对用户不产生可见展示，只被留作提示；reasoning、工具看图、文字描述都不算。改稿是否发新版按同目录 mtime 判断：目录里存在比内嵌那张更新的分镜图（文件名含 storyboard/分镜/示意）就 deny stale_storyboard_version，避免改稿后仍发旧图。交付卡片在轮次结束后才可见，故先发独立图片正文再提问。只观测事件，不新增已弃用的session同步日志读取。反向漏问（2026-11-04 实例）：正文单独成一条消息且不带任何工具调用时，助手在正文后直接stop结束回合，审核窗不弹。对照同模型成功轮次，正文消息都同时带着video_stage调用（收口script_present/开始script_review_wait）；失败那轮把start script_present提到present之前、提前用掉了这条锚点。因此提示词要求正文消息内必须带收口调用，禁止在present前提前start/finish；守卫在turn/end（或下一轮首个事件）见到已present未提问就记storyboard_review_missing，便于判断修复是否生效。
+脚本审核展示防漏：监听session/event，必须有assistant/message正文text内嵌本版分镜图（绝对路径解析后文件仍存在），才放行脚本审核ask_user_question。present 不再参与分镜展示——交付卡片只登记最终成片，present 登记的分镜图对用户不产生可见展示，只被留作提示；reasoning、工具看图、文字描述都不算。改稿是否发新版按同目录 mtime 判断：目录里存在比内嵌那张更新的分镜图（文件名含 storyboard/分镜/示意）就 deny stale_storyboard_version，避免改稿后仍发旧图。交付卡片在轮次结束后才可见，故先发独立图片正文再提问。只观测事件，不新增已弃用的session同步日志读取。反向漏问（2026-11-04 实例）：正文单独成一条消息且不带任何工具调用时，助手在正文后直接stop结束回合，审核窗不弹。对照同模型成功轮次，正文消息都同时带着metaontic_agent_forge_video_stage调用（收口script_present/开始script_review_wait）；失败那轮把start script_present提到present之前、提前用掉了这条锚点。因此提示词要求正文消息内必须带收口调用，禁止在present前提前start/finish；守卫在turn/end（或下一轮首个事件）见到已present未提问就记storyboard_review_missing，便于判断修复是否生效。
 
 设置布局：模型按视频/图片分组，共用开关及共用 API密钥在上方，独立 API密钥各在所属模型下；画幅/音频等高排列、窄窗口堆叠。重置在底部。改布局用真实组件模拟当前渠道、共用切换、保存、键盘和明暗/窄屏验证，不写实际宿主配置；同步真实指南截图，截图不含版本或真实 API密钥。
 
@@ -119,11 +119,11 @@ MetaOntic AI 使用手填 API密钥。界面保存及video_config写入须原子
 
 最初角色图持续参考：每段续拍携带上一段视频与同一套最初已审核角色图；characterReferenceImages可明确指定，未指定时沿用首段referenceImages或首帧，首帧在续拍中改作reference_image而不是first_frame。角色图归一化后随断点保存，不使用后续段落截图替代初始角色，不自动重画；无初始图片时仍为纯视频续拍，不虚构角色参考图。真人限制须先获转换同意、展示审核，再单次视频重试；成功后复用已审核转换图。原已提交任务保留originalBody，不因加图而重新提交。
 
-纯文生视频角色图选择：有需要固定外形的人物/主体且未提供图片时，在需求阶段通过video_project(action:prepare)询问“是否先生成角色参考图？图片调用单独计费，生成后先看图确认。”两个选项为“直接文生视频/先生成角色图（单独计费）”。本次已明确同意或拒绝则记录到项目，不重复问；未答/取消/pending不表示同意，不调用图片或视频。用户拒绝时保留纯文生方案，不自动加图；没有固定主体的空镜不强加角色。用户同意后先明确外形与画面风格，依次提供真人写实（第一位）、二维动画、卡通、插画；必须按用户选择执行，调用video_prepare_image(operation:create_character,prompt:角色设定,style:已确认风格,characterType:真人写实选realistic其余选stylized)，默认一次一张，不需要原图。记录taskId/imageUrl；超时查询原taskId，不重发；失败或不满意先停止，重画先确认新增费用。结果在正文内嵌并给原图链接，单独询问“这张角色图可以用于接下来的视频吗？”，待明确认可后，将imageUrl同时写入video_generate.referenceImages和characterReferenceImages。再展示含角色图、脚本、分镜与费用预估的本版材料并审核，最后由视频工具付费审批确认制作。脚本末尾注明角色图单独计费且不包含在视频估价中；项目记录角色图选择、任务及审核状态，恢复后不重复出图或重复问已确认选择。火山直连无此图片通道时先说明限制，可让用户提供角色图，不谎称可代画。
+纯文生视频角色图选择：有需要固定外形的人物/主体且未提供图片时，在需求阶段通过metaontic_agent_forge_video_project(action:prepare)询问“是否先生成角色参考图？图片调用单独计费，生成后先看图确认。”两个选项为“直接文生视频/先生成角色图（单独计费）”。本次已明确同意或拒绝则记录到项目，不重复问；未答/取消/pending不表示同意，不调用图片或视频。用户拒绝时保留纯文生方案，不自动加图；没有固定主体的空镜不强加角色。用户同意后先明确外形与画面风格，依次提供真人写实（第一位）、二维动画、卡通、插画；必须按用户选择执行，调用metaontic_agent_forge_video_prepare_image(operation:create_character,prompt:角色设定,style:已确认风格,characterType:真人写实选realistic其余选stylized)，默认一次一张，不需要原图。记录taskId/imageUrl；超时查询原taskId，不重发；失败或不满意先停止，重画先确认新增费用。结果在正文内嵌并给原图链接，单独询问“这张角色图可以用于接下来的视频吗？”，待明确认可后，将imageUrl同时写入metaontic_agent_forge_video_generate.referenceImages和characterReferenceImages。再展示含角色图、脚本、分镜与费用预估的本版材料并审核，最后由视频工具付费审批确认制作。脚本末尾注明角色图单独计费且不包含在视频估价中；项目记录角色图选择、任务及审核状态，恢复后不重复出图或重复问已确认选择。火山直连无此图片通道时先说明限制，可让用户提供角色图，不谎称可代画。
 
 安装稳定性：宿主入口必须内置schemastery及运行依赖（仅开发依赖），成品不依赖外部node_modules；同步第三方MIT声明。发布前把index.js复制到无依赖空目录导入并校验Config/工具，用实际Harness Schema解析器验证。卸载重装后若仍指本地路径，核对HMR覆盖；仅改本插件HMR目标为已安装目录，保留 API密钥与其他配置，工作区外修改走系统权限。
 
-角色图选择在需求阶段用video_project(action:prepare)完成，以projectId持久化，不随提示词、时长或清晰度重复询问。空镜选scenery不强加角色；生成入口仅核验既有选择。
+角色图选择在需求阶段用metaontic_agent_forge_video_project(action:prepare)完成，以projectId持久化，不随提示词、时长或清晰度重复询问。空镜选scenery不强加角色；生成入口仅核验既有选择。
 
 Windows首次安装遇ERR_PNPM_GIT_RESOLVE_FAILED时先区分Git传输与供应链检查：供应链通过不代表Git可达。用户安装入口、说明书及配图统一推荐Release的.tgz成品附件或解压后的package目录，不引导全局Git重写、SSH配置或关闭策略；插件代码无法在尚未安装时修复宿主Git传输。保留完整错误核对旧Git来源，不盲目清配置或 API密钥。
 
@@ -140,15 +140,15 @@ Windows解压目录安装在更新时出现空目录/locale缺失：先核对成
 历史版本回收使用scripts/clean-releases.mjs（npm run clean:releases -- --apply）：默认演练，只删计划内对象，最新正式版、当前package.json版本以及README/说明书/CHANGELOG/本文件里.tgz下载地址引用过的版本永不删除；先附件、再发行版、最后标签，GitHub与Gitee同一计划并同步本地标签，演练同时给出预计释放的附件体积；待删标签默认取所选GitHub/Gitee平台标签API的并集，不依赖本机SSH；显式--remote才额外读取Git远端，API失败时停止而不按不完整本地数据删除，Gitee开放接口没有删除标签的端点（DELETE /tags只会404），只能用私人令牌走HTTPS推送删引用。定期删除由.github/workflows/clean-releases.yml按周演练，只有仓库变量CLEANUP_APPLY=true或手动勾选apply才真正执行。回收不是发版，但删除不可逆，先看演练输出的保留集与待删清单再执行，不在发布流程中间插入清理。
 回收默认发行版与标签各保留最近5个（--keep / --keep-tags，后者默认跟随前者，两条保留线取并集）；Gitee标签只能用git push删引用，Gitee操作需要GITEE_TOKEN。
 
-分段收尾与重复逻辑：video_generate 与 video_extend 的分段循环共用 workflow/segment-run.ts（结果落盘、中断收尾、暂停说明、merge:false、下载合并收尾），结果文案共用 tools/results.ts 的 renderVideoResult/renderResult（同一实现在 RENDER_WORDING 里分工具措辞），改措辞只改一处，不要再各自复制一份。media/merge.ts 的分段下载与 ffprobe 探测并发跑（mapLimit，上限 SEGMENT_TASK_CONCURRENCY=4），跑完仍按段号顺序处理，因为「累计成片」识别依赖 files 的推进顺序；下载失败仍按段号取最靠前的那一段报错。参考图适配缓存在系统临时目录只增不减，写入成功后调 pruneReferenceCache（7 天、上限 200 个，5 分钟内带 .fit- 的临时文件不删）；日志目录按天缓存 mkdir，失败不记缓存以便下次重试。
+分段收尾与重复逻辑：metaontic_agent_forge_video_generate 与 metaontic_agent_forge_video_extend 的分段循环共用 workflow/segment-run.ts（结果落盘、中断收尾、暂停说明、merge:false、下载合并收尾），结果文案共用 tools/results.ts 的 renderVideoResult/renderResult（同一实现在 RENDER_WORDING 里分工具措辞），改措辞只改一处，不要再各自复制一份。media/merge.ts 的分段下载与 ffprobe 探测并发跑（mapLimit，上限 SEGMENT_TASK_CONCURRENCY=4），跑完仍按段号顺序处理，因为「累计成片」识别依赖 files 的推进顺序；下载失败仍按段号取最靠前的那一段报错。参考图适配缓存在系统临时目录只增不减，写入成功后调 pruneReferenceCache（7 天、上限 200 个，5 分钟内带 .fit- 的临时文件不删）；日志目录按天缓存 mkdir，失败不记缓存以便下次重试。
 
 宿主插件页的「详细介绍」不可关闭，只能靠包里没有文档来隐藏：Harness 的插件页（组合包页面）会读安装目录里的介绍文档，顺序是 locale/<界面语言>.json 的 meta.detail → 包内 README.md / readme.md / Readme.md / README.markdown / README（README.en.md 不在名单里，也没有任何开关或布尔配置能关掉这块）；找到就整篇渲染，找不到才整块不显示，因此成品包用 scripts/strip-package-readme.py 在打包后裁掉 package/README.md（release.mjs 与 pack-test.mjs 已接入，放在算 sha256/Windows ZIP 之前），仓库首页的 README 保持不动；本地 link 安装仍读工作区，会照旧显示，要看隐藏效果必须装成品包。给页面换成简短介绍才用 locale 的 meta.detail（文件也得进 files）。
 
 插件已移除服务端登录接入、账户额度、钱包及充值逻辑。默认 MetaOntic AI，火山已有配置仍支持；独立服务端仓库保留。旧服务端凭据仅供清理，不迁移为其他渠道密钥。
 
-项目流程由video_project管理，review通过后生成工具付费审批即制作确认，不再另问开始制作；正文完整展示脚本并内嵌分镜才允许审核。状态绑定项目、脚本摘要和制作参数，改稿重审，审核后不再改script.md状态。分段暂停默认只交付新段，最终合并；resume+cumulativePreview:true只交付已有累计视频，不生成、不改变deliveryPending。动态创作提示词仅在当前agentPresets.presetForSession为forge-video-director时注入，标准模式返回空串，不能由历史header覆盖当前标准选择。
+项目流程由metaontic_agent_forge_video_project管理，review通过后生成工具付费审批即制作确认，不再另问开始制作；正文完整展示脚本并内嵌分镜才允许审核。状态绑定项目、脚本摘要和制作参数，改稿重审，审核后不再改script.md状态。分段暂停默认只交付新段，最终合并；resume+cumulativePreview:true只交付已有累计视频，不生成、不改变deliveryPending。动态创作提示词仅在当前agentPresets.presetForSession为metaontic-agent-forge-video-director时注入，标准模式返回空串，不能由历史header覆盖当前标准选择。
 
-分段结果审核不得并入或省略：paused返回后，助手先正文展示最新分段可点击链接，再立即调用video_project(action:review_segment,resume:原目录)；只在独立工具中用userQuestions弹窗，不能在生成循环里等待。续做入口和执行前校验segment-review.json中的会话/完成段数/末段taskId；未答、取消、拒绝均不放行，下一段必须新审。原任务查询、交付恢复及累计预览不新增任务则跳过，重载可复用已通过记录。Windows/macOS均用node:path和原子写入，Windows占用失败保留原文件并报错；已跑自动模拟，未跑付费与双平台桌面实测。
+分段结果审核不得并入或省略：paused返回后，助手先正文展示最新分段可点击链接，再立即调用metaontic_agent_forge_video_project(action:review_segment,resume:原目录)；只在独立工具中用userQuestions弹窗，不能在生成循环里等待。续做入口和执行前校验segment-review.json中的会话/完成段数/末段taskId；未答、取消、拒绝均不放行，下一段必须新审。原任务查询、交付恢复及累计预览不新增任务则跳过，重载可复用已通过记录。Windows/macOS均用node:path和原子写入，Windows占用失败保留原文件并报错；已跑自动模拟，未跑付费与双平台桌面实测。
 
 媒体预览使用output.presentationMeta投影成果字段，客户端读取block.meta.metaonticMedia；不投影请求、配置或密钥。本地媒体走宿主鉴权api/file，支持Windows盘符和macOS绝对路径，禁止file://及UNC；加载失败回退上游URL，保留正文原文件链接。预览不登记present、不改变交付顺序。
 
@@ -162,17 +162,17 @@ Windows解压目录安装在更新时出现空目录/locale缺失：先核对成
 
 结构维护：生成与续拍共用workflow/segment-executor.ts的executeSegmentPlan，仅请求构造、时长规划和方向游标保留在各工具；每次成功、查询不明、原始请求及onCreated仍先落盘，暂停不在工具内部弹审核。结果文案、媒体元信息与交付守卫统一读取workflow/result-state.ts；断点由validatePauseRecord验证，兼容无version及旧可选字段，损坏时保留文件并停止。进度只负责运行中的视频，tool-result独立切换成果预览。设置保存/重置/控件由settings-actions复用；测试用module-test-api导入源码，不按打包函数名或缩进截取代码，成品入口另有整包烟测。
 
-需求时长不得默认15秒。video_project.prepare只在用户已明确时传duration，否则由duration-choice弹15/30/45/60秒和自定义，选自定义后用无选项问题输入4–120整数秒。取消/未答/保存失败保持pending，不进入角色图、脚本或视频。时长绑定项目，已有审核时长兼容沿用，修改后重审；review核对完整目标时长，续拍为本次新增总时长。
+需求时长不得默认15秒。metaontic_agent_forge_video_project.prepare只在用户已明确时传duration，否则由duration-choice弹15/30/45/60秒和自定义，选自定义后用无选项问题输入4–120整数秒。取消/未答/保存失败保持pending，不进入角色图、脚本或视频。时长绑定项目，已有审核时长兼容沿用，修改后重审；review核对完整目标时长，续拍为本次新增总时长。
 
 时长与完善创意同轮询问：先用一次ask_user_question分别列出完善/方向、时长、画幅、清晰度的缺失项；时长15/30/45/60秒及自定义，等回答后prepare传确认duration。prepare内询问仅作遗漏兜底，不能让“先prepare”把时长拆到创意之后。
 
 创意完整也要确认是否完善：与缺失规格同轮询问，已明确选择不重复问。完善只补原意细节，不改主题、人物关系、核心情节或结尾；实质改动须另获同意。
 
-流程修复：普通明确失败段重试前清除旧请求快照并按本次已审核参数构造，pending/真人转换保持原请求。费用卡口注册异常时工具执行也必须拒绝。video_extend的duration是每段秒数，review/估价/执行共同校验上限与segments，禁止静默夹短。合并与单文件交付临时写入成功后rename，不能先删已有成片；Windows文件占用报错并保留旧文件。制作确认只用视频工具付费审批，需求时长在对话中改，不引导设置页。
+流程修复：普通明确失败段重试前清除旧请求快照并按本次已审核参数构造，pending/真人转换保持原请求。费用卡口注册异常时工具执行也必须拒绝。metaontic_agent_forge_video_extend的duration是每段秒数，review/估价/执行共同校验上限与segments，禁止静默夹短。合并与单文件交付临时写入成功后rename，不能先删已有成片；Windows文件占用报错并保留旧文件。制作确认只用视频工具付费审批，需求时长在对话中改，不引导设置页。
 
 用户原创意中的时长/横竖屏/分辨率直接作为确认值，仅询问缺失项；完善创意不清空规格。“30秒竖屏720P”不得再问这三项，不支持的参数单独说明并询问可执行替代，不静默改值。
 
-宣传预设forge-promo-video与forge-video-director复用YAML插件列表锚点和公共工具/审批，仅宣传模式注入promo专题。作用域判断以当前预设registry为准，标准/未知预设不得注入。预设新增后核对宿主YAML解析、技能入包和动态模式切换；旧会话固定身份不追溯修改。
+宣传预设metaontic-agent-forge-promo-video与metaontic-agent-forge-video-director复用YAML插件列表锚点和公共工具/审批，仅宣传模式注入promo专题。作用域判断以当前预设registry为准，标准/未知预设不得注入。预设新增后核对宿主YAML解析、技能入包和动态模式切换；旧会话固定身份不追溯修改。
 
 组件中文名称：宿主包含组件列表按row.moduleName读取<完整模块名>/locale/en.json及同目录语言文件，不读预设config.name。两个预设用metaontic-agent-forge/presets/<id>独立入口转导出宿主dsh-agent-preset，并导出对应locale；不修改宿主文件，不改预设id。打包核对wrapper与locale均纳入，宿主解析名称而非仅模式列表名称。
 

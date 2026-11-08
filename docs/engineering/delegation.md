@@ -1,13 +1,13 @@
 # 云智工坊 · 智能体平台：总控委派
 
-总控预设 ID 为 `forge-studio`，名称为“云智工坊 · 智能体平台”。它没有视频业务依赖，不直接执行视频/图片生成工具。现有视频、宣传两个预设及其审核、费用确认、分段审核流程保持原样。文件与界面按总控、视频、宣传排序，order 为 10、20、30；公共插件在最前，视频 YAML 锚点先定义后引用。
+总控预设 ID 为 `metaontic-agent-forge-studio`，名称为“云智工坊 · 智能体平台”。它没有视频业务依赖，不直接执行视频/图片生成工具。现有视频、宣传两个预设及其审核、费用确认、分段审核流程保持原样。文件与界面按总控、视频、宣传排序，order 为 10、20、30；公共插件在最前，视频 YAML 锚点先定义后引用。
 
 ## 装配与执行
 
-- `src/agents/forge-studio/` 定义身份、任务上下文传递、结果汇总规则和委派策略。
-- `cordis.patch.yml` 在总控预设内挂载 Harness 原生 `dsh-tool-subagent`，工具名 `delegate_agent`、提供方 `spawn`、默认目标 `forge-video-director`，白名单只有 `forge-video-director` 与 `forge-promo-video`，绝对深度上限为 1。
+- `src/agents/metaontic-agent-forge-studio/` 定义身份、任务上下文传递、结果汇总规则和委派策略。
+- `cordis.patch.yml` 在总控预设内挂载 Harness 原生 `dsh-tool-subagent`，工具名 `metaontic_agent_forge_delegate_agent`、提供方 `spawn`、默认目标 `metaontic-agent-forge-video-director`，白名单只有 `metaontic-agent-forge-video-director` 与 `metaontic-agent-forge-promo-video`，绝对深度上限为 1。
 - 当前 Harness 基础层提供 `dsh-subagent`、进程内 spawn 和持久化任务管理，不重复注册服务。旧宿主没有这些能力时不会假装任务已经创建，视频模式的原有工具仍可使用。
-- 总控预设同时挂载原生 `send_message`、`interrupt_agent`、`list_agents`，任务所有权、消息投递、持久化、恢复与完成通知由宿主管理。普通标准模式不受插件委派规则约束。
+- 总控预设同时挂载原生 `metaontic_agent_forge_send_message`、`metaontic_agent_forge_interrupt_agent`、`metaontic_agent_forge_list_agents`，任务所有权、消息投递、持久化、恢复与完成通知由宿主管理。普通标准模式不受插件委派规则约束。
 - `src/core/delegation.ts` 额外限制已注册 Agent：总控只能走具名委派入口和目标白名单；专业助手不能通过全局 `subagent` / `subagent_fork` 等入口继续委派。读取会话持久深度和运行时深度，取较深值；子会话不能重置为 0 绕过限制。原生工具自身也验证目标枚举与服务端深度。
 - 注册表拒绝自调用、未知目标、可再委派的目标及非一层拓扑。扩展业务时须显式修改白名单、同步原生配置并增加验证，不隐式开放所有预设。
 
@@ -21,7 +21,7 @@
 
 ## 图标与资源
 
-`presets/icons/forge-studio.svg` 使用云端枢纽和协作节点，独立导出 `/presets/forge-studio/icon`。`assets/branding/forge-studio-logo.svg` 为带字标志。图标在明暗背景的 24/40/64 像素下检查。独立预设包装、双语组件名称与图标均纳入成品，包名保持 `metaontic-agent-forge` 以兼容已有安装。
+`presets/icons/metaontic-agent-forge-studio.svg` 使用云端枢纽和协作节点，独立导出 `/presets/metaontic-agent-forge-studio/icon`。`assets/branding/metaontic-agent-forge-studio-logo.svg` 为带字标志。图标在明暗背景的 24/40/64 像素下检查。独立预设包装、双语组件名称与图标均纳入成品，包名保持 `metaontic-agent-forge` 以兼容已有安装。
 
 ## 验证与平台
 

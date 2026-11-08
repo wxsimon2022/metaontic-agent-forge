@@ -30,16 +30,16 @@ test('failed replacement merge preserves previous movie, successful retry replac
 });
 test('extension duration rejects silent shortening in the shared estimation plan',()=>{
  const c={connectionMode:'metaontic',model:'seedance-2.5'};
- assert.throws(()=>api.estimatePlan(c,'video_extend',{duration:45,segments:1}),/不会自动缩短/);
- assert.deepEqual(api.estimatePlan(c,'video_extend',{duration:15,segments:3}).map(s=>s.seconds),[15,15,15]);
- assert.throws(()=>api.estimatePlan(c,'video_extend',{duration:15,segments:1.5}),/segments/);
+ assert.throws(()=>api.estimatePlan(c,'metaontic_agent_forge_video_extend',{duration:45,segments:1}),/不会自动缩短/);
+ assert.deepEqual(api.estimatePlan(c,'metaontic_agent_forge_video_extend',{duration:15,segments:3}).map(s=>s.seconds),[15,15,15]);
+ assert.throws(()=>api.estimatePlan(c,'metaontic_agent_forge_video_extend',{duration:15,segments:1.5}),/segments/);
 });
 test('failed confirmation hook blocks paid tools even when directly executed',async()=>{
  const registered=new Map();let warnings=0;
  const dispose=apply({tools:{register(t){registered.set(t.name,t);return()=>{};}},inject(){},on(name){if(name==='tools/pre-execute')throw Error('unavailable');return()=>{};},logger:{warn(){warnings++;}}},{connectionMode:'metaontic'});
  try{
   assert.equal(warnings,1);
-  for(const name of ['video_generate','video_extend','video_prepare_image','video_setup','media_submission'])
+  for(const name of ['metaontic_agent_forge_video_generate','metaontic_agent_forge_video_extend','metaontic_agent_forge_video_prepare_image','metaontic_agent_forge_video_setup','metaontic_agent_forge_media_submission'])
    await assert.rejects(registered.get(name).execute({},{}),/人工确认服务未就绪/);
  }finally{dispose();}
 });
@@ -53,7 +53,7 @@ test('a definitively failed segment rebuilds its request with the revised prompt
  };
  try{
   const c={connectionMode:'metaontic',metaonticApiKey:'offline',baseUrl:'https://mock.invalid',model:'doubao-seedance-2-0-mini-260615',outputDir:home};
-  const tool=workflowApi.lowLevelVideo('video_generate',c,{});
+  const tool=workflowApi.lowLevelVideo('metaontic_agent_forge_video_generate',c,{});
   const result=await tool.execute({prompt:'旧的构思',duration:5,ratio:'16:9',resolution:'480p',merge:false},{});
   assert.equal(result.status,'failed');
   const next=await tool.execute({resume:result.resumeDir,prompt:'修改后已审核的新构思'},{});

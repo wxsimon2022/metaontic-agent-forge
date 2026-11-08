@@ -28,10 +28,10 @@ src/
 │   ├── utils/                视频错误分类、输出目录与文件工具
 │   └── internal/             隐藏的内部视频开发能力
 └── agents/
-    ├── forge-studio/          总控定义、白名单与结果汇总规则
+    ├── metaontic-agent-forge-studio/          总控定义、白名单与结果汇总规则
     ├── index.ts              Agent 清单
-    ├── forge-video-director/        视频创作助手定义
-    └── forge-promo-video/           宣传助手定义与专题提示词
+    ├── metaontic-agent-forge-video-director/        视频创作助手定义
+    └── metaontic-agent-forge-promo-video/           宣传助手定义与专题提示词
 ```
 
 ## 新增同业务 Agent
@@ -41,7 +41,7 @@ src/
 3. 同步 Harness 静态资源：在 `cordis.patch.yml` 添加独立预设；创建 `presets/<id>.js` 包装入口、`locale/presets/<id>/{zh,en}.json` 和图标；在 `package.json.exports` 添加预设、locale、icon 导出。同业务可复用现有 YAML 插件锚点，但独立 Agent 身份与 persona 必须符合自己的业务。
 4. 需要新技能时在 `skills/<id>/` 添加。Agent 描述是框架清单，不会自动生成 Harness YAML、技能或包导出；这些静态资源仍须显式同步并通过安装检查。
 
-当前宣传助手复用视频业务，只有 `agents/forge-promo-video/instructions.ts` 提供专题规则。
+当前宣传助手复用视频业务，只有 `agents/metaontic-agent-forge-promo-video/instructions.ts` 提供专题规则。
 
 ## 新增不同业务
 
@@ -55,7 +55,7 @@ export const writingBusiness: BusinessModule = {
   prompt: () => '当前业务为文章创作。',
   apply(runtime) {
     runtime.tools.register('writing', {
-      name: 'writing_outline', description: '整理文章大纲',
+      name: 'metaontic_agent_forge_writing_outline', description: '整理文章大纲',
       execute: async args => ({ status: 'succeeded', outline: args.topic }),
     });
     // 观察器/服务注册后立即交给框架，注册中途失败也会清理。

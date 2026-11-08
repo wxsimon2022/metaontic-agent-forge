@@ -1,13 +1,13 @@
 import path from 'node:path';
 import { stat } from 'node:fs/promises';
-/** workflow/segment-run：video_generate 与 video_extend 的分段循环共用逻辑。 */
+/** workflow/segment-run：metaontic_agent_forge_video_generate 与 metaontic_agent_forge_video_extend 的分段循环共用逻辑。 */
 import { CONTENT_REJECTION_HINT } from '../config.js';
 import { downloadSegmentsAndMerge } from '../media/merge.js';
 import { appendRequestLog } from '../../../core/utils/logging.js';
 import { resumeHint } from './resume.js';
 
 /** 每段完成后的暂停提示：先交付这一段，等用户预览确认再 resume 下一段。 */
-export const SEGMENT_PAUSE_NOTE = '本段已完成：请先展示本次视频成果，让用户预览；正文展示后立即调用video_project(action:review_segment,resume:原resumeDir)弹出分段结果确认窗；通过后才用resume进入下一段费用审批，不以文字问句替代弹窗。';
+export const SEGMENT_PAUSE_NOTE = '本段已完成：请先展示本次视频成果，让用户预览；正文展示后立即调用metaontic_agent_forge_video_project(action:review_segment,resume:原resumeDir)弹出分段结果确认窗；通过后才用resume进入下一段费用审批，不以文字问句替代弹窗。';
 
 /**
  * 把一次 runTask 的最终结果写进分段列表：任务 ID、上游链接、失败原因，以及
@@ -52,7 +52,7 @@ export function absorbSegmentInterruption(failure, { segments, notes, message })
 
 /**
  * 收尾说明：某一段落败时区分「确实失败」和「只是没查到」——后者任务已经提交、实际状态尚未确认，
- * 必须把任务 ID 交出去让 video_status 事后补拉，而不是当成没生成。
+ * 必须把任务 ID 交出去让 metaontic_agent_forge_video_status 事后补拉，而不是当成没生成。
  * 返回 true 表示没有任何可交付分段，调用方直接返回 result。
  */
 export function describeIncompleteRun({ result, status, segments, notes, completed, deliveredSeconds }) {
@@ -62,7 +62,7 @@ export function describeIncompleteRun({ result, status, segments, notes, complet
     result.pendingTaskId = last.taskId;
     notes.push(
       `第 ${last.index ?? segments.length} 段的查询没拿到结果（${status}），但任务已提交：`
-      + `${last.taskId || '（无任务 ID）'}。它可能仍在生成——用 video_status 按这个 ID 复查，`
+      + `${last.taskId || '（无任务 ID）'}。它可能仍在生成——用 metaontic_agent_forge_video_status 按这个 ID 复查，`
       + '取得成功状态和视频链接后可恢复下载，不重新提交该任务。',
     );
   } else {

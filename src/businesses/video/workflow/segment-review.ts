@@ -31,7 +31,7 @@ export async function assertSegmentReviewed(exec, args) {
   const appending = Number(args.duration) > Number(saved.cursor) || args.segments != null;
   if (done >= saved.plan.length && !appending) return;
   const snap = await segmentSnapshot(dir);
-  if (!await accepted(dir, snap.key, exec)) throw new Error('上一段视频尚未通过结果审核，未提交下一段。请先在正文展示本段视频的可点击链接，再调用video_project(action:review_segment,resume:原resumeDir)弹出结果确认窗；不能用文字问句或制作费用审批替代。');
+  if (!await accepted(dir, snap.key, exec)) throw new Error('上一段视频尚未通过结果审核，未提交下一段。请先在正文展示本段视频的可点击链接，再调用metaontic_agent_forge_video_project(action:review_segment,resume:原resumeDir)弹出结果确认窗；不能用文字问句或制作费用审批替代。');
 }
 export function createSegmentReview(ctx) {
   const shown = new WeakMap<object, Set<string>>();
@@ -69,7 +69,7 @@ export function createSegmentReview(ctx) {
       try { await writeFile(temp, JSON.stringify({ version: 1, owner, key: snap.key, approved: true, reviewedAt: new Date().toISOString() }), { mode: 0o600, flag: 'wx' }); await rename(temp, reviewFile(dir)); }
       finally { await rm(temp, { force: true }).catch(() => {}); }
       await appendRequestLog({ event: 'segment_review_approved', done: snap.done, resumeDir: dir });
-      return { status: 'approved', done: snap.done, resumeDir: dir, nextAction: `使用${snap.saved.toolName || 'video_generate'}的原resume继续；下一段仍需费用审批，不重复生成首段。` };
+      return { status: 'approved', done: snap.done, resumeDir: dir, nextAction: `使用${snap.saved.toolName || 'metaontic_agent_forge_video_generate'}的原resume继续；下一段仍需费用审批，不重复生成首段。` };
     });
   }
   return { observe, review };

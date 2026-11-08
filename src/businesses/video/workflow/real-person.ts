@@ -19,7 +19,7 @@ export async function recoverRealPersonImages(config, body, ctx, exec, final, st
     let outcome;
     try {
       outcome = await approval.request({
-        agent: exec.agent, toolName: 'video_prepare_image',
+        agent: exec.agent, toolName: 'metaontic_agent_forge_video_prepare_image',
         ...(exec.callId ? { callId: exec.callId } : {}),
         ...(exec.signal ? { signal: exec.signal } : {}),
         reason: `视频接口返回真人限制。是否将本次 ${images.length} 张参考图转换为非真人二维动画风格？图片处理单独计费。转换后先展示核对，不立即重试视频。`,

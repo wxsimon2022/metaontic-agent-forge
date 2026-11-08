@@ -3,7 +3,7 @@ import { resolveBinary, ffmpegInstallOptions, probeBinaryVersion, runProcess, fi
 import { tail } from '../utils/files.js';
 
 /**
- * `video_setup` —— 检查本机跑不跑得动 ffmpeg，缺了就由插件来装。
+ * `metaontic_agent_forge_video_setup` —— 检查本机跑不跑得动 ffmpeg，缺了就由插件来装。
  *
  * 存在的意义：长视频合并要 ffmpeg，而「在对话框里问一句要不要装」光靠模型没法落地
  * （模型不一定有终端工具、也不一定敢自己跑安装命令）。所以给一个工具：
@@ -12,7 +12,7 @@ import { tail } from '../utils/files.js';
  */
 export function setupTool(config) {
   return {
-    name: 'video_setup',
+    name: 'metaontic_agent_forge_video_setup',
     description:
       '检查本机有没有 ffmpeg（生成超过模型单次上限的视频时，合并成一条要用它），缺了就装。'
       + 'install=true 表示「用户已经同意安装」，插件会执行安装命令并验证——'
@@ -60,7 +60,7 @@ export function setupTool(config) {
         } else if (status === 'missing') {
           lines.push('本机还没有 ffmpeg：生成超过模型单次上限的视频时只能给分段，没法合并成一条。');
           lines.push(`装一下就好（${os || '当前系统'}）：${installCommand || ''}`);
-          lines.push('用户同意的话，我可以用 video_setup（install=true）直接帮他装。');
+          lines.push('用户同意的话，我可以用 metaontic_agent_forge_video_setup（install=true）直接帮他装。');
         } else if (status === 'failed') {
           lines.push('ffmpeg 没装成功，得手动装一下。');
           lines.push(`手动步骤：${note || installCommand || ''}`);

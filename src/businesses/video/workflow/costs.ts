@@ -29,7 +29,7 @@ function estimateRate(model, usesReference) {
 
 /** 这次调用会拆几段：和真正执行用的是同一套规划（直出 + 逐段延长）。 */
 export function estimatePlan(config, toolName, args) {
-  if (toolName === 'video_extend') {
+  if (toolName === 'metaontic_agent_forge_video_extend') {
     validateExtensionDuration(config, args);
     const count = clampInteger(args?.segments, 1, MAX_SEGMENTS, 1);
     const fallback = modelMaxSeconds(config);

@@ -37,7 +37,7 @@ export function createVideoClient(require) {
         ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'metaontic-agent-forge: dictionaries');
         ctx.effect(() => ctx.slots.inject('conversation.chat.node', () => registerAuthNotice(ctx, h, t)), 'metaontic-agent-forge: friendly service authentication notice');
         const form = ctx.configForms.get(NAMESPACE);
-        for (const tool of ['video_generate', 'video_extend', 'video_status', 'video_prepare_image']) {
+        for (const tool of ['metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_extend', 'metaontic_agent_forge_video_status', 'metaontic_agent_forge_video_prepare_image']) {
           ctx.effect(() => ctx.slots.inject('tool.call.toolview', () =>
             ctx.slots.register({ name: 'tool.call.toolview', key: tool, locale: NS }, ToolResultView)),
           `metaontic-agent-forge: ${tool} progress`);

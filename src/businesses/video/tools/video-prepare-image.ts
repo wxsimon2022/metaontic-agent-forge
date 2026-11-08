@@ -10,8 +10,8 @@ const IMAGE_MODELS = [IMAGE_MODEL];
 
 export function prepareImageTool(liveConfig, progress = {}) {
   return {
-    name: 'video_prepare_image',
-    description: 'A/B 模式：Seedream支持operation=create_character按文字生成角色参考图（不需要原图），或默认convert_reference把真人参考图转为非真人角色。纯文生视频先询问是否出角色图，明确图片单独计费；同意后生成，逐张展示并审核后才能用于视频。须先说明图片调用单独计费并确认风格；返回 imageUrl，可交给 video_generate/video_extend 的参考图或首尾帧。不能识别图片是否真人，由助手看图或根据用户说明判断；失败禁止改用原真人图生成视频。',
+    name: 'metaontic_agent_forge_video_prepare_image',
+    description: 'A/B 模式：Seedream支持operation=create_character按文字生成角色参考图（不需要原图），或默认convert_reference把真人参考图转为非真人角色。纯文生视频先询问是否出角色图，明确图片单独计费；同意后生成，逐张展示并审核后才能用于视频。须先说明图片调用单独计费并确认风格；返回 imageUrl，可交给 metaontic_agent_forge_video_generate/metaontic_agent_forge_video_extend 的参考图或首尾帧。不能识别图片是否真人，由助手看图或根据用户说明判断；失败禁止改用原真人图生成视频。',
     parameters: {
       type: 'object',
       properties: {

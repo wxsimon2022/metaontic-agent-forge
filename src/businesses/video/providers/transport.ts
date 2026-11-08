@@ -139,7 +139,7 @@ export function getTask(config, taskId, signal) {
  * API密钥在生成途中被判无效都会让查询报错，但任务在上游照常跑完。所以这里对查询错误
  * 做有限次重试（`pollErrorRetries`，默认 5）——连续失败到上限才放弃，
  * 放弃时返回 `unknown`（不是 `failed`），任务 ID 由调用方保留，
- * 交给 `video_status` 事后补拉，绝不把「没查到」当成「没生成」。
+ * 交给 `metaontic_agent_forge_video_status` 事后补拉，绝不把「没查到」当成「没生成」。
  */
 export async function waitForCompletion(config, taskId, signal): Promise<TaskResult> {
   const deadline = Date.now() + ref(config, 'maxWaitMs', 600000);
@@ -163,7 +163,7 @@ export async function waitForCompletion(config, taskId, signal): Promise<TaskRes
           status: 'unknown',
           errorCode: failure?.code || 'provider_poll_error',
           error: `任务已提交（${taskId}），查询返回失败：${failure?.message || failure}。`
-            + '可用 video_status 按这个 ID 复查确认。',
+            + '可用 metaontic_agent_forge_video_status 按这个 ID 复查确认。',
         };
       }
       pollErrors += 1;
@@ -174,7 +174,7 @@ export async function waitForCompletion(config, taskId, signal): Promise<TaskRes
           errorCode: failure?.code || 'provider_poll_error',
           error: `任务已提交（${taskId}），但连续 ${pollErrors} 次查询状态失败：${
             failure?.message || failure
-          }。任务可能仍在生成，可用 video_status 按这个 ID 再查，不要重复提交。`,
+          }。任务可能仍在生成，可用 metaontic_agent_forge_video_status 按这个 ID 再查，不要重复提交。`,
         };
       }
       await sleep(ref(config, 'pollIntervalMs', 5000), signal);

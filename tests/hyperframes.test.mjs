@@ -25,7 +25,7 @@ test('Hyperframes is hidden unless the internal environment flag is explicit', (
         },
         on() {},
       });
-      assert.equal(names.includes('video_hyperframes'), enabled);
+      assert.equal(names.includes('metaontic_agent_forge_video_hyperframes'), enabled);
       assert.doesNotMatch(prompt.text(), /hyperframes/i);
     }
   } finally {

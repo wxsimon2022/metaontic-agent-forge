@@ -5,5 +5,5 @@ export function isVideoDirector(context: any, ctx: any) {
   return registryForContext(ctx, agentRegistry).hasBusiness(context, ctx, 'video');
 }
 export function isPromoVideoAssistant(context: any, ctx: any) {
-  return registryForContext(ctx, agentRegistry).resolve(context, ctx)?.id === 'forge-promo-video';
+  return registryForContext(ctx, agentRegistry).resolve(context, ctx)?.id === 'metaontic-agent-forge-promo-video';
 }

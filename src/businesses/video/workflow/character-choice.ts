@@ -17,7 +17,7 @@ function hasImages(args) {
     .some(value => typeof value === 'string' && Boolean(value.trim()));
 }
 export async function characterChoiceGate(ctx, config, exec, args) {
-  if (exec.name !== 'video_generate' || String(args?.resume || '').trim() || hasImages(args)) return null;
+  if (exec.name !== 'metaontic_agent_forge_video_generate' || String(args?.resume || '').trim() || hasImages(args)) return null;
   if (args?.projectId && !args.preparation) return projectCharacterGate(config, exec, args);
   const project = args?.projectId ? await readProject(args.projectId, exec) : null;
   const session = exec.agent?.session;
@@ -64,7 +64,7 @@ export async function characterChoiceGate(ctx, config, exec, args) {
     if (choice === 'text_only') return null;
     if (choice === 'generate_first') return deny(isVolcengine(config)
       ? '用户选择先使用角色图，已停止纯文生视频提交。请先取得并审核用户提供的角色图，再传referenceImages/characterReferenceImages；不要重复询问或直接生成视频。'
-      : '用户已明确选择先生成角色图，已停止纯文生视频提交。请先用video_prepare_image(operation:create_character)按已确认设定出图，图片单独计费；展示审核后将图片传入referenceImages和characterReferenceImages，再单独确认视频费用与制作。不要重复询问此选择，不要直接重提纯文生视频；用户明确改变方案时，传resetCharacterChoice:true重新取得选择。');
+      : '用户已明确选择先生成角色图，已停止纯文生视频提交。请先用metaontic_agent_forge_video_prepare_image(operation:create_character)按已确认设定出图，图片单独计费；展示审核后将图片传入referenceImages和characterReferenceImages，再单独确认视频费用与制作。不要重复询问此选择，不要直接重提纯文生视频；用户明确改变方案时，传resetCharacterChoice:true重新取得选择。');
     return deny('角色图选择尚未取得明确答复，已停止提交。取消、跳过、pending、交互不可用或记录失败都不等于选择直接文生视频；恢复询问能力后再继续，不得默认跳过。');
   } catch { return deny('角色图选择未完成，未提交视频。请恢复询问与选择记录能力后再继续，不要自动跳过或重提。'); }
 }

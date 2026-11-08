@@ -10,9 +10,9 @@ An extensible agent platform for DeepSeek Harness. The coordinator delegates tas
 
 | Agent | ID | Role |
 |---|---|---|
-| 云智工坊 · 智能体平台 | `forge-studio` | Coordination, task tracking and result summaries |
-| Video creation assistant | `forge-video-director` | Concepts, scripts, generation and continuation |
-| Promotional video assistant | `forge-promo-video` | Product, brand and event videos |
+| 云智工坊 · 智能体平台 | `metaontic-agent-forge-studio` | Coordination, task tracking and result summaries |
+| Video creation assistant | `metaontic-agent-forge-video-director` | Concepts, scripts, generation and continuation |
+| Promotional video assistant | `metaontic-agent-forge-promo-video` | Product, brand and event videos |
 
 Delegation is limited to approved specialists and one level. Task creation is not completion. Users still review scripts, costs and each generated video segment.
 
@@ -42,8 +42,8 @@ flowchart TB
     Harness[DeepSeek Harness] --> Entry[metaontic-agent-forge]
     Entry --> Core["src/core: registration, scope, lifecycle, settings"]
     Entry --> UI["src/client: platform UI and business assembly"]
-    Studio[forge-studio] -->|Approved targets, one level| VideoAgent[forge-video-director]
-    Studio -->|Approved targets, one level| PromoAgent[forge-promo-video]
+    Studio[metaontic-agent-forge-studio] -->|Approved targets, one level| VideoAgent[metaontic-agent-forge-video-director]
+    Studio -->|Approved targets, one level| PromoAgent[metaontic-agent-forge-promo-video]
     Studio --> Agents[src/agents]
     VideoAgent --> Agents
     PromoAgent --> Agents

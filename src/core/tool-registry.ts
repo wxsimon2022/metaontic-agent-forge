@@ -10,6 +10,7 @@ export function createToolRegistry(ctx: DshContext, agents: AgentRegistry, analy
     return !agent || agent.businesses.includes(business);
   }
   function register(business: string, tool: DshToolDefinition, registrationContext: DshContext = ctx) {
+    if (!/^metaontic_agent_forge_[a-z0-9_]+$/.test(tool.name) || tool.name.length > 64) throw new Error('平台工具名称必须使用 metaontic_agent_forge_ 固定前缀，且不超过64字符。');
     if (owners.has(tool.name)) throw new Error(`工具名称重复：${tool.name}`);
     owners.set(tool.name, business);
     const guarded = { ...tool, async execute(args: any, exec: any) {

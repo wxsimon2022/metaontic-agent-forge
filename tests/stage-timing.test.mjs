@@ -11,7 +11,7 @@ function harness(){
 }
 test('automatic timing records paired spans and elapsed time without sensitive data',async()=>{
  const {ctx,logs}=harness();const result={status:'succeeded',secret:'private-output'};
- const wrapped=ctx.withStageTiming({name:'video_estimate',execute:async()=>result});
+ const wrapped=ctx.withStageTiming({name:'metaontic_agent_forge_video_estimate',execute:async()=>result});
  assert.equal(await wrapped.execute({apiKey:'secret-key',prompt:'secret-prompt'},{callId:'call-1'}),result);
  assert.equal(logs.length,2);assert.equal(logs[0].spanId,logs[1].spanId);assert.ok(logs[1].elapsedMs>=0);
  assert.equal(logs[1].outcome,'success');assert.ok(!JSON.stringify(logs).includes('secret'));assert.ok(!JSON.stringify(logs).includes('private-output'));

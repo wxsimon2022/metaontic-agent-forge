@@ -14,136 +14,136 @@
     const inputStyle = { width: "100%", boxSizing: "border-box" };
     const PAGE_CSS = `
       /* \u6574\u9875\u7EB5\u5411\u6392\u5E03\uFF1A\u5757\u4E0E\u5757\u4E4B\u95F4\u7EDF\u4E00 16px\uFF0C\u6BD4\u4E00\u6574\u7247\u8868\u5355\u597D\u626B */
-      .forge-page { display: flex; flex-direction: column; gap: 16px; padding: 4px 0; color: ${TOKENS.text}; }
+      .metaontic-agent-forge-page { display: flex; flex-direction: column; gap: 16px; padding: 4px 0; color: ${TOKENS.text}; }
       /* \u5206\u7EC4\u5361\u7247\uFF1A16 \u4E2A\u5B57\u6BB5\u644A\u5728\u4E00\u683C\u91CC\u592A\u7CCA\uFF0C\u6309\u7528\u9014\u5404\u88C5\u4E00\u5F20\u5361 */
-      .forge-section { display: flex; flex-direction: column; gap: 14px; padding: 14px 16px 16px; border-radius: 12px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.cardFill}; }
-      .forge-advanced { display: block; }
-      .forge-advanced-toggle { cursor: pointer; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
-      .forge-advanced-toggle .forge-hint { display: block; margin: 5px 0 0 16px; font-weight: 400; }
-      .forge-advanced-toggle:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 5px; border-radius: 4px; }
-      .forge-advanced-body { display: flex; flex-direction: column; gap: 18px; border-top: 1px solid ${TOKENS.border}; margin-top: 14px; padding-top: 16px; }
-      .forge-advanced-body .forge-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; align-items: start; }
-      .forge-advanced-body .forge-field-wide { grid-column: auto; }
-      .forge-advanced-group { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-      .forge-advanced-group + .forge-advanced-group { border-top: 1px solid ${TOKENS.border}; padding-top: 16px; }
-      .forge-advanced-group .forge-label { min-height: 30px; display: flex; align-items: flex-end; }
-      .forge-advanced-tools .forge-grid { grid-template-columns: minmax(0, 1fr); }
-      .forge-advanced-tools .forge-label { min-height: 0; }
-      .forge-advanced-group[data-group="advancedPicture"] .forge-grid { grid-template-columns: minmax(0, 1fr); }
-      .forge-advanced-group[data-group="advancedPicture"] .forge-switch { justify-content: space-between; flex-direction: row-reverse; }
+      .metaontic-agent-forge-section { display: flex; flex-direction: column; gap: 14px; padding: 14px 16px 16px; border-radius: 12px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.cardFill}; }
+      .metaontic-agent-forge-advanced { display: block; }
+      .metaontic-agent-forge-advanced-toggle { cursor: pointer; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
+      .metaontic-agent-forge-advanced-toggle .metaontic-agent-forge-hint { display: block; margin: 5px 0 0 16px; font-weight: 400; }
+      .metaontic-agent-forge-advanced-toggle:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 5px; border-radius: 4px; }
+      .metaontic-agent-forge-advanced-body { display: flex; flex-direction: column; gap: 18px; border-top: 1px solid ${TOKENS.border}; margin-top: 14px; padding-top: 16px; }
+      .metaontic-agent-forge-advanced-body .metaontic-agent-forge-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; align-items: start; }
+      .metaontic-agent-forge-advanced-body .metaontic-agent-forge-field-wide { grid-column: auto; }
+      .metaontic-agent-forge-advanced-group { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+      .metaontic-agent-forge-advanced-group + .metaontic-agent-forge-advanced-group { border-top: 1px solid ${TOKENS.border}; padding-top: 16px; }
+      .metaontic-agent-forge-advanced-group .metaontic-agent-forge-label { min-height: 30px; display: flex; align-items: flex-end; }
+      .metaontic-agent-forge-advanced-tools .metaontic-agent-forge-grid { grid-template-columns: minmax(0, 1fr); }
+      .metaontic-agent-forge-advanced-tools .metaontic-agent-forge-label { min-height: 0; }
+      .metaontic-agent-forge-advanced-group[data-group="advancedPicture"] .metaontic-agent-forge-grid { grid-template-columns: minmax(0, 1fr); }
+      .metaontic-agent-forge-advanced-group[data-group="advancedPicture"] .metaontic-agent-forge-switch { justify-content: space-between; flex-direction: row-reverse; }
 
-      @container (max-width: 480px) { .forge-advanced-body .forge-grid { grid-template-columns: minmax(0, 1fr); } .forge-advanced-group .forge-label { min-height: 0; } }
-      .forge-advanced { container-type: inline-size; }
-      .forge-section-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
+      @container (max-width: 480px) { .metaontic-agent-forge-advanced-body .metaontic-agent-forge-grid { grid-template-columns: minmax(0, 1fr); } .metaontic-agent-forge-advanced-group .metaontic-agent-forge-label { min-height: 0; } }
+      .metaontic-agent-forge-advanced { container-type: inline-size; }
+      .metaontic-agent-forge-section-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
       /* \u6807\u9898\u5DE6\u8FB9\u4E00\u9053\u4E3B\u8272\u7AD6\u6761\uFF0C\u4EE3\u66FF\u7EAF\u6587\u5B57\u5206\u7EC4\u6807\u9898 */
-      .forge-section-title::before { content: ""; flex: 0 0 auto; width: 3px; height: 13px; border-radius: 2px; background: ${TOKENS.primaryFill}; }
-      .forge-section-title::after { content: ""; flex: 1 1 auto; height: 1px; background: ${TOKENS.border}; }
+      .metaontic-agent-forge-section-title::before { content: ""; flex: 0 0 auto; width: 3px; height: 13px; border-radius: 2px; background: ${TOKENS.primaryFill}; }
+      .metaontic-agent-forge-section-title::after { content: ""; flex: 1 1 auto; height: 1px; background: ${TOKENS.border}; }
       /* \u4E24\u5217\u81EA\u9002\u5E94\uFF1A\u5355\u5217\u81F3\u5C11 240px\uFF0C\u7A84\u9762\u677F\u81EA\u52A8\u843D\u6210\u4E00\u5217 */
-      .forge-parameter-group { container-type: inline-size; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-      .forge-parameter-group + .forge-parameter-group { border-top: 1px solid ${TOKENS.border}; padding-top: 16px; }
-      .forge-parameter-heading { font-size: 12px; font-weight: 600; color: ${TOKENS.muted}; }
-      .forge-parameter-group .forge-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
-      @container (max-width: 480px) { .forge-parameter-group .forge-grid { grid-template-columns: minmax(0, 1fr); } }
-      .forge-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 14px 18px; }
-      .forge-field { display: flex; flex-direction: column; min-width: 0; }
-      .forge-model-settings { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-      .forge-model-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-      .forge-model-grid-single { grid-template-columns: minmax(0, 1fr); }
-      .forge-model-card { display: flex; flex-direction: column; gap: 14px; padding: 12px; border: 1px solid ${TOKENS.border}; border-radius: 10px; min-width: 0; }
-      .forge-parameter-group > .forge-card { border: 0; padding: 0; background: transparent; }
-      @container (max-width: 600px) { .forge-model-grid { grid-template-columns: minmax(0, 1fr); } }
+      .metaontic-agent-forge-parameter-group { container-type: inline-size; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+      .metaontic-agent-forge-parameter-group + .metaontic-agent-forge-parameter-group { border-top: 1px solid ${TOKENS.border}; padding-top: 16px; }
+      .metaontic-agent-forge-parameter-heading { font-size: 12px; font-weight: 600; color: ${TOKENS.muted}; }
+      .metaontic-agent-forge-parameter-group .metaontic-agent-forge-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+      @container (max-width: 480px) { .metaontic-agent-forge-parameter-group .metaontic-agent-forge-grid { grid-template-columns: minmax(0, 1fr); } }
+      .metaontic-agent-forge-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 14px 18px; }
+      .metaontic-agent-forge-field { display: flex; flex-direction: column; min-width: 0; }
+      .metaontic-agent-forge-model-settings { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+      .metaontic-agent-forge-model-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .metaontic-agent-forge-model-grid-single { grid-template-columns: minmax(0, 1fr); }
+      .metaontic-agent-forge-model-card { display: flex; flex-direction: column; gap: 14px; padding: 12px; border: 1px solid ${TOKENS.border}; border-radius: 10px; min-width: 0; }
+      .metaontic-agent-forge-parameter-group > .metaontic-agent-forge-card { border: 0; padding: 0; background: transparent; }
+      @container (max-width: 600px) { .metaontic-agent-forge-model-grid { grid-template-columns: minmax(0, 1fr); } }
 
-      .forge-av-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-      .forge-av-card { display: flex; flex-direction: column; min-width: 0; padding: 12px; gap: 8px; border: 1px solid ${TOKENS.border}; border-radius: 10px; background: ${TOKENS.cardFill}; }
-      .forge-av-card > .forge-label { margin-bottom: -2px; }
-      .forge-av-card .forge-hint { margin-top: auto; }
-      .forge-av-audio .forge-switch { justify-content: space-between; gap: 12px; padding: 0; border: 0; background: transparent; }
-      .forge-av-audio .forge-switch span { order: 0; }
-      .forge-av-audio .forge-switch input { appearance: none; order: 1; flex: 0 0 34px; width: 34px; height: 20px; margin: 0; border: 1px solid ${TOKENS.border}; border-radius: 999px; background: ${TOKENS.border}; position: relative; transition: background .15s; }
-      .forge-av-audio .forge-switch input::after { content: ''; position: absolute; width: 14px; height: 14px; left: 2px; top: 2px; border-radius: 50%; background: white; transition: transform .15s; }
-      .forge-av-audio .forge-switch input:checked { background: ${TOKENS.primaryFill}; border-color: ${TOKENS.primaryFill}; }
-      .forge-av-audio .forge-switch input:checked::after { transform: translateX(14px); }
-      .forge-av-audio .forge-switch input:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 3px; }
-      @container (max-width: 480px) { .forge-av-grid { grid-template-columns: minmax(0, 1fr); } }
-      @media (prefers-reduced-motion: reduce) { .forge-av-audio .forge-switch input, .forge-av-audio .forge-switch input::after { transition: none; } }
+      .metaontic-agent-forge-av-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .metaontic-agent-forge-av-card { display: flex; flex-direction: column; min-width: 0; padding: 12px; gap: 8px; border: 1px solid ${TOKENS.border}; border-radius: 10px; background: ${TOKENS.cardFill}; }
+      .metaontic-agent-forge-av-card > .metaontic-agent-forge-label { margin-bottom: -2px; }
+      .metaontic-agent-forge-av-card .metaontic-agent-forge-hint { margin-top: auto; }
+      .metaontic-agent-forge-av-audio .metaontic-agent-forge-switch { justify-content: space-between; gap: 12px; padding: 0; border: 0; background: transparent; }
+      .metaontic-agent-forge-av-audio .metaontic-agent-forge-switch span { order: 0; }
+      .metaontic-agent-forge-av-audio .metaontic-agent-forge-switch input { appearance: none; order: 1; flex: 0 0 34px; width: 34px; height: 20px; margin: 0; border: 1px solid ${TOKENS.border}; border-radius: 999px; background: ${TOKENS.border}; position: relative; transition: background .15s; }
+      .metaontic-agent-forge-av-audio .metaontic-agent-forge-switch input::after { content: ''; position: absolute; width: 14px; height: 14px; left: 2px; top: 2px; border-radius: 50%; background: white; transition: transform .15s; }
+      .metaontic-agent-forge-av-audio .metaontic-agent-forge-switch input:checked { background: ${TOKENS.primaryFill}; border-color: ${TOKENS.primaryFill}; }
+      .metaontic-agent-forge-av-audio .metaontic-agent-forge-switch input:checked::after { transform: translateX(14px); }
+      .metaontic-agent-forge-av-audio .metaontic-agent-forge-switch input:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 3px; }
+      @container (max-width: 480px) { .metaontic-agent-forge-av-grid { grid-template-columns: minmax(0, 1fr); } }
+      @media (prefers-reduced-motion: reduce) { .metaontic-agent-forge-av-audio .metaontic-agent-forge-switch input, .metaontic-agent-forge-av-audio .metaontic-agent-forge-switch input::after { transition: none; } }
 
       /* \u5F00\u5173\u6CA1\u6709\u6807\u7B7E\u884C\uFF0C\u9760\u5E95\u5BF9\u9F50\u624D\u80FD\u8DDF\u65C1\u8FB9\u8F93\u5165\u6846\u7684\u63A7\u5236\u7EBF\u9F50\u5E73 */
-      .forge-field-switch { justify-content: flex-end; }
-      .forge-field-wide { grid-column: 1 / -1; }
-      .forge-label { display: block; font-size: 12px; color: ${TOKENS.muted}; margin-bottom: 6px; }
-      .forge-input { padding: 8px 10px; border-radius: 8px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.controlFill}; color: ${TOKENS.text}; font: inherit; font-size: 13px; height: 36px; }
-      .forge-key-control { position: relative; min-width: 0; }
-      .forge-key-control .forge-input { padding-right: 40px; }
-      .forge-key-eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 30px; height: 28px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 5px; background: transparent; color: ${TOKENS.muted}; cursor: pointer; }
-      .forge-key-eye:hover { color: ${TOKENS.text}; background: ${TOKENS.border}; }
-      .forge-key-eye:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 1px; }
-      .forge-input:focus, .forge-input:focus-visible { outline: none; border-color: ${TOKENS.primaryFill}; box-shadow: 0 0 0 3px rgba(36, 123, 191, .18); }
+      .metaontic-agent-forge-field-switch { justify-content: flex-end; }
+      .metaontic-agent-forge-field-wide { grid-column: 1 / -1; }
+      .metaontic-agent-forge-label { display: block; font-size: 12px; color: ${TOKENS.muted}; margin-bottom: 6px; }
+      .metaontic-agent-forge-input { padding: 8px 10px; border-radius: 8px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.controlFill}; color: ${TOKENS.text}; font: inherit; font-size: 13px; height: 36px; }
+      .metaontic-agent-forge-key-control { position: relative; min-width: 0; }
+      .metaontic-agent-forge-key-control .metaontic-agent-forge-input { padding-right: 40px; }
+      .metaontic-agent-forge-key-eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 30px; height: 28px; display: flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 5px; background: transparent; color: ${TOKENS.muted}; cursor: pointer; }
+      .metaontic-agent-forge-key-eye:hover { color: ${TOKENS.text}; background: ${TOKENS.border}; }
+      .metaontic-agent-forge-key-eye:focus-visible { outline: 2px solid ${TOKENS.primaryFill}; outline-offset: 1px; }
+      .metaontic-agent-forge-input:focus, .metaontic-agent-forge-input:focus-visible { outline: none; border-color: ${TOKENS.primaryFill}; box-shadow: 0 0 0 3px rgba(36, 123, 191, .18); }
       /* \u6A21\u578B ID \u4E0E\u53EF\u6267\u884C\u6587\u4EF6\u8DEF\u5F84\u5F88\u957F\uFF1A\u7B49\u5BBD\u5B57\u4F53 + \u7701\u7565\uFF0C\u4E0D\u628A\u6574\u884C\u6491\u53D8\u5F62 */
-      .forge-mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; }
+      .metaontic-agent-forge-mono { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; }
       /* \u5F00\u5173\u505A\u6210\u8DDF\u8F93\u5165\u6846\u540C\u9AD8\u7684\u5C0F\u65B9\u5757\uFF0C\u548C\u5468\u56F4\u63A7\u4EF6\u4E00\u6761\u7EBF */
-      .forge-switch { display: flex; align-items: center; gap: 8px; padding: 0 10px; height: 36px; box-sizing: border-box; border: 1px solid ${TOKENS.border}; border-radius: 8px; background: ${TOKENS.controlFill}; font-size: 13px; color: ${TOKENS.text}; cursor: pointer; }
-      .forge-switch:hover { border-color: ${TOKENS.primaryFill}; }
-      .forge-switch input { width: 15px; height: 15px; accent-color: ${TOKENS.primaryFill}; cursor: pointer; }
-      .forge-card { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 12px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.cardFill}; }
-      .forge-current-version { display: inline-flex; align-items: center; gap: 6px; flex: 1 1 120px; }
-      .forge-update-bell { display: inline-flex; flex: 0 0 auto; color: ${TOKENS.primaryFill}; transform-origin: 50% 10%; animation: forge-bell-swing 1.6s ease-in-out infinite; }
-      @keyframes forge-bell-swing { 0%, 60%, 100% { transform: rotate(0deg); } 10%, 30% { transform: rotate(-18deg); } 20%, 40% { transform: rotate(18deg); } 50% { transform: rotate(-8deg); } }
-      @media (prefers-reduced-motion: reduce) { .forge-update-bell { animation: none; } }
-      .forge-card-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-      .forge-card-title { font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
-      .forge-hint { font-size: 12px; color: ${TOKENS.muted}; line-height: 1.5; }
-      .forge-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-sizing: border-box; flex: 0 0 120px; width: 120px; min-width: 120px; height: 36px; min-height: 36px; padding: 4px 10px; border-radius: 8px; border: 1px solid ${TOKENS.border}; background: transparent; color: ${TOKENS.text}; font: inherit; font-size: 12px; line-height: 1.2; text-align: center; cursor: pointer; white-space: normal; overflow-wrap: anywhere; transition: background .15s, border-color .15s, color .15s, opacity .15s; }
-      .forge-btn:hover:not(:disabled) { border-color: ${TOKENS.primaryFill}; color: ${TOKENS.primaryFill}; }
-      .forge-btn:disabled { opacity: .5; cursor: default; }
-      .forge-btn-primary { border-color: ${TOKENS.primaryFill}; background: ${TOKENS.primaryFill}; color: #fff; font-weight: 600; }
-      .forge-btn-primary:hover:not(:disabled) { color: #fff; opacity: .88; }
-      .forge-quota-actions { display: flex; gap: 8px; flex: 0 0 auto; }
-      .forge-support-dialog { width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 0; border: 1px solid ${TOKENS.border}; border-radius: 12px; color: ${TOKENS.text}; background: ${TOKENS.cardFill}; overflow: auto; }
-      .forge-support-dialog::backdrop { background: rgba(0, 0, 0, .45); }
-      .forge-support-content { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-      .forge-support-content p { margin: 0; }
-      .forge-support-frame { width: 100%; height: min(480px, 62vh); border: 0; border-radius: 8px; background: white; }
-      .forge-trailing { margin-left: auto; }
+      .metaontic-agent-forge-switch { display: flex; align-items: center; gap: 8px; padding: 0 10px; height: 36px; box-sizing: border-box; border: 1px solid ${TOKENS.border}; border-radius: 8px; background: ${TOKENS.controlFill}; font-size: 13px; color: ${TOKENS.text}; cursor: pointer; }
+      .metaontic-agent-forge-switch:hover { border-color: ${TOKENS.primaryFill}; }
+      .metaontic-agent-forge-switch input { width: 15px; height: 15px; accent-color: ${TOKENS.primaryFill}; cursor: pointer; }
+      .metaontic-agent-forge-card { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 12px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.cardFill}; }
+      .metaontic-agent-forge-current-version { display: inline-flex; align-items: center; gap: 6px; flex: 1 1 120px; }
+      .metaontic-agent-forge-update-bell { display: inline-flex; flex: 0 0 auto; color: ${TOKENS.primaryFill}; transform-origin: 50% 10%; animation: metaontic-agent-forge-bell-swing 1.6s ease-in-out infinite; }
+      @keyframes metaontic-agent-forge-bell-swing { 0%, 60%, 100% { transform: rotate(0deg); } 10%, 30% { transform: rotate(-18deg); } 20%, 40% { transform: rotate(18deg); } 50% { transform: rotate(-8deg); } }
+      @media (prefers-reduced-motion: reduce) { .metaontic-agent-forge-update-bell { animation: none; } }
+      .metaontic-agent-forge-card-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .metaontic-agent-forge-card-title { font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
+      .metaontic-agent-forge-hint { font-size: 12px; color: ${TOKENS.muted}; line-height: 1.5; }
+      .metaontic-agent-forge-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; box-sizing: border-box; flex: 0 0 120px; width: 120px; min-width: 120px; height: 36px; min-height: 36px; padding: 4px 10px; border-radius: 8px; border: 1px solid ${TOKENS.border}; background: transparent; color: ${TOKENS.text}; font: inherit; font-size: 12px; line-height: 1.2; text-align: center; cursor: pointer; white-space: normal; overflow-wrap: anywhere; transition: background .15s, border-color .15s, color .15s, opacity .15s; }
+      .metaontic-agent-forge-btn:hover:not(:disabled) { border-color: ${TOKENS.primaryFill}; color: ${TOKENS.primaryFill}; }
+      .metaontic-agent-forge-btn:disabled { opacity: .5; cursor: default; }
+      .metaontic-agent-forge-btn-primary { border-color: ${TOKENS.primaryFill}; background: ${TOKENS.primaryFill}; color: #fff; font-weight: 600; }
+      .metaontic-agent-forge-btn-primary:hover:not(:disabled) { color: #fff; opacity: .88; }
+      .metaontic-agent-forge-quota-actions { display: flex; gap: 8px; flex: 0 0 auto; }
+      .metaontic-agent-forge-support-dialog { width: min(420px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 0; border: 1px solid ${TOKENS.border}; border-radius: 12px; color: ${TOKENS.text}; background: ${TOKENS.cardFill}; overflow: auto; }
+      .metaontic-agent-forge-support-dialog::backdrop { background: rgba(0, 0, 0, .45); }
+      .metaontic-agent-forge-support-content { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+      .metaontic-agent-forge-support-content p { margin: 0; }
+      .metaontic-agent-forge-support-frame { width: 100%; height: min(480px, 62vh); border: 0; border-radius: 8px; background: white; }
+      .metaontic-agent-forge-trailing { margin-left: auto; }
       /* \u989D\u5EA6\uFF1A\u4E09\u4E2A\u6570\u5B57\u5757\uFF0C\u4E00\u773C\u5206\u6E05\u5269\u4F59 / \u5DF2\u7528 / \u603B\u989D\u5EA6 */
-      .forge-quota-compact { padding: 8px 12px; gap: 10px 14px; flex-direction: row; align-items: center; flex-wrap: wrap; }
-      .forge-quota-compact .forge-card-head { min-height: 24px; flex: 0 0 auto; gap: 8px; }
-      .forge-quota-compact .forge-stats { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 8px 16px; min-width: 0; }
-      .forge-quota-compact .forge-stat { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 6px; padding: 0; border: 0; border-radius: 0; white-space: nowrap; }
-      .forge-quota-compact .forge-stat-label { font-size: 11px; white-space: nowrap; }
-      .forge-quota-compact .forge-stat-value { font-size: 14px; }
-      .forge-quota-compact .forge-foot-note { font-size: 10px; white-space: nowrap; flex: 0 0 auto; }
-      .forge-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
-      .forge-stat { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 10px; border: 1px solid ${TOKENS.border}; }
-      .forge-stat-label { font-size: 11.5px; color: ${TOKENS.muted}; }
-      .forge-stat-value { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-      .forge-foot-note { font-size: 11.5px; color: ${TOKENS.muted}; }
+      .metaontic-agent-forge-quota-compact { padding: 8px 12px; gap: 10px 14px; flex-direction: row; align-items: center; flex-wrap: wrap; }
+      .metaontic-agent-forge-quota-compact .metaontic-agent-forge-card-head { min-height: 24px; flex: 0 0 auto; gap: 8px; }
+      .metaontic-agent-forge-quota-compact .metaontic-agent-forge-stats { display: flex; flex: 1 1 auto; flex-wrap: wrap; gap: 8px 16px; min-width: 0; }
+      .metaontic-agent-forge-quota-compact .metaontic-agent-forge-stat { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 6px; padding: 0; border: 0; border-radius: 0; white-space: nowrap; }
+      .metaontic-agent-forge-quota-compact .metaontic-agent-forge-stat-label { font-size: 11px; white-space: nowrap; }
+      .metaontic-agent-forge-quota-compact .metaontic-agent-forge-stat-value { font-size: 14px; }
+      .metaontic-agent-forge-quota-compact .metaontic-agent-forge-foot-note { font-size: 10px; white-space: nowrap; flex: 0 0 auto; }
+      .metaontic-agent-forge-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+      .metaontic-agent-forge-stat { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: 10px; border: 1px solid ${TOKENS.border}; }
+      .metaontic-agent-forge-stat-label { font-size: 11.5px; color: ${TOKENS.muted}; }
+      .metaontic-agent-forge-stat-value { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+      .metaontic-agent-forge-foot-note { font-size: 11.5px; color: ${TOKENS.muted}; }
       /* ffmpeg \u5B89\u88C5\u547D\u4EE4\uFF1A\u4E00\u884C\u7B49\u5BBD\u3001\u53EF\u590D\u5236\uFF0C\u4E0D\u7528\u6491\u6EE1\u6574\u884C */
-      .forge-cmd-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-      .forge-tag { flex: 0 0 auto; min-width: 132px; font-size: 12px; color: ${TOKENS.muted}; }
-      .forge-code { flex: 0 0 auto; max-width: 100%; padding: 6px 10px; border-radius: 8px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.controlFill}; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+      .metaontic-agent-forge-cmd-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .metaontic-agent-forge-tag { flex: 0 0 auto; min-width: 132px; font-size: 12px; color: ${TOKENS.muted}; }
+      .metaontic-agent-forge-code { flex: 0 0 auto; max-width: 100%; padding: 6px 10px; border-radius: 8px; border: 1px solid ${TOKENS.border}; background: ${TOKENS.controlFill}; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
       /* \u4F7F\u7528\u8BB0\u5F55\uFF1A\u6591\u9A6C\u7EB9 + \u7EC6\u8868\u5934\uFF0C\u6A21\u578B\u5217\u5403\u6389\u5269\u4F59\u5BBD\u5EA6 */
       /* \u9762\u677F\u5F88\u7A84\u65F6\u8868\u683C\u6A2A\u5411\u6EDA\u52A8\uFF0C\u4E5F\u4E0D\u628A\u300C\u65F6\u95F4\u300D\u6324\u6210\u4E24\u884C */
-      .forge-table { display: flex; flex-direction: column; margin: 0 -6px; overflow-x: auto; }
-      .forge-table-head, .forge-table-row { display: grid; grid-template-columns: 106px 78px minmax(72px, 1fr) 84px 60px; align-items: center; gap: 10px; padding: 8px 10px; }
-      .forge-table-head > :nth-child(1), .forge-table-row > :nth-child(1) { white-space: nowrap; }
-      .forge-table-head { font-size: 11px; letter-spacing: .03em; color: ${TOKENS.muted}; border-bottom: 1px solid ${TOKENS.border}; }
-      .forge-table-row { font-size: 12.5px; border-radius: 8px; }
-      .forge-table-row:nth-child(even) { background: rgba(127, 127, 127, .05); }
-      .forge-table-row:hover { background: rgba(127, 127, 127, .1); }
+      .metaontic-agent-forge-table { display: flex; flex-direction: column; margin: 0 -6px; overflow-x: auto; }
+      .metaontic-agent-forge-table-head, .metaontic-agent-forge-table-row { display: grid; grid-template-columns: 106px 78px minmax(72px, 1fr) 84px 60px; align-items: center; gap: 10px; padding: 8px 10px; }
+      .metaontic-agent-forge-table-head > :nth-child(1), .metaontic-agent-forge-table-row > :nth-child(1) { white-space: nowrap; }
+      .metaontic-agent-forge-table-head { font-size: 11px; letter-spacing: .03em; color: ${TOKENS.muted}; border-bottom: 1px solid ${TOKENS.border}; }
+      .metaontic-agent-forge-table-row { font-size: 12.5px; border-radius: 8px; }
+      .metaontic-agent-forge-table-row:nth-child(even) { background: rgba(127, 127, 127, .05); }
+      .metaontic-agent-forge-table-row:hover { background: rgba(127, 127, 127, .1); }
       /* \u8D39\u7528\u4E0E\u7ED3\u679C\u4E24\u5217\u53F3\u5BF9\u9F50\uFF0C\u6570\u5B57\u7AD6\u7740\u5BF9\u5F97\u9F50 */
-      .forge-table-head > :nth-child(4), .forge-table-row > :nth-child(4),
-      .forge-table-head > :nth-child(5), .forge-table-row > :nth-child(5) { text-align: right; }
-      .forge-model { min-width: 0; overflow: hidden; color: ${TOKENS.muted}; white-space: nowrap; text-overflow: ellipsis; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; }
-      .forge-num { font-variant-numeric: tabular-nums; }
+      .metaontic-agent-forge-table-head > :nth-child(4), .metaontic-agent-forge-table-row > :nth-child(4),
+      .metaontic-agent-forge-table-head > :nth-child(5), .metaontic-agent-forge-table-row > :nth-child(5) { text-align: right; }
+      .metaontic-agent-forge-model { min-width: 0; overflow: hidden; color: ${TOKENS.muted}; white-space: nowrap; text-overflow: ellipsis; font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; }
+      .metaontic-agent-forge-num { font-variant-numeric: tabular-nums; }
       /* \u7ED3\u679C\u7528\u80F6\u56CA\u6807\u7B7E\uFF0C\u6BD4\u88F8\u6587\u5B57\u66F4\u5BB9\u6613\u4E00\u773C\u626B\u5230 */
-      .forge-chip { display: inline-flex; align-items: center; justify-content: center; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; line-height: 1.7; }
-      .forge-chip-ok { color: ${TOKENS.success}; background: rgba(46, 158, 91, .12); }
-      .forge-chip-bad { color: ${TOKENS.error}; background: rgba(217, 83, 79, .12); }
+      .metaontic-agent-forge-chip { display: inline-flex; align-items: center; justify-content: center; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; line-height: 1.7; }
+      .metaontic-agent-forge-chip-ok { color: ${TOKENS.success}; background: rgba(46, 158, 91, .12); }
+      .metaontic-agent-forge-chip-bad { color: ${TOKENS.error}; background: rgba(217, 83, 79, .12); }
       /* \u6CE8\u518C\u8868\u5355\uFF1A\u8F93\u5165\u6846\u5403\u6389\u591A\u4F59\u5BBD\u5EA6\uFF0C\u4E24\u4E2A\u6309\u94AE\u4E0D\u6362\u884C */
-      .forge-register-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .metaontic-agent-forge-register-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
       /* \u5E95\u90E8\u64CD\u4F5C\u6761\uFF1A\u4E0A\u8FB9\u7EBF\u628A\u300C\u4FDD\u5B58\u300D\u548C\u914D\u7F6E\u5185\u5BB9\u5206\u5F00 */
-      .forge-footer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 2px 2px; border-top: 1px solid ${TOKENS.border}; }
-      .forge-notice { margin: 0; font-size: 12px; color: ${TOKENS.muted}; line-height: 1.5; }
+      .metaontic-agent-forge-footer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 2px 2px; border-top: 1px solid ${TOKENS.border}; }
+      .metaontic-agent-forge-notice { margin: 0; font-size: 12px; color: ${TOKENS.muted}; line-height: 1.5; }
     `;
     return { TOKENS, inputStyle, PAGE_CSS };
   }
@@ -152,68 +152,68 @@
   function createSidebarPanel({ React, h, TOKENS, PAGE_CSS, t, PANEL_ID: PANEL_ID2, GUIDE_URL: GUIDE_URL2, LOGO_SVG }) {
     const LOGO_SRC = LOGO_SVG ? `data:image/svg+xml,${encodeURIComponent(LOGO_SVG)}` : "";
     const PANEL_CSS = `
-      .forge-panel { width: 100%; max-width: 880px; margin: 0 auto; padding: 30px 32px 44px; display: flex; flex-direction: column; gap: 18px; }
+      .metaontic-agent-forge-panel { width: 100%; max-width: 880px; margin: 0 auto; padding: 30px 32px 44px; display: flex; flex-direction: column; gap: 18px; }
       /* \u54C1\u724C\u5934\u56FE\uFF1A\u63D2\u4EF6 logo + \u6807\u9898/\u7B80\u4ECB\uFF0C\u7ED9\u7A7A\u8361\u7684\u5185\u5BB9\u533A\u4E00\u4E2A\u89C6\u89C9\u951A\u70B9 */
-      .forge-panel-hero { display: flex; align-items: center; gap: 14px; }
-      .forge-panel-mark { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: ${TOKENS.primaryFill}; }
-      .forge-panel-logo { width: 100%; height: 100%; object-fit: contain; }
+      .metaontic-agent-forge-panel-hero { display: flex; align-items: center; gap: 14px; }
+      .metaontic-agent-forge-panel-mark { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; color: ${TOKENS.primaryFill}; }
+      .metaontic-agent-forge-panel-logo { width: 100%; height: 100%; object-fit: contain; }
       /* \u5DE6\u4FA7\u680F\u90A3\u4E00\u884C\u7684 logo\uFF1A\u6309\u5BBF\u4E3B\u7ED9\u7684\u5C3A\u5BF8\u539F\u6837\u94FA\u5F00\uFF0C\u4E0D\u53C2\u4E0E\u4E3B\u9898\u53D6\u8272 */
-      .forge-rail-logo { display: block; object-fit: contain; }
-      .forge-panel-head { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-      .forge-panel-title { margin: 0; font-size: 19px; font-weight: 600; color: ${TOKENS.text}; }
-      .forge-panel-intro { margin: 0; font-size: 13px; line-height: 1.55; color: ${TOKENS.muted}; }
+      .metaontic-agent-forge-rail-logo { display: block; object-fit: contain; }
+      .metaontic-agent-forge-panel-head { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+      .metaontic-agent-forge-panel-title { margin: 0; font-size: 19px; font-weight: 600; color: ${TOKENS.text}; }
+      .metaontic-agent-forge-panel-intro { margin: 0; font-size: 13px; line-height: 1.55; color: ${TOKENS.muted}; }
       /* \u4E3B\u6309\u94AE\u5403\u6389\u591A\u4F59\u5BBD\u5EA6\uFF0C\u6B21\u8981\u6309\u94AE\u4E0E\u94FE\u63A5\u9000\u5230\u7B2C\u4E8C\u6392 */
-      .forge-panel-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-      .forge-panel-actions .forge-btn-primary { flex: 1 1 220px; width: auto; min-width: 160px; height: 38px; }
-      .forge-panel-actions .forge-btn:not(.forge-btn-primary) { min-width: 132px; }
-      .forge-panel-link { margin-left: auto; font-size: 12px; color: ${TOKENS.primaryFill}; text-decoration: none; border-bottom: 1px solid transparent; }
-      .forge-panel-link:hover { border-bottom-color: currentColor; }
+      .metaontic-agent-forge-panel-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+      .metaontic-agent-forge-panel-actions .metaontic-agent-forge-btn-primary { flex: 1 1 220px; width: auto; min-width: 160px; height: 38px; }
+      .metaontic-agent-forge-panel-actions .metaontic-agent-forge-btn:not(.metaontic-agent-forge-btn-primary) { min-width: 132px; }
+      .metaontic-agent-forge-panel-link { margin-left: auto; font-size: 12px; color: ${TOKENS.primaryFill}; text-decoration: none; border-bottom: 1px solid transparent; }
+      .metaontic-agent-forge-panel-link:hover { border-bottom-color: currentColor; }
       /* \u4E24\u5757\u4EF7\u503C\u70B9\u5361\u7247\uFF1A\u56FE\u6807 + \u6807\u9898 + \u4E00\u53E5\u8BF4\u660E\uFF0C\u7A84\u5BB9\u5668\u81EA\u52A8\u843D\u6210\u4E00\u5217 */
-      .forge-panel-highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
-      .forge-panel-highlight { display: flex; align-items: flex-start; gap: 12px; padding: 13px 14px; border: 1px solid ${TOKENS.border}; border-radius: 12px; background: ${TOKENS.cardFill}; }
-      .forge-panel-highlight-icon { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; }
-      .forge-panel-highlight-body { min-width: 0; }
-      .forge-panel-highlight-title { font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
-      .forge-panel-highlight-desc { margin: 4px 0 0; font-size: 12px; line-height: 1.55; color: ${TOKENS.muted}; }
+      .metaontic-agent-forge-panel-highlights { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+      .metaontic-agent-forge-panel-highlight { display: flex; align-items: flex-start; gap: 12px; padding: 13px 14px; border: 1px solid ${TOKENS.border}; border-radius: 12px; background: ${TOKENS.cardFill}; }
+      .metaontic-agent-forge-panel-highlight-icon { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; }
+      .metaontic-agent-forge-panel-highlight-body { min-width: 0; }
+      .metaontic-agent-forge-panel-highlight-title { font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
+      .metaontic-agent-forge-panel-highlight-desc { margin: 4px 0 0; font-size: 12px; line-height: 1.55; color: ${TOKENS.muted}; }
       /* \u6D41\u7A0B\u6F14\u793A\uFF1A\u56DB\u6B65\u5361\u7247\u6A2A\u6392\uFF0C\u5361\u7247\u4E4B\u95F4\u7528\u7BAD\u5934\u8FDE\u8D77\u6765\uFF1B\u7A84\u5BB9\u5668\u843D\u6210\u4E00\u5217 */
-      .forge-panel-flow { display: flex; align-items: stretch; }
-      .forge-panel-step { position: relative; overflow: hidden; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 7px; padding: 13px 14px 14px; border: 1px solid ${TOKENS.border}; border-radius: 12px; background: ${TOKENS.cardFill}; animation: forge-flow-card 9s ease-in-out infinite; }
-      .forge-panel-step-head { display: flex; align-items: center; gap: 8px; }
-      .forge-panel-step-badge { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 600; color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; animation: forge-flow-badge 9s ease-in-out infinite; }
-      .forge-panel-step-title { min-width: 0; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
-      .forge-panel-step-desc { margin: 0; font-size: 12px; line-height: 1.55; color: ${TOKENS.muted}; }
+      .metaontic-agent-forge-panel-flow { display: flex; align-items: stretch; }
+      .metaontic-agent-forge-panel-step { position: relative; overflow: hidden; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 7px; padding: 13px 14px 14px; border: 1px solid ${TOKENS.border}; border-radius: 12px; background: ${TOKENS.cardFill}; animation: metaontic-agent-forge-flow-card 9s ease-in-out infinite; }
+      .metaontic-agent-forge-panel-step-head { display: flex; align-items: center; gap: 8px; }
+      .metaontic-agent-forge-panel-step-badge { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 600; color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; animation: metaontic-agent-forge-flow-badge 9s ease-in-out infinite; }
+      .metaontic-agent-forge-panel-step-title { min-width: 0; font-size: 13px; font-weight: 600; color: ${TOKENS.text}; }
+      .metaontic-agent-forge-panel-step-desc { margin: 0; font-size: 12px; line-height: 1.55; color: ${TOKENS.muted}; }
       /* \u53F3\u4E0A\u89D2\u7684\u6DE1\u8272\u6C34\u5370\u56FE\u6807\uFF0C\u53EA\u505A\u88C5\u9970 */
-      .forge-panel-step-icon { position: absolute; top: 10px; right: 10px; color: ${TOKENS.primaryFill}; opacity: .14; pointer-events: none; }
+      .metaontic-agent-forge-panel-step-icon { position: absolute; top: 10px; right: 10px; color: ${TOKENS.primaryFill}; opacity: .14; pointer-events: none; }
       /* \u5361\u7247\u4E4B\u95F4\u7684\u7BAD\u5934\uFF1A\u6A2A\u6392\u65F6\u5411\u53F3\uFF0C\u7A84\u5BB9\u5668\u91CC\u8F6C\u6210\u5411\u4E0B */
-      .forge-panel-conn { flex: 0 0 26px; align-self: center; height: 2px; border-radius: 1px; background: ${TOKENS.border}; position: relative; }
-      .forge-panel-conn::after { content: ''; position: absolute; top: 50%; right: -1px; width: 5px; height: 5px; border-top: 2px solid ${TOKENS.border}; border-right: 2px solid ${TOKENS.border}; transform: translateY(-50%) rotate(45deg); }
+      .metaontic-agent-forge-panel-conn { flex: 0 0 26px; align-self: center; height: 2px; border-radius: 1px; background: ${TOKENS.border}; position: relative; }
+      .metaontic-agent-forge-panel-conn::after { content: ''; position: absolute; top: 50%; right: -1px; width: 5px; height: 5px; border-top: 2px solid ${TOKENS.border}; border-right: 2px solid ${TOKENS.border}; transform: translateY(-50%) rotate(45deg); }
       /* \u56DB\u6B65\u4F9D\u6B21\u70B9\u4EAE\uFF0C\u5F62\u6210\u4E00\u6761\u8D70\u52A8\u7684\u6D41\u7A0B\uFF1B\u5EF6\u8FDF\u6309\u6B65\u53F7\u9519\u5F00 */
-      @keyframes forge-flow-card { 0%, 16% { border-color: ${TOKENS.primaryFill}; } 28%, 100% { border-color: ${TOKENS.border}; } }
-      @keyframes forge-flow-badge { 0%, 16% { color: #fff; background: ${TOKENS.primaryFill}; } 28%, 100% { color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; } }
-      .forge-panel-step[data-step="1"], .forge-panel-step[data-step="1"] .forge-panel-step-badge { animation-delay: 2.25s; }
-      .forge-panel-step[data-step="2"], .forge-panel-step[data-step="2"] .forge-panel-step-badge { animation-delay: 4.5s; }
-      .forge-panel-step[data-step="3"], .forge-panel-step[data-step="3"] .forge-panel-step-badge { animation-delay: 6.75s; }
-      .forge-panel { container-type: inline-size; }
+      @keyframes metaontic-agent-forge-flow-card { 0%, 16% { border-color: ${TOKENS.primaryFill}; } 28%, 100% { border-color: ${TOKENS.border}; } }
+      @keyframes metaontic-agent-forge-flow-badge { 0%, 16% { color: #fff; background: ${TOKENS.primaryFill}; } 28%, 100% { color: ${TOKENS.primaryFill}; background: ${TOKENS.controlFill}; } }
+      .metaontic-agent-forge-panel-step[data-step="1"], .metaontic-agent-forge-panel-step[data-step="1"] .metaontic-agent-forge-panel-step-badge { animation-delay: 2.25s; }
+      .metaontic-agent-forge-panel-step[data-step="2"], .metaontic-agent-forge-panel-step[data-step="2"] .metaontic-agent-forge-panel-step-badge { animation-delay: 4.5s; }
+      .metaontic-agent-forge-panel-step[data-step="3"], .metaontic-agent-forge-panel-step[data-step="3"] .metaontic-agent-forge-panel-step-badge { animation-delay: 6.75s; }
+      .metaontic-agent-forge-panel { container-type: inline-size; }
       @container (max-width: 620px) {
-        .forge-panel-flow { flex-direction: column; align-items: stretch; }
+        .metaontic-agent-forge-panel-flow { flex-direction: column; align-items: stretch; }
         /* \u7AD6\u5411\u6392\u5E03\u65F6\u4E0D\u80FD\u518D\u6309\u5269\u4F59\u7A7A\u95F4\u62C9\u4F38\uFF0C\u5426\u5219\u5361\u7247\u4F1A\u88AB\u538B\u6241 */
-        .forge-panel-step { flex: 0 0 auto; }
-        .forge-panel-conn { flex: 0 0 18px; width: 2px; height: 18px; align-self: flex-start; margin-left: 24px; }
-        .forge-panel-conn::after { top: auto; right: 50%; bottom: -1px; transform: translateX(50%) rotate(135deg); }
+        .metaontic-agent-forge-panel-step { flex: 0 0 auto; }
+        .metaontic-agent-forge-panel-conn { flex: 0 0 18px; width: 2px; height: 18px; align-self: flex-start; margin-left: 24px; }
+        .metaontic-agent-forge-panel-conn::after { top: auto; right: 50%; bottom: -1px; transform: translateX(50%) rotate(135deg); }
       }
       @container (max-width: 560px) {
-        .forge-panel { padding: 22px 18px 34px; }
-        .forge-panel-link { margin-left: 0; }
+        .metaontic-agent-forge-panel { padding: 22px 18px 34px; }
+        .metaontic-agent-forge-panel-link { margin-left: 0; }
       }
       @media (prefers-reduced-motion: reduce) {
-        .forge-panel-step, .forge-panel-step-badge { animation: none; }
+        .metaontic-agent-forge-panel-step, .metaontic-agent-forge-panel-step-badge { animation: none; }
       }
     `;
     function PanelIcon({ size = 18 }) {
       const pixels = Number(size) || 18;
       if (LOGO_SRC) {
         return h("img", {
-          className: "forge-rail-logo",
+          className: "metaontic-agent-forge-rail-logo",
           src: LOGO_SRC,
           alt: "",
           width: pixels,
@@ -284,11 +284,11 @@
       ]);
     }
     function highlight(key, icon, title, desc) {
-      return h("div", { key, className: "forge-panel-highlight" }, [
-        h("span", { key: "icon", className: "forge-panel-highlight-icon" }, flowIcon(icon, 20)),
-        h("div", { key: "body", className: "forge-panel-highlight-body" }, [
-          h("div", { key: "title", className: "forge-panel-highlight-title" }, title),
-          h("p", { key: "desc", className: "forge-panel-highlight-desc" }, desc)
+      return h("div", { key, className: "metaontic-agent-forge-panel-highlight" }, [
+        h("span", { key: "icon", className: "metaontic-agent-forge-panel-highlight-icon" }, flowIcon(icon, 20)),
+        h("div", { key: "body", className: "metaontic-agent-forge-panel-highlight-body" }, [
+          h("div", { key: "title", className: "metaontic-agent-forge-panel-highlight-title" }, title),
+          h("p", { key: "desc", className: "metaontic-agent-forge-panel-highlight-desc" }, desc)
         ])
       ]);
     }
@@ -302,66 +302,66 @@
       const flowChildren = flow.flatMap((step, index) => {
         const card = h("div", {
           key: `step-${index}`,
-          className: "forge-panel-step",
+          className: "metaontic-agent-forge-panel-step",
           "data-step": String(index)
         }, [
-          h("div", { key: "head", className: "forge-panel-step-head" }, [
-            h("span", { key: "badge", className: "forge-panel-step-badge" }, String(index + 1)),
-            h("span", { key: "title", className: "forge-panel-step-title" }, step.title)
+          h("div", { key: "head", className: "metaontic-agent-forge-panel-step-head" }, [
+            h("span", { key: "badge", className: "metaontic-agent-forge-panel-step-badge" }, String(index + 1)),
+            h("span", { key: "title", className: "metaontic-agent-forge-panel-step-title" }, step.title)
           ]),
-          h("p", { key: "desc", className: "forge-panel-step-desc" }, step.desc),
-          h("span", { key: "icon", className: "forge-panel-step-icon" }, flowIcon(step.icon))
+          h("p", { key: "desc", className: "metaontic-agent-forge-panel-step-desc" }, step.desc),
+          h("span", { key: "icon", className: "metaontic-agent-forge-panel-step-icon" }, flowIcon(step.icon))
         ]);
-        return index === 0 ? [card] : [h("span", { key: `conn-${index}`, className: "forge-panel-conn", "aria-hidden": true }), card];
+        return index === 0 ? [card] : [h("span", { key: `conn-${index}`, className: "metaontic-agent-forge-panel-conn", "aria-hidden": true }), card];
       });
-      return h("div", { className: "forge-panel" }, [
+      return h("div", { className: "metaontic-agent-forge-panel" }, [
         h("style", { key: "styles" }, PAGE_CSS + PANEL_CSS),
-        h("header", { key: "hero", className: "forge-panel-hero" }, [
+        h("header", { key: "hero", className: "metaontic-agent-forge-panel-hero" }, [
           h(
             "span",
-            { key: "mark", className: "forge-panel-mark" },
-            LOGO_SRC ? h("img", { key: "logo", className: "forge-panel-logo", src: LOGO_SRC, alt: "", "aria-hidden": true }) : PanelIcon({ size: 24 })
+            { key: "mark", className: "metaontic-agent-forge-panel-mark" },
+            LOGO_SRC ? h("img", { key: "logo", className: "metaontic-agent-forge-panel-logo", src: LOGO_SRC, alt: "", "aria-hidden": true }) : PanelIcon({ size: 24 })
           ),
-          h("div", { key: "head", className: "forge-panel-head" }, [
-            h("h1", { key: "title", className: "forge-panel-title" }, t("panelTitle")),
-            h("p", { key: "intro", className: "forge-panel-intro" }, t("panelIntro"))
+          h("div", { key: "head", className: "metaontic-agent-forge-panel-head" }, [
+            h("h1", { key: "title", className: "metaontic-agent-forge-panel-title" }, t("panelTitle")),
+            h("p", { key: "intro", className: "metaontic-agent-forge-panel-intro" }, t("panelIntro"))
           ])
         ]),
-        h("section", { key: "highlights", className: "forge-section" }, [
-          h("div", { key: "highlights-label", className: "forge-section-title" }, t("panelHighlights")),
-          h("div", { key: "highlights-cards", className: "forge-panel-highlights" }, [
+        h("section", { key: "highlights", className: "metaontic-agent-forge-section" }, [
+          h("div", { key: "highlights-label", className: "metaontic-agent-forge-section-title" }, t("panelHighlights")),
+          h("div", { key: "highlights-cards", className: "metaontic-agent-forge-panel-highlights" }, [
             highlight("easy", "easy", t("panelHighlight1Title"), t("panelHighlight1Desc")),
             highlight("cheap", "cheap", t("panelHighlight2Title"), t("panelHighlight2Desc"))
           ])
         ]),
-        h("section", { key: "start", className: "forge-section" }, [
-          h("div", { key: "start-label", className: "forge-section-title" }, t("panelStart")),
-          h("div", { key: "start-actions", className: "forge-panel-actions" }, [
+        h("section", { key: "start", className: "metaontic-agent-forge-section" }, [
+          h("div", { key: "start-label", className: "metaontic-agent-forge-section-title" }, t("panelStart")),
+          h("div", { key: "start-actions", className: "metaontic-agent-forge-panel-actions" }, [
             h("button", {
               key: "new",
               type: "button",
-              className: "forge-btn forge-btn-primary",
+              className: "metaontic-agent-forge-btn metaontic-agent-forge-btn-primary",
               onClick: () => props?.startSession?.()
             }, t("panelNew")),
             h("button", {
               key: "settings",
               type: "button",
-              className: "forge-btn",
+              className: "metaontic-agent-forge-btn",
               disabled: typeof props?.openSettings !== "function",
               onClick: () => props?.openSettings?.()
             }, t("panelSettings")),
             h("a", {
               key: "guide",
-              className: "forge-panel-link",
+              className: "metaontic-agent-forge-panel-link",
               href: GUIDE_URL2,
               target: "_blank",
               rel: "noopener noreferrer"
             }, t("panelGuide"))
           ])
         ]),
-        h("section", { key: "flow", className: "forge-section" }, [
-          h("div", { key: "flow-label", className: "forge-section-title" }, t("panelFlow")),
-          h("div", { key: "flow-steps", className: "forge-panel-flow" }, flowChildren)
+        h("section", { key: "flow", className: "metaontic-agent-forge-section" }, [
+          h("div", { key: "flow-label", className: "metaontic-agent-forge-section-title" }, t("panelFlow")),
+          h("div", { key: "flow-steps", className: "metaontic-agent-forge-panel-flow" }, flowChildren)
         ])
       ]);
     }
@@ -420,7 +420,7 @@
   }
 
   // icon.svg
-  var icon_default = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"><defs><linearGradient id="forge-brand-bg" x1="3" y1="2" x2="45" y2="47" gradientUnits="userSpaceOnUse"><stop stop-color="#163C66"/><stop offset="1" stop-color="#26254F"/></linearGradient></defs><rect width="48" height="48" rx="12" fill="url(#forge-brand-bg)"/><path d="M24 15v7m-10 9 7-5m13 5-7-5" stroke="#D7E8FA" stroke-width="2.2" stroke-linecap="round"/><path d="m24 6 7 4v8l-7 4-7-4v-8l7-4Z" fill="#87A7F7"/><path d="m24 6 7 4-7 4-7-4 7-4Z" fill="#C4D4FF"/><path d="M24 14v8l7-4v-8l-7 4Z" fill="#6C86D3"/><path d="m12 26 7 4v8l-7 4-7-4v-8l7-4Z" fill="#64DDCF"/><path d="m12 26 7 4-7 4-7-4 7-4Z" fill="#B3F5E7"/><path d="M12 34v8l7-4v-8l-7 4Z" fill="#38B4AE"/><path d="m36 26 7 4v8l-7 4-7-4v-8l7-4Z" fill="#72C2F3"/><path d="m36 26 7 4-7 4-7-4 7-4Z" fill="#C2E7FF"/><path d="M36 34v8l7-4v-8l-7 4Z" fill="#4C98D5"/><path d="m24 19 2.3 4.2L31 25l-4.7 2.1L24 32l-2.1-4.9L17 25l4.9-1.8L24 19Z" fill="#FFD68A"/></svg>\n';
+  var icon_default = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none"><defs><linearGradient id="metaontic-agent-forge-brand-bg" x1="3" y1="2" x2="45" y2="47" gradientUnits="userSpaceOnUse"><stop stop-color="#163C66"/><stop offset="1" stop-color="#26254F"/></linearGradient></defs><rect width="48" height="48" rx="12" fill="url(#metaontic-agent-forge-brand-bg)"/><path d="M24 15v7m-10 9 7-5m13 5-7-5" stroke="#D7E8FA" stroke-width="2.2" stroke-linecap="round"/><path d="m24 6 7 4v8l-7 4-7-4v-8l7-4Z" fill="#87A7F7"/><path d="m24 6 7 4-7 4-7-4 7-4Z" fill="#C4D4FF"/><path d="M24 14v8l7-4v-8l-7 4Z" fill="#6C86D3"/><path d="m12 26 7 4v8l-7 4-7-4v-8l7-4Z" fill="#64DDCF"/><path d="m12 26 7 4-7 4-7-4 7-4Z" fill="#B3F5E7"/><path d="M12 34v8l7-4v-8l-7 4Z" fill="#38B4AE"/><path d="m36 26 7 4v8l-7 4-7-4v-8l7-4Z" fill="#72C2F3"/><path d="m36 26 7 4-7 4-7-4 7-4Z" fill="#C2E7FF"/><path d="M36 34v8l7-4v-8l-7 4Z" fill="#4C98D5"/><path d="m24 19 2.3 4.2L31 25l-4.7 2.1L24 32l-2.1-4.9L17 25l4.9-1.8L24 19Z" fill="#FFD68A"/></svg>\n';
 
   // src/client/platform.ts
   var PANEL_ID = "metaontic-agent-forge";
@@ -448,7 +448,7 @@
           key: PANEL_ID,
           locale: NS,
           inject: () => ({
-            startSession: () => ctx.get("uiWorkspace")?.startSession(void 0, { agentPreset: "forge-studio" }),
+            startSession: () => ctx.get("uiWorkspace")?.startSession(void 0, { agentPreset: "metaontic-agent-forge-studio" }),
             openSettings: () => ctx.get("pluginNavigation")?.openBundle(NAMESPACE)
           })
         }, ForgePanel)), "forge: platform dashboard");
@@ -523,7 +523,7 @@
   function createToolResultView({ h, MediaPreview, VideoTaskProgress }) {
     function ToolResultView(props) {
       if (props.block && "kind" in props.block) return h(MediaPreview, props);
-      if (!["video_generate", "video_extend"].includes(props.toolName)) return null;
+      if (!["metaontic_agent_forge_video_generate", "metaontic_agent_forge_video_extend"].includes(props.toolName)) return null;
       return h(VideoTaskProgress, props);
     }
     return { ToolResultView };
@@ -556,7 +556,7 @@
     for (const match of text.matchAll(/\[([^\]]*)\]\(\s*(?:<([^>]+)>|([^\s)]+))\s*\)/g)) {
       const source = match[2] || match[3];
       if (seen.has(source)) continue;
-      let kind = /\.(png|jpe?g|webp|gif|svg)(?:[?#]|$)/i.test(source) || /图片|参考图/.test(match[1]) || toolName === "video_prepare_image" ? "image" : /\.(mp4|webm|mov|m4v)(?:[?#]|$)/i.test(source) || /视频|第.*段/.test(match[1]) ? "video" : "";
+      let kind = /\.(png|jpe?g|webp|gif|svg)(?:[?#]|$)/i.test(source) || /图片|参考图/.test(match[1]) || toolName === "metaontic_agent_forge_video_prepare_image" ? "image" : /\.(mp4|webm|mov|m4v)(?:[?#]|$)/i.test(source) || /视频|第.*段/.test(match[1]) ? "video" : "";
       if (!kind) continue;
       seen.add(source);
       let url = remoteMediaUrl(source);
@@ -595,22 +595,22 @@
         else setFailed(true);
       };
       const label = String(item.label || (item.kind === "image" ? "\u56FE\u7247" : "\u89C6\u9891"));
-      const media = !source || failed ? h("p", { role: "status", className: "forge-media-error" }, item.kind === "image" ? "\u56FE\u7247\u9884\u89C8\u65E0\u6CD5\u52A0\u8F7D\uFF0C\u6587\u4EF6\u53EF\u80FD\u5DF2\u79FB\u52A8\u6216\u94FE\u63A5\u5DF2\u8FC7\u671F\u3002\u8BF7\u5C1D\u8BD5\u6253\u5F00\u539F\u56FE\u3002" : "\u89C6\u9891\u9884\u89C8\u65E0\u6CD5\u64AD\u653E\uFF0C\u53EF\u80FD\u662F\u6587\u4EF6\u5DF2\u79FB\u52A8\u3001\u94FE\u63A5\u5DF2\u8FC7\u671F\u6216\u7F16\u7801\u4E0D\u53D7\u652F\u6301\u3002\u8BF7\u5C1D\u8BD5\u6253\u5F00\u539F\u89C6\u9891\u6216\u4E0B\u8F7D\u540E\u64AD\u653E\u3002") : item.kind === "image" ? h("button", { type: "button", className: "forge-media-image-button", onClick: () => setZoom(true), "aria-label": `\u653E\u5927${label}` }, h("img", { src: source, alt: label, loading: "lazy", onError: error, className: "forge-media-image", referrerPolicy: "no-referrer" })) : h("video", { key: source, src: source, controls: true, playsInline: true, preload: "metadata", onError: error, className: "forge-media-video", "aria-label": label, referrerPolicy: "no-referrer" });
-      return h("figure", { className: "forge-media-item", "data-media-kind": item.kind }, [
-        h("figcaption", { key: "caption", className: "forge-media-caption" }, label),
-        h("div", { key: "body", className: "forge-media-surface" }, media),
-        sources.length ? h("div", { key: "links", className: "forge-media-links" }, [
+      const media = !source || failed ? h("p", { role: "status", className: "metaontic-agent-forge-media-error" }, item.kind === "image" ? "\u56FE\u7247\u9884\u89C8\u65E0\u6CD5\u52A0\u8F7D\uFF0C\u6587\u4EF6\u53EF\u80FD\u5DF2\u79FB\u52A8\u6216\u94FE\u63A5\u5DF2\u8FC7\u671F\u3002\u8BF7\u5C1D\u8BD5\u6253\u5F00\u539F\u56FE\u3002" : "\u89C6\u9891\u9884\u89C8\u65E0\u6CD5\u64AD\u653E\uFF0C\u53EF\u80FD\u662F\u6587\u4EF6\u5DF2\u79FB\u52A8\u3001\u94FE\u63A5\u5DF2\u8FC7\u671F\u6216\u7F16\u7801\u4E0D\u53D7\u652F\u6301\u3002\u8BF7\u5C1D\u8BD5\u6253\u5F00\u539F\u89C6\u9891\u6216\u4E0B\u8F7D\u540E\u64AD\u653E\u3002") : item.kind === "image" ? h("button", { type: "button", className: "metaontic-agent-forge-media-image-button", onClick: () => setZoom(true), "aria-label": `\u653E\u5927${label}` }, h("img", { src: source, alt: label, loading: "lazy", onError: error, className: "metaontic-agent-forge-media-image", referrerPolicy: "no-referrer" })) : h("video", { key: source, src: source, controls: true, playsInline: true, preload: "metadata", onError: error, className: "metaontic-agent-forge-media-video", "aria-label": label, referrerPolicy: "no-referrer" });
+      return h("figure", { className: "metaontic-agent-forge-media-item", "data-media-kind": item.kind }, [
+        h("figcaption", { key: "caption", className: "metaontic-agent-forge-media-caption" }, label),
+        h("div", { key: "body", className: "metaontic-agent-forge-media-surface" }, media),
+        sources.length ? h("div", { key: "links", className: "metaontic-agent-forge-media-links" }, [
           h("a", { key: "open", href: source || sources[0], target: "_blank", rel: "noopener noreferrer", referrerPolicy: "no-referrer" }, item.kind === "image" ? "\u6253\u5F00\u539F\u56FE" : "\u6253\u5F00\u539F\u89C6\u9891"),
           item.localPath && remoteMediaUrl(item.url) ? h("a", { key: "remote", href: remoteMediaUrl(item.url), target: "_blank", rel: "noopener noreferrer", referrerPolicy: "no-referrer" }, "\u4E0A\u6E38\u94FE\u63A5") : null
         ]) : null,
-        zoom && item.kind === "image" ? h("dialog", { key: "zoom", ref: dialog, className: "forge-media-dialog", "aria-label": label, onCancel: () => setZoom(false), onClose: () => setZoom(false), onClick: (e) => {
+        zoom && item.kind === "image" ? h("dialog", { key: "zoom", ref: dialog, className: "metaontic-agent-forge-media-dialog", "aria-label": label, onCancel: () => setZoom(false), onClose: () => setZoom(false), onClick: (e) => {
           if (e.target === e.currentTarget) setZoom(false);
         } }, [
-          h("button", { key: "close", type: "button", className: "forge-media-close", onClick: () => {
+          h("button", { key: "close", type: "button", className: "metaontic-agent-forge-media-close", onClick: () => {
             dialog.current?.close();
             setZoom(false);
           }, "aria-label": "\u5173\u95ED\u56FE\u7247\u9884\u89C8" }, "\u5173\u95ED"),
-          h("img", { key: "image", src: source, alt: label, className: "forge-media-zoom", referrerPolicy: "no-referrer", onError: error })
+          h("img", { key: "image", src: source, alt: label, className: "metaontic-agent-forge-media-zoom", referrerPolicy: "no-referrer", onError: error })
         ]) : null
       ]);
     }
@@ -619,28 +619,28 @@
       const [expanded, setExpanded] = React.useState(false);
       if (!items.length) return null;
       const visible = expanded ? items : items.slice(0, 2);
-      return h("section", { className: "forge-media-preview", "aria-label": "\u751F\u6210\u7ED3\u679C\u9884\u89C8", "data-field": "media-preview" }, [
+      return h("section", { className: "metaontic-agent-forge-media-preview", "aria-label": "\u751F\u6210\u7ED3\u679C\u9884\u89C8", "data-field": "media-preview" }, [
         h("style", { key: "styles" }, `
-        .forge-media-preview{margin-top:12px;min-width:0;color:var(--dsw-alias-label-primary,inherit)}
-        .forge-media-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;min-width:0}
-        .forge-media-item{margin:0;min-width:0;border:1px solid var(--dsw-alias-border-l2,#dfe3eb);border-radius:10px;overflow:hidden}
-        .forge-media-caption{padding:8px 12px;font-size:13px;font-weight:600;overflow-wrap:anywhere}
-        .forge-media-surface{min-width:0;background:var(--dsw-specific-input-major,#f5f6f8)}
-        .forge-media-image-button{display:block;width:100%;padding:0;border:0;background:transparent;cursor:zoom-in}
-        .forge-media-image{display:block;width:100%;max-height:320px;object-fit:contain}
-        .forge-media-video{display:block;width:100%;max-height:420px;background:#10131a;object-fit:contain}
-        .forge-media-links{display:flex;gap:16px;flex-wrap:wrap;padding:8px 12px;font-size:12px}
-        .forge-media-links a{color:var(--dsw-alias-link,#247bbf);text-decoration:underline;overflow-wrap:anywhere}
-        .forge-media-error{margin:0;padding:18px 12px;font-size:12px;line-height:1.6;color:var(--dsw-alias-label-caption,#737b8b)}
-        .forge-media-more{margin-top:10px;border:1px solid var(--dsw-alias-border-l2,#dfe3eb);border-radius:6px;padding:6px 10px;background:transparent;color:inherit;cursor:pointer}
-        .forge-media-dialog{box-sizing:border-box;max-width:94vw;max-height:94vh;padding:42px 12px 12px;border:0;border-radius:12px;background:var(--dsw-alias-settings-card-fill,#fff);color:inherit}
-        .forge-media-dialog::backdrop{background:rgba(0,0,0,.7)}
-        .forge-media-zoom{display:block;max-width:calc(94vw - 24px);max-height:calc(94vh - 70px);object-fit:contain}
-        .forge-media-close{position:absolute;top:8px;right:10px;background:transparent;color:inherit;border:1px solid var(--dsw-alias-border-l2,#dfe3eb);border-radius:6px;padding:4px 10px;cursor:pointer}
-        .forge-media-image-button:focus-visible,.forge-media-more:focus-visible,.forge-media-close:focus-visible{outline:2px solid #247bbf;outline-offset:-2px}
+        .metaontic-agent-forge-media-preview{margin-top:12px;min-width:0;color:var(--dsw-alias-label-primary,inherit)}
+        .metaontic-agent-forge-media-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;min-width:0}
+        .metaontic-agent-forge-media-item{margin:0;min-width:0;border:1px solid var(--dsw-alias-border-l2,#dfe3eb);border-radius:10px;overflow:hidden}
+        .metaontic-agent-forge-media-caption{padding:8px 12px;font-size:13px;font-weight:600;overflow-wrap:anywhere}
+        .metaontic-agent-forge-media-surface{min-width:0;background:var(--dsw-specific-input-major,#f5f6f8)}
+        .metaontic-agent-forge-media-image-button{display:block;width:100%;padding:0;border:0;background:transparent;cursor:zoom-in}
+        .metaontic-agent-forge-media-image{display:block;width:100%;max-height:320px;object-fit:contain}
+        .metaontic-agent-forge-media-video{display:block;width:100%;max-height:420px;background:#10131a;object-fit:contain}
+        .metaontic-agent-forge-media-links{display:flex;gap:16px;flex-wrap:wrap;padding:8px 12px;font-size:12px}
+        .metaontic-agent-forge-media-links a{color:var(--dsw-alias-link,#247bbf);text-decoration:underline;overflow-wrap:anywhere}
+        .metaontic-agent-forge-media-error{margin:0;padding:18px 12px;font-size:12px;line-height:1.6;color:var(--dsw-alias-label-caption,#737b8b)}
+        .metaontic-agent-forge-media-more{margin-top:10px;border:1px solid var(--dsw-alias-border-l2,#dfe3eb);border-radius:6px;padding:6px 10px;background:transparent;color:inherit;cursor:pointer}
+        .metaontic-agent-forge-media-dialog{box-sizing:border-box;max-width:94vw;max-height:94vh;padding:42px 12px 12px;border:0;border-radius:12px;background:var(--dsw-alias-settings-card-fill,#fff);color:inherit}
+        .metaontic-agent-forge-media-dialog::backdrop{background:rgba(0,0,0,.7)}
+        .metaontic-agent-forge-media-zoom{display:block;max-width:calc(94vw - 24px);max-height:calc(94vh - 70px);object-fit:contain}
+        .metaontic-agent-forge-media-close{position:absolute;top:8px;right:10px;background:transparent;color:inherit;border:1px solid var(--dsw-alias-border-l2,#dfe3eb);border-radius:6px;padding:4px 10px;cursor:pointer}
+        .metaontic-agent-forge-media-image-button:focus-visible,.metaontic-agent-forge-media-more:focus-visible,.metaontic-agent-forge-media-close:focus-visible{outline:2px solid #247bbf;outline-offset:-2px}
       `),
-        h("div", { key: "grid", className: "forge-media-grid" }, visible.map((item) => h(MediaItem, { key: `${item.kind}:${item.localPath || item.url}`, item }))),
-        items.length > 2 ? h("button", { key: "more", type: "button", className: "forge-media-more", onClick: () => setExpanded(!expanded), "aria-expanded": expanded }, expanded ? "\u6536\u8D77\u5176\u4ED6\u6210\u679C" : `\u5C55\u5F00\u5176\u4ED6\u6210\u679C\uFF08${items.length - 2}\uFF09`) : null
+        h("div", { key: "grid", className: "metaontic-agent-forge-media-grid" }, visible.map((item) => h(MediaItem, { key: `${item.kind}:${item.localPath || item.url}`, item }))),
+        items.length > 2 ? h("button", { key: "more", type: "button", className: "metaontic-agent-forge-media-more", onClick: () => setExpanded(!expanded), "aria-expanded": expanded }, expanded ? "\u6536\u8D77\u5176\u4ED6\u6210\u679C" : `\u5C55\u5F00\u5176\u4ED6\u6210\u679C\uFF08${items.length - 2}\uFF09`) : null
       ]);
     }
     return { MediaPreview };
@@ -663,7 +663,7 @@
         return;
       const done = "kind" in block;
       const name = done ? block.call?.name : block.name;
-      if (!done && ["video_generate", "video_extend"].includes(name) && !seen.has(block.callId)) {
+      if (!done && ["metaontic_agent_forge_video_generate", "metaontic_agent_forge_video_extend"].includes(name) && !seen.has(block.callId)) {
         seen.add(block.callId);
         calls.push({ block, toolName: name, callId: block.callId });
       }
@@ -707,7 +707,7 @@
     };
   }
   function createVideoProgress({ React, h, TOKENS }) {
-    function VideoTaskProgress({ block = {}, toolName = "video_generate", callId, useVideoExecutions, startedAt }) {
+    function VideoTaskProgress({ block = {}, toolName = "metaontic_agent_forge_video_generate", callId, useVideoExecutions, startedAt }) {
       const done = "kind" in block;
       const executions = useVideoExecutions?.((snapshot) => snapshot);
       const beganAt = startedAt ?? executions?.get(callId);
@@ -722,50 +722,50 @@
       }, [done, callId, beganAt]);
       if (done)
         return null;
-      if (!["video_generate", "video_extend"].includes(toolName) || block.phase !== "start" || beganAt === void 0)
+      if (!["metaontic_agent_forge_video_generate", "metaontic_agent_forge_video_extend"].includes(toolName) || block.phase !== "start" || beganAt === void 0)
         return null;
       const status = "\u6B63\u5728\u751F\u6210 \xB7 \u7B49\u5F85\u7ED3\u679C";
       const duration = block.args?.duration;
       const estimatedWait = estimatedVideoWait(duration);
       const progress = estimatedVideoProgress(elapsed, duration);
       const waitingDots = ".".repeat(elapsed % 3 + 1);
-      const title = toolName === "video_extend" ? "\u89C6\u9891\u7EED\u62CD" : "\u89C6\u9891\u751F\u6210";
-      return h("div", { className: "forge-task forge-task-running", "data-field": "video-task-progress" }, [
+      const title = toolName === "metaontic_agent_forge_video_extend" ? "\u89C6\u9891\u7EED\u62CD" : "\u89C6\u9891\u751F\u6210";
+      return h("div", { className: "metaontic-agent-forge-task metaontic-agent-forge-task-running", "data-field": "video-task-progress" }, [
         h("style", { key: "style" }, `
-          @keyframes forge-task-spin { to { transform: rotate(360deg); } }
-          @keyframes forge-task-flow { from { background-position:0 0; } to { background-position:32px 0; } }
-          @keyframes forge-task-shimmer { from { transform:translateX(-120%); } to { transform:translateX(420%); } }
-          @keyframes forge-task-pulse { 0%,100% { opacity:.45; } 50% { opacity:1; } }
-          @keyframes forge-task-breath { 0%,100% { border-color:${TOKENS.border}; box-shadow:0 0 0 0 transparent; } 50% { border-color:${TOKENS.primaryFill}; box-shadow:0 0 12px 0 ${TOKENS.primaryFill}; } }
-          .forge-task { box-sizing:border-box; min-width:0; width:100%; border:1px solid ${TOKENS.border}; border-radius:10px; padding:10px 12px; color:${TOKENS.text}; margin:6px 0; overflow-wrap:anywhere; }
-          .forge-task-running { animation:forge-task-breath 2.4s ease-in-out infinite; }
-          .forge-task-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:13px; }
-          .forge-task-spinner { width:14px; height:14px; border:2px solid ${TOKENS.border}; border-top-color:${TOKENS.primaryFill}; border-radius:50%; animation:forge-task-spin .9s linear infinite; }
-          .forge-task-note { font-size:12px; color:${TOKENS.muted}; margin-top:8px; }
-          .forge-task-rail { position:relative; margin-top:20px; }
-          .forge-task-track { height:5px; border-radius:999px; overflow:hidden; background:${TOKENS.border}; }
-          .forge-task-turtle { position:absolute; top:-14px; transform:translateX(-50%) scaleX(-1); font-size:12px; line-height:1; transition:left 1s ease; }
-          .forge-task-fill { height:100%; border-radius:999px; background:${TOKENS.primaryFill}; transition:width 1s ease; position:relative; overflow:hidden; }
-          .forge-task-active .forge-task-fill { background-image:repeating-linear-gradient(110deg,transparent 0px,transparent 12px,rgba(255,255,255,.22) 12px,rgba(255,255,255,.22) 22px,transparent 22px,transparent 32px); background-size:32px 100%; animation:forge-task-flow 1s linear infinite; }
-          .forge-task-active .forge-task-fill::after { content:''; position:absolute; inset:0; width:30%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent); animation:forge-task-shimmer 2s linear infinite; }
-          .forge-task-live { display:inline-block; width:6px; height:6px; border-radius:50%; background:${TOKENS.primaryFill}; margin-right:6px; animation:forge-task-pulse 1.4s ease-in-out infinite; }
-          .forge-task-dots { display:inline-block; width:18px; text-align:left; }
-          @media(prefers-reduced-motion:reduce) { .forge-task-spinner, .forge-task-live, .forge-task-active .forge-task-fill, .forge-task-active .forge-task-fill::after { animation:none; } .forge-task-turtle { transition:none; } .forge-task-running { animation:none; } }
+          @keyframes metaontic-agent-forge-task-spin { to { transform: rotate(360deg); } }
+          @keyframes metaontic-agent-forge-task-flow { from { background-position:0 0; } to { background-position:32px 0; } }
+          @keyframes metaontic-agent-forge-task-shimmer { from { transform:translateX(-120%); } to { transform:translateX(420%); } }
+          @keyframes metaontic-agent-forge-task-pulse { 0%,100% { opacity:.45; } 50% { opacity:1; } }
+          @keyframes metaontic-agent-forge-task-breath { 0%,100% { border-color:${TOKENS.border}; box-shadow:0 0 0 0 transparent; } 50% { border-color:${TOKENS.primaryFill}; box-shadow:0 0 12px 0 ${TOKENS.primaryFill}; } }
+          .metaontic-agent-forge-task { box-sizing:border-box; min-width:0; width:100%; border:1px solid ${TOKENS.border}; border-radius:10px; padding:10px 12px; color:${TOKENS.text}; margin:6px 0; overflow-wrap:anywhere; }
+          .metaontic-agent-forge-task-running { animation:metaontic-agent-forge-task-breath 2.4s ease-in-out infinite; }
+          .metaontic-agent-forge-task-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:13px; }
+          .metaontic-agent-forge-task-spinner { width:14px; height:14px; border:2px solid ${TOKENS.border}; border-top-color:${TOKENS.primaryFill}; border-radius:50%; animation:metaontic-agent-forge-task-spin .9s linear infinite; }
+          .metaontic-agent-forge-task-note { font-size:12px; color:${TOKENS.muted}; margin-top:8px; }
+          .metaontic-agent-forge-task-rail { position:relative; margin-top:20px; }
+          .metaontic-agent-forge-task-track { height:5px; border-radius:999px; overflow:hidden; background:${TOKENS.border}; }
+          .metaontic-agent-forge-task-turtle { position:absolute; top:-14px; transform:translateX(-50%) scaleX(-1); font-size:12px; line-height:1; transition:left 1s ease; }
+          .metaontic-agent-forge-task-fill { height:100%; border-radius:999px; background:${TOKENS.primaryFill}; transition:width 1s ease; position:relative; overflow:hidden; }
+          .metaontic-agent-forge-task-active .metaontic-agent-forge-task-fill { background-image:repeating-linear-gradient(110deg,transparent 0px,transparent 12px,rgba(255,255,255,.22) 12px,rgba(255,255,255,.22) 22px,transparent 22px,transparent 32px); background-size:32px 100%; animation:metaontic-agent-forge-task-flow 1s linear infinite; }
+          .metaontic-agent-forge-task-active .metaontic-agent-forge-task-fill::after { content:''; position:absolute; inset:0; width:30%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent); animation:metaontic-agent-forge-task-shimmer 2s linear infinite; }
+          .metaontic-agent-forge-task-live { display:inline-block; width:6px; height:6px; border-radius:50%; background:${TOKENS.primaryFill}; margin-right:6px; animation:metaontic-agent-forge-task-pulse 1.4s ease-in-out infinite; }
+          .metaontic-agent-forge-task-dots { display:inline-block; width:18px; text-align:left; }
+          @media(prefers-reduced-motion:reduce) { .metaontic-agent-forge-task-spinner, .metaontic-agent-forge-task-live, .metaontic-agent-forge-task-active .metaontic-agent-forge-task-fill, .metaontic-agent-forge-task-active .metaontic-agent-forge-task-fill::after { animation:none; } .metaontic-agent-forge-task-turtle { transition:none; } .metaontic-agent-forge-task-running { animation:none; } }
         `),
-        h("div", { key: "head", className: "forge-task-head" }, [
-          h("span", { key: "spinner", className: "forge-task-spinner", "aria-hidden": true }),
+        h("div", { key: "head", className: "metaontic-agent-forge-task-head" }, [
+          h("span", { key: "spinner", className: "metaontic-agent-forge-task-spinner", "aria-hidden": true }),
           h("strong", { key: "title" }, title),
-          h("span", { key: "status", role: "status" }, [status, h("span", { key: "dots", className: "forge-task-dots", "aria-hidden": true }, waitingDots)]),
+          h("span", { key: "status", role: "status" }, [status, h("span", { key: "dots", className: "metaontic-agent-forge-task-dots", "aria-hidden": true }, waitingDots)]),
           h("span", { key: "elapsed", style: { marginLeft: "auto", fontVariantNumeric: "tabular-nums" } }, `\u5DF2\u7B49\u5F85 ${Math.floor(elapsed / 60)}\u5206${String(elapsed % 60).padStart(2, "0")}\u79D2`)
         ]),
-        h("div", { key: "progress", className: "forge-task-rail" }, [
-          h("div", { className: "forge-task-track forge-task-active", role: "progressbar", "aria-label": "\u4F30\u7B97\u8FDB\u5EA6", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": progress }, h("div", { className: "forge-task-fill", style: { width: `${progress}%` } })),
+        h("div", { key: "progress", className: "metaontic-agent-forge-task-rail" }, [
+          h("div", { className: "metaontic-agent-forge-task-track metaontic-agent-forge-task-active", role: "progressbar", "aria-label": "\u4F30\u7B97\u8FDB\u5EA6", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": progress }, h("div", { className: "metaontic-agent-forge-task-fill", style: { width: `${progress}%` } })),
           // 装饰用的小乌龟：跟着进度条填充的右端一起从左往右爬，只表示「还在忙」，不代表真实进度；屏幕阅读器不读它。
-          h("span", { key: "turtle", className: "forge-task-turtle", style: { left: `${progress}%` }, "aria-hidden": true }, "\u{1F422}")
+          h("span", { key: "turtle", className: "metaontic-agent-forge-task-turtle", style: { left: `${progress}%` }, "aria-hidden": true }, "\u{1F422}")
         ]),
-        h("div", { key: "percent", className: "forge-task-note" }, `${progress}% \xB7 \u4F30\u7B97\u8FDB\u5EA6`),
-        h("div", { key: "note", className: "forge-task-note" }, [
-          h("span", { key: "live", className: "forge-task-live", "aria-hidden": true }),
+        h("div", { key: "percent", className: "metaontic-agent-forge-task-note" }, `${progress}% \xB7 \u4F30\u7B97\u8FDB\u5EA6`),
+        h("div", { key: "note", className: "metaontic-agent-forge-task-note" }, [
+          h("span", { key: "live", className: "metaontic-agent-forge-task-live", "aria-hidden": true }),
           `${duration ? `\u76EE\u6807 ${duration} \u79D2 \xB7 \u9884\u8BA1\u7B49\u5F85\u7EA6 ${Math.round(estimatedWait)} \u79D2 \xB7 ` : ""}${progress >= 99 ? "\u4EFB\u52A1\u4ECD\u5728\u7B49\u5F85\u7ED3\u679C\uFF0C\u8FDB\u5EA6\u505C\u572899%\u4E0D\u8868\u793A\u5931\u8D25\u3002" : "\u4EFB\u52A1\u5904\u7406\u4E2D\uFF0C\u5B8C\u6210\u540E\u81EA\u52A8\u663E\u793A\u7ED3\u679C\u3002"}\u8BF7\u52FF\u91CD\u590D\u63D0\u4EA4\u3002`
         ])
       ]);
@@ -1333,7 +1333,7 @@
       const label = t("versionNew", { version: latest });
       return h(
         "span",
-        { key: "update-bell", className: "forge-update-bell", "data-field": "update-bell", role: "img", "aria-label": label, title: label },
+        { key: "update-bell", className: "metaontic-agent-forge-update-bell", "data-field": "update-bell", role: "img", "aria-label": label, title: label },
         h("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, [
           h("path", { key: "body", d: "M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" }),
           h("path", { key: "clapper", d: "M10 21h4M12 2V1" })
@@ -1566,23 +1566,23 @@
   }
   function renderUpdateNotice({ h, t, available, latest, deferred, status, confirmed, onUpdate, onLater }) {
     if (!available || deferred === latest || status === "installing") return null;
-    return h("div", { key: "update-notice", className: "forge-notice", role: "status", "data-field": "update-notice" }, [
+    return h("div", { key: "update-notice", className: "metaontic-agent-forge-notice", role: "status", "data-field": "update-notice" }, [
       h("strong", { key: "title" }, t("versionNew", { version: latest })),
       h("p", { key: "optional" }, t("versionOptional")),
       confirmed ? h("p", { key: "confirm" }, t("versionUpdateConfirmHint")) : null,
-      h("div", { key: "actions", className: "forge-cmd-row" }, [
+      h("div", { key: "actions", className: "metaontic-agent-forge-cmd-row" }, [
         h(
           "button",
           {
             key: "update",
             type: "button",
-            className: "forge-btn forge-btn-sm forge-btn-primary",
+            className: "metaontic-agent-forge-btn metaontic-agent-forge-btn-sm metaontic-agent-forge-btn-primary",
             "data-action": confirmed ? "update-notice-confirm" : "update-notice-open",
             onClick: onUpdate
           },
           confirmed ? t("versionUpdateConfirm", { version: latest }) : t("versionUpdate")
         ),
-        h("button", { key: "later", type: "button", className: "forge-btn forge-btn-sm", "data-action": "update-later", onClick: onLater }, t("versionLater"))
+        h("button", { key: "later", type: "button", className: "metaontic-agent-forge-btn metaontic-agent-forge-btn-sm", "data-action": "update-later", onClick: onLater }, t("versionLater"))
       ])
     ]);
   }
@@ -1661,7 +1661,7 @@
       const displayed = secondsField && current !== void 0 && current !== "" ? Number(current) / 1e3 : current;
       const id = `metaontic-agent-forge-${field.key}`;
       if (field.kind === "switch") {
-        return h("label", { key: "control", htmlFor: id, className: "forge-switch" }, h("input", {
+        return h("label", { key: "control", htmlFor: id, className: "metaontic-agent-forge-switch" }, h("input", {
           id,
           "data-field": field.key,
           type: "checkbox",
@@ -1681,7 +1681,7 @@
           key: "control",
           id,
           "data-field": field.key,
-          className: `forge-input${field.mono ? " forge-mono" : ""}`,
+          className: `metaontic-agent-forge-input${field.mono ? " metaontic-agent-forge-mono" : ""}`,
           style: inputStyle,
           value: removedMode ? "" : legacyMerge ? "copy" : retiredImageModel ? options[0] ?? "" : current ?? "",
           onChange: (event) => edit(field.key, event.target.value)
@@ -1700,7 +1700,7 @@
         key: "input",
         id,
         "data-field": field.key,
-        className: `forge-input${field.mono ? " forge-mono" : ""}`,
+        className: `metaontic-agent-forge-input${field.mono ? " metaontic-agent-forge-mono" : ""}`,
         style: inputStyle,
         type: field.kind === "number" ? "number" : field.secret && !revealed ? "password" : "text",
         value: displayed ?? "",
@@ -1711,12 +1711,12 @@
       });
       if (!canReveal)
         return input;
-      return h("div", { key: "control", className: "forge-key-control" }, [
+      return h("div", { key: "control", className: "metaontic-agent-forge-key-control" }, [
         input,
         h("button", {
           key: "toggle",
           type: "button",
-          className: "forge-key-eye",
+          className: "metaontic-agent-forge-key-eye",
           "aria-label": t(revealed ? "hideKey" : "showKey"),
           title: t(revealed ? "hideKey" : "showKey"),
           "data-action": `toggle-${field.key}`,
@@ -1766,15 +1766,18 @@
       "./locale/*.json": "./locale/*.json",
       "./icon": "./icon.svg",
       "./package.json": "./package.json",
-      "./presets/forge-video-director": "./presets/forge-video-director.js",
-      "./presets/forge-video-director/locale/*.json": "./locale/presets/forge-video-director/*.json",
-      "./presets/forge-promo-video": "./presets/forge-promo-video.js",
-      "./presets/forge-promo-video/locale/*.json": "./locale/presets/forge-promo-video/*.json",
-      "./presets/forge-video-director/icon": "./presets/icons/forge-video-director.svg",
-      "./presets/forge-promo-video/icon": "./presets/icons/forge-promo-video.svg",
-      "./presets/forge-studio": "./presets/forge-studio.js",
-      "./presets/forge-studio/locale/*.json": "./locale/presets/forge-studio/*.json",
-      "./presets/forge-studio/icon": "./presets/icons/forge-studio.svg"
+      "./presets/metaontic-agent-forge-video-director": "./presets/metaontic-agent-forge-video-director.js",
+      "./presets/metaontic-agent-forge-video-director/locale/*.json": "./locale/presets/metaontic-agent-forge-video-director/*.json",
+      "./presets/metaontic-agent-forge-promo-video": "./presets/metaontic-agent-forge-promo-video.js",
+      "./presets/metaontic-agent-forge-promo-video/locale/*.json": "./locale/presets/metaontic-agent-forge-promo-video/*.json",
+      "./presets/metaontic-agent-forge-video-director/icon": "./presets/icons/metaontic-agent-forge-video-director.svg",
+      "./presets/metaontic-agent-forge-promo-video/icon": "./presets/icons/metaontic-agent-forge-promo-video.svg",
+      "./presets/metaontic-agent-forge-studio": "./presets/metaontic-agent-forge-studio.js",
+      "./presets/metaontic-agent-forge-studio/locale/*.json": "./locale/presets/metaontic-agent-forge-studio/*.json",
+      "./presets/metaontic-agent-forge-studio/icon": "./presets/icons/metaontic-agent-forge-studio.svg",
+      "./presets/controls": "./presets/controls.js",
+      "./presets/controls/locale/*.json": "./locale/presets/controls/*.json",
+      "./presets/controls/icon": "./icon.svg"
     },
     files: [
       "index.js",
@@ -1837,7 +1840,7 @@
     releaseNotes: {
       version: "1.0.0",
       prerelease: false,
-      publishedAt: "2026-11-08T08:28:33.088Z",
+      publishedAt: "2026-11-08T08:47:42.042Z",
       items: [
         "\u4F18\u5316\uFF1A\u5E38\u89C4\u4F53\u9A8C\u4F18\u5316\u3002"
       ]
@@ -2070,13 +2073,13 @@
           maxWaitMs: t("waitSecondsHint")
         };
         function fieldCell(field) {
-          const classes = ["forge-field"];
-          if (field.kind === "switch") classes.push("forge-field-switch");
-          if (field.wide) classes.push("forge-field-wide");
+          const classes = ["metaontic-agent-forge-field"];
+          if (field.kind === "switch") classes.push("metaontic-agent-forge-field-switch");
+          if (field.wide) classes.push("metaontic-agent-forge-field-wide");
           return h("div", { key: field.key, className: classes.join(" ") }, [
-            field.kind === "switch" ? null : h("label", { key: "label", className: "forge-label", htmlFor: `metaontic-agent-forge-${field.key}` }, t(["metaonticApiKey", "volcengineApiKey"].includes(field.key) ? !directMode && (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false ? "sharedModelKey" : "videoModelKey" : field.key)),
+            field.kind === "switch" ? null : h("label", { key: "label", className: "metaontic-agent-forge-label", htmlFor: `metaontic-agent-forge-${field.key}` }, t(["metaonticApiKey", "volcengineApiKey"].includes(field.key) ? !directMode && (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) !== false ? "sharedModelKey" : "videoModelKey" : field.key)),
             control(field),
-            hints[field.key] ? h("span", { key: "hint", className: "forge-hint", style: { marginTop: 4 } }, hints[field.key]) : null
+            hints[field.key] ? h("span", { key: "hint", className: "metaontic-agent-forge-hint", style: { marginTop: 4 } }, hints[field.key]) : null
           ]);
         }
         const renderGrid = (section) => {
@@ -2085,24 +2088,24 @@
             const common = !directMode ? [fieldCell(FIELD_BY_KEY.imageUseVideoKey), ...shared2 ? [fieldCell(FIELD_BY_KEY.metaonticApiKey)] : []] : [];
             const videoFields = ["model", ...directMode || !shared2 ? [directMode ? "volcengineApiKey" : "metaonticApiKey"] : []];
             const imageFields = ["imageModel", ...!shared2 ? ["imageApiKey"] : []];
-            return h("div", { key: section.key, className: "forge-model-settings" }, [
+            return h("div", { key: section.key, className: "metaontic-agent-forge-model-settings" }, [
               ...common,
-              h("div", { key: "models", className: `forge-model-grid${directMode ? " forge-model-grid-single" : ""}` }, [
-                h("div", { key: "video", className: "forge-model-card", "data-group": "video-model" }, videoFields.map((key) => fieldCell(FIELD_BY_KEY[key]))),
-                !directMode ? h("div", { key: "image", className: "forge-model-card", "data-group": "image-model" }, imageFields.map((key) => fieldCell(FIELD_BY_KEY[key]))) : null
+              h("div", { key: "models", className: `metaontic-agent-forge-model-grid${directMode ? " metaontic-agent-forge-model-grid-single" : ""}` }, [
+                h("div", { key: "video", className: "metaontic-agent-forge-model-card", "data-group": "video-model" }, videoFields.map((key) => fieldCell(FIELD_BY_KEY[key]))),
+                !directMode ? h("div", { key: "image", className: "metaontic-agent-forge-model-card", "data-group": "image-model" }, imageFields.map((key) => fieldCell(FIELD_BY_KEY[key]))) : null
               ])
             ]);
           }
           if (section.key === "sectionVideo") {
-            return h("div", { key: section.key, className: "forge-av-grid" }, [
-              h("div", { key: "picture", className: "forge-av-card" }, [
+            return h("div", { key: section.key, className: "metaontic-agent-forge-av-grid" }, [
+              h("div", { key: "picture", className: "metaontic-agent-forge-av-card" }, [
                 fieldCell(FIELD_BY_KEY.ratio),
-                h("span", { key: "hint", className: "forge-hint" }, t("ratioLayoutHint"))
+                h("span", { key: "hint", className: "metaontic-agent-forge-hint" }, t("ratioLayoutHint"))
               ]),
-              h("div", { key: "audio", className: "forge-av-card forge-av-audio" }, [
-                h("span", { key: "label", className: "forge-label" }, t("audioSettings")),
+              h("div", { key: "audio", className: "metaontic-agent-forge-av-card metaontic-agent-forge-av-audio" }, [
+                h("span", { key: "label", className: "metaontic-agent-forge-label" }, t("audioSettings")),
                 control(FIELD_BY_KEY.generateAudio),
-                h("span", { key: "hint", className: "forge-hint" }, t("audioLayoutHint"))
+                h("span", { key: "hint", className: "metaontic-agent-forge-hint" }, t("audioLayoutHint"))
               ])
             ]);
           }
@@ -2111,41 +2114,41 @@
           const fields = section.key === "sectionModels" ? directMode ? ["model", videoKey] : shared ? ["imageUseVideoKey", videoKey, "model", "imageModel"] : ["imageUseVideoKey", "model", videoKey, "imageModel", "imageApiKey"] : section.fields;
           return h(
             "div",
-            { key: section.key, className: "forge-grid" },
+            { key: section.key, className: "metaontic-agent-forge-grid" },
             fields.filter((key) => (key !== "volcengineApiKey" || directMode) && (!["imageModel", "imageUseVideoKey", "imageApiKey"].includes(key) || !directMode) && (key !== "imageApiKey" || (draft.imageUseVideoKey ?? value.imageUseVideoKey ?? true) === false) && (key !== "metaonticApiKey" || selectedMode === "metaontic")).map((key) => fieldCell(FIELD_BY_KEY[key])).filter(Boolean)
           );
         };
         const settingsRows = () => [
-          h("div", { key: "generation", className: "forge-section" }, [
-            h("div", { key: "title", className: "forge-section-title" }, t("sectionGeneration")),
-            ...SECTIONS.map((section) => h("div", { key: section.key, className: "forge-parameter-group" }, [
-              h("div", { key: "heading", className: "forge-parameter-heading" }, t(section.key)),
+          h("div", { key: "generation", className: "metaontic-agent-forge-section" }, [
+            h("div", { key: "title", className: "metaontic-agent-forge-section-title" }, t("sectionGeneration")),
+            ...SECTIONS.map((section) => h("div", { key: section.key, className: "metaontic-agent-forge-parameter-group" }, [
+              h("div", { key: "heading", className: "metaontic-agent-forge-parameter-heading" }, t(section.key)),
               renderGrid(section)
             ]))
           ]),
-          h("details", { key: "advanced", className: "forge-section forge-advanced" }, [
-            h("summary", { key: "toggle", className: "forge-advanced-toggle" }, [
+          h("details", { key: "advanced", className: "metaontic-agent-forge-section metaontic-agent-forge-advanced" }, [
+            h("summary", { key: "toggle", className: "metaontic-agent-forge-advanced-toggle" }, [
               h("span", { key: "title" }, t("sectionCombined")),
-              h("span", { key: "hint", className: "forge-hint" }, t("sectionCombinedHint"))
+              h("span", { key: "hint", className: "metaontic-agent-forge-hint" }, t("sectionCombinedHint"))
             ]),
-            h("div", { key: "body", className: "forge-advanced-body" }, [
+            h("div", { key: "body", className: "metaontic-agent-forge-advanced-body" }, [
               ...[
                 { key: "advancedPicture", fields: ["watermark"] },
                 { key: "advancedMerge", fields: ["mergeMode", "seamTrimSeconds"], hint: "segmentsRetained" },
                 { key: "advancedWait", fields: ["pollIntervalMs", "maxWaitMs"] },
                 { key: "advancedTools", fields: ["ffmpegBinary", "ffprobeBinary"], hint: "toolsHint" },
                 { key: "advancedStats", fields: ["usageStatsEnabled"], hint: "usageStatsHint" }
-              ].map((group) => h("div", { key: group.key, className: `forge-advanced-group${group.key === "advancedTools" ? " forge-advanced-tools" : ""}`, "data-group": group.key }, [
-                h("div", { key: "title", className: "forge-parameter-heading" }, t(group.key)),
+              ].map((group) => h("div", { key: group.key, className: `metaontic-agent-forge-advanced-group${group.key === "advancedTools" ? " metaontic-agent-forge-advanced-tools" : ""}`, "data-group": group.key }, [
+                h("div", { key: "title", className: "metaontic-agent-forge-parameter-heading" }, t(group.key)),
                 renderGrid(group),
-                group.hint ? h("p", { key: "hint", className: "forge-hint", style: { margin: 0 } }, t(group.hint)) : null
+                group.hint ? h("p", { key: "hint", className: "metaontic-agent-forge-hint", style: { margin: 0 } }, t(group.hint)) : null
               ]))
             ])
           ])
         ];
         const overrides = Object.keys(snapshot.user || {});
         const footerMessage = status === "saved" ? t("saved") : status === "reset" ? t("resetDone") : status === "failed" ? saveError || t("saveFailed") : pending.length ? t("dirty") : "";
-        const footer = pending.length || status !== "idle" ? h("div", { key: "footer", className: "forge-footer" }, [
+        const footer = pending.length || status !== "idle" ? h("div", { key: "footer", className: "metaontic-agent-forge-footer" }, [
           footerMessage ? h("span", {
             key: "status",
             style: {
@@ -2154,13 +2157,13 @@
             }
           }, footerMessage) : null
         ]) : null;
-        const resetRow = overrides.length || pending.length ? h("div", { key: "reset-row", className: "forge-footer forge-reset-row" }, [
-          h("span", { key: "hint", className: "forge-hint", style: { flex: "1 1 200px" } }, t("resetHint")),
+        const resetRow = overrides.length || pending.length ? h("div", { key: "reset-row", className: "metaontic-agent-forge-footer metaontic-agent-forge-reset-row" }, [
+          h("span", { key: "hint", className: "metaontic-agent-forge-hint", style: { flex: "1 1 200px" } }, t("resetHint")),
           pending.length ? h("button", {
             key: "save",
             "data-action": "save",
             type: "button",
-            className: "forge-btn forge-btn-primary",
+            className: "metaontic-agent-forge-btn metaontic-agent-forge-btn-primary",
             disabled: status === "saving" || snapshot.writable === false,
             onClick: save
           }, status === "saving" ? t("saving") : t("save")) : null,
@@ -2168,7 +2171,7 @@
             key: "reset",
             "data-action": "reset",
             type: "button",
-            className: "forge-btn",
+            className: "metaontic-agent-forge-btn",
             disabled: status === "saving" || snapshot.writable === false,
             onClick: reset
           }, t("reset"))
@@ -2179,24 +2182,24 @@
         const versionBox = h("div", {
           key: "version",
           "data-field": "version",
-          className: "forge-card"
+          className: "metaontic-agent-forge-card"
         }, [
-          h("div", { key: "head", className: "forge-card-head" }, [
-            h("span", { key: "title", className: "forge-card-title" }, t("versionTitle")),
+          h("div", { key: "head", className: "metaontic-agent-forge-card-head" }, [
+            h("span", { key: "title", className: "metaontic-agent-forge-card-title" }, t("versionTitle")),
             h("span", {
               key: "current",
               "data-field": "versionCurrent",
-              className: "forge-hint forge-current-version"
+              className: "metaontic-agent-forge-hint metaontic-agent-forge-current-version"
             }, [
               h("span", { key: "label" }, PLUGIN_VERSION ? t("versionCurrent", { version: PLUGIN_VERSION }) : ""),
               updateBell(t, updateLatest, PLUGIN_VERSION)
             ]),
-            h("a", { key: "history", className: "forge-hint", href: "https://github.com/wxsimon2022/metaontic-agent-forge/blob/master/CHANGELOG.md", target: "_blank", rel: "noopener noreferrer" }, t("versionHistory")),
+            h("a", { key: "history", className: "metaontic-agent-forge-hint", href: "https://github.com/wxsimon2022/metaontic-agent-forge/blob/master/CHANGELOG.md", target: "_blank", rel: "noopener noreferrer" }, t("versionHistory")),
             h("button", {
               key: "check",
               "data-action": "update-check",
               type: "button",
-              className: "forge-btn forge-btn-sm forge-trailing",
+              className: "metaontic-agent-forge-btn metaontic-agent-forge-btn-sm metaontic-agent-forge-trailing",
               disabled: updateStatus === "working" || updateStatus === "installing",
               onClick: () => {
                 checkForUpdate(false).catch(() => {
@@ -2206,8 +2209,8 @@
           ]),
           releaseNotes?.items?.length ? h("div", { key: "release-notes", "data-field": "releaseNotes" }, [
             h("div", { key: "heading", style: { display: "flex", alignItems: "baseline", gap: 12 } }, [
-              h("span", { key: "title", className: "forge-card-title" }, `${releaseNotes.version} \xB7 ${t("releaseNotesTitle")}`),
-              formatReleaseTime(releaseNotes.publishedAt) ? h("span", { key: "published-at", "data-field": "releasePublishedAt", className: "forge-foot-note" }, t("releaseUpdatedAt", { time: formatReleaseTime(releaseNotes.publishedAt) })) : null
+              h("span", { key: "title", className: "metaontic-agent-forge-card-title" }, `${releaseNotes.version} \xB7 ${t("releaseNotesTitle")}`),
+              formatReleaseTime(releaseNotes.publishedAt) ? h("span", { key: "published-at", "data-field": "releasePublishedAt", className: "metaontic-agent-forge-foot-note" }, t("releaseUpdatedAt", { time: formatReleaseTime(releaseNotes.publishedAt) })) : null
             ]),
             h(
               "ul",
@@ -2218,16 +2221,16 @@
           updateText ? h("span", {
             key: "state",
             "data-field": "versionState",
-            className: "forge-hint",
+            className: "metaontic-agent-forge-hint",
             style: { color: updateTone }
           }, updateText) : null,
-          updateAvailable ? h("div", { key: "command", className: "forge-cmd-row" }, [
+          updateAvailable ? h("div", { key: "command", className: "metaontic-agent-forge-cmd-row" }, [
             // 点一下转成「确认更新」，再点一下让宿主重装本插件
             h("button", {
               key: "online",
               "data-action": "update-online",
               type: "button",
-              className: "forge-btn forge-btn-sm forge-btn-primary",
+              className: "metaontic-agent-forge-btn metaontic-agent-forge-btn-sm metaontic-agent-forge-btn-primary",
               disabled: updateStatus === "installing",
               onClick: () => {
                 if (updateConfirm) runOnlineUpdate().catch(() => {
@@ -2239,26 +2242,26 @@
           updateAvailable && updateConfirm ? h("span", {
             key: "confirm-hint",
             "data-field": "updateConfirmHint",
-            className: "forge-hint"
+            className: "metaontic-agent-forge-hint"
           }, t("versionUpdateConfirmHint")) : null,
-          updateAvailable ? h("span", { key: "hint", className: "forge-hint" }, t("versionHint")) : null,
-          updateStatus === "ok" && updateAt ? h("span", { key: "at", className: "forge-foot-note" }, t("versionCheckedAt", { time: updateAt })) : null
+          updateAvailable ? h("span", { key: "hint", className: "metaontic-agent-forge-hint" }, t("versionHint")) : null,
+          updateStatus === "ok" && updateAt ? h("span", { key: "at", className: "metaontic-agent-forge-foot-note" }, t("versionCheckedAt", { time: updateAt })) : null
         ]);
         let notice = null;
         if (snapshot.status === "loading") notice = t("loading");
         else if (snapshot.value === void 0) notice = t("unavailable");
         else if (snapshot.writable === false) notice = t("readOnly");
         const blobs = notice && !snapshot.value ? [] : [footer, versionBox, resetRow];
-        return h("div", { className: "forge-page" }, [
-          // hover / focus 这类效果内联样式写不出来，集中在这张样式表里（class 都带 forge- 前缀）。
+        return h("div", { className: "metaontic-agent-forge-page" }, [
+          // hover / focus 这类效果内联样式写不出来，集中在这张样式表里（class 都带 metaontic-agent-forge- 前缀）。
           h("style", { key: "styles" }, PAGE_CSS),
           h(
             "div",
-            { key: "support-actions", className: "forge-card-head", style: { justifyContent: "flex-end", marginBottom: 12 } },
+            { key: "support-actions", className: "metaontic-agent-forge-card-head", style: { justifyContent: "flex-end", marginBottom: 12 } },
             h("button", {
               key: "support",
               type: "button",
-              className: "forge-btn forge-btn-sm",
+              className: "metaontic-agent-forge-btn metaontic-agent-forge-btn-sm",
               "data-action": "contact-support",
               "aria-haspopup": "dialog",
               "aria-expanded": supportOpen,
@@ -2280,14 +2283,14 @@
             },
             onLater: deferUpdate
           }) : null,
-          notice ? h("p", { key: "notice", className: "forge-notice" }, notice) : null,
+          notice ? h("p", { key: "notice", className: "metaontic-agent-forge-notice" }, notice) : null,
           ...notice && !snapshot.value ? [] : settingsRows(),
           ...blobs,
           supportOpen ? h("dialog", {
             key: "support-dialog",
             ref: supportDialog,
-            className: "forge-support-dialog",
-            "aria-labelledby": "forge-support-title",
+            className: "metaontic-agent-forge-support-dialog",
+            "aria-labelledby": "metaontic-agent-forge-support-title",
             onCancel: () => setSupportOpen(false),
             onClose: () => setSupportOpen(false),
             onClick: (event) => {
@@ -2296,13 +2299,13 @@
                 if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) setSupportOpen(false);
               }
             }
-          }, h("div", { className: "forge-support-content" }, [
-            h("div", { key: "heading", className: "forge-card-head" }, [
-              h("strong", { key: "title", id: "forge-support-title" }, t("supportContact")),
-              h("button", { key: "close", type: "button", className: "forge-btn forge-btn-sm forge-trailing", "aria-label": t("supportClose"), onClick: () => setSupportOpen(false) }, t("supportClose"))
+          }, h("div", { className: "metaontic-agent-forge-support-content" }, [
+            h("div", { key: "heading", className: "metaontic-agent-forge-card-head" }, [
+              h("strong", { key: "title", id: "metaontic-agent-forge-support-title" }, t("supportContact")),
+              h("button", { key: "close", type: "button", className: "metaontic-agent-forge-btn metaontic-agent-forge-btn-sm metaontic-agent-forge-trailing", "aria-label": t("supportClose"), onClick: () => setSupportOpen(false) }, t("supportClose"))
             ]),
-            h("p", { key: "hint", className: "forge-hint" }, t("supportScan")),
-            h("iframe", { key: "qr", className: "forge-support-frame", title: t("supportContact"), src: "https://work.weixin.qq.com/kfid/kfcd6fc4ca793eeac18", referrerPolicy: "no-referrer" }),
+            h("p", { key: "hint", className: "metaontic-agent-forge-hint" }, t("supportScan")),
+            h("iframe", { key: "qr", className: "metaontic-agent-forge-support-frame", title: t("supportContact"), src: "https://work.weixin.qq.com/kfid/kfcd6fc4ca793eeac18", referrerPolicy: "no-referrer" }),
             h("a", { key: "fallback", href: "https://work.weixin.qq.com/kfid/kfcd6fc4ca793eeac18", target: "_blank", rel: "noopener noreferrer" }, t("supportOpenPage"))
           ])) : null
         ]);
@@ -2335,7 +2338,7 @@
         ctx.effect(() => ctx.locale.register(NS2, { zh, en }), "metaontic-agent-forge: dictionaries");
         ctx.effect(() => ctx.slots.inject("conversation.chat.node", () => registerAuthNotice(ctx, h, t)), "metaontic-agent-forge: friendly service authentication notice");
         const form = ctx.configForms.get(NAMESPACE2);
-        for (const tool of ["video_generate", "video_extend", "video_status", "video_prepare_image"]) {
+        for (const tool of ["metaontic_agent_forge_video_generate", "metaontic_agent_forge_video_extend", "metaontic_agent_forge_video_status", "metaontic_agent_forge_video_prepare_image"]) {
           ctx.effect(
             () => ctx.slots.inject("tool.call.toolview", () => ctx.slots.register({ name: "tool.call.toolview", key: tool, locale: NS2 }, ToolResultView)),
             `metaontic-agent-forge: ${tool} progress`

@@ -17,7 +17,7 @@ export function activeVideoCalls(chat) {
             return;
         const done = 'kind' in block;
         const name = done ? block.call?.name : block.name;
-        if (!done && ['video_generate', 'video_extend'].includes(name)
+        if (!done && ['metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_extend'].includes(name)
             && !seen.has(block.callId)) {
             seen.add(block.callId);
             calls.push({ block, toolName: name, callId: block.callId });
@@ -67,7 +67,7 @@ export function videoExecutionSource(eventSource) {
 /** 浏览器端 progress：由入口注入宿主 React 与共享依赖。 */
 export function createVideoProgress({ React, h, TOKENS }: any) {
     /** 宿主工具卡片：仅消费实际运行状态，等待动画不代表百分比进度。 */
-    function VideoTaskProgress({ block = {}, toolName = 'video_generate', callId, useVideoExecutions, startedAt }: {
+    function VideoTaskProgress({ block = {}, toolName = 'metaontic_agent_forge_video_generate', callId, useVideoExecutions, startedAt }: {
         block?: any;
         toolName?: string;
         callId?: string;
@@ -88,50 +88,50 @@ export function createVideoProgress({ React, h, TOKENS }: any) {
         }, [done, callId, beganAt]);
         if (done)
             return null;
-        if (!['video_generate', 'video_extend'].includes(toolName) || block.phase !== 'start' || beganAt === undefined)
+        if (!['metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_extend'].includes(toolName) || block.phase !== 'start' || beganAt === undefined)
             return null;
         const status = '正在生成 · 等待结果';
         const duration = block.args?.duration;
         const estimatedWait = estimatedVideoWait(duration);
         const progress = estimatedVideoProgress(elapsed, duration);
         const waitingDots = '.'.repeat((elapsed % 3) + 1);
-        const title = toolName === 'video_extend' ? '视频续拍' : '视频生成';
-        return h('div', { className: 'forge-task forge-task-running', 'data-field': 'video-task-progress' }, [
+        const title = toolName === 'metaontic_agent_forge_video_extend' ? '视频续拍' : '视频生成';
+        return h('div', { className: 'metaontic-agent-forge-task metaontic-agent-forge-task-running', 'data-field': 'video-task-progress' }, [
             h('style', { key: 'style' }, `
-          @keyframes forge-task-spin { to { transform: rotate(360deg); } }
-          @keyframes forge-task-flow { from { background-position:0 0; } to { background-position:32px 0; } }
-          @keyframes forge-task-shimmer { from { transform:translateX(-120%); } to { transform:translateX(420%); } }
-          @keyframes forge-task-pulse { 0%,100% { opacity:.45; } 50% { opacity:1; } }
-          @keyframes forge-task-breath { 0%,100% { border-color:${TOKENS.border}; box-shadow:0 0 0 0 transparent; } 50% { border-color:${TOKENS.primaryFill}; box-shadow:0 0 12px 0 ${TOKENS.primaryFill}; } }
-          .forge-task { box-sizing:border-box; min-width:0; width:100%; border:1px solid ${TOKENS.border}; border-radius:10px; padding:10px 12px; color:${TOKENS.text}; margin:6px 0; overflow-wrap:anywhere; }
-          .forge-task-running { animation:forge-task-breath 2.4s ease-in-out infinite; }
-          .forge-task-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:13px; }
-          .forge-task-spinner { width:14px; height:14px; border:2px solid ${TOKENS.border}; border-top-color:${TOKENS.primaryFill}; border-radius:50%; animation:forge-task-spin .9s linear infinite; }
-          .forge-task-note { font-size:12px; color:${TOKENS.muted}; margin-top:8px; }
-          .forge-task-rail { position:relative; margin-top:20px; }
-          .forge-task-track { height:5px; border-radius:999px; overflow:hidden; background:${TOKENS.border}; }
-          .forge-task-turtle { position:absolute; top:-14px; transform:translateX(-50%) scaleX(-1); font-size:12px; line-height:1; transition:left 1s ease; }
-          .forge-task-fill { height:100%; border-radius:999px; background:${TOKENS.primaryFill}; transition:width 1s ease; position:relative; overflow:hidden; }
-          .forge-task-active .forge-task-fill { background-image:repeating-linear-gradient(110deg,transparent 0px,transparent 12px,rgba(255,255,255,.22) 12px,rgba(255,255,255,.22) 22px,transparent 22px,transparent 32px); background-size:32px 100%; animation:forge-task-flow 1s linear infinite; }
-          .forge-task-active .forge-task-fill::after { content:''; position:absolute; inset:0; width:30%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent); animation:forge-task-shimmer 2s linear infinite; }
-          .forge-task-live { display:inline-block; width:6px; height:6px; border-radius:50%; background:${TOKENS.primaryFill}; margin-right:6px; animation:forge-task-pulse 1.4s ease-in-out infinite; }
-          .forge-task-dots { display:inline-block; width:18px; text-align:left; }
-          @media(prefers-reduced-motion:reduce) { .forge-task-spinner, .forge-task-live, .forge-task-active .forge-task-fill, .forge-task-active .forge-task-fill::after { animation:none; } .forge-task-turtle { transition:none; } .forge-task-running { animation:none; } }
+          @keyframes metaontic-agent-forge-task-spin { to { transform: rotate(360deg); } }
+          @keyframes metaontic-agent-forge-task-flow { from { background-position:0 0; } to { background-position:32px 0; } }
+          @keyframes metaontic-agent-forge-task-shimmer { from { transform:translateX(-120%); } to { transform:translateX(420%); } }
+          @keyframes metaontic-agent-forge-task-pulse { 0%,100% { opacity:.45; } 50% { opacity:1; } }
+          @keyframes metaontic-agent-forge-task-breath { 0%,100% { border-color:${TOKENS.border}; box-shadow:0 0 0 0 transparent; } 50% { border-color:${TOKENS.primaryFill}; box-shadow:0 0 12px 0 ${TOKENS.primaryFill}; } }
+          .metaontic-agent-forge-task { box-sizing:border-box; min-width:0; width:100%; border:1px solid ${TOKENS.border}; border-radius:10px; padding:10px 12px; color:${TOKENS.text}; margin:6px 0; overflow-wrap:anywhere; }
+          .metaontic-agent-forge-task-running { animation:metaontic-agent-forge-task-breath 2.4s ease-in-out infinite; }
+          .metaontic-agent-forge-task-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:13px; }
+          .metaontic-agent-forge-task-spinner { width:14px; height:14px; border:2px solid ${TOKENS.border}; border-top-color:${TOKENS.primaryFill}; border-radius:50%; animation:metaontic-agent-forge-task-spin .9s linear infinite; }
+          .metaontic-agent-forge-task-note { font-size:12px; color:${TOKENS.muted}; margin-top:8px; }
+          .metaontic-agent-forge-task-rail { position:relative; margin-top:20px; }
+          .metaontic-agent-forge-task-track { height:5px; border-radius:999px; overflow:hidden; background:${TOKENS.border}; }
+          .metaontic-agent-forge-task-turtle { position:absolute; top:-14px; transform:translateX(-50%) scaleX(-1); font-size:12px; line-height:1; transition:left 1s ease; }
+          .metaontic-agent-forge-task-fill { height:100%; border-radius:999px; background:${TOKENS.primaryFill}; transition:width 1s ease; position:relative; overflow:hidden; }
+          .metaontic-agent-forge-task-active .metaontic-agent-forge-task-fill { background-image:repeating-linear-gradient(110deg,transparent 0px,transparent 12px,rgba(255,255,255,.22) 12px,rgba(255,255,255,.22) 22px,transparent 22px,transparent 32px); background-size:32px 100%; animation:metaontic-agent-forge-task-flow 1s linear infinite; }
+          .metaontic-agent-forge-task-active .metaontic-agent-forge-task-fill::after { content:''; position:absolute; inset:0; width:30%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent); animation:metaontic-agent-forge-task-shimmer 2s linear infinite; }
+          .metaontic-agent-forge-task-live { display:inline-block; width:6px; height:6px; border-radius:50%; background:${TOKENS.primaryFill}; margin-right:6px; animation:metaontic-agent-forge-task-pulse 1.4s ease-in-out infinite; }
+          .metaontic-agent-forge-task-dots { display:inline-block; width:18px; text-align:left; }
+          @media(prefers-reduced-motion:reduce) { .metaontic-agent-forge-task-spinner, .metaontic-agent-forge-task-live, .metaontic-agent-forge-task-active .metaontic-agent-forge-task-fill, .metaontic-agent-forge-task-active .metaontic-agent-forge-task-fill::after { animation:none; } .metaontic-agent-forge-task-turtle { transition:none; } .metaontic-agent-forge-task-running { animation:none; } }
         `),
-            h('div', { key: 'head', className: 'forge-task-head' }, [
-                h('span', { key: 'spinner', className: 'forge-task-spinner', 'aria-hidden': true }),
+            h('div', { key: 'head', className: 'metaontic-agent-forge-task-head' }, [
+                h('span', { key: 'spinner', className: 'metaontic-agent-forge-task-spinner', 'aria-hidden': true }),
                 h('strong', { key: 'title' }, title),
-                h('span', { key: 'status', role: 'status' }, [status, h('span', { key: 'dots', className: 'forge-task-dots', 'aria-hidden': true }, waitingDots)]),
+                h('span', { key: 'status', role: 'status' }, [status, h('span', { key: 'dots', className: 'metaontic-agent-forge-task-dots', 'aria-hidden': true }, waitingDots)]),
                 h('span', { key: 'elapsed', style: { marginLeft: 'auto', fontVariantNumeric: 'tabular-nums' } }, `已等待 ${Math.floor(elapsed / 60)}分${String(elapsed % 60).padStart(2, '0')}秒`),
             ]),
-            h('div', { key: 'progress', className: 'forge-task-rail' }, [
-                h('div', { className: 'forge-task-track forge-task-active', role: 'progressbar', 'aria-label': '估算进度', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': progress }, h('div', { className: 'forge-task-fill', style: { width: `${progress}%` } })),
+            h('div', { key: 'progress', className: 'metaontic-agent-forge-task-rail' }, [
+                h('div', { className: 'metaontic-agent-forge-task-track metaontic-agent-forge-task-active', role: 'progressbar', 'aria-label': '估算进度', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': progress }, h('div', { className: 'metaontic-agent-forge-task-fill', style: { width: `${progress}%` } })),
                 // 装饰用的小乌龟：跟着进度条填充的右端一起从左往右爬，只表示「还在忙」，不代表真实进度；屏幕阅读器不读它。
-                h('span', { key: 'turtle', className: 'forge-task-turtle', style: { left: `${progress}%` }, 'aria-hidden': true }, '🐢'),
+                h('span', { key: 'turtle', className: 'metaontic-agent-forge-task-turtle', style: { left: `${progress}%` }, 'aria-hidden': true }, '🐢'),
             ]),
-            h('div', { key: 'percent', className: 'forge-task-note' }, `${progress}% · 估算进度`),
-            h('div', { key: 'note', className: 'forge-task-note' }, [
-                h('span', { key: 'live', className: 'forge-task-live', 'aria-hidden': true }),
+            h('div', { key: 'percent', className: 'metaontic-agent-forge-task-note' }, `${progress}% · 估算进度`),
+            h('div', { key: 'note', className: 'metaontic-agent-forge-task-note' }, [
+                h('span', { key: 'live', className: 'metaontic-agent-forge-task-live', 'aria-hidden': true }),
                 `${duration ? `目标 ${duration} 秒 · 预计等待约 ${Math.round(estimatedWait)} 秒 · ` : ''}${progress >= 99 ? '任务仍在等待结果，进度停在99%不表示失败。' : '任务处理中，完成后自动显示结果。'}请勿重复提交。`,
             ]),
         ]);

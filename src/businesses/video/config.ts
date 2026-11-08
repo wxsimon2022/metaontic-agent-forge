@@ -116,7 +116,7 @@ export const videoConfigFields = {
     .description(
       '轮询期间「查询失败」的容忍次数：网络抖动、中转站限流、API密钥中途被判无效都会让查询报错，'
       + '这些错误不表明任务终态；连续查询失败到这个次数才停止本次等待。'
-      + '放弃时任务 ID 仍保留，可用 video_status 事后补查，不会把「查不到」当成「没生成」。'
+      + '放弃时任务 ID 仍保留，可用 metaontic_agent_forge_video_status 事后补查，不会把「查不到」当成「没生成」。'
       + '设置页不显示这一项：默认值 5 够用。',
     )
     .volatile(),
@@ -162,7 +162,7 @@ export const DEFAULT_QUOTA_PER_UNIT = 500000;
 export const DEFAULT_USD_EXCHANGE_RATE = 7.3;
 
 /** 会真正调用视频模型、因而必须人工确认的工具。 */
-export const GATED_TOOLS = ['video_generate', 'video_extend', 'video_setup', 'video_prepare_image', 'media_submission'];
+export const GATED_TOOLS = ['metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_extend', 'metaontic_agent_forge_video_setup', 'metaontic_agent_forge_video_prepare_image', 'metaontic_agent_forge_media_submission'];
 
 /**
  * 预估费用的价目表：照抄中转站 /api/pricing 里 seedance 的 billing_expr。

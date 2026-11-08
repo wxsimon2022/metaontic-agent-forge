@@ -28,7 +28,7 @@ export async function fetchActualCost(config, taskIds, signal) {
   const tasks = settledTaskCosts([], taskIds);
   if (!tasks.length) return undefined;
   const pending = (reason) => ({ status: 'pending', source: 'relay_settlement', tasks, amount: null, currency: null, reason });
-  if (signal?.aborted) return pending('费用待查询：本次操作已停止，可稍后用video_status补查。');
+  if (signal?.aborted) return pending('费用待查询：本次操作已停止，可稍后用metaontic_agent_forge_video_status补查。');
   const key = resolveApiKey(config);
   const base = resolveBaseUrl(config).replace(/\/v1\/?$/, '');
   if (!key || !base) return pending('费用待查询：原调用连接不可用。');
@@ -48,7 +48,7 @@ export async function fetchActualCost(config, taskIds, signal) {
     if (!Array.isArray(rows)) return pending('费用待查询：中转站未返回有效消费日志。');
     const settled = settledTaskCosts(rows, taskIds);
     const known = settled.filter(x => x.status === 'settled');
-    if (!known.length) return pending('待结算：本 API密钥最近日志中尚未找到该任务的最终结算，可用video_status补查。');
+    if (!known.length) return pending('待结算：本 API密钥最近日志中尚未找到该任务的最终结算，可用metaontic_agent_forge_video_status补查。');
     let conversion;
     try {
       const settings = (await get('/api/status', false)).data;
@@ -67,7 +67,7 @@ export async function fetchActualCost(config, taskIds, signal) {
       reason: known.length !== settled.length ? '部分任务待结算；当前金额仅为已结算小计，不是整条视频最终费用。' : conversion ? '' : '已获取实际消耗额度，金额换算设置暂不可用。',
     };
   } catch {
-    return pending('费用待查询：中转站消费日志查询失败或无权限；视频结果不受影响，可稍后用video_status补查。');
+    return pending('费用待查询：中转站消费日志查询失败或无权限；视频结果不受影响，可稍后用metaontic_agent_forge_video_status补查。');
   }
 }
 

@@ -55,7 +55,7 @@ function compareVideoCosts(config, args) {
 
 export function estimateTool(config) {
   return {
-    name: 'video_estimate',
+    name: 'metaontic_agent_forge_video_estimate',
     description: '脚本审核前必须调用的只读双方案费用试算：火山官方方案与当前MetaOntic Agent Forge插件方案。duration为完整目标时长，resolution须用户已确认；首段按无视频输入，后续续拍按有视频输入计价并计入上一段完整视频时长；参考图不算视频输入。必须在脚本末尾展示逐段档位、输入/输出秒数、单价及金额，不能只给合计。不会生成视频、扣费、查余额或修改配置。未知模型/画幅拒绝猜价。每次改稿涉及时长、清晰度、模型或分段须重算。',
     parameters: { type: 'object', properties: {
       duration: { type: 'integer', minimum: 4, maximum: 120, description: '当前完整脚本的目标总时长' },

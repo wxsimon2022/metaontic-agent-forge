@@ -1,6 +1,6 @@
 import { videoResultState } from './result-state.js';
 /** 仅投影已生成成果的媒体字段，供结果卡片使用；不把请求或完整配置送到客户端。 */
-const PREVIEW_TOOLS = new Set(['video_generate', 'video_extend', 'video_status', 'video_prepare_image']);
+const PREVIEW_TOOLS = new Set(['metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_extend', 'metaontic_agent_forge_video_status', 'metaontic_agent_forge_video_prepare_image']);
 export function mediaPreviewMeta(value, toolName) {
   const media: Array<Record<string, string>> = [];
   const seen = new Set();
@@ -13,7 +13,7 @@ export function mediaPreviewMeta(value, toolName) {
     seen.add(key);
     media.push({ kind, label, ...(file ? { localPath: file } : {}), ...(remote ? { url: remote } : {}) });
   }
-  if (toolName === 'video_prepare_image') add('image', '角色参考图', value?.localPath, value?.imageUrl);
+  if (toolName === 'metaontic_agent_forge_video_prepare_image') add('image', '角色参考图', value?.localPath, value?.imageUrl);
   else {
     if (value?.videoPath && value?.merged) add('video', videoResultState(value).isFinal ? '完整视频' : '已完成部分合并视频', value.videoPath, '');
     const segments = (value?.segments || []).filter(s => s.status === 'succeeded');

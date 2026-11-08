@@ -48,7 +48,7 @@ export function configView(config) {
 
 export function configTool(config, settings) {
   return {
-    name: 'video_config',
+    name: 'metaontic_agent_forge_video_config',
     description:
       '只读查看 MetaOntic Agent Forge 插件自己的配置（baseUrl、submitPath、queryPath、model、imageModel、'
       + 'duration、singleMaxSeconds、ratio、generateAudio、'
@@ -99,7 +99,7 @@ export function configTool(config, settings) {
           minimum: 1,
           maximum: 60,
           description: '轮询「查询失败」的容忍次数（默认 5）：连续失败这么多次才放弃等待；'
-            + '放弃时任务 ID 仍保留，可用 video_status 补查。',
+            + '放弃时任务 ID 仍保留，可用 metaontic_agent_forge_video_status 补查。',
         },
         singleMaxSeconds: {
           type: 'integer',
@@ -167,7 +167,7 @@ export function configTool(config, settings) {
       }
       if (action === 'set') {
         throw new Error(
-          '插件配置不能在对话里改：video_config 是只读的，接入方式、API密钥、模型、地址等任何一项都只能由用户'
+          '插件配置不能在对话里改：metaontic_agent_forge_video_config 是只读的，接入方式、API密钥、模型、地址等任何一项都只能由用户'
           + '在插件设置页（「插件 → 已安装插件 → MetaOntic Agent Forge → 查看」）修改并保存。'
           + '请说明要改的是哪一项并引导用户去设置页，不要代改、不要索取或展示 API密钥。',
         );

@@ -19,7 +19,7 @@ async function save(file, record) {
   finally { await rm(temporary, { force: true }).catch(() => {}); }
 }
 function blocked(record) {
-  return Object.assign(new Error(`提交结果尚不确定，已阻止重复提交。记录 ID：${record.id}。请先在渠道记录中核对，再用 media_submission 关联原任务 ID，或在确认未创建后解锁；不要直接重新生成。`), { code: 'submission_unknown', submissionId: record.id });
+  return Object.assign(new Error(`提交结果尚不确定，已阻止重复提交。记录 ID：${record.id}。请先在渠道记录中核对，再用 metaontic_agent_forge_media_submission 关联原任务 ID，或在确认未创建后解锁；不要直接重新生成。`), { code: 'submission_unknown', submissionId: record.id });
 }
 export async function guardedSubmit(config, requestPath, body, signal, scope = '') {
   if (signal?.aborted) throw abortError();

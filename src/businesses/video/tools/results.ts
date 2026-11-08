@@ -9,7 +9,7 @@ function previewInstruction(value) {
   return `【下一步：先展示本段视频，等待用户预览】请立即在用户可见正文用可点击链接展示本次完成的分段：${target || '见本次分段结果'}。`
     + `正文附上 ${artifactLink('观看本段视频', latest?.localPath || value?.previewPath || value?.videoPath, latest?.videoUrl || value?.videoUrl)}。`
     + '不要调用 present：交付卡片只登记最终成片，中途登记分段会把成片挤到后面。'
-    + '不能只说“生成成功”或只列任务ID。正文展示后立即单独调用 video_project(action:review_segment,resume:本次resumeDir)，弹出“分段结果确认”窗口；不能只用文字询问后结束回合。未通过不能提交下一段。'
+    + '不能只说“生成成功”或只列任务ID。正文展示后立即单独调用 metaontic_agent_forge_video_project(action:review_segment,resume:本次resumeDir)，弹出“分段结果确认”窗口；不能只用文字询问后结束回合。未通过不能提交下一段。'
     + '用户首次授权制作不等于已看过本段，不得自动resume或调用其他生成工具绕过预览；链接不可用时给出可点击视频路径或播放链接，仍须等待明确确认。';
 }
 
@@ -99,10 +99,10 @@ function mergeModeLabel(mergeMode) {
   return '重编码拼接';
 }
 
-/** 结果文字里对本次工具的说法：video_generate 是「直出+延长」，video_extend 只有「延长」。 */
+/** 结果文字里对本次工具的说法：metaontic_agent_forge_video_generate 是「直出+延长」，metaontic_agent_forge_video_extend 只有「延长」。 */
 const RENDER_WORDING = {
   generate: {
-    toolName: 'video_generate',
+    toolName: 'metaontic_agent_forge_video_generate',
     segmentLabel: (segment) => (segment.kind === 'extend' ? `延长 +${segment.seconds}s` : `直出 ${segment.seconds}s`),
     pausedHead: '已生成前',
     pausedTail: '请先预览已完成分段并通过结果确认，再确认下一段费用；当前已暂停',
@@ -112,23 +112,23 @@ const RENDER_WORDING = {
       return `视频生成成功：一次直出 ${formatSeconds(segments[0]?.seconds)} 秒，没有超过单段上限，不需要延长。`;
     },
     timeout: '本次等待已超时，尚未取得生成结果；任务可能仍在运行。',
-    unknown: '没能确认任务状态（查询失败，不能据此判定任务失败）。任务已经提交，可能仍在生成；用 video_status 按下面的任务 ID 复查，不要重新提交。',
+    unknown: '没能确认任务状态（查询失败，不能据此判定任务失败）。任务已经提交，可能仍在生成；用 metaontic_agent_forge_video_status 按下面的任务 ID 复查，不要重新提交。',
     cancelled: '任务已取消。',
     failed: (error) => `视频生成失败${error ? `：${error}` : ''}。`,
-    leftover: (resumeDir) => `要接着做就把 resume 原样传回 video_generate（resume="${resumeDir}"），插件会接着已有的分段往下生成，已完成分段不重新生成；新生成的剩余分段仍需确认费用并计费。`,
+    leftover: (resumeDir) => `要接着做就把 resume 原样传回 metaontic_agent_forge_video_generate（resume="${resumeDir}"），插件会接着已有的分段往下生成，已完成分段不重新生成；新生成的剩余分段仍需确认费用并计费。`,
     noMergedFile: '未提供本地成片，可通过各分段的上游链接保存视频。',
   },
   extend: {
-    toolName: 'video_extend',
+    toolName: 'metaontic_agent_forge_video_extend',
     segmentLabel: (segment) => `+${segment.seconds}s`,
     pausedHead: '已完成延长生成前',
     pausedTail: '请先预览已完成分段并通过结果确认，再确认下一段费用；当前已暂停',
     success: () => '视频延长成功。',
     timeout: '本次延长等待已超时，尚未取得生成结果；任务可能仍在运行。',
-    unknown: '没能确认这段延长任务的状态（查询失败，不能据此判定任务失败）。任务已经提交，可能仍在生成；用 video_status 按任务 ID 复查，不要重新提交。',
+    unknown: '没能确认这段延长任务的状态（查询失败，不能据此判定任务失败）。任务已经提交，可能仍在生成；用 metaontic_agent_forge_video_status 按任务 ID 复查，不要重新提交。',
     cancelled: '延长任务已取消。',
     failed: (error) => `视频延长失败${error ? `：${error}` : ''}。`,
-    leftover: (resumeDir) => `要接着做就把 resume="${resumeDir}" 传回 video_extend（prompt 可以省略，其余参数照旧）：已完成分段不重新生成；新生成的剩余分段仍需确认费用并计费。`,
+    leftover: (resumeDir) => `要接着做就把 resume="${resumeDir}" 传回 metaontic_agent_forge_video_extend（prompt 可以省略，其余参数照旧）：已完成分段不重新生成；新生成的剩余分段仍需确认费用并计费。`,
     noMergedFile: '',
   },
 };
@@ -198,7 +198,7 @@ function renderVideoText(value, variant) {
   if (note) parts.push(note);
   if (status === 'timeout' || status === 'unknown') {
     const taskId = pendingTaskId || segments.at(-1)?.taskId || '（未知）';
-    parts.push(`可用 video_status 查询任务 ${taskId} 的状态与视频链接。`);
+    parts.push(`可用 metaontic_agent_forge_video_status 查询任务 ${taskId} 的状态与视频链接。`);
   }
   return [{ type: 'text', text: parts.filter(Boolean).join('\n') }];
 }

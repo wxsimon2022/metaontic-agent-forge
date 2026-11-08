@@ -38,7 +38,7 @@ function host(selected = 'writer') {
 const exec = { agent: { session: { header: { agentPreset: 'old' } } } };
 function business(id) {
   return { id, prompt: config => `${id}:${config.value}`, apply(runtime) {
-    runtime.tools.register(id, { name: `${id}_run`, description: id, execute: args => ({ status: 'succeeded', value: args.value }) });
+    runtime.tools.register(id, { name: `metaontic_agent_forge_${id}_run`, description: id, execute: args => ({ status: 'succeeded', value: args.value }) });
   } };
 }
 test('two businesses share a runtime while tool scope and live prompts follow the current agent', async () => {
@@ -47,14 +47,14 @@ test('two businesses share a runtime while tool scope and live prompts follow th
   const apply = api.createPluginRuntime({ agents: [agent('writer', ['writing']), agent('seller', ['commerce']), agent('both', ['writing', 'commerce'])], businesses: [business('writing'), business('commerce')] });
   const dispose = apply(h.ctx, config);
   assert.equal(h.text(), 'writing:one');
-  assert.deepEqual(await h.tools.get('writing_run').execute({ value: 'article' }, exec), { status: 'succeeded', value: 'article' });
-  await assert.rejects(h.tools.get('commerce_run').execute({}, exec), /当前助手未启用此业务/);
+  assert.deepEqual(await h.tools.get('metaontic_agent_forge_writing_run').execute({ value: 'article' }, exec), { status: 'succeeded', value: 'article' });
+  await assert.rejects(h.tools.get('metaontic_agent_forge_commerce_run').execute({}, exec), /当前助手未启用此业务/);
   h.select('seller'); config.value = 'two';
   assert.equal(h.text(), 'commerce:two');
-  await assert.rejects(h.tools.get('writing_run').execute({}, exec), /当前助手未启用此业务/);
+  await assert.rejects(h.tools.get('metaontic_agent_forge_writing_run').execute({}, exec), /当前助手未启用此业务/);
   h.select('both'); assert.equal(h.text(), 'writing:two\n\ncommerce:two');
   h.select(null); assert.equal(h.text(), '');
-  assert.equal((await h.tools.get('writing_run').execute({ value: 'manual' }, exec)).value, 'manual');
+  assert.equal((await h.tools.get('metaontic_agent_forge_writing_run').execute({ value: 'manual' }, exec)).value, 'manual');
   h.select('unknown'); assert.equal(h.text(), '');
   dispose(); dispose();
   assert.equal(h.tools.size, 0); assert.equal(h.cleaned.length, 2); assert.equal(h.text(), undefined);
@@ -67,9 +67,9 @@ test('a third video agent inherits video behavior without modifying video busine
     assert.match(h.text(), /总时长 ≤ 30 秒/); assert.match(h.text(), /教程专题/);
     h.select('writer'); assert.equal(api.isVideoDirector(exec, h.ctx), false);
     assert.doesNotMatch(h.text(), /视频创作/);
-    await assert.rejects(h.tools.get('video_config')?.execute({}, exec) || h.tools.get('video_status').execute({}, exec), /当前助手未启用此业务/);
+    await assert.rejects(h.tools.get('metaontic_agent_forge_video_config')?.execute({}, exec) || h.tools.get('metaontic_agent_forge_video_status').execute({}, exec), /当前助手未启用此业务/);
     const gate = h.events.get('tools/pre-execute');
-    assert.equal((await gate({ ...exec, name: 'video_generate' }, () => ({ kind: 'allow' }))).kind, 'deny');
+    assert.equal((await gate({ ...exec, name: 'metaontic_agent_forge_video_generate' }, () => ({ kind: 'allow' }))).kind, 'deny');
     assert.equal((await gate({ ...exec, name: 'ask_user_question' }, () => ({ kind: 'allow' }))).kind, 'allow');
   } finally { dispose(); }
 });
@@ -81,9 +81,9 @@ test('duplicate definitions and missing business dependencies fail before host r
 test('tool name collision rolls back previously registered tools and module resources', () => {
   const h = host(); let released = false;
   const first = { ...business('writing'), apply(runtime) { business('writing').apply(runtime); runtime.defer(() => { released = true; }); } };
-  const second = { id: 'other', apply(runtime) { runtime.tools.register('other', { name: 'writing_run', description: '', execute() {} }); } };
+  const second = { id: 'other', apply(runtime) { runtime.tools.register('other', { name: 'metaontic_agent_forge_writing_run', description: '', execute() {} }); } };
   assert.throws(() => api.createPluginRuntime({ agents: [], businesses: [first, second] })(h.ctx), /工具名称重复/);
-  assert.equal(h.tools.size, 0); assert.equal(released, true); assert.deepEqual(h.cleaned, ['writing_run']);
+  assert.equal(h.tools.size, 0); assert.equal(released, true); assert.deepEqual(h.cleaned, ['metaontic_agent_forge_writing_run']);
 });
 test('partial business registration failure and cleanup errors do not leak other resources', () => {
   const h = host(); let cleaned = 0;
@@ -129,4 +129,10 @@ test('overlapping hot reloads cannot restore a registry whose runtime was alread
   const stopFirst = api.bindAgentRegistry(ctx, first), stopSecond = api.bindAgentRegistry(ctx, second);
   stopFirst(); assert.equal(api.registryForContext(ctx, fallback), second);
   stopSecond(); assert.equal(api.registryForContext(ctx, fallback), fallback);
+});
+test('businesses cannot introduce unprefixed public tool names', () => {
+ const h=host();
+ const invalid={id:'writing',apply(runtime){runtime.tools.register('writing',{name:'video_stage',description:'invalid',execute(){}});}};
+ assert.throws(()=>api.createPluginRuntime({agents:[],businesses:[invalid]})(h.ctx),/固定前缀/);
+ assert.equal(h.tools.size,0);
 });

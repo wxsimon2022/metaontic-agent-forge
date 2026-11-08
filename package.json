@@ -30,15 +30,18 @@
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.svg",
     "./package.json": "./package.json",
-    "./presets/forge-video-director": "./presets/forge-video-director.js",
-    "./presets/forge-video-director/locale/*.json": "./locale/presets/forge-video-director/*.json",
-    "./presets/forge-promo-video": "./presets/forge-promo-video.js",
-    "./presets/forge-promo-video/locale/*.json": "./locale/presets/forge-promo-video/*.json",
-    "./presets/forge-video-director/icon": "./presets/icons/forge-video-director.svg",
-    "./presets/forge-promo-video/icon": "./presets/icons/forge-promo-video.svg",
-    "./presets/forge-studio": "./presets/forge-studio.js",
-    "./presets/forge-studio/locale/*.json": "./locale/presets/forge-studio/*.json",
-    "./presets/forge-studio/icon": "./presets/icons/forge-studio.svg"
+    "./presets/metaontic-agent-forge-video-director": "./presets/metaontic-agent-forge-video-director.js",
+    "./presets/metaontic-agent-forge-video-director/locale/*.json": "./locale/presets/metaontic-agent-forge-video-director/*.json",
+    "./presets/metaontic-agent-forge-promo-video": "./presets/metaontic-agent-forge-promo-video.js",
+    "./presets/metaontic-agent-forge-promo-video/locale/*.json": "./locale/presets/metaontic-agent-forge-promo-video/*.json",
+    "./presets/metaontic-agent-forge-video-director/icon": "./presets/icons/metaontic-agent-forge-video-director.svg",
+    "./presets/metaontic-agent-forge-promo-video/icon": "./presets/icons/metaontic-agent-forge-promo-video.svg",
+    "./presets/metaontic-agent-forge-studio": "./presets/metaontic-agent-forge-studio.js",
+    "./presets/metaontic-agent-forge-studio/locale/*.json": "./locale/presets/metaontic-agent-forge-studio/*.json",
+    "./presets/metaontic-agent-forge-studio/icon": "./presets/icons/metaontic-agent-forge-studio.svg",
+    "./presets/controls": "./presets/controls.js",
+    "./presets/controls/locale/*.json": "./locale/presets/controls/*.json",
+    "./presets/controls/icon": "./icon.svg"
   },
   "files": [
     "index.js",
@@ -101,7 +104,7 @@
   "releaseNotes": {
     "version": "1.0.0",
     "prerelease": false,
-    "publishedAt": "2026-11-08T08:28:33.088Z",
+    "publishedAt": "2026-11-08T08:47:42.042Z",
     "items": [
       "优化：常规体验优化。"
     ]

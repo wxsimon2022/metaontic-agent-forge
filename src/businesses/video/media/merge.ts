@@ -252,7 +252,7 @@ async function mapLimit(items, limit, worker) {
 }
 
 /**
- * 下载分段 + 合并成一条成片（video_generate 与 video_extend 共用）。
+ * 下载分段 + 合并成一条成片（metaontic_agent_forge_video_generate 与 metaontic_agent_forge_video_extend 共用）。
  * 只负责「把已经生成好的段落盘、再拼成一条」；暂停 / 保留分段 / 写暂停记录这些策略由调用方决定。
  * @param notes - 调用方的说明数组，函数会往里追加接缝、音频裁齐、缺 ffmpeg 之类的提示。
  * @param keepSingleFile - 只有一段时不要把它改名搬走（暂停时那段还要留着续做）。

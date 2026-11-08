@@ -67,8 +67,8 @@ function applyVideoBusiness(runtime: BusinessRuntime) {
   register(jsonSafeTool(estimateTool(config)));
   register(jsonSafeTool(submissionTool(config)));
   register(jsonSafeTool(prepareImageTool(config)));
-  register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(withProjectApproval(videoTool(config, deps, ctx), config), config)), 'video_generate', config), deliveryOrder.remember));
-  register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(withProjectApproval(extendTool(config, deps, ctx), config), config)), 'video_extend', config), deliveryOrder.remember));
+  register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(withProjectApproval(videoTool(config, deps, ctx), config), config)), 'metaontic_agent_forge_video_generate', config), deliveryOrder.remember));
+  register(withVideoExecution(withResumeLock(jsonSafeTool(withActualCost(withProjectApproval(extendTool(config, deps, ctx), config), config)), 'metaontic_agent_forge_video_extend', config), deliveryOrder.remember));
   register(withVideoExecution(jsonSafeTool(withActualCost(taskTool(config), config))));
   register(jsonSafeTool(setupTool(config)));
   // 雪藏功能：默认不注册，不进入对外技能和提示词，仅供内部显式启用。
@@ -99,7 +99,7 @@ function applyVideoBusiness(runtime: BusinessRuntime) {
       const orderGate = await deliveryOrder.gate(exec);
       if (orderGate) return orderGate;
       if (!GATED_TOOLS.includes(exec.name)) return next();
-      if (['video_generate', 'video_extend'].includes(exec.name)) {
+      if (['metaontic_agent_forge_video_generate', 'metaontic_agent_forge_video_extend'].includes(exec.name)) {
         try { await assertSegmentReviewed(exec, exec.arguments || {}); await assertProjectApproved(config, exec, exec.arguments || {}); }
         catch (error) { return { kind: 'deny', reason: error?.message || String(error) }; }
       }
@@ -107,8 +107,8 @@ function applyVideoBusiness(runtime: BusinessRuntime) {
         return await preflightGate(ctx, config, exec);
       } catch (error) {
         const message = error?.message || String(error);
-        if (exec.name === 'video_prepare_image') return { kind: 'deny', reason: '图片费用确认未能完成，请先恢复确认能力；未取得同意不生成图片。' };
-        if (exec.name === 'video_setup') {
+        if (exec.name === 'metaontic_agent_forge_video_prepare_image') return { kind: 'deny', reason: '图片费用确认未能完成，请先恢复确认能力；未取得同意不生成图片。' };
+        if (exec.name === 'metaontic_agent_forge_video_setup') {
           const command = ffmpegInstallOptions().installs[0].command;
           return {
             kind: 'ask',

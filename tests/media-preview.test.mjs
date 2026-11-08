@@ -20,21 +20,21 @@ test('metadata projects only completed media and keeps merged film first', () =>
     { index: 1, status: 'succeeded', localPath: '/one.mp4', videoUrl: 'https://cdn/one.mp4' },
     { index: 2, status: 'failed', localPath: '/bad.mp4' },
   ] };
-  const meta = c.mediaPreviewMeta(value, 'video_generate');
+  const meta = c.mediaPreviewMeta(value, 'metaontic_agent_forge_video_generate');
   assert.equal(meta.media.length, 2);
   assert.equal(meta.media[0].label, '已完成部分合并视频');
-  assert.equal(c.mediaPreviewMeta({ ...value, segments: value.segments.slice(0, 1) }, 'video_generate').media[0].label, '完整视频');
+  assert.equal(c.mediaPreviewMeta({ ...value, segments: value.segments.slice(0, 1) }, 'metaontic_agent_forge_video_generate').media[0].label, '完整视频');
   assert.equal(meta.media[1].url, 'https://cdn/one.mp4');
   assert.doesNotMatch(JSON.stringify(meta), /secret|bad/);
-  assert.equal(c.mediaPreviewMeta({ ...value, paused: true }, 'video_generate').media[0].label, '已完成部分合并视频');
+  assert.equal(c.mediaPreviewMeta({ ...value, paused: true }, 'metaontic_agent_forge_video_generate').media[0].label, '已完成部分合并视频');
 });
 test('image metadata and old Markdown conversation links remain previewable', () => {
-  const meta = c.mediaPreviewMeta({ imageUrl: 'https://cdn/image.png', localPath: '/图.png' }, 'video_prepare_image');
+  const meta = c.mediaPreviewMeta({ imageUrl: 'https://cdn/image.png', localPath: '/图.png' }, 'metaontic_agent_forge_video_prepare_image');
   assert.equal(meta.media[0].kind, 'image');
-  assert.equal(c.previewMediaFromBlock({ kind: 'result', meta: { metaonticMedia: meta } }, 'video_prepare_image').length, 1);
+  assert.equal(c.previewMediaFromBlock({ kind: 'result', meta: { metaonticMedia: meta } }, 'metaontic_agent_forge_video_prepare_image').length, 1);
   const block = { kind: 'result', content: [{ type: 'text', text: '[第一段](</视频 1.mp4>)\n[图片](https://cdn/a.png)' }] };
-  const items = c.previewMediaFromBlock(block, 'video_generate');
+  const items = c.previewMediaFromBlock(block, 'metaontic_agent_forge_video_generate');
   assert.equal(items[0].localPath, '/视频 1.mp4');
   assert.equal(items[1].kind, 'image');
-  assert.equal(c.previewMediaFromBlock({ ...block, isError: true }, 'video_generate').length, 0);
+  assert.equal(c.previewMediaFromBlock({ ...block, isError: true }, 'metaontic_agent_forge_video_generate').length, 0);
 });

@@ -38,6 +38,6 @@ test('unavailable questions, aborts and failed persistence cannot authorize dura
 });
 
 test('a previously approved project reuses its confirmed duration without invalidating review',async()=>{
- const h=fixture();h.project.approved={name:'video_generate',specification:{duration:30}};
+ const h=fixture();h.project.approved={name:'metaontic_agent_forge_video_generate',specification:{duration:30}};
  const approved=h.project.approved;assert.equal((await h.run()).duration,30);assert.equal(h.asks.length,0);assert.equal(h.project.approved,approved);
 });

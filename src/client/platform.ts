@@ -22,7 +22,7 @@ export function createPlatformClient(require: any) {
       ctx.effect(() => ctx.slots.inject('main', () => ctx.slots.register({
         name: 'main', key: PANEL_ID, locale: NS,
         inject: () => ({
-          startSession: () => ctx.get('uiWorkspace')?.startSession(undefined, { agentPreset: 'forge-studio' }),
+          startSession: () => ctx.get('uiWorkspace')?.startSession(undefined, { agentPreset: 'metaontic-agent-forge-studio' }),
           openSettings: () => ctx.get('pluginNavigation')?.openBundle(NAMESPACE),
         }),
       }, ForgePanel)), 'forge: platform dashboard');

@@ -3,7 +3,7 @@
 <text x="110" y="226" class="node-title">01 需求确认</text>
 <text x="110" y="253" class="body">时长未指定：15 / 30 / 45 / 60 秒 / 自定义</text>
 <text x="110" y="276" class="body">自定义输入4–120整数秒；同时确认画幅和清晰度</text>
-<text x="110" y="301" class="code">video_project.prepare · duration-choice</text>
+<text x="110" y="301" class="code">metaontic_agent_forge_video_project.prepare · duration-choice</text>
 <rect x="90" y="335" width="550" height="122" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>
 <text x="110" y="366" class="node-title">02 项目与角色参考路线</text>
 <text x="110" y="393" class="body">优先直接文生视频，也可使用已有图或先生成角色图</text>
@@ -12,11 +12,11 @@
 <rect x="90" y="475" width="550" height="100" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>
 <text x="110" y="506" class="node-title">03 脚本、分镜与费用预估</text>
 <text x="110" y="533" class="body">完整展示脚本，内嵌本版分镜图，列出逐段估价</text>
-<text x="110" y="561" class="code">video_estimate · script.md · storyboard</text>
+<text x="110" y="561" class="code">metaontic_agent_forge_video_estimate · script.md · storyboard</text>
 <rect x="90" y="605" width="550" height="90" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>
 <text x="110" y="636" class="node-title">04 脚本审核</text>
 <text x="110" y="663" class="body">通过后固定脚本及制作参数；改稿或改参数需重审</text>
-<text x="110" y="681" class="code">video_project.review</text>
+<text x="110" y="681" class="code">metaontic_agent_forge_video_project.review</text>
 <rect x="90" y="725" width="550" height="90" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>
 <text x="110" y="756" class="node-title">05 本段制作费用确认</text>
 <text x="110" y="783" class="body">生成工具的付费审批就是制作确认，不另问开始制作</text>
@@ -24,7 +24,7 @@
 <rect x="90" y="845" width="550" height="100" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>
 <text x="110" y="876" class="node-title">06 生成当前一段</text>
 <text x="110" y="903" class="body">首次生成或续拍；先保存原请求与任务ID，再查询结果</text>
-<text x="110" y="931" class="code">video_generate / video_extend → segment-executor</text>
+<text x="110" y="931" class="code">metaontic_agent_forge_video_generate / metaontic_agent_forge_video_extend → segment-executor</text>
 <rect x="90" y="975" width="550" height="100" rx="12" fill="#eff9f4" stroke="#c5e1d1"/>
 <text x="110" y="1006" class="node-title">07 取回并展示本段</text>
 <text x="110" y="1033" class="body">暂停时默认只下载新段；正文提供视频链接和直接预览</text>
@@ -81,10 +81,10 @@
 <path d="M1300 365V390" class="edge"/>
 <rect x="1065" y="395" width="470" height="170" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>
 <text x="1085" y="426" class="node-title">工具接口层</text>
-<text x="1085" y="453" class="body">video_project：需求准备与真实审核记录</text>
-<text x="1085" y="476" class="body">video_generate / video_extend：生成与续拍</text>
-<text x="1085" y="499" class="body">video_estimate / video_status：试算与原任务查询</text>
-<text x="1085" y="522" class="body">video_prepare_image：角色图与经同意的转换</text>
+<text x="1085" y="453" class="body">metaontic_agent_forge_video_project：需求准备与真实审核记录</text>
+<text x="1085" y="476" class="body">metaontic_agent_forge_video_generate / metaontic_agent_forge_video_extend：生成与续拍</text>
+<text x="1085" y="499" class="body">metaontic_agent_forge_video_estimate / metaontic_agent_forge_video_status：试算与原任务查询</text>
+<text x="1085" y="522" class="body">metaontic_agent_forge_video_prepare_image：角色图与经同意的转换</text>
 <text x="1085" y="551" class="code">src/tools/</text>
 <path d="M1300 565V590" class="edge"/>
 <rect x="1065" y="595" width="470" height="200" rx="12" fill="#eef5ff" stroke="#c9dbf4"/>

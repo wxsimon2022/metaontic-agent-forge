@@ -180,7 +180,7 @@ export function ffmpegInstallHint(config) {
     '装好后使用原resume恢复已有任务的下载或合并，不重新提交生成任务；'
       + '如果 ffmpeg 已经装了但不在默认位置，把它的绝对路径填到插件设置里的「ffmpeg 路径」也一样管用。',
     'ffmpeg 的安装包里自带 ffprobe，装完分段探测也一起好了。',
-    '想让我来装就说一声 —— 我会用 video_setup 执行安装（执行前宿主会先让你确认命令）。',
+    '想让我来装就说一声 —— 我会用 metaontic_agent_forge_video_setup 执行安装（执行前宿主会先让你确认命令）。',
   ];
   return { binary, os, installs, hint: lines.join('\n') };
 }

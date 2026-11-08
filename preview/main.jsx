@@ -78,7 +78,7 @@ function App() {
     startSession: () => { panelProps.startSession?.(); render((n) => n + 1); },
     openSettings: () => { panelProps.openSettings?.(); render((n) => n + 1); },
   }), []);
-  const Progress = components[task === 'extend' ? 'tool.call.toolview:video_extend' : 'tool.call.toolview:video_generate'];
+  const Progress = components[task === 'extend' ? 'tool.call.toolview:metaontic_agent_forge_video_extend' : 'tool.call.toolview:metaontic_agent_forge_video_generate'];
   const block = task === 'success' ? { kind: 'result', content: [{ type: 'text', text: '视频生成成功 · succeeded\n示例路径：/preview/video.mp4' }] } : task === 'failed' ? { kind: 'result', isError: true, content: [{ type: 'text', text: '预览：模拟生成失败，请检查错误详情。' }] } : { phase: 'start', args: { duration: 15 } };
   const masked = Object.fromEntries(Object.entries(value).map(([k, v]) => [k, secretFields.includes(k) && v ? '（模拟 Key 已隐藏）' : v]));
   return <>
@@ -94,7 +94,7 @@ function App() {
     <p className="preview-note">复用 src/client.ts 的真实界面 · 数据与 Key 均为模拟 · 保存仅在当前页面内生效 · 修改源码自动刷新</p>
     <main className={`preview-content ${narrow ? 'narrow' : ''}`}>
       <nav className="preview-tabs"><button aria-pressed={tab === 'settings'} onClick={() => setTab('settings')}>插件设置</button><button aria-pressed={tab === 'panel'} onClick={() => setTab('panel')}>左侧栏面板</button><button aria-pressed={tab === 'progress'} onClick={() => setTab('progress')}>生成进度卡片</button></nav>
-      {tab === 'settings' ? <Page key={epoch} /> : tab === 'panel' ? <div className="preview-panel"><p className="preview-note">左侧栏入口（收起 18px / 展开 16px、当前项高亮）：{PanelIcon ? <span className="preview-icon"><PanelIcon size={18} active /></span> : null}{PanelLabel ? <span className="preview-icon-label">{PanelLabel()}</span> : null}</p><Panel {...panelProps} {...panelCalls} /><p className="preview-note">点「新建视频创作会话」与「打开插件设置」只记录调用：{JSON.stringify(calls)}</p></div> : <><select aria-label="任务状态" value={task} onChange={e => { setTask(e.target.value); setTaskStartedAt(Date.now()); }}><option value="waiting">生成等待</option><option value="extend">延长等待</option><option value="success">生成成功</option><option value="failed">失败</option></select><Progress key={`${epoch}-${task}`} toolName={task === 'extend' ? 'video_extend' : 'video_generate'} block={block} callId={task} startedAt={taskStartedAt} /></>}
+      {tab === 'settings' ? <Page key={epoch} /> : tab === 'panel' ? <div className="preview-panel"><p className="preview-note">左侧栏入口（收起 18px / 展开 16px、当前项高亮）：{PanelIcon ? <span className="preview-icon"><PanelIcon size={18} active /></span> : null}{PanelLabel ? <span className="preview-icon-label">{PanelLabel()}</span> : null}</p><Panel {...panelProps} {...panelCalls} /><p className="preview-note">点「新建视频创作会话」与「打开插件设置」只记录调用：{JSON.stringify(calls)}</p></div> : <><select aria-label="任务状态" value={task} onChange={e => { setTask(e.target.value); setTaskStartedAt(Date.now()); }}><option value="waiting">生成等待</option><option value="extend">延长等待</option><option value="success">生成成功</option><option value="failed">失败</option></select><Progress key={`${epoch}-${task}`} toolName={task === 'extend' ? 'metaontic_agent_forge_video_extend' : 'metaontic_agent_forge_video_generate'} block={block} callId={task} startedAt={taskStartedAt} /></>}
       <details className="preview-inspect"><summary>模拟配置快照</summary><pre>{JSON.stringify(masked, null, 2)}</pre></details>
     </main>
   </>;

@@ -38,7 +38,7 @@ export function createUpdates({ h, fetchSource }: any) {
     function updateBell(t, latest, current) {
       if (!isNewerVersion(latest, current)) return null;
       const label = t('versionNew', { version: latest });
-      return h('span', { key: 'update-bell', className: 'forge-update-bell', 'data-field': 'update-bell', role: 'img', 'aria-label': label, title: label },
+      return h('span', { key: 'update-bell', className: 'metaontic-agent-forge-update-bell', 'data-field': 'update-bell', role: 'img', 'aria-label': label, title: label },
         h('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true }, [
           h('path', { key: 'body', d: 'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9' }),
           h('path', { key: 'clapper', d: 'M10 21h4M12 2V1' }),
@@ -321,15 +321,15 @@ function deferUpdate() {
 /** Ordinary updates are optional: checking and dismissing never install anything. */
 export function renderUpdateNotice({ h, t, available, latest, deferred, status, confirmed, onUpdate, onLater }) {
   if (!available || deferred === latest || status === 'installing') return null;
-  return h('div', { key: 'update-notice', className: 'forge-notice', role: 'status', 'data-field': 'update-notice' }, [
+  return h('div', { key: 'update-notice', className: 'metaontic-agent-forge-notice', role: 'status', 'data-field': 'update-notice' }, [
     h('strong', { key: 'title' }, t('versionNew', { version: latest })),
     h('p', { key: 'optional' }, t('versionOptional')),
     confirmed ? h('p', { key: 'confirm' }, t('versionUpdateConfirmHint')) : null,
-    h('div', { key: 'actions', className: 'forge-cmd-row' }, [
-      h('button', { key: 'update', type: 'button', className: 'forge-btn forge-btn-sm forge-btn-primary',
+    h('div', { key: 'actions', className: 'metaontic-agent-forge-cmd-row' }, [
+      h('button', { key: 'update', type: 'button', className: 'metaontic-agent-forge-btn metaontic-agent-forge-btn-sm metaontic-agent-forge-btn-primary',
         'data-action': confirmed ? 'update-notice-confirm' : 'update-notice-open', onClick: onUpdate },
         confirmed ? t('versionUpdateConfirm', { version: latest }) : t('versionUpdate')),
-      h('button', { key: 'later', type: 'button', className: 'forge-btn forge-btn-sm', 'data-action': 'update-later', onClick: onLater }, t('versionLater')),
+      h('button', { key: 'later', type: 'button', className: 'metaontic-agent-forge-btn metaontic-agent-forge-btn-sm', 'data-action': 'update-later', onClick: onLater }, t('versionLater')),
     ]),
   ]);
 }

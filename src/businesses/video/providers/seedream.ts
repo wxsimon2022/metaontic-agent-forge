@@ -47,7 +47,7 @@ async function generateSeedreamImageCore(liveConfig, body, signal, existingTaskI
     }
     return completed;
   } catch (error) {
-    throw Object.assign(new Error(`${error?.message || error}（图片 task_id=${taskId}）。${error?.terminal ? '任务已失败，未重试。' : '已停止等待，不重复提交；可用 video_prepare_image 的 taskId 查询此图片任务。'}`), { taskId, terminal: Boolean(error?.terminal), code: error?.code || 'image_task_error' });
+    throw Object.assign(new Error(`${error?.message || error}（图片 task_id=${taskId}）。${error?.terminal ? '任务已失败，未重试。' : '已停止等待，不重复提交；可用 metaontic_agent_forge_video_prepare_image 的 taskId 查询此图片任务。'}`), { taskId, terminal: Boolean(error?.terminal), code: error?.code || 'image_task_error' });
   }
 }
 
