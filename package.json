@@ -39,9 +39,9 @@
     "./presets/metaontic-agent-forge-studio": "./presets/metaontic-agent-forge-studio.js",
     "./presets/metaontic-agent-forge-studio/locale/*.json": "./locale/presets/metaontic-agent-forge-studio/*.json",
     "./presets/metaontic-agent-forge-studio/icon": "./presets/icons/metaontic-agent-forge-studio.svg",
-    "./presets/controls": "./presets/controls.js",
-    "./presets/controls/locale/*.json": "./locale/presets/controls/*.json",
-    "./presets/controls/icon": "./icon.svg"
+    "./presets/metaontic-agent-forge-controls": "./presets/metaontic-agent-forge-controls.js",
+    "./presets/metaontic-agent-forge-controls/locale/*.json": "./locale/presets/controls/*.json",
+    "./presets/metaontic-agent-forge-controls/icon": "./icon.svg"
   },
   "files": [
     "index.js",
@@ -105,9 +105,9 @@
   "releaseNotes": {
     "version": "1.0.0",
     "prerelease": false,
-    "publishedAt": "2026-11-08T09:53:01.958Z",
+    "publishedAt": "2026-11-08T10:24:36.755Z",
     "items": [
-      "优化：支持新旧插件共存，恢复设置页和左侧入口。"
+      "优化：恢复总控会话创建与模式入口，模式列表仅展示平台总控。"
     ]
   }
 }

@@ -31,13 +31,17 @@
               allowedAgentPresets: [metaontic-agent-forge-video-director, metaontic-agent-forge-promo-video]
               maxDepth: 1
           - id: metaontic-agent-forge-studio-subagent-control
-            name: 'metaontic-agent-forge/presets/controls'
+            name: 'metaontic-agent-forge/presets/metaontic-agent-forge-controls'
           - id: metaontic-agent-forge-tool-fs
             name: '@deepseek-ai/dsh-tool-fs'
           - id: metaontic-agent-forge-tool-fs-search
             name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
           - id: metaontic-agent-forge-tool-todo
             name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
           - id: metaontic-agent-forge-tool-ask-user
             name: '@deepseek-ai/dsh-tool-ask-user'
           - id: metaontic-agent-forge-present

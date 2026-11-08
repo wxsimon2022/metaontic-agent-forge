@@ -189,3 +189,5 @@ README 不展示发版记录或最新更新区；发版只同步其在线安装�
 客户端槽位包装：`entriesOfSlot` 只返回当前优胜项，原组件会被本插件包装器遮住；需要追踪原注册项时必须用 `slots.entries` 完整视图，不能按优胜项列表判断原组件已卸载，否则异步通知会引发循环卸载/注册，阻断设置与侧栏装配。回归桩须区分完整注册与优胜视图，并验证重复通知后注册数量稳定；发布前用实际 Harness SlotCore 校验客户端入口、设置页和卸载恢复。
 
 新旧插件共存：公共 `conversation.chat.node` 的 `turn-error` 单元不能重复相同优先级。旧插件按当前优胜项加1注册，且宿主最低值生效；平台用完整entries选出最小值再减2，预留旧插件的加1空位，两种加载顺序均验证。必须以旧插件真实成品与当前客户端共同装配验证，不能仅验证两套包名和工具前缀。
+
+预设启动验收：只验证agent-preset外层schema不够，须验证所有原生子组件Config的必填项，尤其总控的fs-search.sampleOverCapGlobResults与todo.allowParallelInProgress。第三方预设控制组件通过ctx.loader.import解析宿主内置模块，入口使用平台固定前缀；以实际Cordis Loader激活并断言控制工具已注册，不能只对apply使用模拟ctx。浏览器验证要监听warning中的agent-preset/invalid，不能把按钮存在等同新会话创建成功。

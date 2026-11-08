@@ -14,6 +14,15 @@ const rows = document.toJS()[0].insert;
 const presets = rows.filter(row => row.config?.plugins);
 assert.deepEqual(presets.map(row => row.config.id), ['metaontic-agent-forge-studio', 'metaontic-agent-forge-video-director', 'metaontic-agent-forge-promo-video']);
 assert.deepEqual(presets.map(row => row.config.order), [10, 20, 30]);
+// A valid preset envelope alone does not validate the native plugins inside it.
+for (const preset of presets) {
+  for (const row of preset.config.plugins) {
+    if (!['@deepseek-ai/dsh-tool-fs-search', '@deepseek-ai/dsh-tool-todo'].includes(row.name)) continue;
+    const plugin = await import(pathToFileURL(require.resolve(row.name)));
+    const validated = plugin.Config['~standard'].validate(row.config || {});
+    assert.equal(validated.issues, undefined, `${preset.config.id}: ${row.name}: ${JSON.stringify(validated.issues)}`);
+  }
+}
 const studio = presets.find(row => row.config.id === 'metaontic-agent-forge-studio');
 assert.equal(studio.config.name, '云智工坊 · 智能体平台');
 const native = await import(pathToFileURL(require.resolve('@deepseek-ai/dsh-tool-subagent')));
@@ -68,10 +77,11 @@ try {
   assert.equal(starts.length, 2);
   // Host tools deliberately retain their original names; only platform-owned instances get renamed.
   for (const name of ['send_message','interrupt_agent','list_agents']) tools.set(name, { name, hostOwned: true });
-  let adapterSource = await readFile('presets/controls.js', 'utf8');
+  let adapterSource = await readFile('presets/metaontic-agent-forge-controls.js', 'utf8');
   adapterSource = adapterSource.replace(/from '(@deepseek-ai[^']+)'/g, (_whole, name) => `from '${pathToFileURL(require.resolve(name)).href}'`);
   const adapter = await import('data:text/javascript;base64,' + Buffer.from(adapterSource).toString('base64'));
-  adapter.apply(ctx);
+  ctx.loader = { import: name => import(pathToFileURL(require.resolve(name))) };
+  await adapter.apply(ctx);
   const marker = await import(pathToFileURL(require.resolve('@deepseek-ai/dsh-subagent/internal')));
   const send = tools.get('metaontic_agent_forge_send_message');
   assert.equal(marker.isAdjacentAgentSendMessageTool(send), true);
@@ -85,3 +95,29 @@ try {
 
   console.log('PASS actual Harness: YAML/preset schemas, native delegation tool, preset whitelist, spawn routing, absolute depth limit, parent completion delivery and immediate task IDs (simulated service; no LLM/media calls)');
 } finally { for (const cleanup of cleanups.reverse()) cleanup(); }
+
+// Activate the adapter through the real Cordis Loader, rather than calling apply directly.
+// Source imports execute in the host loader's realm; this catches package-entry activation failures.
+const { Context } = await import(pathToFileURL(require.resolve('@deepseek-ai/cordis')));
+const { Loader } = await import(pathToFileURL(require.resolve('@deepseek-ai/cordis-plugin-loader')));
+const activationCtx = new Context();
+activationCtx.baseUrl = pathToFileURL(path.join(host, 'package.json')).href;
+const activatedTools = new Map();
+activationCtx.reflect.provide('tools', { register(tool) {
+  assert.equal(activatedTools.has(tool.name), false);
+  activatedTools.set(tool.name, tool);
+  return () => activatedTools.delete(tool.name);
+} });
+activationCtx.reflect.provide('subagents', { sendMessage: async () => '', interrupt() {}, listChildren: async () => [], listDescendants: async () => [] });
+activationCtx.reflect.provide('agents', { get() {} });
+try {
+  await activationCtx.plugin(Loader);
+  const loader = activationCtx.get('loader');
+  await loader.root.update([{ id: 'metaontic-agent-forge-control-check', name: pathToFileURL(path.resolve('presets/metaontic-agent-forge-controls.js')).href }]);
+  await loader.await();
+  const entry = [...loader.entries()][0];
+  assert.ok(entry?.fiber, 'controls entry must start');
+  await entry.fiber.await();
+  for (const name of ['send_message', 'interrupt_agent', 'list_agents']) assert.ok(activatedTools.has('metaontic_agent_forge_' + name));
+  console.log('PASS actual Cordis Loader: controls entry starts and registers three prefixed native tools');
+} finally { await activationCtx.fiber.dispose(); }
