@@ -1,3 +1,4 @@
+import { delegationDecision } from './delegation.js';
 import { bindAgentRegistry, createAgentRegistry, type AgentDefinition } from './agent-registry.js';
 import { createToolRegistry } from './tool-registry.js';
 import { createAnalyticsReporter } from './telemetry/reporter.js';
@@ -45,6 +46,8 @@ export function createPluginRuntime(definitions: { agents: readonly AgentDefinit
     const tools = createToolRegistry(ctx, agents, analytics, defer);
     const runtime = { ctx, config, agents, tools, defer };
     try {
+      // 当前 Harness 基础层提供原生 subagents；旧宿主缺失该服务时不影响已有视频工具。
+      if (ctx.get?.('subagents')) defer(ctx.on('tools/pre-execute', async (exec, next) => delegationDecision(agents, ctx, exec) || next()));
       for (const business of businesses.values()) defer(business.apply(runtime));
       defer(ctx.inject(['systemPrompt'], promptCtx => promptCtx.systemPrompt.section({
         name: 'plugin:metaontic-video', order: 5200,

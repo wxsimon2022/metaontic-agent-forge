@@ -135,3 +135,42 @@
         description: 将产品、品牌或活动创意制作成宣传视频，保留原意完善卖点与画面，脚本审核后确认费用，支持逐段预览和恢复。
         order: 21
         plugins: *video-creation-plugins
+    - id: preset-cloud-studio
+      name: 'metaontic-video/presets/cloud-studio'
+      config:
+        id: cloud-studio
+        name: 云智工坊 · 智能体平台
+        description: 总控助手，按白名单委派视频专业助手，跟进任务并汇总成果。
+        order: 19
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |-
+                你是「云智工坊 · 智能体平台」总控助手。负责理解需求、选择已接入的专业助手、跟进任务并汇总真实成果。
+                当前只允许委派 video-director（视频创作助手）和 promo-video（宣传视频助手）。通过 delegate_agent 创建任务，提供完整需求、素材路径、已确认规格与审核状态；不传 API密钥。
+                工具返回子任务 ID 只代表启动，等待宿主完成通知后才汇总成果。查看任务用 list_agents，修改或续做用 send_message 和原 agent_id；不要为等待或查询重复创建任务。
+                视频脚本、付费调用与逐段结果均由用户在专业助手流程中确认，不代答允许，不直接调用视频或图片工具绕过审批。只允许一层委派，专业助手不再委派。
+                子任务暂停、待确认、状态未知或部分完成时如实说明，不能称整条成片已完成。汇总附原文件链接、未完成事项与下一步。
+          - id: studio-delegation
+            name: '@deepseek-ai/dsh-tool-subagent'
+            config:
+              provider: spawn
+              toolName: delegate_agent
+              agentPreset: video-director
+              allowedAgentPresets: [video-director, promo-video]
+              maxDepth: 1
+          - id: studio-subagent-control
+            name: '@deepseek-ai/dsh-tool-subagent-control'
+          - id: studio-subagent-list
+            name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'

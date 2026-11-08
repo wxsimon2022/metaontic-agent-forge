@@ -6,6 +6,7 @@ export interface AgentDefinition {
   skills: readonly string[];
   icon: string;
   prompt?: (config: any) => string;
+  delegation?: { toolName: string; allowedAgents: readonly string[]; defaultAgent: string; maxDepth: number };
 }
 export function selectedAgentId(context: any, ctx?: any): string | null {
   const agent = context?.agent;
@@ -23,7 +24,16 @@ export function createAgentRegistry(definitions: readonly AgentDefinition[]) {
   const agents = new Map<string, AgentDefinition>();
   for (const definition of definitions) {
     if (!definition.id || agents.has(definition.id)) throw new Error(`重复或无效的 Agent：${definition.id}`);
-    agents.set(definition.id, Object.freeze({ ...definition, businesses: Object.freeze([...definition.businesses]), skills: Object.freeze([...definition.skills]) }));
+    agents.set(definition.id, Object.freeze({ ...definition, businesses: Object.freeze([...definition.businesses]), skills: Object.freeze([...definition.skills]), ...(definition.delegation ? { delegation: Object.freeze({ ...definition.delegation, allowedAgents: Object.freeze([...definition.delegation.allowedAgents]) }) } : {}) }));
+  }
+  for (const agent of agents.values()) {
+    const policy = agent.delegation;
+    if (!policy) continue;
+    if (!/^[a-z][a-z0-9_]*$/.test(policy.toolName) || !Number.isSafeInteger(policy.maxDepth) || policy.maxDepth !== 1) throw new Error('委派入口必须具名，且当前仅支持一层委派');
+    if (!policy.allowedAgents.length || !policy.allowedAgents.includes(policy.defaultAgent)) throw new Error('委派默认目标必须在白名单中');
+    for (const target of policy.allowedAgents) {
+      if (target === agent.id || !agents.has(target) || agents.get(target).delegation) throw new Error(`委派目标无效或形成嵌套委派：${target}`);
+    }
   }
   const resolve = (context: any, ctx?: any) => agents.get(selectedAgentId(context, ctx)) ?? null;
   return Object.freeze({

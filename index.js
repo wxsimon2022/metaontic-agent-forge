@@ -1152,6 +1152,32 @@ var init_connection = __esm({
   }
 });
 
+// src/core/delegation.ts
+function delegationDecision(registry, ctx, exec) {
+  const names = /* @__PURE__ */ new Set(["subagent", "subagent_fork", ...registry.list().flatMap((agent2) => agent2.delegation ? [agent2.delegation.toolName] : [])]);
+  if (!names.has(exec?.name)) return null;
+  const agent = registry.resolve({ agent: exec?.agent }, ctx);
+  if (!agent) return null;
+  const policy = agent.delegation;
+  const deny = (reason) => ({ kind: "deny", reason });
+  if (!policy || exec.name !== policy.toolName) return deny("\u5F53\u524D\u52A9\u624B\u4E0D\u63D0\u4F9B\u6B64\u59D4\u6D3E\u5165\u53E3\uFF1B\u4E13\u4E1A\u52A9\u624B\u4E0D\u80FD\u7EE7\u7EED\u59D4\u6D3E\uFF0C\u8BF7\u7531\u603B\u63A7\u52A9\u624B\u5206\u914D\u4EFB\u52A1\u3002");
+  const headerDepth = exec.agent?.session?.header?.delegationDepth ?? 0;
+  const runtimeDepth = exec.agent?.options?.subagentDepth ?? 0;
+  if (![headerDepth, runtimeDepth].every((value) => Number.isSafeInteger(value) && value >= 0 && !Object.is(value, -0))) return deny("\u65E0\u6CD5\u786E\u8BA4\u5F53\u524D\u59D4\u6D3E\u5C42\u7EA7\uFF0C\u5DF2\u505C\u6B62\u521B\u5EFA\u5B50\u4EFB\u52A1\u3002");
+  if (Math.max(headerDepth, runtimeDepth) >= policy.maxDepth) return deny("\u5DF2\u8FBE\u5230\u59D4\u6D3E\u6DF1\u5EA6\u4E0A\u9650\uFF1B\u4EC5\u5141\u8BB8\u603B\u63A7\u52A9\u624B\u8C03\u7528\u4E00\u5C42\u4E13\u4E1A\u52A9\u624B\u3002");
+  let args = exec.arguments || {};
+  if (typeof args === "string") {
+    try {
+      args = JSON.parse(args);
+    } catch {
+      return deny("\u59D4\u6D3E\u53C2\u6570\u65E0\u6548\uFF0C\u672A\u521B\u5EFA\u5B50\u4EFB\u52A1\u3002");
+    }
+  }
+  const target = args?.agent_preset ?? policy.defaultAgent;
+  if (!policy.allowedAgents.includes(target) || !registry.get(target) || target === agent.id) return deny("\u76EE\u6807\u52A9\u624B\u4E0D\u5728\u53EF\u8C03\u7528\u767D\u540D\u5355\u4E2D\uFF0C\u672A\u521B\u5EFA\u5B50\u4EFB\u52A1\u3002");
+  return null;
+}
+
 // src/core/agent-registry.ts
 function selectedAgentId(context, ctx) {
   const agent = context?.agent;
@@ -1171,7 +1197,16 @@ function createAgentRegistry(definitions) {
   const agents2 = /* @__PURE__ */ new Map();
   for (const definition of definitions) {
     if (!definition.id || agents2.has(definition.id)) throw new Error(`\u91CD\u590D\u6216\u65E0\u6548\u7684 Agent\uFF1A${definition.id}`);
-    agents2.set(definition.id, Object.freeze({ ...definition, businesses: Object.freeze([...definition.businesses]), skills: Object.freeze([...definition.skills]) }));
+    agents2.set(definition.id, Object.freeze({ ...definition, businesses: Object.freeze([...definition.businesses]), skills: Object.freeze([...definition.skills]), ...definition.delegation ? { delegation: Object.freeze({ ...definition.delegation, allowedAgents: Object.freeze([...definition.delegation.allowedAgents]) }) } : {} }));
+  }
+  for (const agent of agents2.values()) {
+    const policy = agent.delegation;
+    if (!policy) continue;
+    if (!/^[a-z][a-z0-9_]*$/.test(policy.toolName) || !Number.isSafeInteger(policy.maxDepth) || policy.maxDepth !== 1) throw new Error("\u59D4\u6D3E\u5165\u53E3\u5FC5\u987B\u5177\u540D\uFF0C\u4E14\u5F53\u524D\u4EC5\u652F\u6301\u4E00\u5C42\u59D4\u6D3E");
+    if (!policy.allowedAgents.length || !policy.allowedAgents.includes(policy.defaultAgent)) throw new Error("\u59D4\u6D3E\u9ED8\u8BA4\u76EE\u6807\u5FC5\u987B\u5728\u767D\u540D\u5355\u4E2D");
+    for (const target of policy.allowedAgents) {
+      if (target === agent.id || !agents2.has(target) || agents2.get(target).delegation) throw new Error(`\u59D4\u6D3E\u76EE\u6807\u65E0\u6548\u6216\u5F62\u6210\u5D4C\u5957\u59D4\u6D3E\uFF1A${target}`);
+    }
   }
   const resolve3 = (context, ctx) => agents2.get(selectedAgentId(context, ctx)) ?? null;
   return Object.freeze({
@@ -1739,6 +1774,7 @@ function createPluginRuntime(definitions) {
     const tools = createToolRegistry(ctx, agents2, analytics, defer);
     const runtime = { ctx, config, agents: agents2, tools, defer };
     try {
+      if (ctx.get?.("subagents")) defer(ctx.on("tools/pre-execute", async (exec, next) => delegationDecision(agents2, ctx, exec) || next()));
       for (const business of businesses.values()) defer(business.apply(runtime));
       defer(ctx.inject(["systemPrompt"], (promptCtx) => promptCtx.systemPrompt.section({
         name: "plugin:metaontic-video",
@@ -1762,6 +1798,31 @@ function createPluginRuntime(definitions) {
     }
   };
 }
+
+// src/agents/cloud-studio/instructions.ts
+function cloudStudioGuidance() {
+  return [
+    "\u3010\u5F53\u524D\u6A21\u5F0F\uFF1A\u4E91\u667A\u5DE5\u574A \xB7 \u667A\u80FD\u4F53\u5E73\u53F0\u3011\u4F60\u662F\u603B\u63A7\u52A9\u624B\uFF0C\u8D1F\u8D23\u7406\u89E3\u9700\u6C42\u3001\u62C6\u89E3\u4EFB\u52A1\u3001\u9009\u62E9\u5DF2\u63A5\u5165\u7684\u4E13\u4E1A\u52A9\u624B\u548C\u6C47\u603B\u771F\u5B9E\u7ED3\u679C\u3002\u5F53\u524D\u53EA\u63A5\u5165\u89C6\u9891\u521B\u4F5C\u52A9\u624B\u4E0E\u5BA3\u4F20\u89C6\u9891\u52A9\u624B\uFF1B\u4E0D\u8981\u5BA3\u79F0\u5DF2\u6709\u5176\u4ED6\u4E1A\u52A1\u80FD\u529B\u3002",
+    "\u8C03\u7528\u767D\u540D\u5355\uFF1Avideo-director\uFF08\u89C6\u9891\u521B\u4F5C\u52A9\u624B\uFF0C\u901A\u7528\u89C6\u9891\u521B\u4F5C\uFF09\u3001promo-video\uFF08\u5BA3\u4F20\u89C6\u9891\u52A9\u624B\uFF0C\u4EA7\u54C1\u3001\u54C1\u724C\u3001\u6D3B\u52A8\u5BA3\u4F20\uFF09\u3002\u5148\u6309\u76EE\u6807\u9009\u62E9\u4E00\u4E2A\u6700\u5408\u9002\u7684\u52A9\u624B\uFF0C\u4E0D\u4E3A\u540C\u4E00\u89C6\u9891\u540C\u65F6\u542F\u52A8\u4E24\u4E2A\u52A9\u624B\u3002\u53EA\u80FD\u901A\u8FC7delegate_agent\u59D4\u6D3E\uFF0C\u4E0D\u8C03\u7528subagent\u3001subagent_fork\u6216\u5176\u4ED6\u540E\u7AEF\u7ED5\u8FC7\u767D\u540D\u5355\uFF0C\u4E0D\u59D4\u6D3E\u7ED9\u81EA\u5DF1\u3002",
+    "\u521B\u5EFA\u4EFB\u52A1\u65F6\u7ED9\u51FA\u81EA\u8DB3\u7684prompt\uFF1A\u7528\u6237\u539F\u521B\u610F\u3001\u660E\u786E\u7684\u9650\u5236\u3001\u7D20\u6750\u8DEF\u5F84\u3001\u5DF2\u786E\u8BA4\u7684\u65F6\u957F/\u753B\u5E45/\u6E05\u6670\u5EA6\u3001\u662F\u5426\u6388\u6743\u5B8C\u5584\u3001\u5DF2\u6709\u9879\u76EE/\u65AD\u70B9\u76EE\u5F55\u53CA\u4EA4\u4ED8\u8981\u6C42\u3002\u5B50\u52A9\u624B\u4ECE\u72EC\u7ACB\u4E0A\u4E0B\u6587\u5F00\u59CB\uFF0C\u4E0D\u77E5\u9053\u7236\u5BF9\u8BDD\uFF1B\u4FE1\u606F\u7F3A\u5931\u8BA9\u5B83\u6309\u539F\u6D41\u7A0B\u8BE2\u95EE\uFF0C\u4E0D\u66FF\u7528\u6237\u8865\u6210\u9ED8\u8BA4\u503C\uFF0C\u4E0D\u4F20\u9012API\u5BC6\u94A5\u3002",
+    "delegate_agent\u8FD4\u56DE\u7684subagentId\u4EC5\u8868\u793A\u4EFB\u52A1\u5DF2\u542F\u52A8\uFF0C\u4E0D\u4EE3\u8868\u5DF2\u5B8C\u6210\u6216\u751F\u6210\u6210\u529F\u3002\u5411\u7528\u6237\u8BF4\u660E\u6B63\u5728\u7531\u54EA\u4E2A\u52A9\u624B\u5904\u7406\uFF0C\u7B49\u5F85Harness\u5B8C\u6210\u901A\u77E5\uFF1B\u9700\u8981\u67E5\u770B\u5DF2\u6709\u5B50\u4EFB\u52A1\u4F7F\u7528list_agents\uFF0C\u9700\u8981\u8865\u5145\u6216\u4FEE\u6539\u8981\u6C42\u4F7F\u7528send_message\u5E76\u5E26\u539Fagent_id\uFF0C\u4E0D\u4E3A\u67E5\u8BE2\u6216\u7B49\u5F85\u91CD\u590D\u65B0\u5EFA\u4EFB\u52A1\u3002",
+    "\u5B50\u52A9\u624B\u9700\u8981\u786E\u8BA4\u65F6\u8BA9\u7528\u6237\u5728\u5B50\u4EFB\u52A1\u7684\u63D0\u95EE/\u8D39\u7528\u786E\u8BA4\u754C\u9762\u56DE\u7B54\u3002\u7236\u4EFB\u52A1\u7684\u540C\u610F\u3001\u59D4\u6D3E\u6216\u804A\u5929\u56DE\u590D\u90FD\u4E0D\u80FD\u66FF\u4EE3\u811A\u672C\u5BA1\u6838\u3001\u6A21\u578B\u8C03\u7528\u7684\u4ED8\u8D39\u5BA1\u6279\u548C\u6BCF\u6BB5\u751F\u6210\u7ED3\u679C\u5BA1\u6838\uFF1B\u4E0D\u5F97\u81EA\u52A8\u4EE3\u7B54\u5141\u8BB8\uFF0C\u4E0D\u901A\u8FC7Shell/API\u76F4\u63A5\u751F\u6210\u89C6\u9891\u3002",
+    "\u53EA\u5141\u8BB8\u603B\u63A7\u5230\u4E13\u4E1A\u52A9\u624B\u7684\u4E00\u5C42\u59D4\u6D3E\u3002\u4E13\u4E1A\u52A9\u624B\u5904\u7406\u5DE5\u4F5C\uFF0C\u4E0D\u518D\u59D4\u6D3E\u3002\u603B\u63A7\u4E0D\u76F4\u63A5\u8C03\u7528video_generate\u3001video_extend\u3001\u56FE\u7247\u751F\u6210\u6216\u5B89\u88C5\u5DE5\u5177\u7ED5\u8FC7\u4E13\u4E1A\u52A9\u624B\u3002",
+    "\u6536\u5230\u5B8C\u6210\u901A\u77E5\u540E\u6309\u5B9E\u9645\u7ED3\u679C\u6C47\u603B\uFF1A\u9700\u6C42\u4E0E\u8D1F\u8D23\u4EBA\u3001\u5DF2\u5B8C\u6210\u6210\u679C\u7684\u53EF\u70B9\u51FB\u539F\u6587\u4EF6\u94FE\u63A5\u3001\u4ECD\u5F85\u786E\u8BA4/\u5F85\u7EED\u505A/\u5931\u8D25\u4E8B\u9879\u548C\u4E0B\u4E00\u6B65\u3002\u6682\u505C\u6216\u90E8\u5206\u5B8C\u6210\u4E0D\u662F\u6574\u6761\u6210\u7247\u5B8C\u6210\uFF1B\u4EFB\u52A1\u72B6\u6001\u672A\u77E5\u4E0D\u58F0\u79F0\u5931\u8D25\u6216\u6210\u529F\uFF0C\u4E0D\u5C06\u5B50\u4EFB\u52A1\u542F\u52A8\u63D0\u793A\u5F53\u4F5C\u6700\u7EC8\u4EA4\u4ED8\u3002\u4FDD\u7559\u539F\u6587\u4EF6\u4E0E\u9879\u76EE\uFF0C\u540E\u7EED\u4FEE\u6539\u4F18\u5148\u7EE7\u7EED\u539F\u5B50\u4EFB\u52A1\u3002",
+    "\u7528\u6237\u53EA\u95EE\u72B6\u6001\u65F6\u6C47\u62A5\u5DF2\u77E5\u72B6\u6001\uFF0C\u4E0D\u91CD\u65B0\u751F\u6210\u3002\u505C\u6B62\u8981\u6C42\u5148interrupt_agent\uFF0C\u518D\u5982\u5B9E\u8BF4\u660E\uFF1A\u505C\u6B62\u7B49\u5F85\u4E0D\u7B49\u4E8E\u53D6\u6D88\u4E0A\u6E38\u89C6\u9891\u4EFB\u52A1\uFF0C\u5DF2\u7ECF\u63D0\u4EA4\u7684\u4EFB\u52A1\u4ECD\u53EF\u80FD\u8BA1\u8D39\uFF0C\u4E4B\u540E\u6309\u539FtaskId\u67E5\u8BE2\uFF0C\u4E0D\u80FD\u76F2\u76EE\u91CD\u63D0\u3002"
+  ].join("\n");
+}
+
+// src/agents/cloud-studio/index.ts
+var cloudStudio = {
+  id: "cloud-studio",
+  name: "\u4E91\u667A\u5DE5\u574A \xB7 \u667A\u80FD\u4F53\u5E73\u53F0",
+  businesses: [],
+  skills: [],
+  icon: "presets/icons/cloud-studio.svg",
+  prompt: cloudStudioGuidance,
+  delegation: { toolName: "delegate_agent", allowedAgents: ["video-director", "promo-video"], defaultAgent: "video-director", maxDepth: 1 }
+};
 
 // src/agents/video-director/index.ts
 var videoDirector = {
@@ -1795,7 +1856,7 @@ var promoVideo = {
 };
 
 // src/agents/index.ts
-var agents = [videoDirector, promoVideo];
+var agents = [cloudStudio, videoDirector, promoVideo];
 var agentRegistry = createAgentRegistry(agents);
 
 // src/businesses/video/workflow/result-state.ts

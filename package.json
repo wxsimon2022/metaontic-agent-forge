@@ -43,7 +43,10 @@
     "./presets/promo-video": "./presets/promo-video.js",
     "./presets/promo-video/locale/*.json": "./locale/presets/promo-video/*.json",
     "./presets/video-director/icon": "./presets/icons/video-director.svg",
-    "./presets/promo-video/icon": "./presets/icons/promo-video.svg"
+    "./presets/promo-video/icon": "./presets/icons/promo-video.svg",
+    "./presets/cloud-studio": "./presets/cloud-studio.js",
+    "./presets/cloud-studio/locale/*.json": "./locale/presets/cloud-studio/*.json",
+    "./presets/cloud-studio/icon": "./presets/icons/cloud-studio.svg"
   },
   "files": [
     "index.js",
