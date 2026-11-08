@@ -2,6 +2,7 @@ import { sourceOf } from './source.mjs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import {api} from './module-test-api.mjs';
 const source = sourceOf('businesses/video/connection-defaults', 'core/settings/state', 'businesses/video/client/state');
 const context = vm.createContext({});
 vm.runInContext(source + '\nObject.assign(globalThis, createSettingsState({}));', context);
@@ -25,7 +26,7 @@ test('rejected atomic writes report failure without falling back to partial writ
 });
 
 test('stale revision recovers and saves the full connection in one user action', async () => {
-  const disk = { connectionMode: 'service', apiKey: 'issued', model: 'video' };
+  const disk = { connectionMode: 'volcengine', volcengineApiKey: 'issued', model: 'video' };
   let revision = 'old', calls = 0;
   const seen = [];
   const form = {
@@ -39,7 +40,7 @@ test('stale revision recovers and saves the full connection in one user action',
   };
   await context.persistConnection(form, [['connectionMode', 'metaontic'], ['metaonticApiKey', 'new-key']], 'metaontic');
   assert.equal(calls, 2); assert.equal(seen[0], seen[1]);
-  assert.equal(disk.connectionMode, 'metaontic'); assert.equal(disk.metaonticApiKey, 'new-key'); assert.equal(disk.apiKey, '');
+  assert.equal(disk.connectionMode, 'metaontic'); assert.equal(disk.metaonticApiKey, 'new-key'); assert.equal(disk.volcengineApiKey, '');
 });
 for (const variant of ['same-revision', 'changed-field', 'read-only', 'loading', 'second-rejected']) test(`atomic recovery stops safely: ${variant}`, async () => {
   const state = { status: 'ready', writable: true, revision: 1, value: { connectionMode: 'service' } };
@@ -134,3 +135,15 @@ test('save preserves custom relay address and models without copying hidden secr
  assert.equal(disk.baseUrl,'https://ai.bileego.com');
  assert.equal(disk.submitPath,'/doubao/api/v3/contents/generations/tasks');
  });
+
+test('save and reset only address fields declared by the current plugin schema', async () => {
+ const fields=api.Config.dict;
+ assert.equal(fields.apiKey,undefined);
+ for(const mode of ['metaontic','volcengine']){
+  let disk={};
+  const form={getSnapshot:()=>({status:'ready',revision:1,writable:true,value:disk}),async mutate(ops){for(const op of ops){assert.ok(fields[op.path[0]],`undeclared write: ${op.path[0]}`);disk[op.path[0]]=op.value;}return true;}};
+  await context.persistConnection(form,[[mode==='metaontic'?'metaonticApiKey':'volcengineApiKey','placeholder']],mode);
+  assert.equal(disk.connectionMode,mode);
+ }
+ for(const key of api.createClientConfig().PLUGIN_OWNED_KEYS)assert.ok(fields[key],`undeclared reset: ${key}`);
+});

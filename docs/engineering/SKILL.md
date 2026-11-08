@@ -191,3 +191,5 @@ README 不展示发版记录或最新更新区；发版只同步其在线安装�
 新旧插件共存：公共 `conversation.chat.node` 的 `turn-error` 单元不能重复相同优先级。旧插件按当前优胜项加1注册，且宿主最低值生效；平台用完整entries选出最小值再减2，预留旧插件的加1空位，两种加载顺序均验证。必须以旧插件真实成品与当前客户端共同装配验证，不能仅验证两套包名和工具前缀。
 
 预设启动验收：只验证agent-preset外层schema不够，须验证所有原生子组件Config的必填项，尤其总控的fs-search.sampleOverCapGlobResults与todo.allowParallelInProgress。第三方预设控制组件通过ctx.loader.import解析宿主内置模块，入口使用平台固定前缀；以实际Cordis Loader激活并断言控制工具已注册，不能只对apply使用模拟ctx。浏览器验证要监听warning中的agent-preset/invalid，不能把按钮存在等同新会话创建成功。
+
+设置写入必须对照当前Config：保存和重置不得写入已移除的apiKey等字段，否则宿主以非volatile字段拒绝整批写入。实际SettingsForms服务需验证保存、渠道切换与重置；测试桩不能默认接受任意字段。宿主0.2.2将list_agents合入subagent-control主模块且移除独立子路径；按主模块实际注册结果决定是否加载旧子路径。原生兼容验证必须读取当前安装app.asar，ASAR数据区基址为8+headerSize（不是16+JSON字节数），提取后核对运行库版本。

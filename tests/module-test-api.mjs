@@ -22,6 +22,8 @@ export * from './src/client/updates.ts';
 export * from './src/businesses/video/workflow/planning.ts';
 export * from './src/businesses/video/prompts/scope.ts';
 export {resolveResolution} from './src/businesses/video/config.ts';
+export {Config} from './src/config.ts';
+export {createClientConfig} from './src/businesses/video/client/config.ts';
 export {isOmniExtendModel} from './src/businesses/video/providers/connection.ts';
 export * from './src/businesses/video/workflow/result-state.ts';
 export * from './src/businesses/video/workflow/duration-choice.ts';

@@ -1101,7 +1101,6 @@
       "connectionMode",
       "metaonticApiKey",
       "volcengineApiKey",
-      "apiKey",
       "baseUrl",
       "model",
       "imageModel",
@@ -1499,7 +1498,7 @@
     }
     async function persistConnection(form, pending, nextMode) {
       if (!["metaontic", "volcengine"].includes(nextMode)) throw new Error("unknownConnection");
-      const inactiveKeys = nextMode === "volcengine" ? ["metaonticApiKey", "apiKey", "baseUrl", "submitPath", "queryPath"] : ["volcengineApiKey", "apiKey"];
+      const inactiveKeys = nextMode === "volcengine" ? ["metaonticApiKey", "baseUrl", "submitPath", "queryPath"] : ["volcengineApiKey"];
       const ops = pending.filter(([key]) => key !== "connectionMode" && !inactiveKeys.includes(key)).map(([key, next]) => ({ op: "set", path: [key], value: next }));
       for (const key of inactiveKeys) ops.push({ op: "set", path: [key], value: "" });
       const saved = form.getSnapshot?.()?.value || {};
@@ -2062,9 +2061,9 @@
     releaseNotes: {
       version: "1.0.0",
       prerelease: false,
-      publishedAt: "2026-11-08T10:24:36.755Z",
+      publishedAt: "2026-11-08T10:37:17.687Z",
       items: [
-        "\u4F18\u5316\uFF1A\u6062\u590D\u603B\u63A7\u4F1A\u8BDD\u521B\u5EFA\u4E0E\u6A21\u5F0F\u5165\u53E3\uFF0C\u6A21\u5F0F\u5217\u8868\u4EC5\u5C55\u793A\u5E73\u53F0\u603B\u63A7\u3002"
+        "\u4F18\u5316\uFF1A\u4FEE\u590D\u8BBE\u7F6E\u4FDD\u5B58\u5931\u8D25\uFF0C\u517C\u5BB9\u5BBF\u4E3B\u5DEE\u5F02\u5E76\u6062\u590D\u603B\u63A7\u6A21\u5F0F\u5165\u53E3\u3002"
       ]
     }
   };

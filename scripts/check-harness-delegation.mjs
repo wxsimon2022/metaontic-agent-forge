@@ -44,7 +44,7 @@ const presetRegistry = { readDocument: async id => {
 const messages = [], interrupts = [];
 const ctx = {
   get: name => name === 'agentPresets' ? presetRegistry : undefined,
-  sessionProjections: { register() {} },
+  sessionProjections: { register() { return { stateOf: () => undefined }; } },
   subagents: {
     sendMessage: async (...args) => { messages.push(args); return 'message-1'; },
     interrupt: (...args) => interrupts.push(args),
