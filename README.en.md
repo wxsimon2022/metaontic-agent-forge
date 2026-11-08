@@ -2,7 +2,7 @@
 
 # MetaOnticVideo
 
-[简体中文](./README.md)
+[简体中文](./README.md) · [Gitee](https://gitee.com/hadlooop/metaontic-agent-forge)
 
 A DeepSeek Harness plugin for **beginner-friendly video creation and a low-cost long-video workflow**.
 

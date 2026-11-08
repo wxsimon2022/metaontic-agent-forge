@@ -2,7 +2,7 @@
 
 # MetaOnticVideo
 
-[English](./README.en.md)
+[English](./README.en.md) · [Gitee](https://gitee.com/hadlooop/metaontic-agent-forge)
 
 DeepSeek Harness 视频创作插件：**新手快速上手，低成本制作长视频。**
 

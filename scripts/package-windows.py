@@ -42,7 +42,7 @@ ZIP、package文件夹和发布页网址都不能当在线地址，填了会提�
 若界面提示“不是有效的插件包”，通常是填成了文件夹，请改填第2步的.tgz文件路径。
 不想找本地路径时，也可以直接复制正式发布页里.tgz附件的下载链接粘贴安装，
 本版本现成地址（可直接复制使用）：
-Gitee：https://gitee.com/hackloop/metaontic-video/releases/download/vVERSION/metaontic-video-VERSION.tgz
+Gitee：https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/vVERSION/metaontic-video-VERSION.tgz
 GitHub：https://github.com/wxsimon2022/metaontic-video/releases/download/vVERSION/metaontic-video-VERSION.tgz
 两个地址内容相同，Gitee通常国内更快。要粘贴的是这种.tgz附件地址，
 不是发布页网址，也不要选Source code源码包。

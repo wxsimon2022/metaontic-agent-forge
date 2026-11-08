@@ -267,7 +267,7 @@ function credentialOutput(result) {
   return `${result.stderr || ''}${result.stdout || ''}`.trim();
 }
 
-export function createGiteeClient({ slug = 'hackloop/metaontic-video', token, request = fetch, run = defaultRun }) {
+export function createGiteeClient({ slug = 'hadlooop/metaontic-agent-forge', token, request = fetch, run = defaultRun }) {
   if (!token) throw new Error('缺少 GITEE_TOKEN，无法读取或清理 Gitee 发行版。');
   const endpoint = (path, params = {}) => {
     const target = new URL(`https://gitee.com/api/v5/${path}`);
@@ -431,7 +431,7 @@ export function parseArgs(argv) {
   const options = {
     keep: 5, keepTags: null, keepPrerelease: false, maxAgeDays: 0, patterns: ['v*'], hosts: ['github', 'gitee'],
     apply: false, pruneAssets: false, keepDrafts: false, json: false, help: false, remote: null,
-    github: 'git@github.com:wxsimon2022/metaontic-video.git', gitee: 'git@gitee.com:hackloop/metaontic-video.git',
+    github: 'git@github.com:wxsimon2022/metaontic-video.git', gitee: 'git@gitee.com:hadlooop/metaontic-agent-forge.git',
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];

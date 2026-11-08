@@ -1037,7 +1037,7 @@
   // src/client/updates.ts
   function createUpdates({ h, fetchSource }) {
     const PLUGIN_PACKAGE = "metaontic-video";
-    const UPDATE_SPEC = "git+https://gitee.com/hackloop/metaontic-video.git";
+    const UPDATE_SPEC = "git+https://gitee.com/hadlooop/metaontic-agent-forge.git";
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
@@ -1091,7 +1091,7 @@
     }
     async function fetchRecentVersions() {
       const urls = [
-        "https://gitee.com/api/v5/repos/hackloop/metaontic-video/releases?per_page=100",
+        "https://gitee.com/api/v5/repos/hadlooop/metaontic-agent-forge/releases?per_page=100",
         "https://api.github.com/repos/wxsimon2022/metaontic-video/releases?per_page=100"
       ];
       const results = await Promise.allSettled(urls.map(async (url) => {
@@ -1224,7 +1224,7 @@
         return;
       }
       const candidates = [
-        `https://gitee.com/hackloop/metaontic-video/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`,
+        `https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`,
         `https://github.com/wxsimon2022/metaontic-video/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`
       ];
       const specUnresolvable = (text) => /Could not resolve|No matching version|ERR_PNPM_NO_MATCHING_VERSION|ERR_PNPM_FETCH_40[34]|HTTP[ :]+40[34]|404 Not Found|403 Forbidden/i.test(text);

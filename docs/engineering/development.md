@@ -95,7 +95,7 @@ git show --no-patch "v<版本>"
 
 ### 插件包下载
 
-版本包在 [GitHub Releases](https://github.com/wxsimon2022/metaontic-video/releases) 或 [Gitee Releases](https://gitee.com/hackloop/metaontic-video/releases) 下载，通用插件包为 `metaontic-video-<版本>.tgz`。Windows与Mac使用同一个 `.tgz`，不再发布ZIP；指南和PDF已包含在通用包中。不再向 npm 注册表发布，无需配置 `NPM_TOKEN` 或 Trusted Publishing。
+版本包在 [GitHub Releases](https://github.com/wxsimon2022/metaontic-video/releases) 或 [Gitee Releases](https://gitee.com/hadlooop/metaontic-agent-forge/releases) 下载，通用插件包为 `metaontic-video-<版本>.tgz`。Windows与Mac使用同一个 `.tgz`，不再发布ZIP；指南和PDF已包含在通用包中。不再向 npm 注册表发布，无需配置 `NPM_TOKEN` 或 Trusted Publishing。
 
 `v*` 标签触发完整构建与测试，通过双平台安装检查后，使用 GitHub 自动令牌上传通用tgz。`--both`发布脚本再下载这个同一成品，用本地 `GITEE_TOKEN` 发布Gitee；CI未通过时不上传Gitee，不将单仓成功报告为双仓成功。手动运行工作流时须选择与包版本匹配的标签。
 
@@ -218,7 +218,7 @@ npm run release -- 3.13.3
 npm run release -- 3.13.3 --resume
 ```
 
-也可指定 `--notes /你的实际路径/说明.json`、`--branch master`、`--both`、`--github https://github.com/wxsimon2022/metaontic-video.git`、`--gitee https://gitee.com/hackloop/metaontic-video.git`。默认只发 Gitee，`--both`（或带地址的 `--github`）才同步 GitHub，默认使用当前仓库的 SSH 443 地址；Gitee 发布需要环境变量 `GITEE_TOKEN`，Gitee 目标与当前 CI 镜像配置绑定，修改项目归属前需同步 CI，不会静默发布到其他仓库。
+也可指定 `--notes /你的实际路径/说明.json`、`--branch master`、`--both`、`--github https://github.com/wxsimon2022/metaontic-video.git`、`--gitee https://gitee.com/hadlooop/metaontic-agent-forge.git`。默认只发 Gitee，`--both`（或带地址的 `--github`）才同步 GitHub，默认使用当前仓库的 SSH 443 地址；Gitee 发布需要环境变量 `GITEE_TOKEN`，Gitee 目标与当前 CI 镜像配置绑定，修改项目归属前需同步 CI，不会静默发布到其他仓库。
 
 脚本依赖事先写好的完整说明，不能自动判断业务变化或代替指南审核。推送或上传中断时会明确报告未全部完成，使用 `--resume` 重试，不要重新递增版本；默认的仅 Gitee 发布不含 GitHub 双平台安装校验，缺少 Windows 实测证据时要在发布记录里写明。
 
@@ -239,3 +239,7 @@ npm run pack:test -- 3.13.9-test.1
 同步使用原版本和 Gitee 已发布的通用 `.tgz` 成品，不重打包。publish.yml 的手动输入 existing_version 指定版本，同时传入原成品 existing_sha256，核对tgz原字节校验值与包版本，再执行 Windows/macOS 安装检查，全部通过后发布 GitHub；说明从结构化 releaseNotes 生成，不读取旧标签中的验证信息，不回写 Gitee 附件。README 首页仅保留在线安装链接，发版时同步至目标成品地址。
 
 正式版和测试版仅提供 Windows/macOS 通用 `.tgz` 成品，不再生成或上传 Windows ZIP 及 `.zip.sha256`；Windows 与 macOS 仍须验证同一 `.tgz` 的安装与升级。历史已发布 ZIP 保留，避免旧链接失效。README 与宣传页仅展示在线安装，不推荐下载解压或目录安装。
+
+## Gitee 仓库迁移
+
+Git 远端与发布目标已改为 `git@gitee.com:hadlooop/metaontic-agent-forge.git`。GitHub 仓库保持不变，插件包名、预设 ID、配置与任务目录保持兼容。新仓库起始为空，未迁移历史标签或发行版附件；现有 README 与线上宣传页中的已发布版本成品链接保留旧地址，不能指向空附件。下次用户明确发版时，脚本会将 README 和宣传页下载根地址一起切换到新仓库。发行版 API、上传、更新检查、未来成品下载及清理默认目标已切换。原有历史安装来源与旧锁文件仍须兼容识别。

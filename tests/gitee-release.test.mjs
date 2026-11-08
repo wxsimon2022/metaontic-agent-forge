@@ -13,6 +13,7 @@ for (const prerelease of [false,true]) test(`Gitee publishes and verifies ${prer
     const archive = join(dir, filename); await writeFile(archive, 'archive');
     let release = null; const attachments = []; let creates = 0, uploads = 0;
     const request = async (url, options) => {
+      assert.ok(url.pathname.startsWith('/api/v5/repos/hadlooop/metaontic-agent-forge/'));
       const path = url.pathname;
       if (options.method === 'PATCH') {
         assert.equal(options.body.get('tag_name'), tag);

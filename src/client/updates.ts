@@ -2,7 +2,7 @@
 export function createUpdates({ h, fetchSource }: any) {
 /** 「检查更新」的数据源：Gitee 镜像仓库（Gitee 的 API 带 CORS 头，浏览器半侧能直接读）。 */
     const PLUGIN_PACKAGE = 'metaontic-video';
-    const UPDATE_SPEC = 'git+https://gitee.com/hackloop/metaontic-video.git';
+    const UPDATE_SPEC = 'git+https://gitee.com/hadlooop/metaontic-agent-forge.git';
     /** 在线更新最多试几次：Gitee 的匿名 HTTPS 克隆会排队，429 一般过一会儿就好。 */
     const UPDATE_ATTEMPTS = 3;
     /** 版本检查结果的本地缓存：打开设置页先显示，再后台刷新。 */
@@ -65,7 +65,7 @@ export function createUpdates({ h, fetchSource }: any) {
     /** 两仓合并去重，仅保留最近三个已发布正式版本。 */
     async function fetchRecentVersions() {
       const urls = [
-        'https://gitee.com/api/v5/repos/hackloop/metaontic-video/releases?per_page=100',
+        'https://gitee.com/api/v5/repos/hadlooop/metaontic-agent-forge/releases?per_page=100',
         'https://api.github.com/repos/wxsimon2022/metaontic-video/releases?per_page=100',
       ];
       const results = await Promise.allSettled(urls.map(async url => {
@@ -234,7 +234,7 @@ async function runOnlineUpdate() {
         return;
     }
     const candidates = [
-      `https://gitee.com/hackloop/metaontic-video/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`,
+      `https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`,
       `https://github.com/wxsimon2022/metaontic-video/releases/download/v${context.updateLatest}/metaontic-video-${context.updateLatest}.tgz`,
     ];
     /** 这条 spec 装不上时值不值得换下一条：只有「这个 committish 解析不出来」才换。 */

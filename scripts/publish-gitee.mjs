@@ -5,7 +5,7 @@ import { pathToFileURL } from 'node:url';
 export async function publishGitee({ token, tag, archive, notes, prerelease = false, request = fetch, retry = { attempts: 4, delayMs: 20000 } }) {
   if (!token) throw new Error('Missing GITEE_TOKEN. Add it to GitHub Actions repository secrets.');
   if (!/^v\d+\.\d+\.\d+(?:-beta\.[1-9]\d*)?$/.test(tag)) throw new Error('A version tag is required.');
-  const base = 'https://gitee.com/api/v5/repos/hackloop/metaontic-video';
+  const base = 'https://gitee.com/api/v5/repos/hadlooop/metaontic-agent-forge';
   async function api(path, { method = 'GET', data, file, allow404 = false } = {}) {
     const url = new URL(base + path);
     let body;
@@ -63,7 +63,7 @@ export async function publishGitee({ token, tag, archive, notes, prerelease = fa
     if (failure) throw new Error(`Gitee 上传 ${name} 重试 ${attempts} 次仍失败：${failure.message}`);
   }
   if (!stored(await api(path))) throw new Error('Gitee attachment verification failed.');
-  return `https://gitee.com/hackloop/metaontic-video/releases/tag/${tag}`;
+  return `https://gitee.com/hadlooop/metaontic-agent-forge/releases/tag/${tag}`;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

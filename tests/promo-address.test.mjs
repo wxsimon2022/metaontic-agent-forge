@@ -14,6 +14,7 @@ const FIXTURE = [
 
 test('promo page version addresses are rewritten to the release version', () => {
   const { text, results } = syncPromoText(FIXTURE, '3.15.1');
+  assert.ok(text.includes('https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/'));
   assert.match(text, /releases\/download\/v3\.15\.1\/metaontic-video-3\.15\.1\.tgz/);
   assert.match(text, /"softwareVersion": "3\.15\.1"/);
   assert.match(text, /而作 · v3\.15\.1</);

@@ -77,7 +77,7 @@ export async function main(argv) {
   }
   if (!argv.length || argv.includes('--help') || argv.includes('-h')) { console.log(help); return; }
   const version = argv[0]; if (!validVersion(version)) throw Error('版本号必须为X.Y.Z正式版');
-  const opts={branch:'master',targets:'gitee',github:'git@ssh.github.com:wxsimon2022/metaontic-video.git',gitee:'git@ssh.gitee.com:hackloop/metaontic-video.git'};
+  const opts={branch:'master',targets:'gitee',github:'git@ssh.github.com:wxsimon2022/metaontic-video.git',gitee:'git@gitee.com:hadlooop/metaontic-agent-forge.git'};
   for(let i=1;i<argv.length;i++) {
     const key=argv[i];
     if(['--dry-run','--resume','--no-promo'].includes(key)) opts[key.slice(2)]=true;
@@ -91,7 +91,7 @@ export async function main(argv) {
   const github=repository(opts.github,'github.com'),gitee=repository(opts.gitee,'gitee.com');
   const includeGithub=opts.targets!=='gitee';
   // Current workflow mirrors to this configured Gitee repository. Reject silently publishing elsewhere.
-  if(gitee.slug!=='hackloop/metaontic-video')throw Error('当前CI绑定hackloop/metaontic-video，变更目标前请同步CI镜像配置');
+  if(gitee.slug!=='hadlooop/metaontic-agent-forge')throw Error('当前CI绑定hadlooop/metaontic-agent-forge，变更目标前请同步CI镜像配置');
   process.chdir(root);
   const run=(command,args,{capture=false,optional=false}={})=>{
     const result=spawnSync(command,args,{cwd:root,encoding:'utf8',stdio:capture?'pipe':'inherit',shell:false});
@@ -173,11 +173,11 @@ export async function main(argv) {
     const lock=JSON.parse(readFileSync('package-lock.json','utf8'));lock.version=version;lock.packages[''].version=version;
     writeFileSync('package-lock.json',JSON.stringify(lock,null,2)+'\n');
     const englishReadme=readFileSync('README.en.md','utf8');
-    writeFileSync('README.en.md',englishReadme.replace(/(releases\/download\/)v\d+\.\d+\.\d+\/(metaontic-video-)\d+\.\d+\.\d+(\.tgz)/g,`$1v${version}/$2${version}$3`));
+    writeFileSync('README.en.md',englishReadme.replaceAll('https://gitee.com/hackloop/metaontic-video/releases/download/', 'https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/').replace(/(releases\/download\/)v\d+\.\d+\.\d+\/(metaontic-video-)\d+\.\d+\.\d+(\.tgz)/g,`$1v${version}/$2${version}$3`));
     const markdown=sections.map(s=>'### '+s.category+'\n\n'+s.items.map(i=>'- '+i).join('\n')).join('\n\n');
     for(const [file,header] of [['README.md',`## ${tag} 更新内容`],['CHANGELOG.md',`## ${tag}`]]) {
       let text=readFileSync(file,'utf8');
-      if(file==='README.md')text=text.replace(/(releases\/download\/)v\d+\.\d+\.\d+\/(metaontic-video-)\d+\.\d+\.\d+(\.tgz)/g,`$1v${version}/$2${version}$3`);
+      if(file==='README.md')text=text.replaceAll('https://gitee.com/hackloop/metaontic-video/releases/download/', 'https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/').replace(/(releases\/download\/)v\d+\.\d+\.\d+\/(metaontic-video-)\d+\.\d+\.\d+(\.tgz)/g,`$1v${version}/$2${version}$3`);
       if(text.includes(header)) { const start=text.indexOf(header);const rest=text.slice(start+header.length);const next=rest.search(/^## v\d+\.\d+\.\d+/m);text=text.slice(0,start)+(next<0?'':rest.slice(next)); }
       const at=text.search(/^## v\d+\.\d+\.\d+/m);if(at<0)throw Error(`${file}缺少更新区插入位置`);
       writeFileSync(file,text.slice(0,at)+header+'\n\n'+markdown+'\n\n'+text.slice(at));

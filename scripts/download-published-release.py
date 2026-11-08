@@ -28,7 +28,7 @@ def main():
     folder = Path(output)
     folder.mkdir(parents=True, exist_ok=True)
     archive = f'metaontic-video-{version}.tgz'
-    url = f'https://gitee.com/hackloop/metaontic-video/releases/download/v{version}/{archive}'
+    url = f'https://gitee.com/hadlooop/metaontic-agent-forge/releases/download/v{version}/{archive}'
     subprocess.run(['curl', '--fail', '--location', '--silent', '--show-error', '--retry', '3',
                     '--connect-timeout', '30', '--max-time', '180', '--output', str(folder / archive), url], check=True)
     verify_artifacts(version, folder, expected_sha256)
