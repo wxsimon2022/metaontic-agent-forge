@@ -1,3 +1,4 @@
+import './no-network-analytics.mjs';
 import { sourceOf } from './source.mjs';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import os from 'node:os';

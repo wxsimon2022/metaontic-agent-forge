@@ -1,6 +1,6 @@
 {
   "name": "metaontic-video",
-  "version": "3.20.1",
+  "version": "3.20.2",
   "description": "DeepSeek Harness video plugin: beginner-friendly guided video creation and a low-cost long-video workflow using segment continuation and local merging.",
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
@@ -106,11 +106,11 @@
   },
   "dependencies": {},
   "releaseNotes": {
-    "version": "3.20.1",
+    "version": "3.20.2",
     "prerelease": false,
-    "publishedAt": "2026-11-08T02:07:36.429Z",
+    "publishedAt": "2026-11-08T03:02:31.736Z",
     "items": [
-      "优化：鉴权异常提供设置检查与客服入口，不再直接判定密钥无效；视频接口401/403准确提示鉴权失败。"
+      "优化：常规体验优化。"
     ]
   }
 }

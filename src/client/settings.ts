@@ -232,6 +232,7 @@ function makePage({ form, t, manager }) {
                 { key: 'advancedMerge', fields: ['mergeMode', 'seamTrimSeconds'], hint: 'segmentsRetained' },
                 { key: 'advancedWait', fields: ['pollIntervalMs', 'maxWaitMs'] },
                 { key: 'advancedTools', fields: ['ffmpegBinary', 'ffprobeBinary'], hint: 'toolsHint' },
+                { key: 'advancedStats', fields: ['usageStatsEnabled'], hint: 'usageStatsHint' },
               ].map(group => h('div', { key: group.key, className: `mov-advanced-group${group.key === 'advancedTools' ? ' mov-advanced-tools' : ''}`, 'data-group': group.key }, [
                 h('div', { key: 'title', className: 'mov-parameter-heading' }, t(group.key)),
                 renderGrid(group),

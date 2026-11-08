@@ -73,6 +73,9 @@ const zh = {
       ffmpegManual: '想自己装：macOS 用 Homebrew，Windows 用 winget，Linux 用系统包管理器；'
         + '装完确认命令行里能跑 ffmpeg -version 就行。',
       supportContact: '客服',
+      advancedStats: '使用统计',
+      usageStatsEnabled: '匿名使用统计',
+      usageStatsHint: '用于统计首次启用、启动和功能使用情况，仅上报匿名标识、版本、基础设备信息与调用结果，不含对话、素材或API密钥。关闭不影响视频创作。',
       authNoticeTitle: '服务连接验证未通过',
       authNoticeHint: '请到 Harness 的模型设置检查当前 API密钥和中转地址；如果配置无误，请联系客服核查。',
       supportClose: '关闭',
@@ -223,6 +226,9 @@ const zh = {
       ffmpegManual: 'Installing by hand: Homebrew on macOS, winget on Windows, your distro package '
         + 'manager on Linux — you are set once `ffmpeg -version` works in a terminal.',
       supportContact: 'Support',
+      advancedStats: 'Usage statistics',
+      usageStatsEnabled: 'Anonymous usage statistics',
+      usageStatsHint: 'Reports an anonymous installation ID, version, basic device information and operation results. No conversations, media or API keys. Turning it off does not affect video creation.',
       authNoticeTitle: 'Service authentication could not be verified',
       authNoticeHint: 'Check the API key and relay URL in Harness model settings. If they are correct, contact support.',
       supportClose: 'Close',

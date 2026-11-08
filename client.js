@@ -500,6 +500,7 @@
       { key: "ratio", kind: "select" },
       { key: "generateAudio", kind: "switch" },
       { key: "watermark", kind: "switch" },
+      { key: "usageStatsEnabled", kind: "switch" },
       { key: "seamTrimSeconds", kind: "text" },
       { key: "mergeMode", kind: "select", wide: true },
       { key: "pollIntervalMs", kind: "number" },
@@ -509,6 +510,7 @@
     ];
     const FIELD_BY_KEY = Object.fromEntries(FIELDS.map((field) => [field.key, field]));
     const PLUGIN_OWNED_KEYS = [
+      "usageStatsEnabled",
       "connectionMode",
       "metaonticApiKey",
       "volcengineApiKey",
@@ -638,6 +640,9 @@
       ffmpegAfter: "\u4E0D\u60F3\u81EA\u5DF1\u6572\u547D\u4EE4\u7684\u8BDD\uFF0C\u76F4\u63A5\u5728\u5BF9\u8BDD\u91CC\u8BF4\u300C\u5E2E\u6211\u88C5 ffmpeg\u300D\u2014\u2014\u63D2\u4EF6\u4F1A\u6267\u884C\u5B89\u88C5\uFF08\u547D\u4EE4\u4F1A\u5148\u8BA9\u4F60\u786E\u8BA4\uFF09\uFF1B\u88C5\u597D\u540E\u7528\u539F\u6682\u505C\u8FDB\u5EA6\u91CD\u8BD5\u4E0B\u8F7D\u6216\u5408\u5E76\uFF0C\u4E0D\u91CD\u65B0\u63D0\u4EA4\u89C6\u9891\u751F\u6210\u3002ffmpeg \u88C5\u5728\u975E\u9ED8\u8BA4\u4F4D\u7F6E\u7684\u8BDD\uFF0C\u628A\u7EDD\u5BF9\u8DEF\u5F84\u586B\u5230\u4E0A\u9762\u7684\u300Cffmpeg \u8DEF\u5F84\u300D\u4E5F\u4E00\u6837\u7BA1\u7528\u3002\u5B89\u88C5\u5305\u81EA\u5E26 ffprobe\uFF0C\u5206\u6BB5\u65F6\u957F\u63A2\u6D4B\u4F1A\u4E00\u8D77\u89E3\u51B3\u3002",
       ffmpegManual: "\u60F3\u81EA\u5DF1\u88C5\uFF1AmacOS \u7528 Homebrew\uFF0CWindows \u7528 winget\uFF0CLinux \u7528\u7CFB\u7EDF\u5305\u7BA1\u7406\u5668\uFF1B\u88C5\u5B8C\u786E\u8BA4\u547D\u4EE4\u884C\u91CC\u80FD\u8DD1 ffmpeg -version \u5C31\u884C\u3002",
       supportContact: "\u5BA2\u670D",
+      advancedStats: "\u4F7F\u7528\u7EDF\u8BA1",
+      usageStatsEnabled: "\u533F\u540D\u4F7F\u7528\u7EDF\u8BA1",
+      usageStatsHint: "\u7528\u4E8E\u7EDF\u8BA1\u9996\u6B21\u542F\u7528\u3001\u542F\u52A8\u548C\u529F\u80FD\u4F7F\u7528\u60C5\u51B5\uFF0C\u4EC5\u4E0A\u62A5\u533F\u540D\u6807\u8BC6\u3001\u7248\u672C\u3001\u57FA\u7840\u8BBE\u5907\u4FE1\u606F\u4E0E\u8C03\u7528\u7ED3\u679C\uFF0C\u4E0D\u542B\u5BF9\u8BDD\u3001\u7D20\u6750\u6216API\u5BC6\u94A5\u3002\u5173\u95ED\u4E0D\u5F71\u54CD\u89C6\u9891\u521B\u4F5C\u3002",
       authNoticeTitle: "\u670D\u52A1\u8FDE\u63A5\u9A8C\u8BC1\u672A\u901A\u8FC7",
       authNoticeHint: "\u8BF7\u5230 Harness \u7684\u6A21\u578B\u8BBE\u7F6E\u68C0\u67E5\u5F53\u524D API\u5BC6\u94A5\u548C\u4E2D\u8F6C\u5730\u5740\uFF1B\u5982\u679C\u914D\u7F6E\u65E0\u8BEF\uFF0C\u8BF7\u8054\u7CFB\u5BA2\u670D\u6838\u67E5\u3002",
       supportClose: "\u5173\u95ED",
@@ -782,6 +787,9 @@
       ffmpegAfter: 'Rather not touch a terminal? Just say "\u5E2E\u6211\u88C5 ffmpeg" in the chat and the plugin runs the install after you confirm the command. Resume the original saved progress to retry downloading or merging without submitting new generation tasks. Installed somewhere unusual? Put the absolute path in the "ffmpeg path" field above. The package ships ffprobe too, so segment probing is fixed at the same time.',
       ffmpegManual: "Installing by hand: Homebrew on macOS, winget on Windows, your distro package manager on Linux \u2014 you are set once `ffmpeg -version` works in a terminal.",
       supportContact: "Support",
+      advancedStats: "Usage statistics",
+      usageStatsEnabled: "Anonymous usage statistics",
+      usageStatsHint: "Reports an anonymous installation ID, version, basic device information and operation results. No conversations, media or API keys. Turning it off does not affect video creation.",
       authNoticeTitle: "Service authentication could not be verified",
       authNoticeHint: "Check the API key and relay URL in Harness model settings. If they are correct, contact support.",
       supportClose: "Close",
@@ -986,7 +994,7 @@
     const UPDATE_ATTEMPTS = 3;
     const UPDATE_CACHE_KEY = "metaontic-video.update-check-v3";
     const UPDATE_MAX_AGE_MS = 6 * 60 * 60 * 1e3;
-    const PLUGIN_VERSION = true ? "3.20.1".trim().replace(/^v/i, "") : "";
+    const PLUGIN_VERSION = true ? "3.20.2".trim().replace(/^v/i, "") : "";
     function isNewerVersion(remote, local) {
       const parse = (text) => {
         const m = /^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/.exec(String(text || ""));
@@ -1335,7 +1343,7 @@
     }
     function control(field) {
       const { draft, value, h, SELECTS, inputStyle, t, snapshot, visibleKey, setVisibleKey, edit, optionLabel } = context;
-      const current = draft[field.key] !== void 0 ? draft[field.key] : value[field.key] ?? (field.key === "imageUseVideoKey" ? true : field.key === "pollIntervalMs" ? 5e3 : field.key === "maxWaitMs" ? 6e5 : void 0);
+      const current = draft[field.key] !== void 0 ? draft[field.key] : value[field.key] ?? (["imageUseVideoKey", "usageStatsEnabled"].includes(field.key) ? true : field.key === "pollIntervalMs" ? 5e3 : field.key === "maxWaitMs" ? 6e5 : void 0);
       const secondsField = field.key === "pollIntervalMs" || field.key === "maxWaitMs";
       const displayed = secondsField && current !== void 0 && current !== "" ? Number(current) / 1e3 : current;
       const id = `metaontic-video-${field.key}`;
@@ -1415,7 +1423,7 @@
   // package.json
   var package_default = {
     name: "metaontic-video",
-    version: "3.20.1",
+    version: "3.20.2",
     description: "DeepSeek Harness video plugin: beginner-friendly guided video creation and a low-cost long-video workflow using segment continuation and local merging.",
     license: "SEE LICENSE IN LICENSE",
     type: "module",
@@ -1521,11 +1529,11 @@
     },
     dependencies: {},
     releaseNotes: {
-      version: "3.20.1",
+      version: "3.20.2",
       prerelease: false,
-      publishedAt: "2026-11-08T02:07:36.429Z",
+      publishedAt: "2026-11-08T03:02:31.736Z",
       items: [
-        "\u4F18\u5316\uFF1A\u9274\u6743\u5F02\u5E38\u63D0\u4F9B\u8BBE\u7F6E\u68C0\u67E5\u4E0E\u5BA2\u670D\u5165\u53E3\uFF0C\u4E0D\u518D\u76F4\u63A5\u5224\u5B9A\u5BC6\u94A5\u65E0\u6548\uFF1B\u89C6\u9891\u63A5\u53E3401/403\u51C6\u786E\u63D0\u793A\u9274\u6743\u5931\u8D25\u3002"
+        "\u4F18\u5316\uFF1A\u5E38\u89C4\u4F53\u9A8C\u4F18\u5316\u3002"
       ]
     }
   };
@@ -1819,7 +1827,8 @@
                 { key: "advancedPicture", fields: ["watermark"] },
                 { key: "advancedMerge", fields: ["mergeMode", "seamTrimSeconds"], hint: "segmentsRetained" },
                 { key: "advancedWait", fields: ["pollIntervalMs", "maxWaitMs"] },
-                { key: "advancedTools", fields: ["ffmpegBinary", "ffprobeBinary"], hint: "toolsHint" }
+                { key: "advancedTools", fields: ["ffmpegBinary", "ffprobeBinary"], hint: "toolsHint" },
+                { key: "advancedStats", fields: ["usageStatsEnabled"], hint: "usageStatsHint" }
               ].map((group) => h("div", { key: group.key, className: `mov-advanced-group${group.key === "advancedTools" ? " mov-advanced-tools" : ""}`, "data-group": group.key }, [
                 h("div", { key: "title", className: "mov-parameter-heading" }, t(group.key)),
                 renderGrid(group),

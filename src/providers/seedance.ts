@@ -1,3 +1,4 @@
+import { reportUsage } from '../analytics/reporter.js';
 import { withGenerationProgress } from '../workflow/execution.js';
 import { timedStage } from '../utils/timing.js';
 /** providers/seedance：从宿主入口拆出的独立职责模块。 */
@@ -139,11 +140,17 @@ async function runTaskOnce(config, body, signal, progress: { taskId?: string; on
     const taskId = progress.taskId || extractTaskId(created);
     await appendRequestLog({ event: 'task_created', taskId, model: body?.model, duration: body?.duration });
     if (!taskId) throw new Error('创建任务失败：响应中缺少任务 ID。');
+    const stats = { tool: progress.exec?.name, mode: progress.exec?.metaonticMode };
+    if (created) reportUsage(progress.exec, 'video_task_created', stats, taskId);
+    const began = Date.now();
     try {
       await progress.onCreated?.(taskId);
       const final = await timedStage('video_poll_wait', () => waitForCompletion(config, taskId, signal));
       if (['succeeded', 'failed', 'cancelled'].includes(final.status)) await finishSubmission(config, resolveSubmitPath(config), body);
       await appendRequestLog({ event: 'task_finished', taskId, status: final.status, errorCode: final.errorCode });
+      if (['succeeded', 'failed', 'cancelled'].includes(final.status)) reportUsage(progress.exec, 'video_task_finished', {
+        ...stats, status: final.status, durationMs: Date.now() - began, errorCode: final.errorCode,
+      }, taskId);
       return { ...final, taskId };
     } catch (failure) {
       if (failure?.code === 'ABORTED') return { taskId, status: 'unknown', errorCode: 'waiting_stopped', error: `已停止等待，任务 ${taskId} 已提交，可能仍在生成。用 resume 或 video_status 查询已有任务，不要重新提交。` };

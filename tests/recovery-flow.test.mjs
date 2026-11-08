@@ -1,3 +1,4 @@
+import './no-network-analytics.mjs';
 import { workflowApi } from './workflow-test-api.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';

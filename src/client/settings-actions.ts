@@ -69,7 +69,7 @@ export function createSettingsActions(context: any) {
     }
     function control(field) {
         const { draft, value, h, SELECTS, inputStyle, t, snapshot, visibleKey, setVisibleKey, edit, optionLabel } = context;
-        const current = draft[field.key] !== undefined ? draft[field.key] : value[field.key] ?? (field.key === 'imageUseVideoKey' ? true : field.key === 'pollIntervalMs' ? 5000 : field.key === 'maxWaitMs' ? 600000 : undefined);
+        const current = draft[field.key] !== undefined ? draft[field.key] : value[field.key] ?? (['imageUseVideoKey', 'usageStatsEnabled'].includes(field.key) ? true : field.key === 'pollIntervalMs' ? 5000 : field.key === 'maxWaitMs' ? 600000 : undefined);
         const secondsField = field.key === 'pollIntervalMs' || field.key === 'maxWaitMs';
         const displayed = secondsField && current !== undefined && current !== '' ? Number(current) / 1000 : current;
         const id = `metaontic-video-${field.key}`;

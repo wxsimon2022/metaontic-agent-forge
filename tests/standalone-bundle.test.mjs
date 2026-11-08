@@ -1,3 +1,4 @@
+import './no-network-analytics.mjs';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,copyFile,writeFile,rm} from 'node:fs/promises';

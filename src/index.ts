@@ -1,3 +1,4 @@
+import { createAnalyticsReporter, withUsageAnalytics } from './analytics/reporter.js';
 import { withMediaPreview } from './workflow/media-preview.js';
 import { createSegmentReview, assertSegmentReviewed } from './workflow/segment-review.js';
 import { isVideoDirector, isPromoVideoAssistant } from './prompts/scope.js';
@@ -45,6 +46,9 @@ function asDisposer(value: unknown): (() => void) | undefined {
 export function apply(ctx: DshContext, config: any = {}) {
   // 可选服务的宿主对象（会话工作目录等），拿到就放进来
   const deps: Record<string, any> = {};
+  const analytics = createAnalyticsReporter(config);
+  const usageMode = exec => isPromoVideoAssistant({ agent: exec?.agent }, ctx) ? 'promo-video'
+    : isVideoDirector({ agent: exec?.agent }, ctx) ? 'video-director' : 'standard';
   const segmentReview = createSegmentReview(ctx);
   const segmentObserver = (ctx as any).on('session/event', segmentReview.observe);
   const storyboardReview = createStoryboardReviewGuard();
@@ -60,9 +64,10 @@ export function apply(ctx: DshContext, config: any = {}) {
       if (!confirmationReady) throw new Error('人工确认服务未就绪，已停止操作；请恢复插件确认能力后重试，未提交付费任务。');
       return tool.execute(args, exec);
     } };
-    return ctx.tools.register(withStageTiming(withMediaPreview(guarded)));
+    return ctx.tools.register(withStageTiming(withMediaPreview(withUsageAnalytics(guarded, analytics, usageMode))));
   };
   const disposers = [
+    () => analytics.dispose(),
     ...(typeof segmentObserver === 'function' ? [segmentObserver] : []),
     ...(typeof storyboardObserver === 'function' ? [storyboardObserver] : []),
     ...(typeof deliveryObserver === 'function' ? [deliveryObserver] : []),
@@ -96,7 +101,7 @@ export function apply(ctx: DshContext, config: any = {}) {
   }
   // 配置工具依赖宿主的 settings 服务；没有该服务时插件其余功能照常可用。
   const cleanup = ctx.inject(['settings'], (settingsCtx) => {
-    disposers.push(settingsCtx.tools.register(withStageTiming(jsonSafeTool(configTool(config, settingsCtx.settings)))));
+    disposers.push(settingsCtx.tools.register(withStageTiming(withUsageAnalytics(jsonSafeTool(configTool(config, settingsCtx.settings)), analytics, usageMode))));
   });
   for (const dispose of [asDisposer(cleanup)]) if (dispose) disposers.push(dispose);
   // 新对话自带的使用说明：宿主没有 systemPrompt 服务时跳过，其余功能不受影响。
@@ -166,6 +171,7 @@ export function apply(ctx: DshContext, config: any = {}) {
     );
   }
   if (typeof gateCleanup === 'function') disposers.push(gateCleanup);
+  analytics.start();
   return () => {
     for (const dispose of disposers) dispose();
   };

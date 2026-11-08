@@ -64,7 +64,7 @@ npm pack --dry-run
 每次发布必须：
 
 1. 更新 `package.json` 的版本及 `releaseNotes`，其 `version` 必须与包版本一致，`items` 写用户能理解的变更；将 `CHANGELOG.md` 的未发布内容整理到对应版本，记录日期并同步完整更新说明。
-2. 同步更新根目录 `MetaOnticVideo使用说明书.md`，逐项核对本次全部变更涉及的配置、操作步骤、默认行为及常见问题，删除过时说明，确保指南与当前版本一致；指南里写死的 `.tgz` 成品地址（Gitee 与 GitHub 各一条）同步改为本次版本，发布脚本会校验不一致直接失败；指南仅面向用户使用，不得加入插件版本号、适用版本、版本更新内容、更新日志、发布说明或发布核对记录；配图也遵守此约定。适用版本和本次核对结果仅记录在 `docs/engineering/release-<版本>.md`，更新内容统一放在 CHANGELOG、README 的更新区及包内 releaseNotes。未完成指南同步不得发布。
+2. 同步更新本地根目录 `MetaOnticVideo使用说明书.md`（Markdown、PDF 和配图不提交源码仓库），逐项核对本次全部变更涉及的配置、操作步骤、默认行为及常见问题，删除过时说明，确保指南与当前版本一致；指南里写死的 `.tgz` 成品地址（Gitee 与 GitHub 各一条）同步改为本次版本，发布脚本会校验不一致直接失败；指南仅面向用户使用，不得加入插件版本号、适用版本、版本更新内容、更新日志、发布说明或发布核对记录；配图也遵守此约定。适用版本和本次核对结果仅记录在 `docs/engineering/release-<版本>.md`，更新内容统一放在 CHANGELOG、README 的更新区及包内 releaseNotes。未完成指南同步不得发布。
 3. 同步宣传页的最新安装地址：宣传页在服务端仓库 `MetaOnticVideoService/frontend/public/promo/index.html`，用户会照它复制 `.tgz` 地址，发版脚本会在打包前用 `scripts/sync-promo-address.mjs` 把上面的 Gitee 附件地址、`.tgz` 文件名、结构化数据与页脚版本号一并改为本次版本（用 `METAONTIC_PROMO_PATH` 指定路径，`--no-promo` 才跳过），并把结果写进发布记录的「验证」；找不到宣传页时脚本给出提示，必须手动同步。
 4. 同步锁文件，构建并执行相关验证，检查打包清单，确认包含更新后的操作指南。
 5. 提交源码、构建产物与说明。

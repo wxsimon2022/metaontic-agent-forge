@@ -3,6 +3,7 @@ import { METAONTIC_BASE_URL } from './connection-defaults.js';
 import z from '@deepseek-ai/schemastery';
 
 export const Config = z.object({
+  usageStatsEnabled: z.boolean().default(true).description('匿名使用统计：仅统计版本、系统、工具调用与结果，不包含创作内容或API密钥；可随时关闭').volatile(),
   connectionMode: z.union(['metaontic', 'volcengine']).default('metaontic')
     .description('接入方式：MetaOntic AI（metaontic）；火山引擎直连（volcengine，当前设置页暂不提供选择）').volatile(),
   metaonticApiKey: z.string().default('').description('MetaOntic AI API密钥').volatile(),
