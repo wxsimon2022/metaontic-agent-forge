@@ -4,7 +4,7 @@ import type { PluginLocale } from './zh';
 export const locale: PluginLocale = {
   meta: {
     title: 'MetaOnticVideo',
-    description: 'Turn ideas into videos with the Video Creation Assistant: develop concepts, review scripts, then confirm production. Supports reference images, segment continuation, previews and resumable generation; continuing segments keeps ultra-long videos low-cost and merges them locally.',
+    description: 'Get started with video creation quickly, even as a beginner: describe an idea and follow the guided script-to-video workflow. Create longer videos with a low-cost segment continuation and local merging workflow.',
   },
 };
 

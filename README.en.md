@@ -4,12 +4,17 @@
 
 [简体中文](./README.md)
 
-An AI video creation plugin for DeepSeek Harness, supporting Seedance text-to-video, image-to-video and video continuation, with script review, segment previews and local merging.
+A DeepSeek Harness plugin focused on two goals: helping beginners start creating videos quickly, and providing a low-cost workflow for longer videos.
+
+## Highlights
+
+- **Start creating videos quickly**: describe your idea and follow the assistant through the script and production steps, without first learning prompting or editing workflows.
+- **A low-cost long-video workflow**: generate and continue segments, review each result before proceeding, and merge them locally. Completed segments are kept for reuse.
 
 ## Quick start
 
 1. Paste the online installation URL below into Harness → Plugins → Add plugin.
-2. Open plugin settings, choose **MetaOntic AI**, enter your own API key and save. See the [user guide](./MetaOnticVideo使用说明书.md) for setup.
+2. Open plugin settings, choose **MetaOntic AI**, enter your own API key and save. See the [user guide](https://ai.mybfs.cn) for setup.
 3. Select **视频创作助手** in the session mode selector. Describe your idea, duration, aspect ratio and resolution (480P or 720P). If duration is missing, choose 15, 30, 45 or 60 seconds, or enter a custom length.
 
 Online installation URL:
@@ -24,12 +29,7 @@ GitHub mirror (same stable package):
 https://github.com/wxsimon2022/metaontic-video/releases/download/v3.20.1/metaontic-video-3.20.1.tgz
 ```
 
-| Built-in assistant | Purpose |
-|---|---|
-| <img src="./presets/icons/video-director.svg" width="24" alt="" /> 视频创作助手 | General ideas, scripts, storyboards and video creation |
-| <img src="./presets/icons/promo-video.svg" width="24" alt="" /> 宣传视频助手 | Product, brand and event promos that preserve the original idea |
-
-Bring your own API key; model calls are billed by the chosen provider. Both assistants share script review, cost confirmation and segment previews. FFmpeg merges multiple video segments locally.
+Select “视频创作助手” to begin, or “宣传视频助手” for product, brand and event promos. Bring your own API key; model calls are billed by the chosen provider.
 
 ## Workflow
 
@@ -43,7 +43,7 @@ Choose the concept and optional character reference → review the full script, 
 
 ## Documentation and support
 
-- [User guide](./MetaOnticVideo使用说明书.md) · [PDF](./MetaOnticVideo使用说明书.pdf) · [Online guide](https://ai.mybfs.cn)
+- [Online user guide](https://ai.mybfs.cn)
 - [Changelog](./CHANGELOG.md) · [Report an issue](https://github.com/wxsimon2022/metaontic-video/issues)
 - [Development and release instructions](./docs/engineering/development.md) · [Platform compatibility](./docs/engineering/platform-compatibility.md)
 

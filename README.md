@@ -4,12 +4,17 @@
 
 [English](./README.en.md)
 
-DeepSeek Harness 的 AI 视频创作插件。支持 Seedance 文生视频、图生视频与已有视频续拍，从脚本、分镜审核到分段生成和本机合并。
+DeepSeek Harness 视频创作插件，专注两件事：让新手快速上手视频创作，用低成本分段续拍方案制作长视频。
+
+## 插件亮点
+
+- **新手快速上手视频创作**：说出想法，跟着助手完善创意、看脚本、确认制作，不用先研究提示词或剪辑流程。
+- **低成本长视频生成方案**：把长视频分段生成、逐段续拍，最后在本机合并；每段先看结果再继续，已完成的分段保留复用。
 
 ## 开始使用
 
 1. 在 Harness「插件 → 添加插件」中粘贴下方在线安装链接。
-2. 打开插件设置，选择 **MetaOntic AI**，填写自己的 API密钥并保存。申请与配置步骤见[使用说明书](./MetaOnticVideo使用说明书.md)。
+2. 打开插件设置，选择 **MetaOntic AI**，填写自己的 API密钥并保存。申请与配置步骤见[使用说明书](https://ai.mybfs.cn)。
 3. 将会话模式切换为 **视频创作助手**，说明主题、时长、画幅和清晰度（480P / 720P）。未指定时长时，会在完善创意时一并询问15、30、45、60秒或自定义长度。
 
 在线安装链接：
@@ -24,12 +29,7 @@ GitHub 同版备用在线安装：
 https://github.com/wxsimon2022/metaontic-video/releases/download/v3.20.1/metaontic-video-3.20.1.tgz
 ```
 
-| 内置助手 | 用途 |
-|---|---|
-| <img src="./presets/icons/video-director.svg" width="24" alt="" /> 视频创作助手 | 通用创意、脚本、分镜及视频制作 |
-| <img src="./presets/icons/promo-video.svg" width="24" alt="" /> 宣传视频助手 | 产品、品牌和活动宣传，保留原创意完善表达 |
-
-需要自行配置 API密钥，模型调用按渠道实际用量计费。两个助手共用脚本审核、费用确认和逐段预览流程；FFmpeg 用于多段视频的本机合并。
+在会话中选择“视频创作助手”开始；产品、品牌和活动宣传可选择“宣传视频助手”。需要自行配置 API密钥，模型调用按渠道实际用量计费。
 
 ## 制作流程
 
@@ -43,7 +43,6 @@ https://github.com/wxsimon2022/metaontic-video/releases/download/v3.20.1/metaont
 
 ## 使用与反馈
 
-- [完整使用说明书](./MetaOnticVideo使用说明书.md) · [PDF](./MetaOnticVideo使用说明书.pdf)
 - [在线使用说明](https://ai.mybfs.cn)
 - [更新记录](./CHANGELOG.md)
 - [问题反馈](https://github.com/wxsimon2022/metaontic-video/issues)

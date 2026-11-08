@@ -1416,7 +1416,7 @@
   var package_default = {
     name: "metaontic-video",
     version: "3.20.1",
-    description: "AI video creation plugin for DeepSeek Harness: Seedance 2.0 long videos with multi-segment continuation, image-to-video, text-to-video, script and storyboard review, segment previews, resumable generation and local FFmpeg merging. Connects with your own MetaOntic AI key.",
+    description: "DeepSeek Harness video plugin: beginner-friendly guided video creation and a low-cost long-video workflow using segment continuation and local merging.",
     license: "SEE LICENSE IN LICENSE",
     type: "module",
     keywords: [
