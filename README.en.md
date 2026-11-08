@@ -4,51 +4,46 @@
 
 [简体中文](./README.md)
 
-A DeepSeek Harness plugin focused on two goals: helping beginners start creating videos quickly, and providing a low-cost workflow for longer videos.
+A DeepSeek Harness plugin for **beginner-friendly video creation and a low-cost long-video workflow**.
 
-## Highlights
+## Start creating videos quickly
 
-- **Start creating videos quickly**: describe your idea and follow the assistant through the script and production steps, without first learning prompting or editing workflows.
-- **A low-cost long-video workflow**: generate and continue segments, review each result before proceeding, and merge them locally. Completed segments are kept for reuse.
+Describe what you want to make and follow the assistant through your first video, without first learning prompting or editing workflows.
 
-## Quick start
+1. **Share your idea**: start with a brief thought or a complete concept. Any refinement stays true to your original idea.
+2. **Review the script**: read what will be filmed, ask for changes in plain language, then confirm production.
+3. **Watch the result**: preview the generated video and keep the finished file locally.
 
-1. Paste the online installation URL below into Harness → Plugins → Add plugin.
-2. Open plugin settings, choose **MetaOntic AI**, enter your own API key and save. See the [user guide](https://ai.mybfs.cn) for setup.
-3. Select **视频创作助手** in the session mode selector. Describe your idea, duration, aspect ratio and resolution (480P or 720P). If duration is missing, choose 15, 30, 45 or 60 seconds, or enter a custom length.
+For example: “Make a 30-second vertical 720P video showing a peaceful lake at dawn.” Duration, orientation and resolution already supplied are reused; only missing details are requested.
 
-Online installation URL:
+## A low-cost long-video workflow
+
+Use **segment generation → continuation → local merging** to make videos beyond the model’s single-call duration limit.
+
+- Review each result before continuing to the next segment.
+- Keep and reuse completed segments, pause and resume saved progress, and avoid starting over.
+- Merge completed segments locally with FFmpeg while retaining the original clips.
+
+Bring your own API key. Image and video calls are billed by the chosen provider, with cost confirmation before each new segment.
+
+## Online installation
+
+Paste an online installation URL into Harness → Plugins → Add plugin. Windows and macOS use the same package.
+
+Gitee:
 
 ```text
 https://gitee.com/hackloop/metaontic-video/releases/download/v3.20.1/metaontic-video-3.20.1.tgz
 ```
 
-GitHub mirror (same stable package):
+GitHub mirror:
 
 ```text
 https://github.com/wxsimon2022/metaontic-video/releases/download/v3.20.1/metaontic-video-3.20.1.tgz
 ```
 
-Select “视频创作助手” to begin, or “宣传视频助手” for product, brand and event promos. Bring your own API key; model calls are billed by the chosen provider.
+Open plugin settings, choose **MetaOntic AI**, enter your API key and save. Select **视频创作助手** in a conversation to begin; **宣传视频助手** is also available for product, brand or event content. Both assistants share the production workflow. Standard mode remains general-purpose.
 
-## Workflow
-
-Choose the concept and optional character reference → review the full script, storyboard and estimated cost → approve the script → confirm generation cost → generate and preview.
-
-- Videos beyond the model limit use multiple segments. Review each result and confirm the next segment’s cost before continuing. FFmpeg merges the completed video locally; source segments are kept.
-- Images and videos can be previewed in tool result cards. Original links remain available; resume saved progress to avoid duplicate submissions.
-- Character images and reference conversions require separate consent, billing and result review. Completed segments are reused; new segments are still billed.
-- Upstream generation, local download and merging have separate completion states. Query errors do not establish generation failure. Save upstream results promptly.
-- The video-only scope applies to **视频创作助手** and **宣传视频助手** modes. Standard mode supports other tasks. Change API keys and models in plugin settings.
-
-## Documentation and support
-
-- [Online user guide](https://ai.mybfs.cn)
-- [Changelog](./CHANGELOG.md) · [Report an issue](https://github.com/wxsimon2022/metaontic-video/issues)
-- [Development and release instructions](./docs/engineering/development.md) · [Platform compatibility](./docs/engineering/platform-compatibility.md)
-
-Check for the latest stable release in plugin settings and confirm before installing. Updates are not automatic. If installation or updating fails, preserve your settings and tasks and consult the guide before uninstalling.
-
-## License
+[Online user guide](https://ai.mybfs.cn) · [Report an issue](https://github.com/wxsimon2022/metaontic-video/issues) · [Changelog](./CHANGELOG.md) · [Development](./docs/engineering/development.md)
 
 See [LICENSE](./LICENSE).
