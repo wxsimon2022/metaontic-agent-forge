@@ -18,7 +18,18 @@ DeepSeek Harness 的 AI 视频创作插件。支持 Seedance 文生视频、图�
 https://gitee.com/hackloop/metaontic-video/releases/download/v3.20.1/metaontic-video-3.20.1.tgz
 ```
 
-预设 **宣传视频助手**：在会话模式中选择，用于产品、品牌和活动宣传；与视频创作助手共用审核、费用确认和逐段预览流程。
+GitHub 同版备用在线安装：
+
+```text
+https://github.com/wxsimon2022/metaontic-video/releases/download/v3.20.1/metaontic-video-3.20.1.tgz
+```
+
+| 内置助手 | 用途 |
+|---|---|
+| <img src="./presets/icons/video-director.svg" width="24" alt="" /> 视频创作助手 | 通用创意、脚本、分镜及视频制作 |
+| <img src="./presets/icons/promo-video.svg" width="24" alt="" /> 宣传视频助手 | 产品、品牌和活动宣传，保留原创意完善表达 |
+
+需要自行配置 API密钥，模型调用按渠道实际用量计费。两个助手共用脚本审核、费用确认和逐段预览流程；FFmpeg 用于多段视频的本机合并。
 
 ## 制作流程
 

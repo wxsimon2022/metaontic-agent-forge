@@ -18,7 +18,18 @@ Online installation URL:
 https://gitee.com/hackloop/metaontic-video/releases/download/v3.20.1/metaontic-video-3.20.1.tgz
 ```
 
-Choose **宣传视频助手** for product, brand or event promos. It shares the script review, cost confirmation and segment preview workflow.
+GitHub mirror (same stable package):
+
+```text
+https://github.com/wxsimon2022/metaontic-video/releases/download/v3.20.1/metaontic-video-3.20.1.tgz
+```
+
+| Built-in assistant | Purpose |
+|---|---|
+| <img src="./presets/icons/video-director.svg" width="24" alt="" /> 视频创作助手 | General ideas, scripts, storyboards and video creation |
+| <img src="./presets/icons/promo-video.svg" width="24" alt="" /> 宣传视频助手 | Product, brand and event promos that preserve the original idea |
+
+Bring your own API key; model calls are billed by the chosen provider. Both assistants share script review, cost confirmation and segment previews. FFmpeg merges multiple video segments locally.
 
 ## Workflow
 
